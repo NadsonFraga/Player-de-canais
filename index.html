@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tvzinha Online | Canais de TV e Esportes Ao Vivo</title>
+    <meta name="description" content="Assista canais de TV aberta e esportes online ao vivo com qualidade e rapidez.">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="logos/fav/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="logos/fav/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="logos/fav/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logos/fav/apple-touch-icon.png">
+    <link rel="shortcut icon" href="logos/fav/favicon.ico">
+    <link rel="manifest" href="logos/fav/site.webmanifest">
+    <meta name="theme-color" content="#2582ff">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Mobile Top Navigation Bar -->
+    <header class="mobile-header">
+        <button id="btn-toggle-menu" class="btn-icon" aria-label="Abrir Menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="mobile-brand" id="mobile-brand-home" style="cursor: pointer;">
+            <img src="logos/fav/favicon-192x192.png" alt="Tvzinha Logo" class="brand-logo-img-header">
+            <span class="brand-title">Tvzinha <span>Online</span></span>
+        </div>
+        <div class="mobile-live-badge">
+            <span class="pulse-dot"></span> AO VIVO
+        </div>
+    </header>
+
+    <!-- Overlay Backdrop for Mobile Menu -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand" id="brand-home" style="cursor: pointer;" title="Ir para o Início">
+                    <div class="brand-icon-wrapper">
+                        <img src="logos/fav/favicon-192x192.png" alt="Tvzinha Logo" class="brand-logo-img-header">
+                    </div>
+                    <div class="brand-text">
+                        <h2>Tvzinha <span>Online</span></h2>
+                        <span class="brand-tag">HD Stream</span>
+                    </div>
+                </div>
+                <button id="btn-close-menu" class="btn-icon close-mobile" aria-label="Fechar Menu">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Live Search Box -->
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Buscar canal ou estado..." autocomplete="off">
+                    <button id="btn-clear-search" class="btn-clear hidden" aria-label="Limpar busca">&times;</button>
+                </div>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div class="filter-pills-container" id="filter-pills">
+                <button class="pill active" data-category="all">Todos</button>
+                <button class="pill" data-category="favs">⭐ Favoritos</button>
+            </div>
+
+            <!-- Channels Accordion / Navigation List -->
+            <nav class="channels-nav" id="channels-list" aria-label="Lista de Canais">
+                <!-- Skeleton Loaders -->
+                <div class="skeleton-wrapper">
+                    <div class="skeleton skeleton-category"></div>
+                    <div class="skeleton skeleton-channel"></div>
+                    <div class="skeleton skeleton-channel"></div>
+                    <div class="skeleton skeleton-category"></div>
+                    <div class="skeleton skeleton-channel"></div>
+                </div>
+            </nav>
+            <!-- Resizer Handle for drag-to-resize -->
+            <div id="sidebar-resizer" class="sidebar-resizer" title="Arraste para redimensionar o menu lateral"></div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="main-content">
+            <!-- Dynamic Content rendered by script.js (Welcome or Player View) -->
+            <div id="content-display" class="content-display">
+                <!-- Initial Welcome Screen -->
+                <div class="welcome-screen">
+                    <div class="welcome-hero">
+                        <div class="hero-badge">
+                            <span class="pulse-dot"></span> Grade de Canais Ao Vivo
+                        </div>
+                        <h1 class="hero-title">Escolha um canal para assistir agora</h1>
+                        <p class="hero-subtitle">
+                            Acesse transmissões de alta estabilidade de <strong>TV Aberta</strong> e <strong>Esportes</strong> com múltiplos servidores disponíveis.
+                        </p>
+                    </div>
+
+                    <!-- Channel Visual Grid with Logos -->
+                    <div class="quick-channels-section">
+                        <div class="section-heading">
+                            <h3>⚡ Todos os Canais</h3>
+                            <span class="section-hint">Clique no card para abrir o player</span>
+                        </div>
+                        <div class="quick-grid" id="quick-grid">
+                            <!-- Populated dynamically with rich cards and logos -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Application Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>
