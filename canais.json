@@ -1,0 +1,66 @@
+{
+  
+"TV Aberta": {
+
+    "Globo": {
+      "RJ - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=6120663-rj1",
+      "RJ - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globorj",
+      "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globosp",
+      "SP - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globosp",
+      "BA - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoba",
+      "BA - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globoba",
+      "Opção 5": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globomg",
+      "Opção 6": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoes",
+      "Opção 7": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globors",
+      "Opção 8": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/cd3.html?id=globors",
+      "Opção 9": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globosc",
+      "Opção 10": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globosc",
+      "Opção 11": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globopr",
+      "Opção 12": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globope",
+      "Opção 13": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globope",
+      "Opção 16": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoce",
+      "Opção 17": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globopi",
+      "Opção 18": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoam",
+      "Opção 19": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globorn",
+      "Opção 20": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globopb",
+      "Opção 21": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoal",
+      "Opção 22": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globose",
+      "Opção 23": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globomt",
+      "Opção 24": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globopa"
+    },
+
+    "Band": {
+      "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019a797e-eeb8-7eda-9518-132403ccb160",
+      "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019cc41a-ccc4-75e0-a31f-9bf47fad8d8b"
+    },
+
+    "SBT": {
+      "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtsp",
+      "RJ - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtrj",
+      "Alternativo": "https://youtube-player.sbt.com.br/?videoID=ABVQXgr2LW4&t=0&adunit=/1011235/SBT_Videos/Especiais/SBT_Live/video"
+    }
+
+  },
+  "Esportes": {
+    "SporTV": {
+      "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv",
+      "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv",
+      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sportv"
+    },
+    "SporTV 2": {
+      "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv2",
+      "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2",
+      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2sd"
+    },
+    "SporTV 3": {
+      "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv3",
+      "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3",
+      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3sd"
+    },
+    "Premiere": {
+      "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=premiere",
+      "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=premiere",
+      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=premieresd"
+    }
+  }
+}
