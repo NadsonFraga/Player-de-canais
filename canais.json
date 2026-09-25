@@ -57,16 +57,20 @@
       "EmbedTV": "https://w7.embedtv.lat/premiere3"
     },
     "ESPN": {
-      "EmbedTV": "https://w7.embedtv.lat/espn"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=espn",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/espn"
     },
     "ESPN 2": {
-      "EmbedTV": "https://w7.embedtv.lat/espn2"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=espn2",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/espn2"
     },
     "ESPN 3": {
-      "EmbedTV": "https://w7.embedtv.lat/espn3"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=espn3",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/espn3"
     },
     "BandSports": {
-      "EmbedTV": "https://w7.embedtv.lat/bandsports"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=bandsports",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/bandsports"
     },
     "CazéTV": {
       "EmbedTV 1": "https://w7.embedtv.lat/caze1",
@@ -95,41 +99,51 @@
       "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02"
     },
     "Combate": {
-      "EmbedTV": "https://w7.embedtv.lat/combate"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=combate",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/combate"
     },
     "UFC Fight Pass": {
       "EmbedTV": "https://w7.embedtv.lat/ufcfightpass"
     },
     "XSports": {
-      "EmbedTV": "https://w7.embedtv.lat/xsports"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=xsports",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/xsports"
     }
   },
   "Notícias & Variedades": {
     "GloboNews": {
-      "EmbedTV": "https://w7.embedtv.lat/globonews"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=globonews",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/globonews"
     },
     "BandNews": {
-      "EmbedTV": "https://w7.embedtv.lat/bandnews"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=bandnews",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/bandnews"
     },
     "Multishow": {
-      "EmbedTV": "https://w7.embedtv.lat/multishow"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=multishow",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/multishow"
     },
     "MTV": {
-      "EmbedTV": "https://w7.embedtv.lat/mtv"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=mtv",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/mtv"
     }
   },
   "Infantil": {
     "Cartoon Network": {
-      "EmbedTV": "https://w7.embedtv.lat/cartoonnetwork"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonnetwork",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/cartoonnetwork"
     },
     "Cartoonito": {
-      "EmbedTV": "https://w7.embedtv.lat/cartoonito"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonito",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/cartoonito"
     },
     "Discovery Kids": {
-      "EmbedTV": "https://w7.embedtv.lat/discoverykids"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=discoverykids",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/discoverykids"
     },
     "Gloob": {
-      "EmbedTV": "https://w7.embedtv.lat/gloob"
+      "Principal": "https://embedcanaisdetv.xyz/e/index.php?canal=gloob",
+      "Backup - EmbedTV": "https://w7.embedtv.lat/gloob"
     }
   },
   "Séries 24h": {
