@@ -160,6 +160,180 @@ document.addEventListener("DOMContentLoaded", () => {
         renderHomeView();
     }
 
+    // --- Vasco Upcoming Matches Module ---
+    let cachedVascoMatches = null;
+
+    function formatMatchDateTime(dateStr, hourStr) {
+        if (!dateStr) return { formattedDate: "Data a definir", isToday: false, isTomorrow: false };
+        try {
+            const [year, month, day] = dateStr.split("-").map(Number);
+            const matchDate = new Date(year, month - 1, day);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const isToday = matchDate.getTime() === today.getTime();
+            const isTomorrow = matchDate.getTime() === tomorrow.getTime();
+
+            const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+            const weekday = weekdays[matchDate.getDay()];
+            const formattedDayMonth = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`;
+            const timePart = hourStr && hourStr !== "A definir" ? hourStr : "Horário a definir";
+
+            return {
+                formattedDate: `${weekday}, ${formattedDayMonth} • ${timePart}`,
+                isToday,
+                isTomorrow
+            };
+        } catch (e) {
+            return {
+                formattedDate: `${dateStr} ${hourStr || ''}`,
+                isToday: false,
+                isTomorrow: false
+            };
+        }
+    }
+
+    function findMatchingChannel(sourceName) {
+        if (!sourceName || !channelsData) return null;
+        const normalizedSource = sourceName.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+        for (const [category, channels] of Object.entries(channelsData)) {
+            for (const [channelName, players] of Object.entries(channels)) {
+                const normalizedChannel = channelName.toLowerCase().replace(/[^a-z0-9]/g, "");
+                if (normalizedChannel.includes(normalizedSource) || normalizedSource.includes(normalizedChannel)) {
+                    return { category, channelName, players };
+                }
+            }
+        }
+        return null;
+    }
+
+    async function fetchAndRenderVascoMatches() {
+        const gridEl = document.getElementById("vasco-matches-grid");
+        if (!gridEl) return;
+
+        let matches = cachedVascoMatches;
+        if (!matches) {
+            try {
+                const response = await fetch("arquivos/proximos_jogos.json");
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                matches = await response.json();
+                cachedVascoMatches = matches;
+            } catch (err) {
+                console.warn("Aviso ao carregar próximos jogos:", err);
+            }
+        }
+
+        if (!matches || !Array.isArray(matches) || matches.length === 0) {
+            gridEl.innerHTML = `
+                <div class="match-card" style="grid-column: 1 / -1; text-align: center; padding: 24px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 6px;">⚽ Nenhum jogo agendado para os próximos dias.</p>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">A agenda é atualizada periodicamente via Globo Esporte.</span>
+                </div>
+            `;
+            return;
+        }
+
+        gridEl.innerHTML = "";
+
+        matches.forEach((match, index) => {
+            const card = document.createElement("div");
+            const isFeatured = index === 0;
+            card.className = `match-card ${isFeatured ? 'featured' : ''}`;
+
+            const { formattedDate, isToday, isTomorrow } = formatMatchDateTime(match.data, match.hora);
+
+            let statusBadgeHtml = '';
+            if (isToday) {
+                statusBadgeHtml = `<span class="match-status-badge today"><span class="pulse-dot"></span> HOJE</span>`;
+            } else if (isTomorrow) {
+                statusBadgeHtml = `<span class="match-status-badge tomorrow">AMANHÃ</span>`;
+            } else if (isFeatured) {
+                statusBadgeHtml = `<span class="match-status-badge featured">PRÓXIMO JOGO</span>`;
+            }
+
+            const mandanteEscudo = match.mandante?.escudo || 'logos/fav/favicon.svg';
+            const visitanteEscudo = match.visitante?.escudo || 'logos/fav/favicon.svg';
+
+            const broadcastList = match.ondeAssistir || [];
+            let broadcastPillsHtml = '';
+
+            if (broadcastList.length > 0) {
+                broadcastPillsHtml = broadcastList.map(source => {
+                    const matchedChannel = findMatchingChannel(source);
+                    if (matchedChannel) {
+                        return `<button class="broadcast-pill playable" data-category="${matchedChannel.category}" data-channel="${matchedChannel.channelName}" title="Assistir no canal ${matchedChannel.channelName}">▶ ${source}</button>`;
+                    }
+                    return `<span class="broadcast-pill">${source}</span>`;
+                }).join('');
+            } else {
+                broadcastPillsHtml = `<span class="broadcast-pill empty">Transmissão a confirmar</span>`;
+            }
+
+            const stadiumText = match.local && match.local !== "A definir" ? match.local : "Local a definir";
+
+            card.innerHTML = `
+                <div class="match-top-bar">
+                    <span class="championship-badge" title="${match.campeonato || 'Competição'}">${match.campeonato || 'Competição'}</span>
+                    ${statusBadgeHtml}
+                </div>
+
+                <div class="match-duel">
+                    <div class="duel-team">
+                        <div class="duel-badge-wrapper">
+                            <img src="${mandanteEscudo}" alt="${match.mandante?.nome || 'Mandante'}" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
+                        </div>
+                        <span class="duel-team-name" title="${match.mandante?.nome || ''}">${match.mandante?.nome || 'Mandante'}</span>
+                    </div>
+
+                    <div class="duel-vs-box">
+                        <span class="duel-vs">VS</span>
+                        <span class="duel-date-time">${formattedDate}</span>
+                    </div>
+
+                    <div class="duel-team">
+                        <div class="duel-badge-wrapper">
+                            <img src="${visitanteEscudo}" alt="${match.visitante?.nome || 'Visitante'}" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
+                        </div>
+                        <span class="duel-team-name" title="${match.visitante?.nome || ''}">${match.visitante?.nome || 'Visitante'}</span>
+                    </div>
+                </div>
+
+                <div class="match-meta-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span class="match-meta-stadium" title="${stadiumText}">${stadiumText}</span>
+                </div>
+
+                <div class="match-broadcast-footer">
+                    <span class="broadcast-label">Onde Assistir</span>
+                    <div class="broadcast-pills">
+                        ${broadcastPillsHtml}
+                    </div>
+                </div>
+            `;
+
+            // Attach play click listeners for broadcast buttons
+            const playBtns = card.querySelectorAll(".broadcast-pill.playable");
+            playBtns.forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const cat = btn.getAttribute("data-category");
+                    const ch = btn.getAttribute("data-channel");
+                    if (cat && ch && channelsData[cat] && channelsData[cat][ch]) {
+                        selectChannel(cat, ch, channelsData[cat][ch]);
+                    }
+                });
+            });
+
+            gridEl.appendChild(card);
+        });
+    }
+
     // --- Return to Home View ---
     function renderHomeView() {
         activeChannel = null;
@@ -176,6 +350,32 @@ document.addEventListener("DOMContentLoaded", () => {
                     </p>
                 </div>
 
+                <!-- Vasco Upcoming Matches Section -->
+                <section class="vasco-matches-section" id="vasco-matches-section">
+                    <div class="section-heading">
+                        <div class="matches-heading-left">
+                            <span class="matches-team-badge">💢</span>
+                            <div>
+                                <h3>Próximos Jogos do Vascão</h3>
+                                <span class="section-hint">Agenda atualizada dos próximos confrontos</span>
+                            </div>
+                        </div>
+                        <span class="matches-source-tag">via ge.globo</span>
+                    </div>
+                    <div class="matches-grid" id="vasco-matches-grid">
+                        <div class="match-card skeleton-match-card">
+                            <div class="skeleton-match-line short"></div>
+                            <div class="skeleton-match-duel"></div>
+                            <div class="skeleton-match-line"></div>
+                        </div>
+                        <div class="match-card skeleton-match-card">
+                            <div class="skeleton-match-line short"></div>
+                            <div class="skeleton-match-duel"></div>
+                            <div class="skeleton-match-line"></div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Channel Visual Grid with Logos -->
                 <div class="quick-channels-section">
                     <div class="section-heading">
@@ -188,6 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
 
         renderChannelGridCards();
+        fetchAndRenderVascoMatches();
         renderSidebar();
     }
 

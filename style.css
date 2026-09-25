@@ -1178,4 +1178,336 @@ body.is-resizing {
         flex: 1 1 calc(50% - 6px);
         justify-content: center;
     }
+
+    .matches-grid {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 8px;
+        gap: 12px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .match-card {
+        flex: 0 0 260px;
+        scroll-snap-align: start;
+    }
+}
+
+/* ==========================================================================
+   VASCO MATCH SCHEDULE MODULE (HOME SCREEN)
+   ========================================================================== */
+.vasco-matches-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.45s ease-out;
+}
+
+.matches-heading-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.matches-team-badge {
+    font-size: 1.5rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+}
+
+.matches-source-tag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+}
+
+.matches-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 16px;
+}
+
+/* Match Card */
+.match-card {
+    background: linear-gradient(145deg, rgba(22, 28, 38, 0.85), rgba(15, 20, 29, 0.95));
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    backdrop-filter: blur(14px);
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.match-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+/* Featured Next Match */
+.match-card.featured {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: linear-gradient(145deg, rgba(30, 36, 48, 0.92), rgba(17, 22, 32, 0.98));
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.12);
+}
+
+.match-card.featured::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f59e0b, #ef4444, #3b82f6);
+}
+
+/* Top bar: Championship + Status pill */
+.match-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.championship-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.match-status-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.match-status-badge.featured {
+    background: rgba(245, 158, 11, 0.18);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+}
+
+.match-status-badge.today {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #f87171;
+}
+
+.match-status-badge.tomorrow {
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    color: #93c5fd;
+}
+
+/* Match Face-off / Duel */
+.match-duel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 2px 0;
+}
+
+.duel-team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    gap: 6px;
+    min-width: 0;
+}
+
+.duel-badge-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: #ffffff;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform var(--transition-fast);
+}
+
+.match-card:hover .duel-badge-wrapper {
+    transform: scale(1.06);
+}
+
+.duel-badge-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+.duel-team-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 95px;
+}
+
+.duel-vs-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.duel-vs {
+    font-size: 0.72rem;
+    font-weight: 900;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.05em;
+}
+
+.duel-date-time {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--primary-light);
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Venue row */
+.match-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+}
+
+.match-meta-row svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+.match-meta-stadium {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Broadcast Footer */
+.match-broadcast-footer {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.broadcast-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.broadcast-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.broadcast-pill {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: var(--transition-fast);
+}
+
+.broadcast-pill.playable {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #93c5fd;
+    cursor: pointer;
+}
+
+.broadcast-pill.playable:hover {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary-light);
+    transform: scale(1.05);
+    box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.broadcast-pill.empty {
+    font-style: italic;
+    color: var(--text-muted);
+    border-style: dashed;
+}
+
+/* Skeleton Loaders */
+.skeleton-match-card {
+    min-height: 190px;
+    animation: pulse 1.8s infinite;
+}
+
+.skeleton-match-line {
+    height: 14px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 4px;
+}
+
+.skeleton-match-line.short {
+    width: 50%;
+}
+
+.skeleton-match-duel {
+    height: 50px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    margin: 8px 0;
 }
