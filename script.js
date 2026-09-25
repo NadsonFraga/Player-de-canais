@@ -98,6 +98,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const sidebar = document.getElementById("sidebar");
     const sidebarBackdrop = document.getElementById("sidebar-backdrop");
 
+    // --- Monochromatic UI SVGs Registry ---
+    function getUiSvg(name, size = 16) {
+        const icons = {
+            tv: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>`,
+            sports: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"></path><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>`,
+            broadcast: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path></svg>`,
+            star: `<svg class="star-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+            starFilled: `<svg class="star-icon filled" width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+            calendar: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
+            info: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+            server: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`
+        };
+        return icons[name] || '';
+    }
+
     // --- Mapping Channels to Images in logos/ ---
     const CHANNEL_LOGOS = {
         "globo": "logos/globo.png",
@@ -229,7 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!matches || !Array.isArray(matches) || matches.length === 0) {
             gridEl.innerHTML = `
                 <div class="match-card" style="grid-column: 1 / -1; text-align: center; padding: 24px;">
-                    <p style="color: var(--text-secondary); margin-bottom: 6px;">⚽ Nenhum jogo agendado para os próximos dias.</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 6px;">Nenhum jogo agendado para os próximos dias.</p>
                     <span style="font-size: 0.8rem; color: var(--text-muted);">A agenda é atualizada periodicamente via Globo Esporte.</span>
                 </div>
             `;
@@ -247,7 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             let statusBadgeHtml = '';
             if (isToday) {
-                statusBadgeHtml = `<span class="match-status-badge today"><span class="pulse-dot"></span> HOJE</span>`;
+                statusBadgeHtml = `<span class="match-status-badge today"><span class="live-dot"></span> HOJE</span>`;
             } else if (isTomorrow) {
                 statusBadgeHtml = `<span class="match-status-badge tomorrow">AMANHÃ</span>`;
             } else if (isFeatured) {
@@ -342,7 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="welcome-screen">
                 <div class="welcome-hero">
                     <div class="hero-badge">
-                        <span class="pulse-dot"></span> Grade de Canais Ao Vivo
+                        <span class="live-dot"></span> Grade de Canais Ao Vivo
                     </div>
                     <h1 class="hero-title">Escolha um canal para assistir agora</h1>
                     <p class="hero-subtitle">
@@ -354,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <section class="vasco-matches-section" id="vasco-matches-section">
                     <div class="section-heading">
                         <div class="matches-heading-left">
-                            <span class="matches-team-badge">💢</span>
+                            <span class="matches-team-badge">${getUiSvg('calendar', 18)}</span>
                             <div>
                                 <h3>Próximos Jogos do Vascão</h3>
                                 <span class="section-hint">Agenda atualizada dos próximos confrontos</span>
@@ -379,7 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <!-- Channel Visual Grid with Logos -->
                 <div class="quick-channels-section">
                     <div class="section-heading">
-                        <h3>⚡ Todos os Canais</h3>
+                        <h3>Todos os Canais</h3>
                         <span class="section-hint">Clique no card para abrir o player</span>
                     </div>
                     <div class="quick-grid" id="quick-grid"></div>
@@ -466,6 +481,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // All pill
         const allBtn = document.createElement("button");
         allBtn.className = `pill ${activeFilter === "all" ? "active" : ""}`;
+        allBtn.dataset.category = "all";
         allBtn.textContent = "Todos";
         allBtn.addEventListener("click", () => setCategoryFilter("all"));
         filterPillsEl.appendChild(allBtn);
@@ -473,7 +489,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // Favorites pill
         const favsBtn = document.createElement("button");
         favsBtn.className = `pill ${activeFilter === "favs" ? "active" : ""}`;
-        favsBtn.textContent = "⭐ Favoritos";
+        favsBtn.dataset.category = "favs";
+        favsBtn.innerHTML = `${getUiSvg('star', 13)} Favoritos`;
         favsBtn.addEventListener("click", () => setCategoryFilter("favs"));
         filterPillsEl.appendChild(favsBtn);
 
@@ -481,6 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
         Object.keys(channelsData).forEach(category => {
             const pill = document.createElement("button");
             pill.className = `pill ${activeFilter === category ? "active" : ""}`;
+            pill.dataset.category = category;
             pill.textContent = category;
             pill.addEventListener("click", () => setCategoryFilter(category));
             filterPillsEl.appendChild(pill);
@@ -491,11 +509,8 @@ document.addEventListener("DOMContentLoaded", () => {
         activeFilter = category;
         const pills = filterPillsEl.querySelectorAll(".pill");
         pills.forEach(pill => {
-            if (pill.textContent === "Todos" && category === "all") {
-                pill.classList.add("active");
-            } else if (pill.textContent === "⭐ Favoritos" && category === "favs") {
-                pill.classList.add("active");
-            } else if (pill.textContent === category) {
+            const cat = pill.getAttribute("data-category") || (pill.textContent.trim() === "Todos" ? "all" : "");
+            if (cat === category) {
                 pill.classList.add("active");
             } else {
                 pill.classList.remove("active");
@@ -607,7 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div style="display:flex;align-items:center;gap:6px;">
                         <span class="channel-options-count">${playersCount} opç</span>
-                        <span style="font-size:0.8rem;color:${isFav ? 'var(--accent-gold)' : 'transparent'};">★</span>
+                        <span style="display:inline-flex;align-items:center;color:${isFav ? 'var(--accent-gold)' : 'transparent'};">${isFav ? getUiSvg('starFilled', 12) : ''}</span>
                     </div>
                 `;
 
@@ -629,16 +644,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (totalMatchingChannels === 0) {
             channelsListEl.innerHTML = `
                 <div class="empty-search-state">
-                    <p>🔍 Nenhum canal encontrado para os filtros atuais.</p>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text-muted);">
+                        ${getUiSvg('search', 16)}
+                        <p>Nenhum canal encontrado para os filtros atuais.</p>
+                    </div>
                 </div>
             `;
         }
     }
 
     function getCategoryIcon(category) {
-        if (category.toLowerCase().includes("esporte")) return "⚽";
-        if (category.toLowerCase().includes("aberta")) return "📡";
-        return "📺";
+        if (category.toLowerCase().includes("esporte")) return getUiSvg('sports', 16);
+        if (category.toLowerCase().includes("aberta")) return getUiSvg('tv', 16);
+        return getUiSvg('broadcast', 16);
     }
 
     // --- 5. Channel Grid Cards on Home Screen ---
@@ -666,14 +684,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="card-top">
                     <span class="card-category-tag">${category}</span>
                     <button class="btn-card-fav ${isFav ? 'favorited' : ''}" title="${isFav ? 'Remover dos favoritos' : 'Favoritar canal'}">
-                        ${isFav ? '⭐' : '☆'}
+                        ${isFav ? getUiSvg('starFilled', 16) : getUiSvg('star', 16)}
                     </button>
                 </div>
                 <div class="card-main-info">
                     ${logoLargeHtml}
                     <div>
                         <h4 class="card-title">${channelName}</h4>
-                        <span class="card-live"><span class="pulse-dot"></span> AO VIVO</span>
+                        <span class="card-live"><span class="live-dot"></span> AO VIVO</span>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -737,11 +755,11 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div style="display:flex;align-items:center;gap:8px;">
                                 <h2>${name}</h2>
                                 <button id="btn-fav-current" class="btn-card-fav ${isFav ? 'favorited' : ''}" title="${isFav ? 'Remover dos favoritos' : 'Favoritar canal'}">
-                                    ${isFav ? '⭐' : '☆'}
+                                    ${isFav ? getUiSvg('starFilled', 16) : getUiSvg('star', 16)}
                                 </button>
                             </div>
                             <span class="channel-category-label">
-                                <span class="pulse-dot"></span> AO VIVO &bull; ${category}
+                                <span class="live-indicator"><span class="live-dot"></span> AO VIVO</span> &bull; ${category}
                             </span>
                         </div>
                     </div>
@@ -789,7 +807,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="server-selector-card">
                     <div class="server-selector-header">
                         <h4>
-                            <span>⚡ Opções de Player & Servidores</span>
+                            <span style="display:inline-flex;align-items:center;gap:6px;">${getUiSvg('server', 16)} Opções de Player & Servidores</span>
                         </h4>
                         <span class="server-selector-hint">Se a transmissão travar, alterne para outra opção</span>
                     </div>
@@ -797,7 +815,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <!-- Server buttons -->
                     </div>
                     <div class="stream-tip-note">
-                        <span>🛡️</span>
+                        <span style="display:inline-flex;align-items:center;">${getUiSvg('info', 16)}</span>
                         <span>Dica: Caso o player apresente tela preta ou bloqueio, utilize o botão <strong>"Nova Aba"</strong> no topo.</span>
                     </div>
                 </div>
