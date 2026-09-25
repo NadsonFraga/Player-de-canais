@@ -1,0 +1,32 @@
+name: Update Match Schedule
+
+on:
+  schedule:
+    # Runs twice daily at 09:00 and 21:00 UTC (06:00 and 18:00 BRT)
+    - cron: '0 9,21 * * *'
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+jobs:
+  update-schedule:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Execute match extraction script
+        run: python scripts/test_get_matches.py
+
+      - name: Commit and push updated match schedule
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add arquivos/proximos_jogos.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: auto-update match schedule [skip ci]" && git push)
