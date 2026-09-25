@@ -1,0 +1,74 @@
+[
+  {
+    "id": 346576,
+    "data": "2026-10-07",
+    "hora": "20:30",
+    "campeonato": "Campeonato Brasileiro",
+    "local": "Nilton Santos (Engenhão)",
+    "mandante": {
+      "nome": "Botafogo",
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+    },
+    "visitante": {
+      "nome": "Vasco",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    },
+    "ondeAssistir": [
+      "Cartola",
+      "Prime Vídeo"
+    ]
+  },
+  {
+    "id": 346556,
+    "data": "2026-10-10",
+    "hora": "17:00",
+    "campeonato": "Campeonato Brasileiro",
+    "local": "São Januário",
+    "mandante": {
+      "nome": "Vasco",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    },
+    "visitante": {
+      "nome": "Remo",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/02/25/Remo-PA.svg"
+    },
+    "ondeAssistir": [
+      "Premiere",
+      "Cartola"
+    ]
+  },
+  {
+    "id": 357346,
+    "data": "2026-10-13",
+    "hora": "21:30",
+    "campeonato": "Copa Sul-Americana",
+    "local": "La Bombonera",
+    "mandante": {
+      "nome": "Boca Juniors",
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/19/boca-juniors-svg-13083.svg"
+    },
+    "visitante": {
+      "nome": "Vasco",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    },
+    "ondeAssistir": [
+      "Paramount+"
+    ]
+  },
+  {
+    "id": 346527,
+    "data": "2026-10-18",
+    "hora": "A definir",
+    "campeonato": "Campeonato Brasileiro",
+    "local": "A definir",
+    "mandante": {
+      "nome": "São Paulo",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+    },
+    "visitante": {
+      "nome": "Vasco",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    },
+    "ondeAssistir": []
+  }
+]
