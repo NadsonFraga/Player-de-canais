@@ -121,8 +121,8 @@ def fetch_and_process_matches():
                 "ondeAssistir": live_sources
             })
 
-    # Limit to next 4 matches
-    final_matches = filtered_matches[:4]
+    # Limit to next 7 matches (user requested 6 to 7 matches)
+    final_matches = filtered_matches[:7]
     print(f"[4/4] Sliced to next {len(final_matches)} fixtures.")
 
     os.makedirs(os.path.dirname(OUTPUT_FILE_PATH), exist_ok=True)

@@ -11,66 +11,189 @@ const FALLBACK_CHANNELS = {
             "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globosp",
             "SP - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globosp",
             "BA - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoba",
-            "BA - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globoba",
-            "Opção 5": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globomg",
-            "Opção 6": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoes",
-            "Opção 7": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globors",
-            "Opção 8": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/cd3.html?id=globors",
-            "Opção 9": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globosc",
-            "Opção 10": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globosc",
-            "Opção 11": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globopr",
-            "Opção 12": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globope",
-            "Opção 13": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globope",
-            "Opção 16": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoce",
-            "Opção 17": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globopi",
-            "Opção 18": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoam",
-            "Opção 19": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globorn",
-            "Opção 20": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globopb",
-            "Opção 21": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoal",
-            "Opção 22": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globose",
-            "Opção 23": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globomt",
-            "Opção 24": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globopa"
+            "BA - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globoba"
         },
         "Band": {
             "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019a797e-eeb8-7eda-9518-132403ccb160",
-            "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019cc41a-ccc4-75e0-a31f-9bf47fad8d8b"
+            "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019cc41a-ccc4-75e0-a31f-9bf47fad8d8b",
+            "SP - EmbedTV": "https://w7.embedtv.lat/bandsp",
+            "RJ - EmbedTV": "https://w7.embedtv.lat/bandrj"
         },
         "SBT": {
             "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtsp",
             "RJ - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtrj",
             "Alternativo": "https://youtube-player.sbt.com.br/?videoID=ABVQXgr2LW4&t=0&adunit=/1011235/SBT_Videos/Especiais/SBT_Live/video"
+        },
+        "Record": {
+            "SP - EmbedTV": "https://w7.embedtv.lat/recordsp",
+            "RJ - EmbedTV": "https://w7.embedtv.lat/recordrj",
+            "MG - EmbedTV": "https://w7.embedtv.lat/recordmg"
         }
     },
     "Esportes": {
         "SporTV": {
             "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv",
             "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv",
-            "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sportv"
+            "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sportv",
+            "EmbedTV": "https://w7.embedtv.lat/sportv"
         },
         "SporTV 2": {
             "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv2",
             "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2",
-            "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2sd"
+            "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2sd",
+            "EmbedTV": "https://w7.embedtv.lat/sportv2"
         },
         "SporTV 3": {
-            "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv3",
-            "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3",
-            "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3sd"
+            "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/primebr.html?id=sportv3",
+            "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv3",
+            "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3sd",
+            "EmbedTV": "https://w7.embedtv.lat/sportv3"
         },
         "Premiere": {
             "Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=premiere",
             "Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=premiere",
-            "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/primebr.html?id=premieresd"
+            "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=premieresd",
+            "EmbedTV": "https://w7.embedtv.lat/premiere"
+        },
+        "Premiere 2": {
+            "EmbedTV": "https://w7.embedtv.lat/premiere2"
+        },
+        "Premiere 3": {
+            "EmbedTV": "https://w7.embedtv.lat/premiere3"
+        },
+        "ESPN": {
+            "EmbedTV": "https://w7.embedtv.lat/espn"
+        },
+        "ESPN 2": {
+            "EmbedTV": "https://w7.embedtv.lat/espn2"
+        },
+        "ESPN 3": {
+            "EmbedTV": "https://w7.embedtv.lat/espn3"
+        },
+        "BandSports": {
+            "EmbedTV": "https://w7.embedtv.lat/bandsports"
+        },
+        "CazéTV": {
+            "EmbedTV 1": "https://w7.embedtv.lat/caze1",
+            "EmbedTV 2": "https://w7.embedtv.lat/caze2",
+            "EmbedTV 3": "https://w7.embedtv.lat/caze3"
+        },
+        "Disney+": {
+            "EmbedTV 1": "https://w7.embedtv.lat/disneyplus1",
+            "EmbedTV 2": "https://w7.embedtv.lat/disneyplus2",
+            "EmbedTV 3": "https://w7.embedtv.lat/disneyplus3"
+        },
+        "Max": {
+            "EmbedTV 1": "https://w7.embedtv.lat/max1",
+            "EmbedTV 2": "https://w7.embedtv.lat/max2",
+            "EmbedTV 3": "https://w7.embedtv.lat/max3"
+        },
+        "Paramount+": {
+            "EmbedTV 1": "https://w7.embedtv.lat/paramountplus",
+            "EmbedTV 2": "https://w7.embedtv.lat/paramountplus2"
+        },
+        "Prime Video": {
+            "EmbedTV 1": "https://w7.embedtv.lat/primevideo",
+            "EmbedTV 2": "https://w7.embedtv.lat/primevideo2",
+            "EmbedTV 4": "https://w7.embedtv.lat/primevideo4",
+            "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo",
+            "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02"
+        },
+        "Combate": {
+            "EmbedTV": "https://w7.embedtv.lat/combate"
+        },
+        "UFC Fight Pass": {
+            "EmbedTV": "https://w7.embedtv.lat/ufcfightpass"
+        },
+        "XSports": {
+            "EmbedTV": "https://w7.embedtv.lat/xsports"
+        }
+    },
+    "Notícias & Variedades": {
+        "GloboNews": {
+            "EmbedTV": "https://w7.embedtv.lat/globonews"
+        },
+        "BandNews": {
+            "EmbedTV": "https://w7.embedtv.lat/bandnews"
+        },
+        "Multishow": {
+            "EmbedTV": "https://w7.embedtv.lat/multishow"
+        },
+        "MTV": {
+            "EmbedTV": "https://w7.embedtv.lat/mtv"
+        }
+    },
+    "Infantil": {
+        "Cartoon Network": {
+            "EmbedTV": "https://w7.embedtv.lat/cartoonnetwork"
+        },
+        "Cartoonito": {
+            "EmbedTV": "https://w7.embedtv.lat/cartoonito"
+        },
+        "Discovery Kids": {
+            "EmbedTV": "https://w7.embedtv.lat/discoverykids"
+        },
+        "Gloob": {
+            "EmbedTV": "https://w7.embedtv.lat/gloob"
+        }
+    },
+    "Séries 24h": {
+        "Chaves 24h": {
+            "EmbedTV": "https://w7.embedtv.lat/24h_chaves"
+        },
+        "Dragon Ball 24h": {
+            "EmbedTV": "https://w7.embedtv.lat/24h_dragonball"
+        },
+        "Naruto 24h": {
+            "EmbedTV": "https://w7.embedtv.lat/24h_naruto"
+        },
+        "Os Simpsons 24h": {
+            "EmbedTV": "https://w7.embedtv.lat/24h_simpsons"
+        },
+        "Pica-Pau 24h": {
+            "EmbedTV": "https://w7.embedtv.lat/24h_picapau"
+        },
+        "Friends 24h": {
+            "EmbedTV": "https://w7.embedtv.lat/24h_friends"
+        },
+        "Todo Mundo Odeia o Chris 24h": {
+            "EmbedTV": "https://w7.embedtv.lat/24h_odeiachris"
         }
     }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+    // --- Pop-up & Anti-Hijack Protection Shield ---
+    // Preserves intentional "Nova Aba" opening while blocking rogue popups & parent window redirects
+    const safeWindowOpen = window.open ? window.open.bind(window) : null;
+    window.open = function(url, target, features) {
+        console.warn("Tvzinha Shield: Bloqueada tentativa não autorizada de abertura de janela:", url);
+        return null;
+    };
+
+    let isAuthorizedUserAction = false;
+    window.addEventListener("beforeunload", (e) => {
+        if (!isAuthorizedUserAction) {
+            // Prevent rogue iframe scripts from navigating away from the app
+            e.preventDefault();
+            e.returnValue = "";
+            return "";
+        }
+    });
+
+    document.addEventListener("click", () => {
+        isAuthorizedUserAction = true;
+        setTimeout(() => {
+            isAuthorizedUserAction = false;
+        }, 1200);
+    }, true);
+
     // --- State Management ---
     let channelsData = {};
     let activeFilter = "all";
     let searchQuery = "";
     let activeChannel = null; // { category, name, players, currentPlayerName, currentPlayerUrl }
+    let adShieldEnabled = true; // Auto-blocks popunder ad tabs (Superbet, etc.) on non-EmbedTV players
 
     // Load Favorites from LocalStorage
     let favorites = new Set();
@@ -108,7 +231,10 @@ document.addEventListener("DOMContentLoaded", () => {
             starFilled: `<svg class="star-icon filled" width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
             calendar: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
             info: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
-            server: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`
+            server: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`,
+            news: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg>`,
+            kids: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>`,
+            series: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>`
         };
         return icons[name] || '';
     }
@@ -118,12 +244,28 @@ document.addEventListener("DOMContentLoaded", () => {
         "globo": "logos/globo.png",
         "band": "logos/Band.png",
         "sbt": "logos/sbt.png",
+        "record": "logos/record.png",
         "sportv 3": "logos/sportv3.png",
-        "sportv3": "logos/sportv3.png",
         "sportv 2": "logos/sportv2.png",
-        "sportv2": "logos/sportv2.png",
         "sportv": "logos/sportv.png",
-        "premiere": "logos/premiere.png"
+        "premiere": "logos/premiere.png",
+        "prime": "logos/amazonprimevideo.png",
+        "cazetv": "logos/cazetv.png",
+        "disney": "logos/disneyplus.png",
+        "max": "logos/max.png",
+        "paramount": "logos/paramountplus.png",
+        "espn": "logos/espn.png",
+        "bandsports": "logos/bandsports.png",
+        "combate": "logos/combate.png",
+        "xsports": "logos/xsports.png",
+        "globonews": "logos/globonews.png",
+        "bandnews": "logos/bandnews.png",
+        "multishow": "logos/multishow.png",
+        "mtv": "logos/mtv.png",
+        "cartoonnetwork": "logos/cartoonnetwork.png",
+        "cartoonito": "logos/cartoonito.png",
+        "discoverykids": "logos/discoverykids.png",
+        "gloob": "logos/gloob.png"
     };
 
     function getChannelLogoSrc(channelName) {
@@ -131,10 +273,28 @@ document.addEventListener("DOMContentLoaded", () => {
         if (name.includes("sportv 3") || name.includes("sportv3")) return CHANNEL_LOGOS["sportv 3"];
         if (name.includes("sportv 2") || name.includes("sportv2")) return CHANNEL_LOGOS["sportv 2"];
         if (name.includes("sportv")) return CHANNEL_LOGOS["sportv"];
-        if (name.includes("globo")) return CHANNEL_LOGOS["globo"];
+        if (name.includes("bandsports")) return CHANNEL_LOGOS["bandsports"];
+        if (name.includes("bandnews")) return CHANNEL_LOGOS["bandnews"];
         if (name.includes("band")) return CHANNEL_LOGOS["band"];
+        if (name.includes("globonews")) return CHANNEL_LOGOS["globonews"];
+        if (name.includes("globo")) return CHANNEL_LOGOS["globo"];
         if (name.includes("sbt")) return CHANNEL_LOGOS["sbt"];
+        if (name.includes("record")) return CHANNEL_LOGOS["record"];
         if (name.includes("premiere")) return CHANNEL_LOGOS["premiere"];
+        if (name.includes("prime") || name.includes("amazon")) return CHANNEL_LOGOS["prime"];
+        if (name.includes("caze") || name.includes("cazé")) return CHANNEL_LOGOS["cazetv"];
+        if (name.includes("disney")) return CHANNEL_LOGOS["disney"];
+        if (name.includes("max") || name.includes("hbo")) return CHANNEL_LOGOS["max"];
+        if (name.includes("paramount")) return CHANNEL_LOGOS["paramount"];
+        if (name.includes("espn")) return CHANNEL_LOGOS["espn"];
+        if (name.includes("combate")) return CHANNEL_LOGOS["combate"];
+        if (name.includes("xsports")) return CHANNEL_LOGOS["xsports"];
+        if (name.includes("multishow")) return CHANNEL_LOGOS["multishow"];
+        if (name.includes("mtv")) return CHANNEL_LOGOS["mtv"];
+        if (name.includes("cartoon network") || name.includes("cartoonnetwork")) return CHANNEL_LOGOS["cartoonnetwork"];
+        if (name.includes("cartoonito")) return CHANNEL_LOGOS["cartoonito"];
+        if (name.includes("discovery kids") || name.includes("discoverykids")) return CHANNEL_LOGOS["discoverykids"];
+        if (name.includes("gloob")) return CHANNEL_LOGOS["gloob"];
         return null;
     }
 
@@ -160,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- 1. Initialization & Data Fetching ---
     async function initApp() {
         try {
-            const response = await fetch("canais.json");
+            const response = await fetch("canais.json?v=" + Date.now(), { cache: "no-store" });
             if (!response.ok) {
                 throw new Error(`Erro HTTP: ${response.status}`);
             }
@@ -210,14 +370,109 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    function normalizeChannelSearch(text) {
+        if (!text) return "";
+        return text
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]/g, "");
+    }
+
+    function findChannelByName(targetName) {
+        const normTarget = normalizeChannelSearch(targetName);
+        for (const [category, channels] of Object.entries(channelsData)) {
+            for (const [channelName, players] of Object.entries(channels)) {
+                if (normalizeChannelSearch(channelName) === normTarget) {
+                    return { category, channelName, players };
+                }
+            }
+        }
+        return null;
+    }
+
     function findMatchingChannel(sourceName) {
         if (!sourceName || !channelsData) return null;
-        const normalizedSource = sourceName.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const raw = sourceName.toLowerCase().trim();
+
+        // 1. Direct intelligent alias matching
+        if (raw.includes("prime") || raw.includes("amazon")) {
+            const found = findChannelByName("Prime Video");
+            if (found) return found;
+        }
+        if (raw.includes("caze") || raw.includes("cazé")) {
+            const found = findChannelByName("CazéTV");
+            if (found) return found;
+        }
+        if (raw.includes("paramount")) {
+            const found = findChannelByName("Paramount+");
+            if (found) return found;
+        }
+        if (raw.includes("premiere")) {
+            const found = findChannelByName("Premiere");
+            if (found) return found;
+        }
+        if (raw.includes("sportv 3") || raw.includes("sportv3")) {
+            const found = findChannelByName("SporTV 3");
+            if (found) return found;
+        }
+        if (raw.includes("sportv 2") || raw.includes("sportv2")) {
+            const found = findChannelByName("SporTV 2");
+            if (found) return found;
+        }
+        if (raw.includes("sportv")) {
+            const found = findChannelByName("SporTV");
+            if (found) return found;
+        }
+        if (raw.includes("globonews")) {
+            const found = findChannelByName("GloboNews");
+            if (found) return found;
+        }
+        if (raw.includes("globo") || raw.includes("ge") || raw.includes("tv globo")) {
+            const found = findChannelByName("Globo");
+            if (found) return found;
+        }
+        if (raw.includes("bandnews")) {
+            const found = findChannelByName("BandNews");
+            if (found) return found;
+        }
+        if (raw.includes("bandsports")) {
+            const found = findChannelByName("BandSports");
+            if (found) return found;
+        }
+        if (raw.includes("band")) {
+            const found = findChannelByName("Band");
+            if (found) return found;
+        }
+        if (raw.includes("sbt")) {
+            const found = findChannelByName("SBT");
+            if (found) return found;
+        }
+        if (raw.includes("record")) {
+            const found = findChannelByName("Record");
+            if (found) return found;
+        }
+        if (raw.includes("disney")) {
+            const found = findChannelByName("Disney+");
+            if (found) return found;
+        }
+        if (raw.includes("max") || raw.includes("hbo")) {
+            const found = findChannelByName("Max");
+            if (found) return found;
+        }
+        if (raw.includes("combate")) {
+            const found = findChannelByName("Combate");
+            if (found) return found;
+        }
+
+        // 2. Generic fallback search
+        const normalizedSource = normalizeChannelSearch(sourceName);
+        if (!normalizedSource) return null;
 
         for (const [category, channels] of Object.entries(channelsData)) {
             for (const [channelName, players] of Object.entries(channels)) {
-                const normalizedChannel = channelName.toLowerCase().replace(/[^a-z0-9]/g, "");
-                if (normalizedChannel.includes(normalizedSource) || normalizedSource.includes(normalizedChannel)) {
+                const normalizedChannel = normalizeChannelSearch(channelName);
+                if (normalizedChannel && (normalizedChannel.includes(normalizedSource) || normalizedSource.includes(normalizedChannel))) {
                     return { category, channelName, players };
                 }
             }
@@ -232,7 +487,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let matches = cachedVascoMatches;
         if (!matches) {
             try {
-                const response = await fetch("arquivos/proximos_jogos.json");
+                const response = await fetch("arquivos/proximos_jogos.json?v=" + Date.now(), { cache: "no-store" });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 matches = await response.json();
                 cachedVascoMatches = matches;
@@ -347,6 +602,119 @@ document.addEventListener("DOMContentLoaded", () => {
 
             gridEl.appendChild(card);
         });
+
+        setupMatchesCarousel();
+    }
+
+    // --- Matches Carousel Navigation & Drag Scrolling ---
+    function setupMatchesCarousel() {
+        const gridEl = document.getElementById("vasco-matches-grid");
+        const prevBtn = document.getElementById("btn-matches-prev");
+        const nextBtn = document.getElementById("btn-matches-next");
+
+        if (!gridEl) return;
+
+        function updateArrowState() {
+            if (!prevBtn || !nextBtn) return;
+            const maxScroll = Math.max(0, gridEl.scrollWidth - gridEl.clientWidth);
+            const atStart = gridEl.scrollLeft <= 8;
+            const atEnd = gridEl.scrollLeft >= maxScroll - 8;
+
+            prevBtn.disabled = atStart;
+            nextBtn.disabled = atEnd;
+            prevBtn.classList.toggle("disabled", atStart);
+            nextBtn.classList.toggle("disabled", atEnd);
+        }
+
+        function getScrollStep() {
+            const firstCard = gridEl.querySelector(".match-card");
+            if (firstCard) {
+                const cardWidth = firstCard.offsetWidth;
+                const gap = 16;
+                return cardWidth + gap;
+            }
+            return gridEl.clientWidth * 0.85;
+        }
+
+        if (prevBtn) {
+            prevBtn.onclick = () => {
+                gridEl.scrollBy({ left: -getScrollStep(), behavior: "smooth" });
+            };
+        }
+
+        if (nextBtn) {
+            nextBtn.onclick = () => {
+                gridEl.scrollBy({ left: getScrollStep(), behavior: "smooth" });
+            };
+        }
+
+        // Scroll listener (throttled via requestAnimationFrame)
+        let ticking = false;
+        gridEl.addEventListener("scroll", () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    updateArrowState();
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        }, { passive: true });
+
+        window.addEventListener("resize", updateArrowState, { passive: true });
+
+        requestAnimationFrame(() => {
+            updateArrowState();
+        });
+
+        // Mouse Drag-to-Scroll Support
+        let isDown = false;
+        let startX = 0;
+        let initialScroll = 0;
+        let hasDragged = false;
+
+        gridEl.addEventListener("mousedown", (e) => {
+            if (e.button !== 0 || e.target.closest("button") || e.target.closest(".broadcast-pill.playable")) return;
+            isDown = true;
+            hasDragged = false;
+            gridEl.classList.add("is-dragging");
+            startX = e.pageX - gridEl.offsetLeft;
+            initialScroll = gridEl.scrollLeft;
+        });
+
+        window.addEventListener("mouseup", () => {
+            if (isDown) {
+                isDown = false;
+                gridEl.classList.remove("is-dragging");
+            }
+        });
+
+        gridEl.addEventListener("mousemove", (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - gridEl.offsetLeft;
+            const walk = (x - startX) * 1.35;
+            if (Math.abs(walk) > 4) hasDragged = true;
+            gridEl.scrollLeft = initialScroll - walk;
+        });
+
+        // Prevent button clicks if dragging
+        gridEl.addEventListener("click", (e) => {
+            if (hasDragged) {
+                e.stopPropagation();
+                hasDragged = false;
+            }
+        }, true);
+
+        // Keyboard arrow navigation
+        gridEl.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                gridEl.scrollBy({ left: -getScrollStep(), behavior: "smooth" });
+            } else if (e.key === "ArrowRight") {
+                e.preventDefault();
+                gridEl.scrollBy({ left: getScrollStep(), behavior: "smooth" });
+            }
+        });
     }
 
     // --- Return to Home View ---
@@ -356,13 +724,18 @@ document.addEventListener("DOMContentLoaded", () => {
         contentDisplay.innerHTML = `
             <div class="welcome-screen">
                 <div class="welcome-hero">
-                    <div class="hero-badge">
-                        <span class="live-dot"></span> Grade de Canais Ao Vivo
+                    <div class="welcome-hero-text">
+                        <div class="hero-badge">
+                            <span class="live-dot"></span> Grade de Canais Ao Vivo
+                        </div>
+                        <h1 class="hero-title">Escolha um canal para assistir agora</h1>
+                        <p class="hero-subtitle">
+                            Acesse transmissões de alta estabilidade de <strong>TV Aberta</strong> e <strong>Esportes</strong> com múltiplos servidores disponíveis.
+                        </p>
                     </div>
-                    <h1 class="hero-title">Escolha um canal para assistir agora</h1>
-                    <p class="hero-subtitle">
-                        Acesse transmissões de alta estabilidade de <strong>TV Aberta</strong> e <strong>Esportes</strong> com múltiplos servidores disponíveis.
-                    </p>
+                    <div class="welcome-hero-emblem" aria-hidden="true" title="Tvzinha Online">
+                        <img src="logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="hero-emblem-img">
+                    </div>
                 </div>
 
                 <!-- Vasco Upcoming Matches Section -->
@@ -375,18 +748,39 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span class="section-hint">Agenda atualizada dos próximos confrontos</span>
                             </div>
                         </div>
-                        <span class="matches-source-tag">via ge.globo</span>
-                    </div>
-                    <div class="matches-grid" id="vasco-matches-grid">
-                        <div class="match-card skeleton-match-card">
-                            <div class="skeleton-match-line short"></div>
-                            <div class="skeleton-match-duel"></div>
-                            <div class="skeleton-match-line"></div>
+                        <div class="matches-heading-right">
+                            <span class="matches-source-tag">via ge.globo</span>
+                            <div class="matches-nav-arrows">
+                                <button id="btn-matches-prev" class="btn-matches-arrow" aria-label="Jogos anteriores" title="Ver jogos anteriores" disabled>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 18 9 12 15 6"></polyline>
+                                    </svg>
+                                </button>
+                                <button id="btn-matches-next" class="btn-matches-arrow" aria-label="Próximos jogos" title="Ver mais jogos">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <div class="match-card skeleton-match-card">
-                            <div class="skeleton-match-line short"></div>
-                            <div class="skeleton-match-duel"></div>
-                            <div class="skeleton-match-line"></div>
+                    </div>
+                    <div class="matches-carousel-wrapper">
+                        <div class="matches-grid matches-carousel" id="vasco-matches-grid" tabindex="0" role="region" aria-label="Carrossel de próximos jogos">
+                            <div class="match-card skeleton-match-card">
+                                <div class="skeleton-match-line short"></div>
+                                <div class="skeleton-match-duel"></div>
+                                <div class="skeleton-match-line"></div>
+                            </div>
+                            <div class="match-card skeleton-match-card">
+                                <div class="skeleton-match-line short"></div>
+                                <div class="skeleton-match-duel"></div>
+                                <div class="skeleton-match-line"></div>
+                            </div>
+                            <div class="match-card skeleton-match-card">
+                                <div class="skeleton-match-line short"></div>
+                                <div class="skeleton-match-duel"></div>
+                                <div class="skeleton-match-line"></div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -654,8 +1048,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getCategoryIcon(category) {
-        if (category.toLowerCase().includes("esporte")) return getUiSvg('sports', 16);
-        if (category.toLowerCase().includes("aberta")) return getUiSvg('tv', 16);
+        const cat = category.toLowerCase();
+        if (cat.includes("esporte")) return getUiSvg('sports', 16);
+        if (cat.includes("aberta")) return getUiSvg('tv', 16);
+        if (cat.includes("infantil")) return getUiSvg('kids', 16);
+        if (cat.includes("24h") || cat.includes("série")) return getUiSvg('series', 16);
+        if (cat.includes("notícia") || cat.includes("variedade")) return getUiSvg('news', 16);
         return getUiSvg('broadcast', 16);
     }
 
@@ -675,6 +1073,15 @@ document.addEventListener("DOMContentLoaded", () => {
         allChannels.forEach(({ category, channelName, players }) => {
             const card = document.createElement("div");
             card.className = "quick-card";
+            card.tabIndex = 0;
+            card.setAttribute("role", "button");
+            card.setAttribute("aria-label", `Assistir canal ${channelName}`);
+            card.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    selectChannel(category, channelName, players);
+                }
+            });
             const optionsCount = Object.keys(players).length;
             const logoLargeHtml = createLogoBadgeHtml(channelName, 'lg');
             const channelKey = `${category}:${channelName}`;
@@ -735,6 +1142,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         renderPlayerView();
         renderSidebar();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (window.innerWidth <= 768) {
+            closeMobileMenu();
+        }
     }
 
     function renderPlayerView() {
@@ -744,6 +1155,31 @@ document.addEventListener("DOMContentLoaded", () => {
         const logoLargeHtml = createLogoBadgeHtml(name, 'md');
         const channelKey = `${category}:${name}`;
         const isFav = favorites.has(channelKey);
+
+        const isEmbedTv = currentPlayerUrl.toLowerCase().includes("embedtv");
+        // EmbedTV blocks sandboxed iframes with anti-sandbox screen;
+        // Non-EmbedTV servers (MeuPlayer, EmbedCanaisdeTV, Localhost70) use popunders (Superbet, etc.) and require sandbox without allow-popups:
+        const sandboxAttr = (!isEmbedTv && adShieldEnabled)
+            ? 'sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"'
+            : '';
+
+        let shieldToolbarHtml = '';
+        if (isEmbedTv) {
+            shieldToolbarHtml = `
+                <div class="player-shield-badge" title="Servidor EmbedTV (modo direto P2P)">
+                    <span class="live-dot" style="background:#10b981;"></span> EmbedTV
+                </div>
+            `;
+        } else {
+            shieldToolbarHtml = `
+                <button id="btn-toggle-shield" class="btn-player-action ${adShieldEnabled ? 'shield-active' : ''}" title="${adShieldEnabled ? 'Proteção Anti-Popups ATIVA: Bloqueia abertura de novas guias e anúncios do Superbet ao clicar no player. Clique para desativar se necessário.' : 'Proteção Anti-Popups DESATIVADA: Clique para reativar o bloqueio de popups.'}">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>${adShieldEnabled ? 'Anti-Popups: Ativo' : 'Anti-Popups: Desligado'}</span>
+                </button>
+            `;
+        }
 
         contentDisplay.innerHTML = `
             <div class="player-view-container">
@@ -764,6 +1200,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                     <div class="player-toolbar">
+                        ${shieldToolbarHtml}
                         <button id="btn-reload-player" class="btn-player-action" title="Recarregar Transmissão">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="23 4 23 10 17 10"></polyline>
@@ -799,7 +1236,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         src="${currentPlayerUrl}" 
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                         allowfullscreen
-                        sandbox="allow-forms allow-scripts allow-same-origin allow-popups"
+                        ${sandboxAttr}
                     ></iframe>
                 </div>
 
@@ -816,7 +1253,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="stream-tip-note">
                         <span style="display:inline-flex;align-items:center;">${getUiSvg('info', 16)}</span>
-                        <span>Dica: Caso o player apresente tela preta ou bloqueio, utilize o botão <strong>"Nova Aba"</strong> no topo.</span>
+                        <span>
+                            ${!isEmbedTv && adShieldEnabled 
+                                ? '🛡️ <strong>Proteção Anti-Popups Ativa:</strong> Novas guias de anúncios (ex: Superbet/apostas) são bloqueadas pelo navegador ao clicar no player.' 
+                                : '⚡ <strong>Player:</strong> Caso o canal apresente tela preta ou bloqueio, utilize o botão <strong>"Nova Aba"</strong> no topo.'}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -827,6 +1268,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (favBtnCurrent) {
             favBtnCurrent.addEventListener("click", () => {
                 toggleFavorite(channelKey);
+                renderPlayerView();
+            });
+        }
+
+        // Anti-Popups Shield Toggle Listener
+        const btnToggleShield = document.getElementById("btn-toggle-shield");
+        if (btnToggleShield) {
+            btnToggleShield.addEventListener("click", () => {
+                adShieldEnabled = !adShieldEnabled;
                 renderPlayerView();
             });
         }
@@ -880,7 +1330,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (btnExternal) {
             btnExternal.addEventListener("click", () => {
-                window.open(activeChannel.currentPlayerUrl, "_blank", "noopener,noreferrer");
+                isAuthorizedUserAction = true;
+                if (safeWindowOpen) {
+                    safeWindowOpen(activeChannel.currentPlayerUrl, "_blank", "noopener,noreferrer");
+                }
             });
         }
 
@@ -903,6 +1356,181 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // --- 7. TV Remote & D-Pad Spatial Navigation Module ---
+        // Global delegation for broadcast pills (ensures clicks always forward to channel)
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest(".broadcast-pill.playable");
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            let cat = btn.getAttribute("data-category") || "Esportes";
+            let ch = btn.getAttribute("data-channel") || "Prime Video";
+            let players = channelsData[cat]?.[ch];
+            if (!players) {
+                for (const [c, chs] of Object.entries(channelsData)) {
+                    if (chs[ch]) {
+                        cat = c;
+                        players = chs[ch];
+                        break;
+                    }
+                }
+            }
+            if (players) {
+                selectChannel(cat, ch, players);
+            }
+        }
+    });
+
+function setupTvRemoteNavigation() {
+        function getFocusableElements() {
+            const selector = [
+                '#filter-pills .pill',
+                '#quick-grid .quick-card',
+                '#vasco-matches-grid .broadcast-pill.playable',
+                '#channels-list .channel-btn',
+                '#channels-list .category-header',
+                '.btn-server-option',
+                '.btn-player-action',
+                '#search-input',
+                '#brand-home'
+            ].join(', ');
+
+            return Array.from(document.querySelectorAll(selector)).filter(el => {
+                const rect = el.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).visibility !== 'hidden' && window.getComputedStyle(el).display !== 'none';
+            });
+        }
+
+        function findBestDirectionalCandidate(currentEl, direction) {
+            const currentRect = currentEl.getBoundingClientRect();
+            const currentCenter = {
+                x: currentRect.left + currentRect.width / 2,
+                y: currentRect.top + currentRect.height / 2
+            };
+
+            const candidates = getFocusableElements().filter(el => el !== currentEl);
+            let bestCandidate = null;
+            let minDistance = Infinity;
+
+            candidates.forEach(cand => {
+                const rect = cand.getBoundingClientRect();
+                const center = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                };
+
+                let isEligible = false;
+                let primaryDist = 0;
+                let secondaryDist = 0;
+
+                if (direction === 'right') {
+                    if (rect.left >= currentRect.left + 5) {
+                        isEligible = true;
+                        primaryDist = rect.left - currentRect.right;
+                        secondaryDist = Math.abs(center.y - currentCenter.y);
+                    }
+                } else if (direction === 'left') {
+                    if (rect.right <= currentRect.right - 5) {
+                        isEligible = true;
+                        primaryDist = currentRect.left - rect.right;
+                        secondaryDist = Math.abs(center.y - currentCenter.y);
+                    }
+                } else if (direction === 'down') {
+                    if (rect.top >= currentRect.top + 5) {
+                        isEligible = true;
+                        primaryDist = rect.top - currentRect.bottom;
+                        secondaryDist = Math.abs(center.x - currentCenter.x);
+                    }
+                } else if (direction === 'up') {
+                    if (rect.bottom <= currentRect.bottom - 5) {
+                        isEligible = true;
+                        primaryDist = currentRect.top - rect.bottom;
+                        secondaryDist = Math.abs(center.x - currentCenter.x);
+                    }
+                }
+
+                if (isEligible) {
+                    const totalDistance = Math.max(0, primaryDist) + secondaryDist * 2.2;
+                    if (totalDistance < minDistance) {
+                        minDistance = totalDistance;
+                        bestCandidate = cand;
+                    }
+                }
+            });
+
+            return bestCandidate;
+        }
+
+        window.addEventListener('keydown', (e) => {
+            const key = e.key;
+            const code = e.keyCode;
+
+            // Handle Back / Return keys (Samsung 10009, webOS 461, Android 4, Esc 27, Backspace 8)
+            const isBackKey = key === 'Escape' || key === 'Backspace' || code === 27 || code === 8 || code === 10009 || code === 461 || code === 4;
+
+            if (isBackKey) {
+                if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+                    return;
+                }
+
+                if (activeChannel) {
+                    e.preventDefault();
+                    renderHomeView();
+                    setTimeout(() => {
+                        const firstCard = document.querySelector('#quick-grid .quick-card');
+                        if (firstCard) firstCard.focus();
+                    }, 60);
+                    return;
+                }
+
+                if (sidebar.classList.contains('open')) {
+                    e.preventDefault();
+                    closeMobileMenu();
+                    return;
+                }
+            }
+
+            const directions = {
+                ArrowUp: 'up',
+                ArrowDown: 'down',
+                ArrowLeft: 'left',
+                ArrowRight: 'right',
+                Up: 'up',
+                Down: 'down',
+                Left: 'left',
+                Right: 'right'
+            };
+
+            const dir = directions[key];
+            if (dir) {
+                const currentEl = document.activeElement;
+                const focusables = getFocusableElements();
+                if (focusables.length === 0) return;
+
+                if (!currentEl || currentEl === document.body || !focusables.includes(currentEl)) {
+                    e.preventDefault();
+                    if (activeChannel) {
+                        const defaultPlayerBtn = document.querySelector('.btn-server-option.active') || document.querySelector('.btn-server-option') || document.getElementById('btn-fullscreen-player');
+                        if (defaultPlayerBtn) defaultPlayerBtn.focus();
+                        else focusables[0].focus();
+                    } else {
+                        const defaultHomeEl = document.querySelector('.pill.active') || focusables[0];
+                        if (defaultHomeEl) defaultHomeEl.focus();
+                    }
+                    return;
+                }
+
+                const nextEl = findBestDirectionalCandidate(currentEl, dir);
+                if (nextEl) {
+                    e.preventDefault();
+                    nextEl.focus();
+                    nextEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                }
+            }
+        });
+    }
+
     // --- Initialize ---
     initApp();
+    setupTvRemoteNavigation();
 });
