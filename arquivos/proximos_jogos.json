@@ -1,124 +1,2722 @@
-[
-  {
-    "id": 346576,
-    "data": "2026-10-07",
-    "hora": "20:30",
-    "campeonato": "Campeonato Brasileiro",
-    "local": "Nilton Santos (Engenhão)",
-    "mandante": {
-      "nome": "Botafogo",
-      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+{
+  "updatedAt": "2026-09-29T18:03:24.114677",
+  "teams": {
+    "athletico-pr": {
+      "name": "Athletico-PR",
+      "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg",
+      "matches": [
+        {
+          "id": 356329,
+          "data": "2026-10-02",
+          "hora": "19:00",
+          "campeonato": "Copa Paraná",
+          "local": "Arena da Baixada",
+          "mandante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "visitante": {
+            "nome": "São Joseense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2023/05/03/São_Joseense.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 346582,
+          "data": "2026-10-08",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena da Baixada",
+          "mandante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "visitante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346569,
+          "data": "2026-10-12",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena Condá",
+          "mandante": {
+            "nome": "Chapecoense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg"
+          },
+          "visitante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 356333,
+          "data": "2026-10-17",
+          "hora": "15:30",
+          "campeonato": "Copa Paraná",
+          "local": "VGD",
+          "mandante": {
+            "nome": "Londrina",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/londrina.svg"
+          },
+          "visitante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 346532,
+          "data": "2026-10-17",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena da Baixada",
+          "mandante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "visitante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        },
+        {
+          "id": 346473,
+          "data": "2026-10-24",
+          "hora": "16:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Barradão",
+          "mandante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "visitante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346441,
+          "data": "2026-10-29",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena do Grêmio",
+          "mandante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "visitante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        }
+      ]
     },
-    "visitante": {
-      "nome": "Vasco",
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    "atletico-mg": {
+      "name": "Atlético-MG",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg",
+      "matches": [
+        {
+          "id": 346286,
+          "data": "2026-10-03",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena MRV",
+          "mandante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "visitante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346582,
+          "data": "2026-10-08",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena da Baixada",
+          "mandante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "visitante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346563,
+          "data": "2026-10-11",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena MRV",
+          "mandante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "visitante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 357348,
+          "data": "2026-10-14",
+          "hora": "19:00",
+          "campeonato": "Copa Sul-Americana",
+          "local": "Arena MRV",
+          "mandante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "visitante": {
+            "nome": "Montevideo City Torque",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/03/02/Montevideo_City_Torque_SVG.svg"
+          },
+          "ondeAssistir": [
+            "Disney+"
+          ]
+        },
+        {
+          "id": 346530,
+          "data": "2026-10-17",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena MRV",
+          "mandante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "visitante": {
+            "nome": "Coritiba",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/coritiba.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 357349,
+          "data": "2026-10-21",
+          "hora": "19:00",
+          "campeonato": "Copa Sul-Americana",
+          "local": "Centenario",
+          "mandante": {
+            "nome": "Montevideo City Torque",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/03/02/Montevideo_City_Torque_SVG.svg"
+          },
+          "visitante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "ondeAssistir": [
+            "Disney+"
+          ]
+        },
+        {
+          "id": 346465,
+          "data": "2026-10-26",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "visitante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        }
+      ]
     },
-    "ondeAssistir": [
-      "Cartola",
-      "Prime Vídeo"
-    ]
-  },
-  {
-    "id": 346556,
-    "data": "2026-10-10",
-    "hora": "17:00",
-    "campeonato": "Campeonato Brasileiro",
-    "local": "São Januário",
-    "mandante": {
-      "nome": "Vasco",
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    "bahia": {
+      "name": "Bahia",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg",
+      "matches": [
+        {
+          "id": 346578,
+          "data": "2026-10-08",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Nubank Parque",
+          "mandante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "visitante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346568,
+          "data": "2026-10-11",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena Fonte Nova",
+          "mandante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "visitante": {
+            "nome": "Mirassol",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/07/17/MIrassol.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346533,
+          "data": "2026-10-18",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena Fonte Nova",
+          "mandante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "visitante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346467,
+          "data": "2026-10-24",
+          "hora": "21:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Vila Belmiro",
+          "mandante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "visitante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346443,
+          "data": "2026-10-28",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena Fonte Nova",
+          "mandante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "visitante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346396,
+          "data": "2026-11-05",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Mineirão",
+          "mandante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "visitante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        },
+        {
+          "id": 346367,
+          "data": "2026-11-18",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "visitante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
     },
-    "visitante": {
-      "nome": "Remo",
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/02/25/Remo-PA.svg"
+    "botafogo": {
+      "name": "Botafogo",
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
+      "matches": [
+        {
+          "id": 346576,
+          "data": "2026-10-07",
+          "hora": "20:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Nilton Santos (Engenhão)",
+          "mandante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "visitante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        },
+        {
+          "id": 346567,
+          "data": "2026-10-12",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Couto Pereira",
+          "mandante": {
+            "nome": "Coritiba",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/coritiba.svg"
+          },
+          "visitante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        },
+        {
+          "id": 346526,
+          "data": "2026-10-17",
+          "hora": "18:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Nilton Santos (Engenhão)",
+          "mandante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "visitante": {
+            "nome": "Chapecoense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346471,
+          "data": "2026-10-24",
+          "hora": "16:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Beira-Rio",
+          "mandante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "visitante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346444,
+          "data": "2026-10-28",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Mangueirão",
+          "mandante": {
+            "nome": "Remo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/25/Remo-PA.svg"
+          },
+          "visitante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346392,
+          "data": "2026-11-04",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Nilton Santos (Engenhão)",
+          "mandante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "visitante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346364,
+          "data": "2026-11-18",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "visitante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
     },
-    "ondeAssistir": [
-      "Premiere",
-      "Cartola"
-    ]
-  },
-  {
-    "id": 357346,
-    "data": "2026-10-13",
-    "hora": "21:30",
-    "campeonato": "Copa Sul-Americana",
-    "local": "La Bombonera",
-    "mandante": {
-      "nome": "Boca Juniors",
-      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/19/boca-juniors-svg-13083.svg"
+    "corinthians": {
+      "name": "Corinthians",
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/09/30/Corinthians.svg",
+      "matches": [
+        {
+          "id": 346581,
+          "data": "2026-10-07",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Beira-Rio",
+          "mandante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "visitante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346559,
+          "data": "2026-10-11",
+          "hora": "17:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Nubank Parque",
+          "mandante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "visitante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346528,
+          "data": "2026-10-19",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Neo Química Arena",
+          "mandante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "visitante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346466,
+          "data": "2026-10-24",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "São Januário",
+          "mandante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "visitante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346438,
+          "data": "2026-10-30",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Neo Química Arena",
+          "mandante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "visitante": {
+            "nome": "Mirassol",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/07/17/MIrassol.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346393,
+          "data": "2026-11-04",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "visitante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346364,
+          "data": "2026-11-18",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "visitante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
     },
-    "visitante": {
-      "nome": "Vasco",
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    "criciuma": {
+      "name": "Criciúma",
+      "escudo": "https://s.sde.globo.com/media/organizations/2024/03/27/criciuma.svg",
+      "matches": [
+        {
+          "id": 349315,
+          "data": "2026-10-02",
+          "hora": "20:30",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "VGD",
+          "mandante": {
+            "nome": "Londrina",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/londrina.svg"
+          },
+          "visitante": {
+            "nome": "Criciúma",
+            "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349336,
+          "data": "2026-10-08",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Castelão (CE)",
+          "mandante": {
+            "nome": "Ceará",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/10/10/ceara.svg"
+          },
+          "visitante": {
+            "nome": "Criciúma",
+            "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349178,
+          "data": "2026-10-12",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Heriberto Hülse",
+          "mandante": {
+            "nome": "Criciúma",
+            "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg"
+          },
+          "visitante": {
+            "nome": "América-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/05/07/America-MG-branco.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349023,
+          "data": "2026-10-18",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Primeiro de Maio",
+          "mandante": {
+            "nome": "São Bernardo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2022/01/20/Sao_Bernardo.svg"
+          },
+          "visitante": {
+            "nome": "Criciúma",
+            "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349049,
+          "data": "2026-10-24",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Sport",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sport.svg"
+          },
+          "visitante": {
+            "nome": "Criciúma",
+            "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349068,
+          "data": "2026-10-31",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Criciúma",
+            "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg"
+          },
+          "visitante": {
+            "nome": "Ponte Preta",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/03/17/ponte-preta.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349081,
+          "data": "2026-11-07",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Vila Nova",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/07/vilanova.svg"
+          },
+          "visitante": {
+            "nome": "Criciúma",
+            "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
     },
-    "ondeAssistir": [
-      "Paramount+"
-    ]
-  },
-  {
-    "id": 346527,
-    "data": "2026-10-18",
-    "hora": "A definir",
-    "campeonato": "Campeonato Brasileiro",
-    "local": "A definir",
-    "mandante": {
-      "nome": "São Paulo",
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+    "cruzeiro": {
+      "name": "Cruzeiro",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
+      "matches": [
+        {
+          "id": 346580,
+          "data": "2026-10-07",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Mineirão",
+          "mandante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "visitante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346561,
+          "data": "2026-10-12",
+          "hora": "21:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Cícero de Souza Marques",
+          "mandante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "visitante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346531,
+          "data": "2026-10-18",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena do Grêmio",
+          "mandante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "visitante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346470,
+          "data": "2026-10-23",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Mineirão",
+          "mandante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "visitante": {
+            "nome": "Remo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/25/Remo-PA.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346440,
+          "data": "2026-10-29",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena MRV",
+          "mandante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "visitante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346396,
+          "data": "2026-11-05",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Mineirão",
+          "mandante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "visitante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        },
+        {
+          "id": 346366,
+          "data": "2026-11-18",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "visitante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
     },
-    "visitante": {
-      "nome": "Vasco",
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    "cuiaba": {
+      "name": "Cuiabá",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg",
+      "matches": [
+        {
+          "id": 349320,
+          "data": "2026-10-03",
+          "hora": "17:00",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Arena Pantanal",
+          "mandante": {
+            "nome": "Cuiabá",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg"
+          },
+          "visitante": {
+            "nome": "Ponte Preta",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/03/17/ponte-preta.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349341,
+          "data": "2026-10-07",
+          "hora": "20:30",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "OBA",
+          "mandante": {
+            "nome": "Vila Nova",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/07/vilanova.svg"
+          },
+          "visitante": {
+            "nome": "Cuiabá",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349180,
+          "data": "2026-10-11",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Arena Pantanal",
+          "mandante": {
+            "nome": "Cuiabá",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg"
+          },
+          "visitante": {
+            "nome": "Avaí",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/05/12/avaí.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349025,
+          "data": "2026-10-20",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "VGD",
+          "mandante": {
+            "nome": "Londrina",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/londrina.svg"
+          },
+          "visitante": {
+            "nome": "Cuiabá",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349044,
+          "data": "2026-10-24",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "América-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/05/07/America-MG-branco.svg"
+          },
+          "visitante": {
+            "nome": "Cuiabá",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349070,
+          "data": "2026-10-31",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Cuiabá",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg"
+          },
+          "visitante": {
+            "nome": "São Bernardo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2022/01/20/Sao_Bernardo.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349080,
+          "data": "2026-11-07",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Cuiabá",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg"
+          },
+          "visitante": {
+            "nome": "Juventude",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
     },
-    "ondeAssistir": []
-  },
-  {
-    "id": 357347,
-    "data": "2026-10-20",
-    "hora": "21:30",
-    "campeonato": "Copa Sul-Americana",
-    "local": "A definir",
-    "mandante": {
-      "nome": "Vasco",
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    "flamengo": {
+      "name": "Flamengo",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/04/09/flamengo.svg",
+      "matches": [
+        {
+          "id": 346577,
+          "data": "2026-10-08",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Vila Belmiro",
+          "mandante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "visitante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346555,
+          "data": "2026-10-11",
+          "hora": "17:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "visitante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 357342,
+          "data": "2026-10-15",
+          "hora": "21:30",
+          "campeonato": "Taça Conmebol Libertadores",
+          "local": "Jorge Luis Hirschi",
+          "mandante": {
+            "nome": "Estudiantes",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/09/18/Novo_Escudo_Estudiantes.svg"
+          },
+          "visitante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "ondeAssistir": [
+            "Disney+"
+          ]
+        },
+        {
+          "id": 346533,
+          "data": "2026-10-18",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena Fonte Nova",
+          "mandante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "visitante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 357343,
+          "data": "2026-10-22",
+          "hora": "21:30",
+          "campeonato": "Taça Conmebol Libertadores",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "visitante": {
+            "nome": "Estudiantes",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/09/18/Novo_Escudo_Estudiantes.svg"
+          },
+          "ondeAssistir": [
+            "Disney+"
+          ]
+        },
+        {
+          "id": 346465,
+          "data": "2026-10-26",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "visitante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346436,
+          "data": "2026-10-29",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "visitante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        }
+      ]
     },
-    "visitante": {
-      "nome": "Boca Juniors",
-      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/19/boca-juniors-svg-13083.svg"
+    "fluminense": {
+      "name": "Fluminense",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg",
+      "matches": [
+        {
+          "id": 346575,
+          "data": "2026-10-08",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "visitante": {
+            "nome": "Coritiba",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/coritiba.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346555,
+          "data": "2026-10-11",
+          "hora": "17:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "visitante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 357344,
+          "data": "2026-10-14",
+          "hora": "21:30",
+          "campeonato": "Taça Conmebol Libertadores",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "visitante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "ondeAssistir": [
+            "Globo",
+            "Paramount+",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346525,
+          "data": "2026-10-18",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "visitante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 357345,
+          "data": "2026-10-21",
+          "hora": "21:30",
+          "campeonato": "Taça Conmebol Libertadores",
+          "local": "Nubank Parque",
+          "mandante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "visitante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "ondeAssistir": [
+            "Globo",
+            "Paramount+",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346474,
+          "data": "2026-10-24",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena Condá",
+          "mandante": {
+            "nome": "Chapecoense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg"
+          },
+          "visitante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        },
+        {
+          "id": 346435,
+          "data": "2026-10-28",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "visitante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        }
+      ]
     },
-    "ondeAssistir": [
-      "Paramount+"
-    ]
-  },
-  {
-    "id": 346466,
-    "data": "2026-10-25",
-    "hora": "A definir",
-    "campeonato": "Campeonato Brasileiro",
-    "local": "A definir",
-    "mandante": {
-      "nome": "Vasco",
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    "fortaleza": {
+      "name": "Fortaleza",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_01.svg",
+      "matches": [
+        {
+          "id": 349316,
+          "data": "2026-10-02",
+          "hora": "21:35",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Castelão (CE)",
+          "mandante": {
+            "nome": "Fortaleza",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg"
+          },
+          "visitante": {
+            "nome": "Náutico",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/01/03/Nautico.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349334,
+          "data": "2026-10-07",
+          "hora": "20:30",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Independência",
+          "mandante": {
+            "nome": "América-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/05/07/America-MG-branco.svg"
+          },
+          "visitante": {
+            "nome": "Fortaleza",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349176,
+          "data": "2026-10-12",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Castelão (CE)",
+          "mandante": {
+            "nome": "Fortaleza",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg"
+          },
+          "visitante": {
+            "nome": "CRB",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/crb.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349029,
+          "data": "2026-10-16",
+          "hora": "20:30",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Ilha do Retiro",
+          "mandante": {
+            "nome": "Sport",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sport.svg"
+          },
+          "visitante": {
+            "nome": "Fortaleza",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349042,
+          "data": "2026-10-24",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Ponte Preta",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/03/17/ponte-preta.svg"
+          },
+          "visitante": {
+            "nome": "Fortaleza",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349066,
+          "data": "2026-10-31",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Fortaleza",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg"
+          },
+          "visitante": {
+            "nome": "Atlético-GO",
+            "escudo": "https://s.sde.globo.com/media/organizations/2020/07/02/atletico-go-2020.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349073,
+          "data": "2026-11-07",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Novorizontino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/01/08/Novohorizontino.svg"
+          },
+          "visitante": {
+            "nome": "Fortaleza",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
     },
-    "visitante": {
-      "nome": "Corinthians",
-      "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+    "gremio": {
+      "name": "Grêmio",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg",
+      "matches": [
+        {
+          "id": 346584,
+          "data": "2026-10-07",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Mangueirão",
+          "mandante": {
+            "nome": "Remo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/25/Remo-PA.svg"
+          },
+          "visitante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346565,
+          "data": "2026-10-11",
+          "hora": "17:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena do Grêmio",
+          "mandante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "visitante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346531,
+          "data": "2026-10-18",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena do Grêmio",
+          "mandante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "visitante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346472,
+          "data": "2026-10-26",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Couto Pereira",
+          "mandante": {
+            "nome": "Coritiba",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/coritiba.svg"
+          },
+          "visitante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346441,
+          "data": "2026-10-29",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena do Grêmio",
+          "mandante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "visitante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 357427,
+          "data": "2026-11-01",
+          "hora": "18:30",
+          "campeonato": "Copa do Brasil",
+          "local": "Arena do Grêmio",
+          "mandante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "visitante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo",
+            "Prime Video"
+          ]
+        },
+        {
+          "id": 346391,
+          "data": "2026-11-04",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "visitante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        }
+      ]
     },
-    "ondeAssistir": []
-  },
-  {
-    "id": 346436,
-    "data": "2026-10-28",
-    "hora": "A definir",
-    "campeonato": "Campeonato Brasileiro",
-    "local": "A definir",
-    "mandante": {
-      "nome": "Vasco",
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+    "internacional": {
+      "name": "Internacional",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg",
+      "matches": [
+        {
+          "id": 346581,
+          "data": "2026-10-07",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Beira-Rio",
+          "mandante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "visitante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346565,
+          "data": "2026-10-11",
+          "hora": "17:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena do Grêmio",
+          "mandante": {
+            "nome": "Grêmio",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg"
+          },
+          "visitante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346529,
+          "data": "2026-10-16",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maião",
+          "mandante": {
+            "nome": "Mirassol",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/07/17/MIrassol.svg"
+          },
+          "visitante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346471,
+          "data": "2026-10-24",
+          "hora": "16:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Beira-Rio",
+          "mandante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "visitante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346435,
+          "data": "2026-10-28",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "visitante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346397,
+          "data": "2026-11-03",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Beira-Rio",
+          "mandante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "visitante": {
+            "nome": "Coritiba",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/coritiba.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346362,
+          "data": "2026-11-18",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "visitante": {
+            "nome": "Internacional",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
     },
-    "visitante": {
-      "nome": "Flamengo",
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+    "juventude": {
+      "name": "Juventude",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg",
+      "matches": [
+        {
+          "id": 349321,
+          "data": "2026-10-02",
+          "hora": "20:45",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Alfredo Jaconi",
+          "mandante": {
+            "nome": "Juventude",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg"
+          },
+          "visitante": {
+            "nome": "Operário-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/12/27/Operário-PR.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349332,
+          "data": "2026-10-06",
+          "hora": "21:35",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Ítalo Limongi",
+          "mandante": {
+            "nome": "Ponte Preta",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/03/17/ponte-preta.svg"
+          },
+          "visitante": {
+            "nome": "Juventude",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349181,
+          "data": "2026-10-11",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Alfredo Jaconi",
+          "mandante": {
+            "nome": "Juventude",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg"
+          },
+          "visitante": {
+            "nome": "São Bernardo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2022/01/20/Sao_Bernardo.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349026,
+          "data": "2026-10-17",
+          "hora": "16:30",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "Castelão (CE)",
+          "mandante": {
+            "nome": "Ceará",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/10/10/ceara.svg"
+          },
+          "visitante": {
+            "nome": "Juventude",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349051,
+          "data": "2026-10-24",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Juventude",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg"
+          },
+          "visitante": {
+            "nome": "Náutico",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/01/03/Nautico.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349071,
+          "data": "2026-10-31",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Vila Nova",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/07/vilanova.svg"
+          },
+          "visitante": {
+            "nome": "Juventude",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 349080,
+          "data": "2026-11-07",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro Série B",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Cuiabá",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg"
+          },
+          "visitante": {
+            "nome": "Juventude",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
     },
-    "ondeAssistir": []
+    "palmeiras": {
+      "name": "Palmeiras",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/palmeiras.svg",
+      "matches": [
+        {
+          "id": 346578,
+          "data": "2026-10-08",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Nubank Parque",
+          "mandante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "visitante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346559,
+          "data": "2026-10-11",
+          "hora": "17:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Nubank Parque",
+          "mandante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "visitante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 357344,
+          "data": "2026-10-14",
+          "hora": "21:30",
+          "campeonato": "Taça Conmebol Libertadores",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "visitante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "ondeAssistir": [
+            "Globo",
+            "Paramount+",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346532,
+          "data": "2026-10-17",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena da Baixada",
+          "mandante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "visitante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        },
+        {
+          "id": 357345,
+          "data": "2026-10-21",
+          "hora": "21:30",
+          "campeonato": "Taça Conmebol Libertadores",
+          "local": "Nubank Parque",
+          "mandante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "visitante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "ondeAssistir": [
+            "Globo",
+            "Paramount+",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346468,
+          "data": "2026-10-24",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena Barueri",
+          "mandante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "visitante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346437,
+          "data": "2026-10-28",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Vila Belmiro",
+          "mandante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "visitante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        }
+      ]
+    },
+    "red-bull-bragantino": {
+      "name": "Red Bull Bragantino",
+      "escudo": "https://s.sde.globo.com/media/organizations/2020/01/01/Red_Bull_Bragantino.svg",
+      "matches": [
+        {
+          "id": 346286,
+          "data": "2026-10-03",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena MRV",
+          "mandante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "visitante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346579,
+          "data": "2026-10-07",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Cícero de Souza Marques",
+          "mandante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "visitante": {
+            "nome": "Mirassol",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/07/17/MIrassol.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346561,
+          "data": "2026-10-12",
+          "hora": "21:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Cícero de Souza Marques",
+          "mandante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "visitante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346534,
+          "data": "2026-10-18",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Mangueirão",
+          "mandante": {
+            "nome": "Remo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/25/Remo-PA.svg"
+          },
+          "visitante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346468,
+          "data": "2026-10-24",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena Barueri",
+          "mandante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "visitante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346439,
+          "data": "2026-10-28",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Cícero de Souza Marques",
+          "mandante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "visitante": {
+            "nome": "Chapecoense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346395,
+          "data": "2026-11-02",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Cícero de Souza Marques",
+          "mandante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "visitante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        }
+      ]
+    },
+    "santos": {
+      "name": "Santos",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
+      "matches": [
+        {
+          "id": 346283,
+          "data": "2026-10-02",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Morumbis",
+          "mandante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "visitante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346577,
+          "data": "2026-10-08",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Vila Belmiro",
+          "mandante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "visitante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346563,
+          "data": "2026-10-11",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena MRV",
+          "mandante": {
+            "nome": "Atlético-MG",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg"
+          },
+          "visitante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346525,
+          "data": "2026-10-18",
+          "hora": "16:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maracanã",
+          "mandante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "visitante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346467,
+          "data": "2026-10-24",
+          "hora": "21:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Vila Belmiro",
+          "mandante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "visitante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346437,
+          "data": "2026-10-28",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Vila Belmiro",
+          "mandante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "visitante": {
+            "nome": "Palmeiras",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346395,
+          "data": "2026-11-02",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Cícero de Souza Marques",
+          "mandante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "visitante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        }
+      ]
+    },
+    "sao-paulo": {
+      "name": "São Paulo",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg",
+      "matches": [
+        {
+          "id": 346283,
+          "data": "2026-10-02",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Morumbis",
+          "mandante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "visitante": {
+            "nome": "Santos",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346580,
+          "data": "2026-10-07",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Mineirão",
+          "mandante": {
+            "nome": "Cruzeiro",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg"
+          },
+          "visitante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346557,
+          "data": "2026-10-10",
+          "hora": "21:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Morumbis",
+          "mandante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "visitante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346527,
+          "data": "2026-10-17",
+          "hora": "21:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Morumbis",
+          "mandante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "visitante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346469,
+          "data": "2026-10-24",
+          "hora": "16:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Maião",
+          "mandante": {
+            "nome": "Mirassol",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/07/17/MIrassol.svg"
+          },
+          "visitante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346443,
+          "data": "2026-10-28",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Arena Fonte Nova",
+          "mandante": {
+            "nome": "Bahia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg"
+          },
+          "visitante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 346393,
+          "data": "2026-11-04",
+          "hora": "21:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "visitante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo",
+            "Ge TV"
+          ]
+        }
+      ]
+    },
+    "vasco": {
+      "name": "Vasco",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg",
+      "matches": [
+        {
+          "id": 346576,
+          "data": "2026-10-07",
+          "hora": "20:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Nilton Santos (Engenhão)",
+          "mandante": {
+            "nome": "Botafogo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg"
+          },
+          "visitante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        },
+        {
+          "id": 346556,
+          "data": "2026-10-10",
+          "hora": "17:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "São Januário",
+          "mandante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "visitante": {
+            "nome": "Remo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/02/25/Remo-PA.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 357346,
+          "data": "2026-10-13",
+          "hora": "21:30",
+          "campeonato": "Copa Sul-Americana",
+          "local": "La Bombonera",
+          "mandante": {
+            "nome": "Boca Juniors",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/19/boca-juniors-svg-13083.svg"
+          },
+          "visitante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "ondeAssistir": [
+            "Paramount+"
+          ]
+        },
+        {
+          "id": 346527,
+          "data": "2026-10-17",
+          "hora": "21:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Morumbis",
+          "mandante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "visitante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 357347,
+          "data": "2026-10-20",
+          "hora": "21:30",
+          "campeonato": "Copa Sul-Americana",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "visitante": {
+            "nome": "Boca Juniors",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/02/19/boca-juniors-svg-13083.svg"
+          },
+          "ondeAssistir": [
+            "Paramount+"
+          ]
+        },
+        {
+          "id": 346466,
+          "data": "2026-10-24",
+          "hora": "18:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "São Januário",
+          "mandante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "visitante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346436,
+          "data": "2026-10-29",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Vasco",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg"
+          },
+          "visitante": {
+            "nome": "Flamengo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
+          },
+          "ondeAssistir": [
+            "Prime Video"
+          ]
+        }
+      ]
+    },
+    "vitoria": {
+      "name": "Vitória",
+      "escudo": "https://s.sde.globo.com/media/organizations/2024/04/09/vitoria_2024.svg",
+      "matches": [
+        {
+          "id": 346583,
+          "data": "2026-10-07",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Barradão",
+          "mandante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "visitante": {
+            "nome": "Chapecoense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346557,
+          "data": "2026-10-10",
+          "hora": "21:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Morumbis",
+          "mandante": {
+            "nome": "São Paulo",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg"
+          },
+          "visitante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346528,
+          "data": "2026-10-19",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Neo Química Arena",
+          "mandante": {
+            "nome": "Corinthians",
+            "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
+          },
+          "visitante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346473,
+          "data": "2026-10-24",
+          "hora": "16:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Barradão",
+          "mandante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "visitante": {
+            "nome": "Athletico-PR",
+            "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg"
+          },
+          "ondeAssistir": [
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346442,
+          "data": "2026-10-29",
+          "hora": "19:30",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Couto Pereira",
+          "mandante": {
+            "nome": "Coritiba",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/coritiba.svg"
+          },
+          "visitante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "ondeAssistir": [
+            "Premiere"
+          ]
+        },
+        {
+          "id": 346399,
+          "data": "2026-11-06",
+          "hora": "20:00",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "Barradão",
+          "mandante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "visitante": {
+            "nome": "Fluminense",
+            "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Premiere",
+            "Globo"
+          ]
+        },
+        {
+          "id": 346369,
+          "data": "2026-11-18",
+          "hora": "A definir",
+          "campeonato": "Campeonato Brasileiro",
+          "local": "A definir",
+          "mandante": {
+            "nome": "Vitória",
+            "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
+          },
+          "visitante": {
+            "nome": "Bragantino",
+            "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
+    },
+    "brasil": {
+      "name": "Seleção Brasileira",
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/09/09/Brasil_cbf.svg",
+      "matches": [
+        {
+          "id": 354169,
+          "data": "2026-10-03",
+          "hora": "11:00",
+          "campeonato": "Amistosos da Seleção Brasileira",
+          "local": "Calcutá",
+          "mandante": {
+            "nome": "Índia",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/09/09/Índia.svg"
+          },
+          "visitante": {
+            "nome": "Brasil",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/16/Brasil_rgYHF6Z.svg"
+          },
+          "ondeAssistir": [
+            "SporTV",
+            "Globo",
+            "Ge TV"
+          ]
+        },
+        {
+          "id": 357056,
+          "data": "2026-11-14",
+          "hora": "07:15",
+          "campeonato": "Amistosos da Seleção Brasileira",
+          "local": "Nacional de Singapura",
+          "mandante": {
+            "nome": "Japão",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/09/03/Japao.svg"
+          },
+          "visitante": {
+            "nome": "Brasil",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/16/Brasil_rgYHF6Z.svg"
+          },
+          "ondeAssistir": []
+        },
+        {
+          "id": 357057,
+          "data": "2026-11-17",
+          "hora": "07:00",
+          "campeonato": "Amistosos da Seleção Brasileira",
+          "local": "Nacional de Singapura",
+          "mandante": {
+            "nome": "Singapura",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/09/04/Cingapura.svg"
+          },
+          "visitante": {
+            "nome": "Brasil",
+            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/16/Brasil_rgYHF6Z.svg"
+          },
+          "ondeAssistir": []
+        }
+      ]
+    }
   }
-]
+}

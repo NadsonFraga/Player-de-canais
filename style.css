@@ -1830,3 +1830,411 @@ body.is-resizing {
 :focus:not(:focus-visible):not(.tv-focused) {
     outline: none;
 }
+
+/* ==========================================================================
+   DYNAMIC MULTI-TEAM SELECTION & INVITATION MODULE
+   ========================================================================== */
+
+/* Button to change/choose team in section header */
+.btn-change-team {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    padding: 6px 14px;
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-change-team svg {
+    color: var(--accent-emerald);
+    flex-shrink: 0;
+}
+
+.btn-change-team:hover {
+    background: var(--accent-emerald-subtle);
+    border-color: var(--accent-emerald-border);
+    color: #34d399;
+    transform: translateY(-1px);
+    box-shadow: 0 0 12px var(--accent-emerald-glow);
+}
+
+.btn-change-team:active {
+    transform: translateY(0);
+}
+
+/* Active Club Emblem in Section Header */
+.team-header-crest {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    border-radius: var(--radius-full);
+}
+
+/* Friendly Unselected State (Invitation Hero Card) */
+.unselected-team-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 36px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-md);
+}
+
+.unselected-team-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-emerald), transparent);
+}
+
+.unselected-icon-bubble {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-full);
+    background: var(--accent-emerald-subtle);
+    border: 1px solid var(--accent-emerald-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-emerald);
+    box-shadow: 0 0 20px var(--accent-emerald-glow);
+    margin-bottom: 2px;
+}
+
+.unselected-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.unselected-desc {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    max-width: 480px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.btn-choose-team-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-emerald);
+    color: var(--text-inverse);
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 10px 22px;
+    border-radius: var(--radius-full);
+    border: none;
+    cursor: pointer;
+    margin-top: 6px;
+    box-shadow: 0 4px 14px var(--accent-emerald-glow);
+    transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-choose-team-cta:hover {
+    background: var(--accent-emerald-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-choose-team-cta:active {
+    transform: translateY(0);
+}
+
+/* ==========================================================================
+   TEAM SELECTION MODAL
+   ========================================================================== */
+.team-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
+}
+
+.team-modal-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.team-modal-card {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 0, 0, 0.6);
+    width: 100%;
+    max-width: 660px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.95) translateY(8px);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.team-modal-backdrop.active .team-modal-card {
+    transform: scale(1) translateY(0);
+}
+
+/* Modal Header */
+.team-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    gap: 16px;
+}
+
+.team-modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.team-modal-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--accent-emerald-subtle);
+    border: 1px solid var(--accent-emerald-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-emerald);
+    flex-shrink: 0;
+}
+
+.team-modal-title-group h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 2px 0;
+}
+
+.team-modal-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.btn-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn-modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: var(--border-medium);
+}
+
+/* Modal Search */
+.team-modal-search-wrapper {
+    position: relative;
+    padding: 14px 24px 8px 24px;
+}
+
+.team-search-icon {
+    position: absolute;
+    left: 36px;
+    top: 50%;
+    transform: translateY(-20%);
+    color: var(--text-muted);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+}
+
+.team-search-input {
+    width: 100%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    padding: 10px 14px 10px 38px;
+    color: var(--text-primary);
+    font-size: 0.86rem;
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.team-search-input:focus {
+    border-color: var(--accent-emerald);
+    box-shadow: 0 0 10px var(--accent-emerald-glow);
+}
+
+.team-search-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Modal Body & Teams Grid */
+.team-modal-body {
+    padding: 12px 24px 24px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+}
+
+.team-select-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+    position: relative;
+}
+
+.team-select-card:hover {
+    background: var(--bg-surface-hover);
+    border-color: var(--accent-emerald-border);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.team-select-card.active {
+    background: var(--accent-emerald-subtle);
+    border-color: var(--accent-emerald);
+    box-shadow: 0 0 12px var(--accent-emerald-glow);
+}
+
+.team-card-crest-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: #ffffff;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.team-card-crest {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.team-card-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.team-select-card.active .team-card-name {
+    color: #34d399;
+    font-weight: 700;
+}
+
+.team-card-check {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--radius-full);
+    background: var(--accent-emerald);
+    color: var(--text-inverse);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.teams-empty-search {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 30px 16px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+
+@media (max-width: 640px) {
+    .team-modal-card {
+        max-height: 90vh;
+        border-radius: var(--radius-lg);
+    }
+
+    .team-modal-header {
+        padding: 16px 18px;
+    }
+
+    .team-modal-search-wrapper {
+        padding: 10px 18px 6px 18px;
+    }
+
+    .team-modal-body {
+        padding: 10px 18px 18px 18px;
+    }
+
+    .teams-grid {
+        grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+        gap: 8px;
+    }
+
+    .team-select-card {
+        padding: 10px 8px;
+    }
+
+    .team-card-crest-wrapper {
+        width: 36px;
+        height: 36px;
+    }
+}
+
