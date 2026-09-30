@@ -1,0 +1,4 @@
+# Cloudflare Pages Cache Rules for Dynamic Scraping JSON
+/arquivos/proximos_jogos.json
+  Cache-Control: no-cache, no-store, must-revalidate
+  CDN-Cache-Control: no-store
