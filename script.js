@@ -343,6 +343,52 @@ document.addEventListener("DOMContentLoaded", () => {
     const FAVORITE_TEAM_KEY = "tvzinha_favorite_team";
     let cachedScheduleFeed = null;
 
+    const KNOWN_TEAM_CRESTS = {
+        "athletico-pr": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg",
+        "atletico-mg": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg",
+        "bahia": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg",
+        "botafogo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
+        "corinthians": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg",
+        "criciuma": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg",
+        "cruzeiro": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
+        "cuiaba": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg",
+        "flamengo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg",
+        "fluminense": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg",
+        "fortaleza": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg",
+        "gremio": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg",
+        "internacional": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg",
+        "juventude": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg",
+        "palmeiras": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg",
+        "red-bull-bragantino": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg",
+        "santos": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
+        "sao-paulo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg",
+        "vasco": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg",
+        "vitoria": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg",
+        "brasil": "https://s.sde.globo.com/media/organizations/2019/07/16/Brasil_rgYHF6Z.svg"
+    };
+
+    function resolveClientTeamCrest(teamId, teamInfo) {
+        if (teamInfo && teamInfo.escudo && teamInfo.escudo.startsWith("http")) {
+            return teamInfo.escudo;
+        }
+        const matches = (teamInfo && teamInfo.matches) || [];
+        const targetName = ((teamInfo && teamInfo.name) || teamId).toLowerCase();
+        for (const m of matches) {
+            const mName = (m.mandante?.nome || "").toLowerCase();
+            if (mName.includes(targetName) || targetName.includes(mName)) {
+                if (m.mandante?.escudo && m.mandante.escudo.startsWith("http")) return m.mandante.escudo;
+            }
+            const vName = (m.visitante?.nome || "").toLowerCase();
+            if (vName.includes(targetName) || targetName.includes(vName)) {
+                if (m.visitante?.escudo && m.visitante.escudo.startsWith("http")) return m.visitante.escudo;
+            }
+        }
+        if (KNOWN_TEAM_CRESTS[teamId]) {
+            return KNOWN_TEAM_CRESTS[teamId];
+        }
+        return 'logos/fav/favicon.svg';
+    }
+
     function getFavoriteTeam() {
         return localStorage.getItem(FAVORITE_TEAM_KEY);
     }
@@ -587,7 +633,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (headingTitle) headingTitle.textContent = `Próximos Jogos • ${teamData.name}`;
         if (headingHint) headingHint.textContent = `Agenda atualizada do ${teamData.name}`;
         if (teamBadgeEl) {
-            teamBadgeEl.innerHTML = `<img src="${teamData.escudo || 'logos/fav/favicon.svg'}" alt="${teamData.name}" class="team-header-crest" onerror="this.src='logos/fav/favicon.svg'">`;
+            const crestUrl = resolveClientTeamCrest(favoriteTeamId, teamData);
+            teamBadgeEl.innerHTML = `<img src="${crestUrl}" alt="${teamData.name}" class="team-header-crest" onerror="this.src='logos/fav/favicon.svg'">`;
         }
 
         const matches = teamData.matches || [];
@@ -803,11 +850,12 @@ document.addEventListener("DOMContentLoaded", () => {
             card.setAttribute("aria-label", `Selecionar ${teamInfo.name}`);
 
             const checkHtml = isSelected ? `<span class="team-card-check">${getUiSvg('check', 11)}</span>` : '';
+            const crestUrl = resolveClientTeamCrest(teamId, teamInfo);
 
             card.innerHTML = `
                 ${checkHtml}
                 <div class="team-card-crest-wrapper">
-                    <img src="${teamInfo.escudo || 'logos/fav/favicon.svg'}" alt="${teamInfo.name}" class="team-card-crest" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
+                    <img src="${crestUrl}" alt="${teamInfo.name}" class="team-card-crest" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
                 </div>
                 <span class="team-card-name">${teamInfo.name}</span>
             `;

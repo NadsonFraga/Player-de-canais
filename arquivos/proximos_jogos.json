@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-29T18:03:24.114677",
+  "updatedAt": "2026-09-30T17:14:23.699118",
   "teams": {
     "athletico-pr": {
       "name": "Athletico-PR",
@@ -537,7 +537,7 @@
     },
     "corinthians": {
       "name": "Corinthians",
-      "escudo": "https://s.sde.globo.com/media/organizations/2019/09/30/Corinthians.svg",
+      "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg",
       "matches": [
         {
           "id": 346581,
@@ -674,7 +674,7 @@
     },
     "criciuma": {
       "name": "Criciúma",
-      "escudo": "https://s.sde.globo.com/media/organizations/2024/03/27/criciuma.svg",
+      "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg",
       "matches": [
         {
           "id": 349315,
@@ -946,7 +946,9 @@
             "nome": "Ponte Preta",
             "escudo": "https://s.sde.globo.com/media/organizations/2019/03/17/ponte-preta.svg"
           },
-          "ondeAssistir": []
+          "ondeAssistir": [
+            "Disney+"
+          ]
         },
         {
           "id": 349341,
@@ -1048,7 +1050,7 @@
     },
     "flamengo": {
       "name": "Flamengo",
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/04/09/flamengo.svg",
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg",
       "matches": [
         {
           "id": 346577,
@@ -1322,7 +1324,7 @@
     },
     "fortaleza": {
       "name": "Fortaleza",
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_01.svg",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg",
       "matches": [
         {
           "id": 349316,
@@ -1832,7 +1834,7 @@
     },
     "palmeiras": {
       "name": "Palmeiras",
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/palmeiras.svg",
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg",
       "matches": [
         {
           "id": 346578,
@@ -1971,7 +1973,7 @@
     },
     "red-bull-bragantino": {
       "name": "Red Bull Bragantino",
-      "escudo": "https://s.sde.globo.com/media/organizations/2020/01/01/Red_Bull_Bragantino.svg",
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg",
       "matches": [
         {
           "id": 346286,
@@ -2525,7 +2527,7 @@
     },
     "vitoria": {
       "name": "Vitória",
-      "escudo": "https://s.sde.globo.com/media/organizations/2024/04/09/vitoria_2024.svg",
+      "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg",
       "matches": [
         {
           "id": 346583,
@@ -2662,7 +2664,7 @@
     },
     "brasil": {
       "name": "Seleção Brasileira",
-      "escudo": "https://s.sde.globo.com/media/organizations/2019/09/09/Brasil_cbf.svg",
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/07/16/Brasil_rgYHF6Z.svg",
       "matches": [
         {
           "id": 354169,
