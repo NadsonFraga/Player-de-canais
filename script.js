@@ -966,6 +966,126 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.style.overflow = "";
     }
 
+    // --- Adblock & DNS Disclaimer Modal Handlers ---
+    const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
+    const ADBLOCK_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+    let isAdblockModalInitialized = false;
+
+    function setupAdblockModal() {
+        if (isAdblockModalInitialized) return;
+        const modal = document.getElementById("adblock-modal");
+        const btnAck = document.getElementById("btn-adblock-ack");
+        const btnClose = document.getElementById("btn-close-adblock-modal");
+        const btnCopyDns = document.getElementById("btn-copy-dns");
+        const btnMobileAdblock = document.getElementById("btn-mobile-adblock");
+
+        if (!modal) return;
+        isAdblockModalInitialized = true;
+
+        if (btnAck) {
+            btnAck.addEventListener("click", () => {
+                acknowledgeAdblockNotice();
+                closeAdblockModal();
+            });
+        }
+
+        if (btnClose) {
+            btnClose.addEventListener("click", () => {
+                acknowledgeAdblockNotice();
+                closeAdblockModal();
+            });
+        }
+
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                acknowledgeAdblockNotice();
+                closeAdblockModal();
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && modal.style.display !== "none") {
+                acknowledgeAdblockNotice();
+                closeAdblockModal();
+            }
+        });
+
+        if (btnCopyDns) {
+            btnCopyDns.addEventListener("click", () => {
+                const textToCopy = "dns.adguard-dns.com";
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const label = document.getElementById("copy-dns-label");
+                    btnCopyDns.classList.add("copied");
+                    if (label) label.textContent = "Copiado!";
+                    setTimeout(() => {
+                        btnCopyDns.classList.remove("copied");
+                        if (label) label.textContent = "Copiar";
+                    }, 2200);
+                }).catch(() => {
+                    const label = document.getElementById("copy-dns-label");
+                    if (label) label.textContent = "dns.adguard-dns.com";
+                });
+            });
+        }
+
+        if (btnMobileAdblock) {
+            btnMobileAdblock.addEventListener("click", () => {
+                openAdblockModal();
+            });
+        }
+
+        // Delegated listener for hero adblock button (PC Welcome Screen)
+        document.addEventListener("click", (e) => {
+            const heroAdblockBtn = e.target.closest("#btn-hero-adblock");
+            if (heroAdblockBtn) {
+                openAdblockModal();
+            }
+        });
+    }
+
+    function checkAdblockNoticeStatus() {
+        setupAdblockModal();
+        try {
+            const rawTimestamp = localStorage.getItem(ADBLOCK_STORAGE_KEY);
+            if (!rawTimestamp) {
+                setTimeout(() => openAdblockModal(), 500);
+                return;
+            }
+            const lastAck = parseInt(rawTimestamp, 10);
+            if (isNaN(lastAck) || (Date.now() - lastAck > ADBLOCK_EXPIRATION_MS)) {
+                setTimeout(() => openAdblockModal(), 500);
+            }
+        } catch (e) {
+            console.warn("Falha ao ler status do adblock no localStorage:", e);
+        }
+    }
+
+    function acknowledgeAdblockNotice() {
+        try {
+            localStorage.setItem(ADBLOCK_STORAGE_KEY, Date.now().toString());
+        } catch (e) {
+            console.warn("Falha ao salvar status do adblock no localStorage:", e);
+        }
+    }
+
+    function openAdblockModal() {
+        const modal = document.getElementById("adblock-modal");
+        if (!modal) return;
+        setupAdblockModal();
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+        const btnAck = document.getElementById("btn-adblock-ack");
+        if (btnAck) btnAck.focus();
+    }
+
+    function closeAdblockModal() {
+        const modal = document.getElementById("adblock-modal");
+        if (!modal) return;
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+    }
+
     // --- Matches Carousel Navigation & Drag Scrolling ---
     function setupMatchesCarousel() {
         const gridEl = document.getElementById("vasco-matches-grid");
@@ -1085,9 +1205,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="welcome-screen">
                 <div class="welcome-hero">
                     <div class="welcome-hero-text">
-                        <div class="hero-badge">
-                            <span class="live-dot"></span> Grade de Canais Ao Vivo
-                        </div>
+                        <button class="hero-badge hero-badge-btn" id="btn-hero-adblock" title="Como bloquear anúncios e pop-ups dos players" aria-label="Aviso e configuração de Bloqueador de Anúncios">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                <polyline points="9 12 11 14 15 10"></polyline>
+                            </svg>
+                            <span>Sem Anúncios</span>
+                        </button>
                         <h1 class="hero-title">Escolha um canal para assistir agora</h1>
                         <p class="hero-subtitle">
                             Acesse transmissões de alta estabilidade de <strong>TV Aberta</strong> e <strong>Esportes</strong> com múltiplos servidores disponíveis.
@@ -1236,6 +1360,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- 3. Filter Pills & Search ---
     function buildCategoryPills() {
         filterPillsEl.innerHTML = "";
+
+        // AdBlock / DNS guide pill (placed first as requested)
+        const adblockBtn = document.createElement("button");
+        adblockBtn.className = "pill pill-adblock";
+        adblockBtn.id = "btn-sidebar-adblock";
+        adblockBtn.title = "Como bloquear anúncios e pop-ups dos players";
+        adblockBtn.innerHTML = `
+            <svg class="icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            Sem Anúncios
+        `;
+        adblockBtn.addEventListener("click", () => openAdblockModal());
+        filterPillsEl.appendChild(adblockBtn);
 
         // All pill
         const allBtn = document.createElement("button");
@@ -1903,4 +2042,5 @@ function setupTvRemoteNavigation() {
     // --- Initialize ---
     initApp();
     setupTvRemoteNavigation();
+    checkAdblockNoticeStatus();
 });
