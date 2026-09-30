@@ -234,7 +234,11 @@ document.addEventListener("DOMContentLoaded", () => {
             server: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`,
             news: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg>`,
             kids: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>`,
-            series: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>`
+            series: `<svg class="category-header-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>`,
+            trophy: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"></path><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>`,
+            swap: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>`,
+            search: `<svg class="icon-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`,
+            check: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`
         };
         return icons[name] || '';
     }
@@ -335,11 +339,85 @@ document.addEventListener("DOMContentLoaded", () => {
         renderHomeView();
     }
 
-    // --- Vasco Upcoming Matches Module ---
-    let cachedVascoMatches = null;
+    // --- Dynamic Multi-Team Upcoming Matches Module ---
+    const FAVORITE_TEAM_KEY = "tvzinha_favorite_team";
+    let cachedScheduleFeed = null;
+
+    const KNOWN_TEAM_CRESTS = {
+        "athletico-pr": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg",
+        "atletico-mg": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg",
+        "bahia": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg",
+        "botafogo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
+        "corinthians": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg",
+        "criciuma": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg",
+        "cruzeiro": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
+        "cuiaba": "https://s.sde.globo.com/media/organizations/2018/12/26/Cuiaba_EC.svg",
+        "flamengo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg",
+        "fluminense": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg",
+        "fortaleza": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg",
+        "gremio": "https://s.sde.globo.com/media/organizations/2018/03/12/gremio.svg",
+        "internacional": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg",
+        "juventude": "https://s.sde.globo.com/media/organizations/2021/04/29/Juventude-2021-01.svg",
+        "palmeiras": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg",
+        "red-bull-bragantino": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg",
+        "santos": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
+        "sao-paulo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg",
+        "vasco": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg",
+        "vitoria": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg",
+        "brasil": "https://s.sde.globo.com/media/organizations/2019/07/16/Brasil_rgYHF6Z.svg"
+    };
+
+    function resolveClientTeamCrest(teamId, teamInfo) {
+        if (teamInfo && teamInfo.escudo && teamInfo.escudo.startsWith("http")) {
+            return teamInfo.escudo;
+        }
+        const matches = (teamInfo && teamInfo.matches) || [];
+        const targetName = ((teamInfo && teamInfo.name) || teamId).toLowerCase();
+        for (const m of matches) {
+            const mName = (m.mandante?.nome || "").toLowerCase();
+            if (mName.includes(targetName) || targetName.includes(mName)) {
+                if (m.mandante?.escudo && m.mandante.escudo.startsWith("http")) return m.mandante.escudo;
+            }
+            const vName = (m.visitante?.nome || "").toLowerCase();
+            if (vName.includes(targetName) || targetName.includes(vName)) {
+                if (m.visitante?.escudo && m.visitante.escudo.startsWith("http")) return m.visitante.escudo;
+            }
+        }
+        if (KNOWN_TEAM_CRESTS[teamId]) {
+            return KNOWN_TEAM_CRESTS[teamId];
+        }
+        return 'logos/fav/favicon.svg';
+    }
+
+    function getFavoriteTeam() {
+        return localStorage.getItem(FAVORITE_TEAM_KEY);
+    }
+
+    function setFavoriteTeam(teamId) {
+        if (teamId) {
+            localStorage.setItem(FAVORITE_TEAM_KEY, teamId);
+        } else {
+            localStorage.removeItem(FAVORITE_TEAM_KEY);
+        }
+        renderMatchesSection();
+    }
+
+    async function loadScheduleFeed() {
+        if (cachedScheduleFeed) return cachedScheduleFeed;
+        try {
+            const response = await fetch("arquivos/proximos_jogos.json?t=" + Date.now(), { cache: "no-store" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            cachedScheduleFeed = data;
+            return data;
+        } catch (err) {
+            console.warn("Aviso ao carregar feed consolidado de jogos:", err);
+            return null;
+        }
+    }
 
     function formatMatchDateTime(dateStr, hourStr) {
-        if (!dateStr) return { formattedDate: "Data a definir", isToday: false, isTomorrow: false };
+        if (!dateStr) return { formattedDate: "Data a definir", isToday: false, isTomorrow: false, diffDays: null, countdownText: "", countdownBadge: "" };
         try {
             const [year, month, day] = dateStr.split("-").map(Number);
             const matchDate = new Date(year, month - 1, day);
@@ -351,23 +429,76 @@ document.addEventListener("DOMContentLoaded", () => {
             const isToday = matchDate.getTime() === today.getTime();
             const isTomorrow = matchDate.getTime() === tomorrow.getTime();
 
+            // Calculate calendar day difference
+            const diffTime = matchDate.getTime() - today.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+            let countdownText = "";
+            let countdownBadge = "";
+            if (diffDays <= 0) {
+                countdownText = "Hoje";
+                countdownBadge = "HOJE";
+            } else if (diffDays === 1) {
+                countdownText = "Amanhã";
+                countdownBadge = "AMANHÃ";
+            } else {
+                countdownText = `Em ${diffDays} dias`;
+                countdownBadge = `EM ${diffDays} DIAS`;
+            }
+
             const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
             const weekday = weekdays[matchDate.getDay()];
             const formattedDayMonth = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`;
-            const timePart = hourStr && hourStr !== "A definir" ? hourStr : "Horário a definir";
+            const timePart = hourStr && hourStr !== "A definir" ? hourStr : "A definir";
+            const dateDayText = `${weekday}, ${formattedDayMonth}`;
 
             return {
-                formattedDate: `${weekday}, ${formattedDayMonth} • ${timePart}`,
+                formattedDate: `${dateDayText} • ${timePart}`,
+                dateDayText,
+                timePart,
                 isToday,
-                isTomorrow
+                isTomorrow,
+                diffDays,
+                countdownText,
+                countdownBadge
             };
         } catch (e) {
             return {
                 formattedDate: `${dateStr} ${hourStr || ''}`,
+                dateDayText: dateStr || "Data a definir",
+                timePart: hourStr || "A definir",
                 isToday: false,
-                isTomorrow: false
+                isTomorrow: false,
+                diffDays: null,
+                countdownText: "",
+                countdownBadge: ""
             };
         }
+    }
+
+    function normalizeChampionshipName(name) {
+        if (!name) return "Competição";
+        const clean = name.trim();
+        const low = clean.toLowerCase();
+
+        if (low.includes("brasileiro") || low.includes("brasileirão")) {
+            if (low.includes("série b") || low.includes("serie b")) return "Brasileirão Série B";
+            return "Brasileirão";
+        }
+        if (low.includes("libertadores")) return "Libertadores";
+        if (low.includes("sul-americana") || low.includes("sudamericana")) return "Sul-Americana";
+        if (low.includes("copa do brasil")) return "Copa do Brasil";
+        if (low.includes("recopa")) return "Recopa";
+        if (low.includes("eliminatórias") || low.includes("eliminatorias")) return "Eliminatórias";
+        if (low.includes("amistoso")) return "Amistoso";
+        if (low.includes("mundial")) return "Mundial de Clubes";
+        if (low.includes("paulista") || low.includes("paulistão")) return "Paulistão";
+        if (low.includes("carioca")) return "Carioca";
+        if (low.includes("mineiro")) return "Mineiro";
+        if (low.includes("gaúcho") || low.includes("gaucho")) return "Gaúcho";
+        if (low.includes("paranaense")) return "Paranaense";
+
+        return clean;
     }
 
     function normalizeChannelSearch(text) {
@@ -428,7 +559,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const found = findChannelByName("GloboNews");
             if (found) return found;
         }
-        if (raw.includes("globo") || raw.includes("ge") || raw.includes("tv globo")) {
+        if (raw.includes("globo") || raw.includes("ge") || raw.includes("tv globo") || raw.includes("globoplay")) {
             const found = findChannelByName("Globo");
             if (found) return found;
         }
@@ -480,40 +611,117 @@ document.addEventListener("DOMContentLoaded", () => {
         return null;
     }
 
-    async function fetchAndRenderVascoMatches() {
+    async function renderMatchesSection() {
+        const sectionEl = document.getElementById("vasco-matches-section");
+        const headingTitle = document.getElementById("matches-section-title");
+        const headingHint = document.getElementById("matches-section-hint");
+        const teamBadgeEl = document.getElementById("matches-team-badge");
+        const btnChangeTeam = document.getElementById("btn-change-team");
+        const btnChangeTeamLabel = document.getElementById("btn-change-team-label");
+        const navArrows = document.getElementById("matches-nav-arrows");
+        const carouselFooter = document.getElementById("matches-carousel-footer");
+        const wrapperEl = document.getElementById("matches-carousel-wrapper");
+
+        if (!sectionEl || !wrapperEl) return;
+
+        // Ensure Team Selection Modal is initialized
+        setupTeamSelectModal();
+
+        // Wire change button to open modal
+        if (btnChangeTeam) {
+            btnChangeTeam.onclick = (e) => {
+                e.stopPropagation();
+                openTeamSelectModal();
+            };
+        }
+
+        const favoriteTeamId = getFavoriteTeam();
+
+        // --- CASE 1: No Team Selected (Friendly Unselected State) ---
+        if (!favoriteTeamId) {
+            if (headingTitle) headingTitle.textContent = "Próximos Jogos";
+            if (headingHint) headingHint.textContent = "Agenda de confrontos dos clubes brasileiros (via ge.globo)";
+            if (teamBadgeEl) teamBadgeEl.innerHTML = getUiSvg('calendar', 18);
+            if (btnChangeTeamLabel) btnChangeTeamLabel.textContent = "Escolher Time";
+            if (carouselFooter) carouselFooter.style.display = "none";
+            if (navArrows) navArrows.style.display = "none";
+
+            wrapperEl.innerHTML = `
+                <div class="unselected-team-card">
+                    <div class="unselected-icon-bubble" aria-hidden="true">
+                        ${getUiSvg('trophy', 26)}
+                    </div>
+                    <h4 class="unselected-title">Acompanhe os Jogos do seu Time</h4>
+                    <p class="unselected-desc">
+                        Escolha seu clube favorito para ver as datas, horários e canais de transmissão ao vivo das próximas partidas.
+                    </p>
+                    <button class="btn-choose-team-cta" id="btn-unselected-choose" type="button">
+                        ${getUiSvg('trophy', 16)}
+                        <span>Escolher meu time</span>
+                    </button>
+                </div>
+            `;
+
+            const chooseBtn = document.getElementById("btn-unselected-choose");
+            if (chooseBtn) {
+                chooseBtn.onclick = () => openTeamSelectModal();
+            }
+            return;
+        }
+
+        // --- CASE 2: Team Selected ---
+        if (btnChangeTeamLabel) btnChangeTeamLabel.textContent = "Alterar time";
+
+        // Load data feed
+        const feed = await loadScheduleFeed();
+        const teams = feed?.teams || {};
+        const teamData = teams[favoriteTeamId];
+
+        // If saved team is not found in feed, reset gracefully
+        if (!teamData) {
+            console.warn(`Time salvo '${favoriteTeamId}' não encontrado no feed.`);
+            setFavoriteTeam(null);
+            return;
+        }
+
+        if (headingTitle) headingTitle.textContent = `Próximos Jogos • ${teamData.name}`;
+        if (headingHint) headingHint.textContent = `Agenda atualizada do ${teamData.name} (via ge.globo)`;
+        if (teamBadgeEl) {
+            const crestUrl = resolveClientTeamCrest(favoriteTeamId, teamData);
+            teamBadgeEl.innerHTML = `<img src="${crestUrl}" alt="${teamData.name}" class="team-header-crest" onerror="this.src='logos/fav/favicon.svg'">`;
+        }
+
+        const matches = teamData.matches || [];
+
+        // Restore carousel grid container
+        wrapperEl.innerHTML = `
+            <div class="matches-grid matches-carousel" id="vasco-matches-grid" tabindex="0" role="region" aria-label="Carrossel de próximos jogos do ${teamData.name}"></div>
+        `;
+
         const gridEl = document.getElementById("vasco-matches-grid");
         if (!gridEl) return;
 
-        let matches = cachedVascoMatches;
-        if (!matches) {
-            try {
-                const response = await fetch("arquivos/proximos_jogos.json?v=" + Date.now(), { cache: "no-store" });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                matches = await response.json();
-                cachedVascoMatches = matches;
-            } catch (err) {
-                console.warn("Aviso ao carregar próximos jogos:", err);
-            }
-        }
-
-        if (!matches || !Array.isArray(matches) || matches.length === 0) {
+        if (matches.length === 0) {
+            if (carouselFooter) carouselFooter.style.display = "none";
+            if (navArrows) navArrows.style.display = "none";
             gridEl.innerHTML = `
-                <div class="match-card" style="grid-column: 1 / -1; text-align: center; padding: 24px;">
-                    <p style="color: var(--text-secondary); margin-bottom: 6px;">Nenhum jogo agendado para os próximos dias.</p>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">A agenda é atualizada periodicamente via Globo Esporte.</span>
+                <div class="match-card" style="grid-column: 1 / -1; text-align: center; padding: 28px 20px;">
+                    <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 6px;">Nenhum jogo agendado para o ${teamData.name} no momento.</p>
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">Isso ocorre em intervalos de competições, férias ou Data FIFA. A agenda é sincronizada via ge.globo.</span>
                 </div>
             `;
             return;
         }
 
-        gridEl.innerHTML = "";
+        if (carouselFooter) carouselFooter.style.display = matches.length > 1 ? "flex" : "none";
+        if (navArrows) navArrows.style.display = "inline-flex";
 
         matches.forEach((match, index) => {
             const card = document.createElement("div");
             const isFeatured = index === 0;
             card.className = `match-card ${isFeatured ? 'featured' : ''}`;
 
-            const { formattedDate, isToday, isTomorrow } = formatMatchDateTime(match.data, match.hora);
+            const { formattedDate, dateDayText, timePart, isToday, isTomorrow, countdownBadge } = formatMatchDateTime(match.data, match.hora);
 
             let statusBadgeHtml = '';
             if (isToday) {
@@ -521,9 +729,10 @@ document.addEventListener("DOMContentLoaded", () => {
             } else if (isTomorrow) {
                 statusBadgeHtml = `<span class="match-status-badge tomorrow">AMANHÃ</span>`;
             } else if (isFeatured) {
-                statusBadgeHtml = `<span class="match-status-badge featured">PRÓXIMO JOGO</span>`;
+                statusBadgeHtml = `<span class="match-status-badge featured">${countdownBadge || 'PRÓXIMO JOGO'}</span>`;
             }
 
+            const championshipFormatted = normalizeChampionshipName(match.campeonato);
             const mandanteEscudo = match.mandante?.escudo || 'logos/fav/favicon.svg';
             const visitanteEscudo = match.visitante?.escudo || 'logos/fav/favicon.svg';
 
@@ -546,12 +755,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             card.innerHTML = `
                 <div class="match-top-bar">
-                    <span class="championship-badge" title="${match.campeonato || 'Competição'}">${match.campeonato || 'Competição'}</span>
+                    <span class="championship-badge" title="${match.campeonato || 'Competição'}">${championshipFormatted}</span>
                     ${statusBadgeHtml}
                 </div>
 
                 <div class="match-duel">
-                    <div class="duel-team">
+                    <div class="duel-team duel-mandante">
                         <div class="duel-badge-wrapper">
                             <img src="${mandanteEscudo}" alt="${match.mandante?.nome || 'Mandante'}" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
                         </div>
@@ -559,11 +768,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
 
                     <div class="duel-vs-box">
-                        <span class="duel-vs">VS</span>
-                        <span class="duel-date-time">${formattedDate}</span>
+                        <div class="duel-vs-circle-wrapper">
+                            <span class="duel-vs">VS</span>
+                        </div>
+                        <div class="duel-date-time">
+                            <span class="duel-date-day">${dateDayText}</span>
+                            <span class="duel-date-hour">${timePart}</span>
+                        </div>
                     </div>
 
-                    <div class="duel-team">
+                    <div class="duel-team duel-visitante">
                         <div class="duel-badge-wrapper">
                             <img src="${visitanteEscudo}" alt="${match.visitante?.nome || 'Visitante'}" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
                         </div>
@@ -604,6 +818,152 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         setupMatchesCarousel();
+    }
+
+    // --- Team Selection Modal Handlers ---
+    let isTeamModalInitialized = false;
+
+    function setupTeamSelectModal() {
+        if (isTeamModalInitialized) return;
+        const modal = document.getElementById("team-select-modal");
+        const btnClose = document.getElementById("btn-close-team-modal");
+        const searchInput = document.getElementById("team-search-input");
+
+        if (!modal) return;
+        isTeamModalInitialized = true;
+
+        if (btnClose) {
+            btnClose.addEventListener("click", closeTeamSelectModal);
+        }
+
+        // Close when clicking on backdrop
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                closeTeamSelectModal();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && modal.classList.contains("active")) {
+                closeTeamSelectModal();
+            }
+        });
+
+        // Search filter input
+        if (searchInput) {
+            searchInput.addEventListener("input", () => {
+                const query = normalizeChannelSearch(searchInput.value);
+                const cards = modal.querySelectorAll(".team-select-card");
+                let visibleCount = 0;
+
+                cards.forEach(card => {
+                    const teamName = card.getAttribute("data-team-name") || "";
+                    const normName = normalizeChannelSearch(teamName);
+                    const matches = normName.includes(query);
+                    card.style.display = matches ? "flex" : "none";
+                    if (matches) visibleCount++;
+                });
+
+                let emptyMsg = modal.querySelector(".teams-empty-search");
+                if (visibleCount === 0) {
+                    if (!emptyMsg) {
+                        emptyMsg = document.createElement("div");
+                        emptyMsg.className = "teams-empty-search";
+                        const grid = document.getElementById("teams-grid");
+                        if (grid) grid.appendChild(emptyMsg);
+                    }
+                    emptyMsg.textContent = `Nenhum clube encontrado para "${searchInput.value}"`;
+                    emptyMsg.style.display = "block";
+                } else if (emptyMsg) {
+                    emptyMsg.style.display = "none";
+                }
+            });
+        }
+    }
+
+    async function openTeamSelectModal() {
+        const modal = document.getElementById("team-select-modal");
+        const grid = document.getElementById("teams-grid");
+        const searchInput = document.getElementById("team-search-input");
+        if (!modal || !grid) return;
+
+        setupTeamSelectModal();
+
+        // Load feed
+        const feed = await loadScheduleFeed();
+        const teams = feed?.teams || {};
+        const currentFavorite = getFavoriteTeam();
+
+        grid.innerHTML = "";
+
+        // Sort teams alphabetically, keeping Seleção Brasileira at the top or end
+        const sortedEntries = Object.entries(teams).sort((a, b) => {
+            if (a[0] === 'brasil') return 1;
+            if (b[0] === 'brasil') return -1;
+            return a[1].name.localeCompare(b[1].name, 'pt-BR');
+        });
+
+        sortedEntries.forEach(([teamId, teamInfo]) => {
+            const card = document.createElement("div");
+            const isSelected = teamId === currentFavorite;
+            card.className = `team-select-card ${isSelected ? 'active' : ''}`;
+            card.setAttribute("data-team-id", teamId);
+            card.setAttribute("data-team-name", teamInfo.name);
+            card.setAttribute("tabindex", "0");
+            card.setAttribute("role", "button");
+            card.setAttribute("aria-label", `Selecionar ${teamInfo.name}`);
+
+            const checkHtml = isSelected ? `<span class="team-card-check">${getUiSvg('check', 11)}</span>` : '';
+            const crestUrl = resolveClientTeamCrest(teamId, teamInfo);
+
+            card.innerHTML = `
+                ${checkHtml}
+                <div class="team-card-crest-wrapper">
+                    <img src="${crestUrl}" alt="${teamInfo.name}" class="team-card-crest" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
+                </div>
+                <span class="team-card-name">${teamInfo.name}</span>
+            `;
+
+            card.addEventListener("click", () => {
+                setFavoriteTeam(teamId);
+                closeTeamSelectModal();
+            });
+
+            card.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setFavoriteTeam(teamId);
+                    closeTeamSelectModal();
+                }
+            });
+
+            grid.appendChild(card);
+        });
+
+        if (searchInput) {
+            searchInput.value = "";
+            const cards = grid.querySelectorAll(".team-select-card");
+            cards.forEach(c => c.style.display = "flex");
+            const emptyMsg = grid.querySelector(".teams-empty-search");
+            if (emptyMsg) emptyMsg.style.display = "none";
+        }
+
+        modal.classList.add("active");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+
+        setTimeout(() => {
+            if (searchInput) searchInput.focus();
+        }, 120);
+    }
+
+    function closeTeamSelectModal() {
+        const modal = document.getElementById("team-select-modal");
+        if (!modal) return;
+        modal.classList.remove("active");
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
     }
 
     // --- Matches Carousel Navigation & Drag Scrolling ---
@@ -738,33 +1098,24 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
 
-                <!-- Vasco Upcoming Matches Section -->
+                <!-- Multi-Team Upcoming Matches Section -->
                 <section class="vasco-matches-section" id="vasco-matches-section">
-                    <div class="section-heading">
+                    <div class="section-heading" id="matches-section-heading">
                         <div class="matches-heading-left">
-                            <span class="matches-team-badge">${getUiSvg('calendar', 18)}</span>
+                            <span class="matches-team-badge" id="matches-team-badge">${getUiSvg('calendar', 18)}</span>
                             <div>
-                                <h3>Próximos Jogos do Vascão</h3>
-                                <span class="section-hint">Agenda atualizada dos próximos confrontos</span>
+                                <h3 id="matches-section-title">Próximos Jogos</h3>
+                                <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos (via ge.globo)</span>
                             </div>
                         </div>
-                        <div class="matches-heading-right">
-                            <span class="matches-source-tag">via ge.globo</span>
-                            <div class="matches-nav-arrows">
-                                <button id="btn-matches-prev" class="btn-matches-arrow" aria-label="Jogos anteriores" title="Ver jogos anteriores" disabled>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="15 18 9 12 15 6"></polyline>
-                                    </svg>
-                                </button>
-                                <button id="btn-matches-next" class="btn-matches-arrow" aria-label="Próximos jogos" title="Ver mais jogos">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="9 18 15 12 9 6"></polyline>
-                                    </svg>
-                                </button>
-                            </div>
+                        <div class="matches-heading-right" id="matches-heading-right">
+                            <button id="btn-change-team" class="btn-change-team" aria-label="Escolher ou trocar time" title="Alterar time favorito">
+                                ${getUiSvg('swap', 15)}
+                                <span id="btn-change-team-label">Escolher Time</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="matches-carousel-wrapper">
+                    <div class="matches-carousel-wrapper" id="matches-carousel-wrapper">
                         <div class="matches-grid matches-carousel" id="vasco-matches-grid" tabindex="0" role="region" aria-label="Carrossel de próximos jogos">
                             <div class="match-card skeleton-match-card">
                                 <div class="skeleton-match-line short"></div>
@@ -783,6 +1134,20 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                     </div>
+                    <div class="matches-carousel-footer" id="matches-carousel-footer">
+                        <div class="matches-nav-arrows" id="matches-nav-arrows">
+                            <button id="btn-matches-prev" class="btn-matches-arrow" aria-label="Jogos anteriores" title="Ver jogos anteriores" disabled>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+                            <button id="btn-matches-next" class="btn-matches-arrow" aria-label="Próximos jogos" title="Ver mais jogos">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- Channel Visual Grid with Logos -->
@@ -797,7 +1162,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
 
         renderChannelGridCards();
-        fetchAndRenderVascoMatches();
+        renderMatchesSection();
         renderSidebar();
     }
 
@@ -1386,13 +1751,18 @@ function setupTvRemoteNavigation() {
             const selector = [
                 '#filter-pills .pill',
                 '#quick-grid .quick-card',
+                '#btn-change-team',
+                '#btn-unselected-choose',
                 '#vasco-matches-grid .broadcast-pill.playable',
                 '#channels-list .channel-btn',
                 '#channels-list .category-header',
                 '.btn-server-option',
                 '.btn-player-action',
                 '#search-input',
-                '#brand-home'
+                '#brand-home',
+                '#btn-close-team-modal',
+                '#team-search-input',
+                '.team-select-card'
             ].join(', ');
 
             return Array.from(document.querySelectorAll(selector)).filter(el => {
