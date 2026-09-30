@@ -49,13 +49,13 @@ TEAMS_CONFIG = [
         "id": "corinthians",
         "name": "Corinthians",
         "url": "https://ge.globo.com/futebol/times/corinthians/agenda-de-jogos-do-corinthians/",
-        "escudo": "https://s.sde.globo.com/media/organizations/2019/09/30/Corinthians.svg"
+        "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg"
     },
     {
         "id": "criciuma",
         "name": "Criciúma",
         "url": "https://ge.globo.com/futebol/times/criciuma/agenda-de-jogos-do-criciuma/",
-        "escudo": "https://s.sde.globo.com/media/organizations/2024/03/27/criciuma.svg"
+        "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg"
     },
     {
         "id": "cruzeiro",
@@ -73,7 +73,7 @@ TEAMS_CONFIG = [
         "id": "flamengo",
         "name": "Flamengo",
         "url": "https://ge.globo.com/futebol/times/flamengo/agenda-de-jogos-do-flamengo/",
-        "escudo": "https://s.sde.globo.com/media/organizations/2018/04/09/flamengo.svg"
+        "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg"
     },
     {
         "id": "fluminense",
@@ -85,7 +85,7 @@ TEAMS_CONFIG = [
         "id": "fortaleza",
         "name": "Fortaleza",
         "url": "https://ge.globo.com/futebol/times/fortaleza/agenda-de-jogos-do-fortaleza/",
-        "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_01.svg"
+        "escudo": "https://s.sde.globo.com/media/organizations/2021/09/19/Fortaleza_2021_1.svg"
     },
     {
         "id": "gremio",
@@ -109,13 +109,13 @@ TEAMS_CONFIG = [
         "id": "palmeiras",
         "name": "Palmeiras",
         "url": "https://ge.globo.com/futebol/times/palmeiras/agenda-de-jogos-do-palmeiras/",
-        "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/palmeiras.svg"
+        "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg"
     },
     {
         "id": "red-bull-bragantino",
         "name": "Red Bull Bragantino",
         "url": "https://ge.globo.com/futebol/times/bragantino/agenda-de-jogos-do-bragantino/",
-        "escudo": "https://s.sde.globo.com/media/organizations/2020/01/01/Red_Bull_Bragantino.svg"
+        "escudo": "https://s.sde.globo.com/media/organizations/2021/06/28/bragantino.svg"
     },
     {
         "id": "santos",
@@ -139,15 +139,37 @@ TEAMS_CONFIG = [
         "id": "vitoria",
         "name": "Vitória",
         "url": "https://ge.globo.com/futebol/times/vitoria/agenda-de-jogos-do-vitoria/",
-        "escudo": "https://s.sde.globo.com/media/organizations/2024/04/09/vitoria_2024.svg"
+        "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg"
     },
     {
         "id": "brasil",
         "name": "Seleção Brasileira",
         "url": "https://ge.globo.com/futebol/selecao-brasileira/agenda-de-jogos-da-selecao/",
-        "escudo": "https://s.sde.globo.com/media/organizations/2019/09/09/Brasil_cbf.svg"
+        "escudo": "https://s.sde.globo.com/media/organizations/2019/07/16/Brasil_rgYHF6Z.svg"
     }
 ]
+
+def resolve_team_crest(team_name: str, matches: list, default_crest: str) -> str:
+    """
+    Dynamically resolves the club crest directly from the live match feed.
+    If match fixtures contain the club as home or away, takes that active URL;
+    otherwise gracefully falls back to verified default crest URL.
+    """
+    norm_target = team_name.lower().replace("-", " ")
+    for m in matches:
+        mandante_nome = (m.get("mandante", {}).get("nome") or "").lower()
+        if norm_target in mandante_nome or mandante_nome in norm_target:
+            crest = m.get("mandante", {}).get("escudo")
+            if crest and crest.startswith("http"):
+                return crest
+
+        visitante_nome = (m.get("visitante", {}).get("nome") or "").lower()
+        if norm_target in visitante_nome or visitante_nome in norm_target:
+            crest = m.get("visitante", {}).get("escudo")
+            if crest and crest.startswith("http"):
+                return crest
+
+    return default_crest
 
 def extract_schedule_payload(html_content: str) -> dict:
     """Safely extracts the scheduleTeam JSON object from the raw HTML."""
@@ -299,9 +321,10 @@ def fetch_and_process_all_teams():
         try:
             matches = fetch_single_team(team)
             elapsed = time.time() - t0
+            resolved_badge = resolve_team_crest(team_name, matches, team.get("escudo", ""))
             consolidated_output["teams"][team_id] = {
                 "name": team_name,
-                "escudo": team.get("escudo", ""),
+                "escudo": resolved_badge,
                 "matches": matches
             }
             success_count += 1
