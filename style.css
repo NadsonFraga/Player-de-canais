@@ -384,6 +384,23 @@ body.is-resizing {
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
 }
 
+.pill.pill-adblock {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.25);
+    background: rgba(16, 185, 129, 0.08);
+    font-weight: 600;
+}
+
+.pill.pill-adblock:hover {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #34d399;
+    transform: translateY(-1px);
+}
+
 /* Channels Navigation List with Robust Scroll */
 .channels-nav {
     flex: 1 1 0%;
@@ -717,6 +734,25 @@ body.is-resizing {
     font-weight: 600;
     color: var(--primary-light);
     margin-bottom: 16px;
+}
+
+button.hero-badge,
+.hero-badge-btn {
+    cursor: pointer;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+    font-family: inherit;
+    transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+button.hero-badge:hover,
+.hero-badge-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.55);
+    transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+    color: #34d399;
 }
 
 .pulse-dot, .live-dot {
@@ -2349,6 +2385,391 @@ body.is-resizing {
 
     .duel-team-name {
         font-size: 0.76rem;
+    }
+}
+
+/* ==========================================================================
+   ADBLOCK & PRIVATE DNS DISCLAIMER MODAL
+   ========================================================================== */
+.mobile-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-header-adblock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-header-adblock:hover {
+    background: rgba(16, 185, 129, 0.22);
+    border-color: rgba(16, 185, 129, 0.55);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+    transform: translateY(-1px);
+}
+
+.adblock-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 7, 6, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.adblock-modal-card {
+    background: linear-gradient(155deg, rgba(25, 34, 30, 0.98), rgba(15, 20, 18, 0.99));
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 620px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(16, 185, 129, 0.1);
+    animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    position: relative;
+}
+
+.adblock-modal-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent-emerald), transparent);
+}
+
+.adblock-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.adblock-modal-title-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.adblock-modal-shield-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.2);
+}
+
+.adblock-modal-header h2 {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.adblock-modal-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 2px 0 0 0;
+}
+
+.adblock-modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Disclaimer text container */
+.adblock-disclaimer-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+}
+
+.adblock-disclaimer-icon {
+    color: #f87171;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.adblock-disclaimer-text {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #fca5a5;
+    margin: 0;
+}
+
+.adblock-disclaimer-text strong {
+    color: #ffffff;
+}
+
+/* Solution Cards Grid */
+.adblock-solutions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.adblock-solution-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.adblock-solution-card:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.adblock-solution-card.featured {
+    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.04);
+}
+
+.solution-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.solution-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    width: fit-content;
+}
+
+.solution-badge.highlight {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.solution-card-header h4 {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 2px 0 0 0;
+}
+
+.solution-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+    flex: 1;
+}
+
+/* Option 1 links */
+.solution-links {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 4px;
+}
+
+.btn-solution-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 7px 10px;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.btn-solution-action:hover {
+    background: var(--accent-emerald-subtle);
+    border-color: var(--accent-emerald-border);
+    color: #34d399;
+    transform: translateY(-1px);
+}
+
+.btn-solution-action.secondary {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+}
+
+.btn-solution-action.secondary:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Option 2: DNS Copy box */
+.dns-copy-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #090c0b;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-md);
+    padding: 4px 6px 4px 10px;
+    margin-top: 4px;
+}
+
+.dns-code {
+    font-family: monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #34d399;
+    letter-spacing: 0.02em;
+    user-select: all;
+}
+
+.btn-copy-dns {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 4px 9px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-copy-dns:hover {
+    background: var(--accent-emerald);
+    color: #090c0b;
+    border-color: var(--accent-emerald);
+}
+
+.btn-copy-dns.copied {
+    background: var(--accent-emerald);
+    color: #090c0b;
+    border-color: var(--accent-emerald);
+}
+
+.dns-tutorial-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    margin-top: 2px;
+}
+
+.dns-tutorial-link:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+
+/* Modal Footer & Confirmation button */
+.adblock-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-adblock-confirm {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--accent-emerald);
+    color: #090c0b;
+    font-size: 0.88rem;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.btn-adblock-confirm:hover {
+    background: #34d399;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+}
+
+.btn-adblock-confirm:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+    .adblock-modal-card {
+        max-height: 94vh;
+        border-radius: var(--radius-lg);
+    }
+
+    .adblock-modal-header {
+        padding: 16px 18px 12px 18px;
+    }
+
+    .adblock-modal-body {
+        padding: 14px 16px;
+        gap: 12px;
+    }
+
+    .adblock-solutions-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .adblock-modal-footer {
+        padding: 12px 16px;
     }
 }
 
