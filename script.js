@@ -417,7 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function formatMatchDateTime(dateStr, hourStr) {
-        if (!dateStr) return { formattedDate: "Data a definir", isToday: false, isTomorrow: false };
+        if (!dateStr) return { formattedDate: "Data a definir", isToday: false, isTomorrow: false, diffDays: null, countdownText: "", countdownBadge: "" };
         try {
             const [year, month, day] = dateStr.split("-").map(Number);
             const matchDate = new Date(year, month - 1, day);
@@ -429,23 +429,76 @@ document.addEventListener("DOMContentLoaded", () => {
             const isToday = matchDate.getTime() === today.getTime();
             const isTomorrow = matchDate.getTime() === tomorrow.getTime();
 
+            // Calculate calendar day difference
+            const diffTime = matchDate.getTime() - today.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+            let countdownText = "";
+            let countdownBadge = "";
+            if (diffDays <= 0) {
+                countdownText = "Hoje";
+                countdownBadge = "HOJE";
+            } else if (diffDays === 1) {
+                countdownText = "Amanhã";
+                countdownBadge = "AMANHÃ";
+            } else {
+                countdownText = `Em ${diffDays} dias`;
+                countdownBadge = `EM ${diffDays} DIAS`;
+            }
+
             const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
             const weekday = weekdays[matchDate.getDay()];
             const formattedDayMonth = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`;
-            const timePart = hourStr && hourStr !== "A definir" ? hourStr : "Horário a definir";
+            const timePart = hourStr && hourStr !== "A definir" ? hourStr : "A definir";
+            const dateDayText = `${weekday}, ${formattedDayMonth}`;
 
             return {
-                formattedDate: `${weekday}, ${formattedDayMonth} • ${timePart}`,
+                formattedDate: `${dateDayText} • ${timePart}`,
+                dateDayText,
+                timePart,
                 isToday,
-                isTomorrow
+                isTomorrow,
+                diffDays,
+                countdownText,
+                countdownBadge
             };
         } catch (e) {
             return {
                 formattedDate: `${dateStr} ${hourStr || ''}`,
+                dateDayText: dateStr || "Data a definir",
+                timePart: hourStr || "A definir",
                 isToday: false,
-                isTomorrow: false
+                isTomorrow: false,
+                diffDays: null,
+                countdownText: "",
+                countdownBadge: ""
             };
         }
+    }
+
+    function normalizeChampionshipName(name) {
+        if (!name) return "Competição";
+        const clean = name.trim();
+        const low = clean.toLowerCase();
+
+        if (low.includes("brasileiro") || low.includes("brasileirão")) {
+            if (low.includes("série b") || low.includes("serie b")) return "Brasileirão Série B";
+            return "Brasileirão";
+        }
+        if (low.includes("libertadores")) return "Libertadores";
+        if (low.includes("sul-americana") || low.includes("sudamericana")) return "Sul-Americana";
+        if (low.includes("copa do brasil")) return "Copa do Brasil";
+        if (low.includes("recopa")) return "Recopa";
+        if (low.includes("eliminatórias") || low.includes("eliminatorias")) return "Eliminatórias";
+        if (low.includes("amistoso")) return "Amistoso";
+        if (low.includes("mundial")) return "Mundial de Clubes";
+        if (low.includes("paulista") || low.includes("paulistão")) return "Paulistão";
+        if (low.includes("carioca")) return "Carioca";
+        if (low.includes("mineiro")) return "Mineiro";
+        if (low.includes("gaúcho") || low.includes("gaucho")) return "Gaúcho";
+        if (low.includes("paranaense")) return "Paranaense";
+
+        return clean;
     }
 
     function normalizeChannelSearch(text) {
@@ -566,6 +619,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const btnChangeTeam = document.getElementById("btn-change-team");
         const btnChangeTeamLabel = document.getElementById("btn-change-team-label");
         const navArrows = document.getElementById("matches-nav-arrows");
+        const carouselFooter = document.getElementById("matches-carousel-footer");
         const wrapperEl = document.getElementById("matches-carousel-wrapper");
 
         if (!sectionEl || !wrapperEl) return;
@@ -586,9 +640,10 @@ document.addEventListener("DOMContentLoaded", () => {
         // --- CASE 1: No Team Selected (Friendly Unselected State) ---
         if (!favoriteTeamId) {
             if (headingTitle) headingTitle.textContent = "Próximos Jogos";
-            if (headingHint) headingHint.textContent = "Agenda de confrontos dos clubes brasileiros";
+            if (headingHint) headingHint.textContent = "Agenda de confrontos dos clubes brasileiros (via ge.globo)";
             if (teamBadgeEl) teamBadgeEl.innerHTML = getUiSvg('calendar', 18);
             if (btnChangeTeamLabel) btnChangeTeamLabel.textContent = "Escolher Time";
+            if (carouselFooter) carouselFooter.style.display = "none";
             if (navArrows) navArrows.style.display = "none";
 
             wrapperEl.innerHTML = `
@@ -615,7 +670,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // --- CASE 2: Team Selected ---
-        if (navArrows) navArrows.style.display = "inline-flex";
         if (btnChangeTeamLabel) btnChangeTeamLabel.textContent = "Alterar time";
 
         // Load data feed
@@ -631,7 +685,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (headingTitle) headingTitle.textContent = `Próximos Jogos • ${teamData.name}`;
-        if (headingHint) headingHint.textContent = `Agenda atualizada do ${teamData.name}`;
+        if (headingHint) headingHint.textContent = `Agenda atualizada do ${teamData.name} (via ge.globo)`;
         if (teamBadgeEl) {
             const crestUrl = resolveClientTeamCrest(favoriteTeamId, teamData);
             teamBadgeEl.innerHTML = `<img src="${crestUrl}" alt="${teamData.name}" class="team-header-crest" onerror="this.src='logos/fav/favicon.svg'">`;
@@ -648,6 +702,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!gridEl) return;
 
         if (matches.length === 0) {
+            if (carouselFooter) carouselFooter.style.display = "none";
+            if (navArrows) navArrows.style.display = "none";
             gridEl.innerHTML = `
                 <div class="match-card" style="grid-column: 1 / -1; text-align: center; padding: 28px 20px;">
                     <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 6px;">Nenhum jogo agendado para o ${teamData.name} no momento.</p>
@@ -657,12 +713,15 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        if (carouselFooter) carouselFooter.style.display = matches.length > 1 ? "flex" : "none";
+        if (navArrows) navArrows.style.display = "inline-flex";
+
         matches.forEach((match, index) => {
             const card = document.createElement("div");
             const isFeatured = index === 0;
             card.className = `match-card ${isFeatured ? 'featured' : ''}`;
 
-            const { formattedDate, isToday, isTomorrow } = formatMatchDateTime(match.data, match.hora);
+            const { formattedDate, dateDayText, timePart, isToday, isTomorrow, countdownBadge } = formatMatchDateTime(match.data, match.hora);
 
             let statusBadgeHtml = '';
             if (isToday) {
@@ -670,9 +729,10 @@ document.addEventListener("DOMContentLoaded", () => {
             } else if (isTomorrow) {
                 statusBadgeHtml = `<span class="match-status-badge tomorrow">AMANHÃ</span>`;
             } else if (isFeatured) {
-                statusBadgeHtml = `<span class="match-status-badge featured">PRÓXIMO JOGO</span>`;
+                statusBadgeHtml = `<span class="match-status-badge featured">${countdownBadge || 'PRÓXIMO JOGO'}</span>`;
             }
 
+            const championshipFormatted = normalizeChampionshipName(match.campeonato);
             const mandanteEscudo = match.mandante?.escudo || 'logos/fav/favicon.svg';
             const visitanteEscudo = match.visitante?.escudo || 'logos/fav/favicon.svg';
 
@@ -695,12 +755,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             card.innerHTML = `
                 <div class="match-top-bar">
-                    <span class="championship-badge" title="${match.campeonato || 'Competição'}">${match.campeonato || 'Competição'}</span>
+                    <span class="championship-badge" title="${match.campeonato || 'Competição'}">${championshipFormatted}</span>
                     ${statusBadgeHtml}
                 </div>
 
                 <div class="match-duel">
-                    <div class="duel-team">
+                    <div class="duel-team duel-mandante">
                         <div class="duel-badge-wrapper">
                             <img src="${mandanteEscudo}" alt="${match.mandante?.nome || 'Mandante'}" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
                         </div>
@@ -708,11 +768,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
 
                     <div class="duel-vs-box">
-                        <span class="duel-vs">VS</span>
-                        <span class="duel-date-time">${formattedDate}</span>
+                        <div class="duel-vs-circle-wrapper">
+                            <span class="duel-vs">VS</span>
+                        </div>
+                        <div class="duel-date-time">
+                            <span class="duel-date-day">${dateDayText}</span>
+                            <span class="duel-date-hour">${timePart}</span>
+                        </div>
                     </div>
 
-                    <div class="duel-team">
+                    <div class="duel-team duel-visitante">
                         <div class="duel-badge-wrapper">
                             <img src="${visitanteEscudo}" alt="${match.visitante?.nome || 'Visitante'}" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
                         </div>
@@ -1040,7 +1105,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span class="matches-team-badge" id="matches-team-badge">${getUiSvg('calendar', 18)}</span>
                             <div>
                                 <h3 id="matches-section-title">Próximos Jogos</h3>
-                                <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos</span>
+                                <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos (via ge.globo)</span>
                             </div>
                         </div>
                         <div class="matches-heading-right" id="matches-heading-right">
@@ -1048,19 +1113,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                 ${getUiSvg('swap', 15)}
                                 <span id="btn-change-team-label">Escolher Time</span>
                             </button>
-                            <span class="matches-source-tag">via ge.globo</span>
-                            <div class="matches-nav-arrows" id="matches-nav-arrows">
-                                <button id="btn-matches-prev" class="btn-matches-arrow" aria-label="Jogos anteriores" title="Ver jogos anteriores" disabled>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="15 18 9 12 15 6"></polyline>
-                                    </svg>
-                                </button>
-                                <button id="btn-matches-next" class="btn-matches-arrow" aria-label="Próximos jogos" title="Ver mais jogos">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="9 18 15 12 9 6"></polyline>
-                                    </svg>
-                                </button>
-                            </div>
                         </div>
                     </div>
                     <div class="matches-carousel-wrapper" id="matches-carousel-wrapper">
@@ -1080,6 +1132,20 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div class="skeleton-match-duel"></div>
                                 <div class="skeleton-match-line"></div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="matches-carousel-footer" id="matches-carousel-footer">
+                        <div class="matches-nav-arrows" id="matches-nav-arrows">
+                            <button id="btn-matches-prev" class="btn-matches-arrow" aria-label="Jogos anteriores" title="Ver jogos anteriores" disabled>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+                            <button id="btn-matches-next" class="btn-matches-arrow" aria-label="Próximos jogos" title="Ver mais jogos">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </section>
