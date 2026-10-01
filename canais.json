@@ -29,7 +29,7 @@
     "SporTV": {
       "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv",
       "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=sportv/",
-      "Servidor 3": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv",
+      "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
       "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sportv",
       "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv"
     },
@@ -44,7 +44,7 @@
       "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/primebr.html?id=sportv3",
       "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=sportv3/",
       "Servidor 3": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv3",
-      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3sd",
+      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/primebr.html?id=sportv3sd",
       "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv3"
     },
     "Premiere": {
@@ -63,7 +63,9 @@
     },
     "ESPN": {
       "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=espn",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/espn"
+      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-81.php",
+      "Servidor 3 (NossoPlayer)": "https://nossoplayeronlinehd.ink/extra/espn",
+      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/espn"
     },
     "ESPN 2": {
       "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=espn2",
@@ -72,6 +74,9 @@
     "ESPN 3": {
       "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=espn3",
       "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/espn3"
+    },
+    "ESPN 4": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=espn4"
     },
     "BandSports": {
       "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=bandsports",
@@ -82,6 +87,44 @@
       "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv2/",
       "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv3/",
       "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/caze1"
+    },
+    "Combate": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=combate",
+      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
+      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/combate"
+    },
+    "UFC Fight Pass": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=ufcfightpass",
+      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
+      "Servidor 3 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/watch.html?id=paramount1",
+      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/ufcfightpass"
+    },
+    "XSports": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=xsports",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/xsports"
+    }
+  },
+  "Filmes & Séries": {
+    "HBO": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=hbo",
+      "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/extra/hbo",
+      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/hbo"
+    },
+    "HBO 2": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=hbo2",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbo2"
+    },
+    "HBO Plus": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=hboplus",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hboplus"
+    },
+    "HBO Signature": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=hbosignature",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbosignature"
+    },
+    "Comedy Central": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=comedycentral",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/comedycentral"
     },
     "Disney+": {
       "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus/",
@@ -107,20 +150,47 @@
       "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/primevideo",
       "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/primevideo2",
       "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/primevideo4"
-    },
-    "Combate": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=combate",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/combate"
-    },
-    "UFC Fight Pass": {
-      "EmbedTV": "https://w7.embedtv.lat/ufcfightpass"
-    },
-    "XSports": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=xsports",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/xsports"
     }
   },
-  "Notícias & Variedades": {
+  "Infantil": {
+    "Cartoon Network": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonnetwork",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonnetwork"
+    },
+    "Cartoonito": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonito",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonito"
+    },
+    "Disney Channel": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=disneychannel",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/disneychannel"
+    },
+    "Nickelodeon": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=nickelodeon",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickelodeon"
+    },
+    "Nick Jr.": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=nickjr",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickjr"
+    },
+    "Discovery Kids": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=discoverykids",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverykids"
+    },
+    "Gloob": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=gloob",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/gloob"
+    }
+  },
+  "Documentários & Variedades": {
+    "Discovery Channel": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=discoverychannel",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverychannel"
+    },
+    "Animal Planet": {
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=animalplanet",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/animalplanet"
+    },
     "GloboNews": {
       "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=globonews",
       "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/globonews"
@@ -136,24 +206,6 @@
     "MTV": {
       "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=mtv",
       "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/mtv"
-    }
-  },
-  "Infantil": {
-    "Cartoon Network": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonnetwork",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonnetwork"
-    },
-    "Cartoonito": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonito",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonito"
-    },
-    "Discovery Kids": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=discoverykids",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverykids"
-    },
-    "Gloob": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=gloob",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/gloob"
     }
   },
   "Séries 24h": {
