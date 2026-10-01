@@ -9,10 +9,10 @@
       "BA - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globoba"
     },
     "Band": {
-      "SP (EmbedTV)": "https://w7.embedtv.lat/bandsp",
-      "RJ (EmbedTV)": "https://w7.embedtv.lat/bandrj",
-      "Servidor 2 (Alternativo)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019a797e-eeb8-7eda-9518-132403ccb160",
-      "Servidor 3 (Backup)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019cc41a-ccc4-75e0-a31f-9bf47fad8d8b"
+      "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019a797e-eeb8-7eda-9518-132403ccb160",
+      "Servidor 2": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019cc41a-ccc4-75e0-a31f-9bf47fad8d8b",
+      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/bandsp",
+      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/bandrj"
     },
     "SBT": {
       "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtsp",
@@ -27,123 +27,133 @@
   },
   "Esportes": {
     "SporTV": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/sportv",
-      "Servidor 2 (Alternativo)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv",
-      "Servidor 3 (Backup)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv",
-      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sportv"
+      "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv",
+      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=sportv/",
+      "Servidor 3": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv",
+      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sportv",
+      "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv"
     },
     "SporTV 2": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/sportv2",
-      "Servidor 2 (Alternativo)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv2",
-      "Servidor 3 (Backup)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2",
-      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2sd"
+      "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv2",
+      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=sportv2/",
+      "Servidor 3": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2",
+      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2sd",
+      "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv2"
     },
     "SporTV 3": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/sportv3",
-      "Servidor 2 (Alternativo)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/primebr.html?id=sportv3",
-      "Servidor 3 (Backup)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv3",
-      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3sd"
+      "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/primebr.html?id=sportv3",
+      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=sportv3/",
+      "Servidor 3": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv3",
+      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3sd",
+      "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv3"
     },
     "Premiere": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/premiere",
-      "Servidor 2 (Alternativo)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=premiere",
-      "Servidor 3 (Backup)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=premiere",
-      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=premieresd"
+      "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=premiere",
+      "Servidor 2": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=premiere",
+      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=premieresd",
+      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/premiere"
     },
     "Premiere 2": {
-      "EmbedTV": "https://w7.embedtv.lat/premiere2"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=premiere2/",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/premiere2"
     },
     "Premiere 3": {
-      "EmbedTV": "https://w7.embedtv.lat/premiere3"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=premiere3/",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/premiere3"
     },
     "ESPN": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/espn",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=espn"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=espn",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/espn"
     },
     "ESPN 2": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/espn2",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=espn2"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=espn2",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/espn2"
     },
     "ESPN 3": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/espn3",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=espn3"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=espn3",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/espn3"
     },
     "BandSports": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/bandsports",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=bandsports"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=bandsports",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandsports"
     },
     "CazéTV": {
-      "EmbedTV 1": "https://w7.embedtv.lat/caze1",
-      "EmbedTV 2": "https://w7.embedtv.lat/caze2",
-      "EmbedTV 3": "https://w7.embedtv.lat/caze3"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv/",
+      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv2/",
+      "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv3/",
+      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/caze1"
     },
     "Disney+": {
-      "EmbedTV 1": "https://w7.embedtv.lat/disneyplus1",
-      "EmbedTV 2": "https://w7.embedtv.lat/disneyplus2",
-      "EmbedTV 3": "https://w7.embedtv.lat/disneyplus3"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus/",
+      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus02/",
+      "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus03/",
+      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/disneyplus1"
     },
     "Max": {
-      "EmbedTV 1": "https://w7.embedtv.lat/max1",
-      "EmbedTV 2": "https://w7.embedtv.lat/max2",
-      "EmbedTV 3": "https://w7.embedtv.lat/max3"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=max/",
+      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=max02/",
+      "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=max03/",
+      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/max1"
     },
     "Paramount+": {
-      "EmbedTV 1": "https://w7.embedtv.lat/paramountplus",
-      "EmbedTV 2": "https://w7.embedtv.lat/paramountplus2"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus/",
+      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus02/",
+      "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus03/",
+      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/paramountplus"
     },
     "Prime Video": {
-      "EmbedTV 1": "https://w7.embedtv.lat/primevideo",
-      "EmbedTV 2": "https://w7.embedtv.lat/primevideo2",
-      "EmbedTV 4": "https://w7.embedtv.lat/primevideo4",
       "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo",
-      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02"
+      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02",
+      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/primevideo",
+      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/primevideo2",
+      "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/primevideo4"
     },
     "Combate": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/combate",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=combate"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=combate",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/combate"
     },
     "UFC Fight Pass": {
       "EmbedTV": "https://w7.embedtv.lat/ufcfightpass"
     },
     "XSports": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/xsports",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=xsports"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=xsports",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/xsports"
     }
   },
   "Notícias & Variedades": {
     "GloboNews": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/globonews",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=globonews"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=globonews",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/globonews"
     },
     "BandNews": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/bandnews",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=bandnews"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=bandnews",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandnews"
     },
     "Multishow": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/multishow",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=multishow"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=multishow",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/multishow"
     },
     "MTV": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/mtv",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=mtv"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=mtv",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/mtv"
     }
   },
   "Infantil": {
     "Cartoon Network": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/cartoonnetwork",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonnetwork"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonnetwork",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonnetwork"
     },
     "Cartoonito": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/cartoonito",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonito"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=cartoonito",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonito"
     },
     "Discovery Kids": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/discoverykids",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=discoverykids"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=discoverykids",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverykids"
     },
     "Gloob": {
-      "Servidor 1 (EmbedTV)": "https://w7.embedtv.lat/gloob",
-      "Servidor 2 (Alternativo)": "https://embedcanaisdetv.xyz/e/index.php?canal=gloob"
+      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=gloob",
+      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/gloob"
     }
   },
   "Séries 24h": {
