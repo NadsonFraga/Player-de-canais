@@ -21,10 +21,41 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css?v=20260930_6">
+    <link rel="stylesheet" href="style.css?v=20261001_1">
 </head>
 
 <body>
+    <!-- Floating Glass Nav Capsule (Top Central - Nuvio Style) -->
+    <nav id="floating-nav-capsule" class="floating-nav-capsule" aria-label="Navegação Principal">
+        <button id="nav-tab-tv" class="nav-capsule-item active" data-view="tv" aria-label="Aba Canais de TV">
+            <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                <polyline points="17 2 12 7 7 2"></polyline>
+            </svg>
+            <span>Canais</span>
+        </button>
+        <button id="nav-tab-movies" class="nav-capsule-item" data-view="movies" aria-label="Aba Filmes sob Demanda">
+            <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                <line x1="7" y1="2" x2="7" y2="22"></line>
+                <line x1="17" y1="2" x2="17" y2="22"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <line x1="2" y1="7" x2="7" y2="7"></line>
+                <line x1="2" y1="17" x2="7" y2="17"></line>
+                <line x1="17" y1="17" x2="22" y2="17"></line>
+                <line x1="17" y1="7" x2="22" y2="7"></line>
+            </svg>
+            <span>Filmes</span>
+        </button>
+        <button id="nav-tab-sports" class="nav-capsule-item" data-view="sports" aria-label="Aba Jogos de Futebol">
+            <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="12 6 16.5 9.5 15 14.5 9 14.5 7.5 9.5 12 6"></polygon>
+            </svg>
+            <span>Futebol</span>
+            <span class="nav-capsule-badge">Em Breve</span>
+        </button>
+    </nav>
     <!-- Mobile Top Navigation Bar -->
     <header class="mobile-header">
         <button id="btn-toggle-menu" class="btn-icon" aria-label="Abrir Menu">
@@ -40,21 +71,13 @@
             </div>
             <span class="brand-title">Tvzinha <span>Online</span></span>
         </div>
-        <div class="mobile-header-right">
-            <button id="btn-mobile-adblock" class="btn-header-adblock" title="Bloqueador de Anúncios / DNS" aria-label="Aviso e configuração de Bloqueador de Anúncios">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    <polyline points="9 12 11 14 15 10"></polyline>
-                </svg>
-                <span>Sem Anúncios</span>
-            </button>
-        </div>
     </header>
 
     <!-- Overlay Backdrop for Mobile Menu -->
     <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
-    <div class="app-layout">
+    <!-- View 1: TV Channels Application Layout -->
+    <div class="app-layout" id="view-tv">
         <!-- Sidebar Navigation -->
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
@@ -156,8 +179,8 @@
                                     </svg>
                                 </span>
                                 <div>
-                                    <h3 id="matches-section-title">Próximos Jogos</h3>
-                                    <span class="section-hint" id="matches-section-hint">Agenda atualizada dos próximos confrontos (via ge.globo)</span>
+                                    <h3 id="matches-section-title">Próximos Jogos de Futebol</h3>
+                                    <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos de futebol (via ge.globo)</span>
                                 </div>
                             </div>
                             <div class="matches-heading-right" id="matches-heading-right">
@@ -224,6 +247,323 @@
         </main>
     </div>
 
+    <!-- View 2: Movies Catalog View (Nuvio Cinema Style) -->
+    <main id="view-movies" class="view-movies hidden" aria-label="Catálogo de Filmes">
+        <!-- Spotlight Search Bar -->
+        <header class="movies-spotlight-header">
+            <div class="spotlight-search-container">
+                <svg class="spotlight-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="movies-search-input" class="spotlight-input" placeholder="Buscar filmes por título, gênero..." autocomplete="off">
+                <button id="btn-clear-movie-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
+                <button id="btn-toggle-movie-filters" class="spotlight-filter-btn" aria-label="Abrir Filtros Avançados" title="Filtros Avançados">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Advanced Filters Drawer (Genres, Timeline, Sort) -->
+            <div id="movies-filters-drawer" class="movies-filters-drawer hidden">
+                <div class="filter-group">
+                    <span class="filter-group-label">Gênero</span>
+                    <div class="filter-pills-row" id="filter-genres-pills">
+                        <button class="filter-chip active" data-genre="">Todos</button>
+                        <button class="filter-chip" data-genre="28">Ação</button>
+                        <button class="filter-chip" data-genre="27">Terror</button>
+                        <button class="filter-chip" data-genre="878">Ficção Científica</button>
+                        <button class="filter-chip" data-genre="35">Comédia</button>
+                        <button class="filter-chip" data-genre="18">Drama</button>
+                        <button class="filter-chip" data-genre="53">Suspense</button>
+                        <button class="filter-chip" data-genre="16">Animação</button>
+                        <button class="filter-chip" data-genre="10749">Romance</button>
+                        <button class="filter-chip" data-genre="99">Documentário</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-group-label">Época</span>
+                    <div class="filter-pills-row" id="filter-timeline-pills">
+                        <button class="filter-chip active" data-year-range="">Todas</button>
+                        <button class="filter-chip" data-year-range="2020-2026">2020–2026</button>
+                        <button class="filter-chip" data-year-range="2010-2019">Anos 2010</button>
+                        <button class="filter-chip" data-year-range="2000-2009">Anos 2000</button>
+                        <button class="filter-chip" data-year-range="1990-1999">Anos 90</button>
+                        <button class="filter-chip" data-year-range="1980-1989">Anos 80</button>
+                        <button class="filter-chip" data-year-range="1900-1979">Clássicos (&lt;1980)</button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-group-label">Ordenar</span>
+                    <div class="filter-pills-row" id="filter-sort-pills">
+                        <button class="filter-chip active" data-sort="popularity.desc">Mais Populares</button>
+                        <button class="filter-chip" data-sort="vote_average.desc">Melhor Avaliados</button>
+                        <button class="filter-chip" data-sort="primary_release_date.desc">Lançamentos</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search Results Grid (dynamically toggled) -->
+        <section id="movies-search-section" class="movies-search-section hidden">
+            <div class="movies-section-header">
+                <h2 id="movies-search-title">Resultados da Busca</h2>
+                <span id="movies-search-count" class="movies-results-count"></span>
+            </div>
+            <div id="movies-search-grid" class="movies-poster-grid">
+                <!-- Search cards dynamically rendered -->
+            </div>
+            <div id="movies-search-pagination" class="movies-pagination hidden"></div>
+        </section>
+
+        <!-- Dedicated Collection Section (Directors, Studios) -->
+        <section id="movies-collection-section" class="movies-collection-section hidden">
+            <div class="movies-collection-header">
+                <button id="btn-collection-back" class="btn-cinema-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Voltar ao Catálogo</span>
+                </button>
+                <div class="collection-profile-info">
+                    <img id="collection-avatar" class="collection-avatar hidden" src="" alt="Avatar da Coleção">
+                    <div class="collection-text-group">
+                        <span id="collection-badge" class="collection-badge">Coleção Especial</span>
+                        <h2 id="collection-title" class="collection-title">Nome da Coleção</h2>
+                        <p id="collection-meta" class="collection-meta">Filmografia em Destaque</p>
+                    </div>
+                </div>
+            </div>
+            <div id="movies-collection-grid" class="movies-poster-grid">
+                <!-- Posters dynamically loaded -->
+            </div>
+            <div id="movies-collection-pagination" class="movies-pagination hidden"></div>
+        </section>
+
+        <!-- Default Discovery Feed -->
+        <div id="movies-discovery-feed" class="movies-discovery-feed">
+            <!-- Hero Showcase Banner -->
+            <section id="movies-hero" class="movies-hero">
+                <div class="movies-hero-backdrop-wrapper">
+                    <img id="movies-hero-backdrop" src="" alt="Banner do Filme em Destaque" class="movies-hero-backdrop">
+                    <div class="movies-hero-gradient-overlay"></div>
+                </div>
+                <div class="movies-hero-content">
+                    <img id="movies-hero-title-logo" src="" alt="Título do Filme" class="movies-hero-title-logo hidden">
+                    <h1 id="movies-hero-title" class="movies-hero-title">Carregando...</h1>
+                    <div class="movies-hero-meta">
+                        <span class="movies-hero-badge"><span class="cinema-sparkle">✦</span> Destaque</span>
+                        <span id="movies-hero-year" class="movies-meta-tag"></span>
+                        <span id="movies-hero-rating" class="movies-meta-tag rating"></span>
+                        <div id="movies-hero-genres" class="movies-hero-genres"></div>
+                    </div>
+                    <p id="movies-hero-overview" class="movies-hero-overview"></p>
+                    <div class="movies-hero-actions">
+                        <button id="btn-hero-watch" class="btn-cinema-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            <span>Assistir Agora</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hero Carousel Navigation Controls -->
+                <div class="movies-hero-nav">
+                    <button id="btn-hero-prev" class="btn-hero-nav-arrow" aria-label="Destaque anterior" title="Destaque anterior">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <div id="movies-hero-dots" class="hero-dots-container"></div>
+                    <button id="btn-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo destaque" title="Próximo destaque">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Quick Navigation Pills -->
+            <nav class="movies-category-pills" id="movies-category-pills" aria-label="Navegar por Seções">
+                <button class="movie-pill active" data-target="all">Todos</button>
+                <button class="movie-pill" data-target="row-trending">Populares</button>
+                <button class="movie-pill" data-target="row-releases">Lançamentos</button>
+                <button class="movie-pill" data-target="row-animation">Animações</button>
+                <button class="movie-pill" data-target="row-directors">Diretores</button>
+                <button class="movie-pill" data-target="row-studios">Estúdios</button>
+                <button class="movie-pill" data-target="row-national">Cinema Nacional</button>
+                <button class="movie-pill" data-target="row-classics">Clássicos</button>
+            </nav>
+
+            <!-- Horizontal Rows -->
+            <div id="movies-carousels-container" class="movies-carousels-container">
+                <!-- 1. Trending -->
+                <section class="movies-row-section" id="row-trending">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Populares da Semana</h2>
+                            <span class="movies-row-badge">Top Filmes</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="track-trending" aria-label="Voltar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="track-trending" aria-label="Avançar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="track-trending">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Releases -->
+                <section class="movies-row-section" id="row-releases">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Lançamentos Recentes</h2>
+                            <span class="movies-row-badge">Cinema & Streaming</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="track-releases" aria-label="Voltar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="track-releases" aria-label="Avançar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="track-releases">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Animation & Anime -->
+                <section class="movies-row-section" id="row-animation">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Mundo da Animação</h2>
+                            <span class="movies-row-badge">Longas & Animes</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="track-animation" aria-label="Voltar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="track-animation" aria-label="Avançar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="track-animation">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Masters of Cinema (Directors) -->
+                <section class="movies-row-section" id="row-directors">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Mestres da Direção</h2>
+                            <span class="movies-row-badge">Cineastas Consagrados</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="track-directors" aria-label="Voltar diretores">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="track-directors" aria-label="Avançar diretores">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track directors-track" id="track-directors">
+                            <!-- Dynamic director cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. Famous Studios & Brands -->
+                <section class="movies-row-section" id="row-studios">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Grandes Estúdios & Produtoras</h2>
+                            <span class="movies-row-badge">Universos & Casas</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="track-studios" aria-label="Voltar estúdios">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="track-studios" aria-label="Avançar estúdios">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track studios-track" id="track-studios">
+                            <!-- Dynamic studio cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. National Cinema -->
+                <section class="movies-row-section" id="row-national">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>O Melhor do Cinema Nacional</h2>
+                            <span class="movies-row-badge">Brasil</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="track-national" aria-label="Voltar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="track-national" aria-label="Avançar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="track-national">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. Classics & Cults -->
+                <section class="movies-row-section" id="row-classics">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Clássicos Imperdíveis</h2>
+                            <span class="movies-row-badge">Obras-Primas</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="track-classics" aria-label="Voltar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="track-classics" aria-label="Avançar filmes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="track-classics">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
     <!-- Team Selection Modal -->
     <div id="team-select-modal" class="team-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="team-modal-title">
         <div class="team-modal-card">
@@ -239,8 +579,8 @@
                         </svg>
                     </span>
                     <div>
-                        <h2 id="team-modal-title">Escolha seu Time do Coração</h2>
-                        <p class="team-modal-subtitle">Selecione seu clube para acompanhar os próximos confrontos</p>
+                        <h2 id="team-modal-title">Escolha seu Time de Futebol</h2>
+                        <p class="team-modal-subtitle">Selecione seu clube brasileiro para acompanhar as próximas partidas</p>
                     </div>
                 </div>
                 <button id="btn-close-team-modal" class="btn-modal-close" aria-label="Fechar janela" title="Fechar">
@@ -374,8 +714,80 @@
         </div>
     </div>
 
+    <!-- Movie Details & Server Selector Modal -->
+    <div id="movie-modal" class="movie-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="movie-modal-title">
+        <div class="movie-modal-card">
+            <button id="btn-close-movie-modal" class="btn-movie-modal-close" aria-label="Fechar janela" title="Fechar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <!-- Media / Player Area -->
+            <div class="movie-modal-media-area" id="movie-modal-media-area">
+                <div id="movie-modal-backdrop-box" class="movie-modal-backdrop-box">
+                    <img id="movie-modal-backdrop-img" src="" alt="Capa panorâmica" class="movie-modal-backdrop-img">
+                    <div class="movie-modal-backdrop-gradient"></div>
+                </div>
+                <div id="movie-modal-player-container" class="movie-modal-player-container hidden">
+                    <div class="movie-player-top-bar">
+                        <span id="movie-player-server-title" class="movie-player-server-title">Servidor 1</span>
+                        <div class="movie-player-actions">
+                            <button id="btn-reload-movie-player" class="btn-player-action-mini" title="Recarregar player">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                </svg>
+                                <span>Recarregar</span>
+                            </button>
+                            <button id="btn-close-movie-player" class="btn-player-action-mini danger" title="Fechar player e voltar aos detalhes">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span>Fechar Player</span>
+                            </button>
+                        </div>
+                    </div>
+                    <iframe id="movie-modal-iframe" class="movie-modal-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>
+                </div>
+            </div>
+
+            <!-- Modal Content & Server Options -->
+            <div class="movie-modal-body">
+                <div class="movie-modal-header-info">
+                    <h2 id="movie-modal-title" class="movie-modal-title"></h2>
+                    <div class="movie-modal-meta-row">
+                        <span id="movie-modal-year" class="movie-modal-badge"></span>
+                        <span id="movie-modal-rating" class="movie-modal-badge rating"></span>
+                        <div id="movie-modal-genres" class="movie-modal-genres"></div>
+                    </div>
+                    <p id="movie-modal-overview" class="movie-modal-overview"></p>
+                </div>
+
+                <!-- Servers Grid -->
+                <div class="movie-servers-section">
+                    <div class="movie-servers-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <span>Selecione um Servidor para Reproduzir:</span>
+                    </div>
+                    <div id="movie-servers-grid" class="movie-servers-grid">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global App Toast Notification -->
+    <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
+
     <!-- Application Script -->
-    <script src="script.js?v=20260930_5"></script>
+    <script src="script.js?v=20261001_1"></script>
 </body>
 
 </html>
