@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-30T17:14:23.699118",
+  "updatedAt": "2026-10-01T00:24:25.040899",
   "teams": {
     "athletico-pr": {
       "name": "Athletico-PR",
@@ -690,7 +690,9 @@
             "nome": "Criciúma",
             "escudo": "https://s.sde.globo.com/media/teams/2026/01/16/criciuma-2026-svg-79692.svg"
           },
-          "ondeAssistir": []
+          "ondeAssistir": [
+            "Disney+"
+          ]
         },
         {
           "id": 349336,
@@ -1340,7 +1342,9 @@
             "nome": "Náutico",
             "escudo": "https://s.sde.globo.com/media/organizations/2019/01/03/Nautico.svg"
           },
-          "ondeAssistir": []
+          "ondeAssistir": [
+            "Disney+"
+          ]
         },
         {
           "id": 349334,
@@ -1732,7 +1736,9 @@
             "nome": "Operário-PR",
             "escudo": "https://s.sde.globo.com/media/organizations/2018/12/27/Operário-PR.svg"
           },
-          "ondeAssistir": []
+          "ondeAssistir": [
+            "Disney+"
+          ]
         },
         {
           "id": 349332,
