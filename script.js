@@ -730,6 +730,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 statusBadgeHtml = `<span class="match-status-badge tomorrow">AMANHÃ</span>`;
             } else if (isFeatured) {
                 statusBadgeHtml = `<span class="match-status-badge featured">${countdownBadge || 'PRÓXIMO JOGO'}</span>`;
+            } else if (countdownBadge) {
+                statusBadgeHtml = `<span class="match-status-badge countdown">${countdownBadge}</span>`;
             }
 
             const championshipFormatted = normalizeChampionshipName(match.campeonato);
