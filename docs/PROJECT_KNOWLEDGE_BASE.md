@@ -236,24 +236,24 @@ Handles physical Back buttons on remotes (`Escape`, `Backspace`, Samsung `10009`
 
 ## 9. Design System & Styling Tokens (`style.css`)
 
-### 9.1 Theme Architecture (Obsidian Dark)
-Tvzinha uses a custom streaming dark mode inspired by Spotify, Kick, and premium IPTV applications:
+### 9.1 Theme Architecture (Unified Nuvio Monochromatic Cinema Dark)
+Tvzinha uses a unified premium monochromatic cinema design system across both Channels and Movies tabs:
 
 ```css
 :root {
-  --bg-base: #090c0b;               /* Deep obsidian background */
-  --bg-surface: #0f1412;            /* Sidebar and cards */
-  --bg-surface-elevated: #161e1a;   /* Popups, modals, inputs */
-  --bg-surface-hover: #1c2621;      /* Interactive hover surfaces */
+  --bg-base: #080808;               /* Pure obsidian background */
+  --bg-sidebar: #0e0e11;            /* Deep graphite sidebar */
+  --bg-surface: #121215;            /* Cards and elevated sections */
+  --bg-surface-elevated: #18181c;   /* Popups, modals, inputs */
+  --bg-surface-hover: #222227;      /* Interactive hover surfaces */
 
-  --accent-emerald: #10b981;        /* Primary brand accent */
-  --accent-emerald-hover: #059669;  /* Hover state */
-  --accent-emerald-glow: rgba(16, 185, 129, 0.25);
-  --accent-emerald-subtle: rgba(16, 185, 129, 0.08);
+  --primary: #ffffff;               /* Pure white primary highlights */
+  --primary-glow: rgba(255, 255, 255, 0.18);
+  --accent-gold: #fbbf24;           /* Warm amber for favorites & star badges */
 
-  --text-primary: #f0fdf4;          /* Pure light foreground */
-  --text-secondary: #94a3b8;        /* Subtitles and metadata */
-  --text-muted: #64748b;            /* Hints, borders, timestamps */
+  --text-primary: #f4f4f5;          /* Crisp high-contrast foreground */
+  --text-secondary: #a1a1aa;        /* Subtitles and metadata */
+  --text-muted: #71717a;            /* Hints, borders, timestamps */
 
   --font-heading: 'Outfit', sans-serif;
   --font-body: 'Plus Jakarta Sans', sans-serif;
@@ -321,6 +321,7 @@ The search bar queries TMDB in real time using a 320ms debounce (`/search/movie?
 2. **Never break the 24-hour AdBlock logic:** Always honor the timestamp stored in `tvzinha_adblock_ack_timestamp`.
 3. **Keep `test_get_matches.py` zero-dependency:** The GitHub Actions runner must execute it without needing `pip install`. Use Python standard library only (`urllib`, `json`, `datetime`, `re`).
 4. **Preserve TV Navigation:** Whenever adding interactive buttons, modals, or links, ensure they are focusable (`<button>`, `<a>`, `<input>` or `tabindex="0"`) so spatial D-Pad navigation does not lose focus.
-5. **Aesthetic Separation:** TV Ao Vivo uses the **Obsidian Emerald** palette; Movies catalog strictly uses the **Nuvio Monochromatic Cinema** palette (`#080808` to `#18181b` with pure white focus rings).
-6. **Language Constraints:** All conversation with the user must be in **Brazilian Portuguese (PT-BR)**. All code, variables, file names, commit messages, and documentation (`.md`) must be in **English**.
+5. **Unified Aesthetic Standards:** Both TV Ao Vivo and Movies catalog strictly adhere to the **Unified Nuvio Monochromatic Cinema** palette (`#080808` to `#18181c` with pure white focus rings and warm amber `#fbbf24` for stars/favorites).
+6. **Player Structural Preservation:** The video player DOM architecture and functionality are strictly maintained across redesigns; changes to player views are constrained strictly to surfaces, borders, and typography.
+7. **Language Constraints:** All conversation with the user must be in **Brazilian Portuguese (PT-BR)**. All code, variables, file names, commit messages, and documentation (`.md`) must be in **English**.
 

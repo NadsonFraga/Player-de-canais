@@ -1297,12 +1297,14 @@ document.addEventListener("DOMContentLoaded", () => {
     function openMobileMenu() {
         sidebar.classList.add("open");
         sidebarBackdrop.classList.add("active");
+        document.body.classList.add("sidebar-open");
         document.body.style.overflow = "hidden";
     }
 
     function closeMobileMenu() {
         sidebar.classList.remove("open");
         sidebarBackdrop.classList.remove("active");
+        document.body.classList.remove("sidebar-open");
         document.body.style.overflow = "";
     }
 
@@ -1631,6 +1633,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const playerNames = Object.keys(players);
         if (playerNames.length === 0) return;
 
+        if (currentAppView !== 'tv') {
+            switchAppView('tv');
+        }
+
         const defaultPlayerName = preferredPlayerName && players[preferredPlayerName] 
             ? preferredPlayerName 
             : playerNames[0];
@@ -1671,7 +1677,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isEmbedTv) {
             shieldToolbarHtml = `
                 <div class="player-shield-badge" title="Servidor EmbedTV (modo direto P2P)">
-                    <span class="live-dot" style="background:#10b981;"></span> EmbedTV
+                    <span class="live-dot"></span> EmbedTV
                 </div>
             `;
         } else {
@@ -1754,14 +1760,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="servers-grid" id="servers-grid">
                         <!-- Server buttons -->
-                    </div>
-                    <div class="stream-tip-note">
-                        <span style="display:inline-flex;align-items:center;">${getUiSvg('info', 16)}</span>
-                        <span>
-                            ${!isEmbedTv && adShieldEnabled 
-                                ? '🛡️ <strong>Proteção Anti-Popups Ativa:</strong> Novas guias de anúncios (ex: Superbet/apostas) são bloqueadas pelo navegador ao clicar no player.' 
-                                : '⚡ <strong>Player:</strong> Caso o canal apresente tela preta ou bloqueio, utilize o botão <strong>"Nova Aba"</strong> no topo.'}
-                        </span>
                     </div>
                 </div>
             </div>
@@ -1909,6 +1907,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         currentAppView = viewName;
         window.location.hash = viewName === 'movies' ? 'filmes' : 'canais';
+
+        // Close channels mobile sidebar if leaving tv view
+        if (viewName !== 'tv') {
+            closeMobileMenu();
+        }
 
         const viewTv = document.getElementById("view-tv");
         const viewMovies = document.getElementById("view-movies");
@@ -2854,10 +2857,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const playerContainer = document.getElementById("movie-modal-player-container");
                 const backdropBox = document.getElementById("movie-modal-backdrop-box");
                 const iframe = document.getElementById("movie-modal-iframe");
+                const modalCard = document.querySelector(".movie-modal-card");
 
                 if (iframe) iframe.src = "";
                 if (playerContainer) playerContainer.classList.add("hidden");
                 if (backdropBox) backdropBox.classList.remove("hidden");
+                if (modalCard) modalCard.classList.remove("is-playing");
                 document.querySelectorAll(".btn-movie-server").forEach(btn => btn.classList.remove("active"));
                 activeMovieServer = null;
             });
@@ -2873,9 +2878,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const playerContainer = document.getElementById("movie-modal-player-container");
         const backdropBox = document.getElementById("movie-modal-backdrop-box");
         const iframe = document.getElementById("movie-modal-iframe");
+        const modalCard = document.querySelector(".movie-modal-card");
         if (iframe) iframe.src = "";
         if (playerContainer) playerContainer.classList.add("hidden");
         if (backdropBox) backdropBox.classList.remove("hidden");
+        if (modalCard) modalCard.classList.remove("is-playing");
 
         // Fill modal content
         const backdropImg = document.getElementById("movie-modal-backdrop-img");
@@ -2929,10 +2936,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const backdropBox = document.getElementById("movie-modal-backdrop-box");
         const serverTitle = document.getElementById("movie-player-server-title");
         const iframe = document.getElementById("movie-modal-iframe");
+        const modalCard = document.querySelector(".movie-modal-card");
 
         if (serverTitle) serverTitle.textContent = server.name;
         if (backdropBox) backdropBox.classList.add("hidden");
         if (playerContainer) playerContainer.classList.remove("hidden");
+        if (modalCard) modalCard.classList.add("is-playing");
 
         const embedUrl = server.buildUrl(currentSelectedMovie.id);
         if (iframe) {
@@ -2948,8 +2957,10 @@ document.addEventListener("DOMContentLoaded", () => {
     function closeMovieDetailsModal() {
         const modal = document.getElementById("movie-modal");
         const iframe = document.getElementById("movie-modal-iframe");
+        const modalCard = document.querySelector(".movie-modal-card");
         if (iframe) iframe.src = "";
         if (modal) modal.classList.add("hidden");
+        if (modalCard) modalCard.classList.remove("is-playing");
         document.body.style.overflow = "";
         currentSelectedMovie = null;
         activeMovieServer = null;
