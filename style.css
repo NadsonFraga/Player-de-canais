@@ -1032,12 +1032,12 @@ button.hero-badge:hover,
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.28);
     border-radius: var(--radius-md);
-    color: var(--text-secondary);
-    padding: 8px 12px;
-    font-size: 0.82rem;
+    color: #34d399;
+    padding: 7px 12px;
+    font-size: 0.80rem;
     font-weight: 600;
 }
 
