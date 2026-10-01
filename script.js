@@ -639,8 +639,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // --- CASE 1: No Team Selected (Friendly Unselected State) ---
         if (!favoriteTeamId) {
-            if (headingTitle) headingTitle.textContent = "Próximos Jogos";
-            if (headingHint) headingHint.textContent = "Agenda de confrontos dos clubes brasileiros (via ge.globo)";
+            if (headingTitle) headingTitle.textContent = "Próximos Jogos de Futebol";
+            if (headingHint) headingHint.textContent = "Agenda de confrontos do futebol brasileiro (via ge.globo)";
             if (teamBadgeEl) teamBadgeEl.innerHTML = getUiSvg('calendar', 18);
             if (btnChangeTeamLabel) btnChangeTeamLabel.textContent = "Escolher Time";
             if (carouselFooter) carouselFooter.style.display = "none";
@@ -684,7 +684,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (headingTitle) headingTitle.textContent = `Próximos Jogos • ${teamData.name}`;
+        if (headingTitle) headingTitle.textContent = `Jogos de Futebol • ${teamData.name}`;
         if (headingHint) headingHint.textContent = `Agenda atualizada do ${teamData.name} (via ge.globo)`;
         if (teamBadgeEl) {
             const crestUrl = resolveClientTeamCrest(favoriteTeamId, teamData);
@@ -1228,8 +1228,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="matches-heading-left">
                             <span class="matches-team-badge" id="matches-team-badge">${getUiSvg('calendar', 18)}</span>
                             <div>
-                                <h3 id="matches-section-title">Próximos Jogos</h3>
-                                <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos (via ge.globo)</span>
+                                <h3 id="matches-section-title">Próximos Jogos de Futebol</h3>
+                                <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos de futebol (via ge.globo)</span>
                             </div>
                         </div>
                         <div class="matches-heading-right" id="matches-heading-right">
@@ -1885,9 +1885,1089 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-function setupTvRemoteNavigation() {
+    // ==========================================================================
+    // NUVIO MULTIMEDIA & SPA ROUTING MODULE
+    // ==========================================================================
+    let currentAppView = 'tv'; // 'tv' | 'movies' | 'sports'
+
+    function showToast(message, duration = 3200) {
+        const toast = document.getElementById("app-toast");
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.remove("hidden");
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.classList.add("hidden");
+        }, duration);
+    }
+
+    function switchAppView(viewName) {
+        if (viewName === 'sports') {
+            showToast("Hub Esportivo em breve! Acompanhe as transmissões na tela inicial de Canais.");
+            return;
+        }
+
+        currentAppView = viewName;
+        window.location.hash = viewName === 'movies' ? 'filmes' : 'canais';
+
+        const viewTv = document.getElementById("view-tv");
+        const viewMovies = document.getElementById("view-movies");
+        const tabTv = document.getElementById("nav-tab-tv");
+        const tabMovies = document.getElementById("nav-tab-movies");
+        const tabSports = document.getElementById("nav-tab-sports");
+
+        if (viewName === 'movies') {
+            if (viewTv) viewTv.classList.add("hidden");
+            if (viewMovies) viewMovies.classList.remove("hidden");
+            if (tabTv) tabTv.classList.remove("active");
+            if (tabMovies) tabMovies.classList.add("active");
+            if (tabSports) tabSports.classList.remove("active");
+
+            // Initialize movies view on demand
+            initMoviesView();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            // 'tv'
+            if (viewTv) viewTv.classList.remove("hidden");
+            if (viewMovies) viewMovies.classList.add("hidden");
+            if (tabTv) tabTv.classList.add("active");
+            if (tabMovies) tabMovies.classList.remove("active");
+            if (tabSports) tabSports.classList.remove("active");
+        }
+    }
+
+    function setupSpaNavigation() {
+        const tabTv = document.getElementById("nav-tab-tv");
+        const tabMovies = document.getElementById("nav-tab-movies");
+        const tabSports = document.getElementById("nav-tab-sports");
+
+        if (tabTv) tabTv.addEventListener("click", () => switchAppView('tv'));
+        if (tabMovies) tabMovies.addEventListener("click", () => switchAppView('movies'));
+        if (tabSports) tabSports.addEventListener("click", () => switchAppView('sports'));
+
+        function handleHash() {
+            const hash = (window.location.hash || '').toLowerCase();
+            if (hash === '#filmes' || hash === '#movies') {
+                switchAppView('movies');
+            } else if (hash === '#agenda' || hash === '#sports') {
+                switchAppView('sports');
+            } else {
+                switchAppView('tv');
+            }
+        }
+
+        window.addEventListener("hashchange", handleHash);
+        if (window.location.hash) {
+            handleHash();
+        }
+    }
+
+    // ==========================================================================
+    // MOVIES CATALOG & TMDB ENGINE (NUVIO CINEMA STYLE)
+    // ==========================================================================
+    const TMDB_API_KEY = '2dca580c2a14b55200e784d157207b4d';
+    const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+    const TMDB_IMG_W500 = 'https://image.tmdb.org/t/p/w500';
+    const TMDB_IMG_ORIGINAL = 'https://image.tmdb.org/t/p/original';
+    const TMDB_CACHE_KEY = 'tvzinha_movies_cache_v2';
+    const TMDB_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+    // Curated Masters of Cinema (Directors) - TMDB verified 200 OK profile photos
+    const FAMOUS_DIRECTORS = [
+        { id: 525, name: "Christopher Nolan", knownFor: "Ficção & Suspense", photo: "https://image.tmdb.org/t/p/w300/kWogkBJKzXFJSY8cZpuzanfsaFi.jpg" },
+        { id: 138, name: "Quentin Tarantino", knownFor: "Ação & Diálogos", photo: "https://image.tmdb.org/t/p/w300/1gjcpAa99FAOWGnrUvHEXXsRs7o.jpg" },
+        { id: 488, name: "Steven Spielberg", knownFor: "Aventura & Épicos", photo: "https://image.tmdb.org/t/p/w300/tZxcg19YQ3e8fJ0pOs7hjlnmmr6.jpg" },
+        { id: 1032, name: "Martin Scorsese", knownFor: "Crime & Drama", photo: "https://image.tmdb.org/t/p/w300/g3DjfKsgZQWZiw30I20hZVk1oMX.jpg" },
+        { id: 137427, name: "Denis Villeneuve", knownFor: "Ficção Científica", photo: "https://image.tmdb.org/t/p/w300/xzQYqb4nR8xT7Zdw5itbEL9K3fd.jpg" },
+        { id: 608, name: "Hayao Miyazaki", knownFor: "Animação & Fantasia", photo: "https://image.tmdb.org/t/p/w300/ouhjt9KugzhWtdEyBPipihB3ic8.jpg" },
+        { id: 2710, name: "James Cameron", knownFor: "Grandes Bilheterias", photo: "https://image.tmdb.org/t/p/w300/2Hh4Jos62luf90CCglP5K32qaWO.jpg" },
+        { id: 240, name: "Stanley Kubrick", knownFor: "Clássicos & Cults", photo: "https://image.tmdb.org/t/p/w300/yFT0VyIelI9aegZrsAwOG5iVP4v.jpg" },
+        { id: 7467, name: "David Fincher", knownFor: "Suspense Psicológico", photo: "https://image.tmdb.org/t/p/w300/tpEczFclQZeKAiCeKZZ0adRvtfz.jpg" },
+        { id: 10828, name: "Guillermo del Toro", knownFor: "Fantasia & Monstros", photo: "https://image.tmdb.org/t/p/w300/cWvt8FdPAH0j3QtLzAN1j7ZJJrr.jpg" },
+        { id: 510, name: "Tim Burton", knownFor: "Gótico & Fantasia", photo: "https://image.tmdb.org/t/p/w300/yHEHAHQpN9PfSEQx1UxZPczhcAi.jpg" },
+        { id: 291263, name: "Jordan Peele", knownFor: "Terror & Crítica", photo: "https://image.tmdb.org/t/p/w300/kFUKn5g3ebpyZ3CSZZZo2HFWRNQ.jpg" }
+    ];
+
+    // Curated Famous Studios & Universes - TMDB verified 200 OK logos
+    const FAMOUS_STUDIOS = [
+        { id: 420, name: "Marvel Studios", badge: "MCU", logo: "https://image.tmdb.org/t/p/w500/hUzeosd33nzE5MCNsZxCGEKTXaQ.png" },
+        { id: 174, name: "Warner Bros", badge: "WB & DC", logo: "https://image.tmdb.org/t/p/w500/zhD3hhtKB5qyv7ZeL4uLpNxgMVU.png" },
+        { id: 2, name: "Walt Disney", badge: "Disney", logo: "https://image.tmdb.org/t/p/w500/wdrCwmRnLFJhEoH8GSfymY85KHT.png" },
+        { id: 3, name: "Pixar", badge: "Pixar Animation", logo: "https://image.tmdb.org/t/p/w500/1TjvGVDMYsj6JBxOAkUHpPEwLf7.png" },
+        { id: 10342, name: "Studio Ghibli", badge: "Ghibli", logo: "https://image.tmdb.org/t/p/w500/uFuxPEZRUcBTEiYIxjHJq62Vr77.png" },
+        { id: 41077, name: "A24", badge: "Cinema Cult", logo: "https://image.tmdb.org/t/p/w500/1ZXsGaFPgrgS6ZZGS37AqD5uU12.png" },
+        { id: 33, name: "Universal Pictures", badge: "Universal", logo: "https://image.tmdb.org/t/p/w500/8lvHyhjr8oUKOOy2dKXoALWKdp0.png" },
+        { id: 4, name: "Paramount", badge: "Paramount", logo: "https://image.tmdb.org/t/p/w500/jay6WcMgagAklUt7i9Euwj1pzTF.png" },
+        { id: 5, name: "Columbia Pictures", badge: "Sony / Columbia", logo: "https://image.tmdb.org/t/p/w500/71BqEFAF4V3qjjMPCpLuyJFB9A.png" },
+        { id: 3172, name: "Blumhouse", badge: "Terror & Suspense", logo: "https://image.tmdb.org/t/p/w500/rzKluDcRkIwHZK2pHsiT667A2Kw.png" },
+        { id: 521, name: "DreamWorks", badge: "DreamWorks", logo: "https://image.tmdb.org/t/p/w500/3BPX5VGBov8SDqTV7wC1L1xShAS.png" }
+    ];
+
+    // Multi-server embed generators based on universal TMDB ID
+    const MOVIE_SERVERS = [
+        { id: 'superflix', name: 'Servidor 1 (SuperFlix)', buildUrl: (id) => `https://superflixapi.quest/filme/${id}` },
+        { id: 'mgeb',      name: 'Servidor 2 (MGEB - Dublado)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
+        { id: 'myembed',   name: 'Servidor 3 (MyEmbed)', buildUrl: (id) => `https://myembed.biz/filme/${id}` },
+        { id: 'vsembed',   name: 'Servidor 4 (VSEmbed - Multi-Áudio)', buildUrl: (id) => `https://vsembed.ru/embed/movie/${id}?ds_lang=pob,pt,en` },
+        { id: 'embedplay', name: 'Servidor 5 (EmbedPlay)', buildUrl: (id) => `https://www.embedplay.one/filme/${id}` },
+        { id: 'fembed',    name: 'Servidor 6 (FEmbed)', buildUrl: (id) => `https://fembed.lol/filme/e/${id}` }
+    ];
+
+    let isMoviesInitialized = false;
+    let moviesCacheData = null;
+    let currentSelectedMovie = null;
+    let activeMovieServer = null;
+    let movieSearchDebounceTimer = null;
+
+    // Advanced search filter state
+    let activeFilterGenre = '';
+    let activeFilterYearRange = '';
+    let activeFilterSort = 'popularity.desc';
+
+    async function fetchTmdbEndpoint(path) {
+        const separator = path.includes('?') ? '&' : '?';
+        const url = `${TMDB_BASE_URL}/${path}${separator}api_key=${TMDB_API_KEY}&language=pt-BR`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`TMDB HTTP error ${res.status}`);
+        return await res.json();
+    }
+
+    async function initMoviesView() {
+        if (isMoviesInitialized) return;
+        isMoviesInitialized = true;
+
+        setupMoviesSearchAndFilters();
+        setupMovieModal();
+        setupMoviesCarouselNavigation();
+
+        // Check local cache
+        try {
+            const rawCache = localStorage.getItem(TMDB_CACHE_KEY);
+            if (rawCache) {
+                const parsed = JSON.parse(rawCache);
+                if (parsed && parsed.timestamp && (Date.now() - parsed.timestamp < TMDB_CACHE_TTL_MS)) {
+                    moviesCacheData = parsed.data;
+                    renderMoviesDiscoveryFeed(moviesCacheData);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn("Falha ao ler cache de filmes:", e);
+        }
+
+        // Fetch fresh data from TMDB
+        await loadMoviesFromTmdb();
+    }
+
+    async function loadMoviesFromTmdb() {
+        showTrackSkeletons();
+        try {
+            const [trendingRes, releasesRes, animationRes, nationalRes, classicsRes] = await Promise.allSettled([
+                fetchTmdbEndpoint('trending/movie/week'),
+                fetchTmdbEndpoint('movie/now_playing'),
+                fetchTmdbEndpoint('discover/movie?with_genres=16&sort_by=popularity.desc'),
+                fetchTmdbEndpoint('discover/movie?with_origin_country=BR&sort_by=popularity.desc'),
+                fetchTmdbEndpoint('discover/movie?primary_release_date.lte=1999-12-31&vote_count.gte=1000&sort_by=vote_average.desc')
+            ]);
+
+            const trending = trendingRes.status === 'fulfilled' ? (trendingRes.value.results || []) : [];
+            const releases = releasesRes.status === 'fulfilled' ? (releasesRes.value.results || []) : [];
+            const animation = animationRes.status === 'fulfilled' ? (animationRes.value.results || []) : [];
+            const national = nationalRes.status === 'fulfilled' ? (nationalRes.value.results || []) : [];
+            const classics = classicsRes.status === 'fulfilled' ? (classicsRes.value.results || []) : [];
+
+            moviesCacheData = { trending, releases, animation, national, classics };
+
+            // Save to cache
+            try {
+                localStorage.setItem(TMDB_CACHE_KEY, JSON.stringify({
+                    timestamp: Date.now(),
+                    data: moviesCacheData
+                }));
+            } catch (e) {
+                console.warn("Falha ao salvar cache de filmes:", e);
+            }
+
+            renderMoviesDiscoveryFeed(moviesCacheData);
+        } catch (err) {
+            console.error("Erro ao carregar catálogo de filmes:", err);
+        }
+    }
+
+    function showTrackSkeletons() {
+        const tracks = ['track-trending', 'track-releases', 'track-animation', 'track-directors', 'track-studios', 'track-national', 'track-classics'];
+        tracks.forEach(trackId => {
+            const track = document.getElementById(trackId);
+            if (!track) return;
+            track.innerHTML = Array.from({ length: 6 }).map(() => `
+                <div class="movie-poster-card" style="opacity: 0.4; pointer-events: none;">
+                    <div style="width: 100%; height: 100%; background: #27272a; animation: pulse 1.8s infinite;"></div>
+                </div>
+            `).join('');
+        });
+    }
+
+    function createMovieCardElement(movie) {
+        const card = document.createElement("div");
+        card.className = "movie-poster-card";
+        card.tabIndex = 0;
+        card.dataset.movieId = movie.id;
+        card.setAttribute("role", "button");
+        card.setAttribute("aria-label", `${movie.title} (${(movie.release_date || '').substring(0, 4)})`);
+
+        const posterUrl = movie.poster_path
+            ? `${TMDB_IMG_W500}${movie.poster_path}`
+            : 'logos/fav/icon-detailed.svg';
+
+        const releaseYear = (movie.release_date || '').substring(0, 4) || 'N/A';
+        const rating = movie.vote_average ? movie.vote_average.toFixed(1) : '—';
+
+        card.innerHTML = `
+            <img class="movie-poster-img" src="${posterUrl}" alt="${movie.title}" loading="lazy" onerror="this.src='logos/fav/icon-detailed.svg'">
+            <div class="movie-poster-overlay">
+                <h4 class="movie-card-title" title="${movie.title}">${movie.title}</h4>
+                <div class="movie-card-meta">
+                    <span>${releaseYear}</span>
+                    <span class="movie-card-rating">★ ${rating}</span>
+                </div>
+            </div>
+        `;
+
+        card.addEventListener("click", () => openMovieDetailsModal(movie));
+        card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openMovieDetailsModal(movie);
+            }
+        });
+
+        return card;
+    }
+
+    const TMDB_GENRES = {
+        28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
+        99: "Documentário", 18: "Drama", 10751: "Família", 14: "Fantasia",
+        36: "História", 27: "Terror", 10402: "Música", 9648: "Mistério",
+        10749: "Romance", 878: "Ficção Científica", 10770: "Cinema TV",
+        53: "Thriller", 10752: "Guerra", 37: "Faroeste"
+    };
+
+    let heroMoviesList = [];
+    let currentHeroIndex = 0;
+    let heroAutoRotateTimer = null;
+
+    function renderMoviesDiscoveryFeed(data) {
+        if (!data) return;
+
+        // 1. Setup Hero Showcase Carousel (3 to 5 top trending movies with backdrops)
+        const candidates = (data.trending || []).filter(m => m.backdrop_path);
+        heroMoviesList = candidates.length >= 3 ? candidates.slice(0, 5) : (data.trending || []).slice(0, 5);
+
+        if (heroMoviesList.length > 0) {
+            currentHeroIndex = 0;
+            initHeroCarousel(heroMoviesList);
+        }
+
+        // 2. Render each curated track
+        populateTrack('track-trending', data.trending);
+        populateTrack('track-releases', data.releases);
+        populateTrack('track-animation', data.animation);
+        populateDirectorsTrack('track-directors', FAMOUS_DIRECTORS);
+        populateStudiosTrack('track-studios', FAMOUS_STUDIOS);
+        populateTrack('track-national', data.national);
+        populateTrack('track-classics', data.classics);
+    }
+
+    function initHeroCarousel(movies) {
+        const dotsContainer = document.getElementById("movies-hero-dots");
+        const btnPrev = document.getElementById("btn-hero-prev");
+        const btnNext = document.getElementById("btn-hero-next");
+        const heroSection = document.getElementById("movies-hero");
+
+        // Concurrent pre-fetch and pre-load of all hero movie logos and backdrops
+        movies.forEach(movie => {
+            if (movie.backdrop_path) {
+                const preBackdrop = new Image();
+                preBackdrop.src = `${TMDB_IMG_ORIGINAL}${movie.backdrop_path}`;
+            }
+
+            if (!movie.logo_url && !movie.has_no_logo) {
+                fetchTmdbEndpoint(`movie/${movie.id}/images?include_image_language=pt,en,null`).then(imgData => {
+                    if (imgData && imgData.logos && imgData.logos.length > 0) {
+                        const ptLogo = imgData.logos.find(l => l.iso_639_1 === 'pt');
+                        const enLogo = imgData.logos.find(l => l.iso_639_1 === 'en');
+                        const chosenLogo = ptLogo || enLogo || imgData.logos[0];
+                        if (chosenLogo && chosenLogo.file_path) {
+                            const logoUrl = `${TMDB_IMG_W500}${chosenLogo.file_path}`;
+                            movie.logo_url = logoUrl;
+                            const preImg = new Image();
+                            preImg.src = logoUrl;
+                            preImg.onload = () => {
+                                movie.logo_loaded = true;
+                                // If this movie is currently displayed, smoothly upgrade it
+                                if (heroMoviesList[currentHeroIndex] && heroMoviesList[currentHeroIndex].id === movie.id) {
+                                    const logoEl = document.getElementById("movies-hero-title-logo");
+                                    const titleEl = document.getElementById("movies-hero-title");
+                                    if (logoEl && titleEl) {
+                                        logoEl.src = movie.logo_url;
+                                        logoEl.classList.remove("hidden");
+                                        titleEl.classList.add("hidden");
+                                    }
+                                }
+                            };
+                        } else {
+                            movie.has_no_logo = true;
+                        }
+                    } else {
+                        movie.has_no_logo = true;
+                    }
+                }).catch(() => {
+                    movie.has_no_logo = true;
+                });
+            }
+        });
+
+        if (dotsContainer) {
+            dotsContainer.innerHTML = "";
+            movies.forEach((m, idx) => {
+                const dot = document.createElement("button");
+                dot.className = `hero-dot ${idx === 0 ? 'active' : ''}`;
+                dot.setAttribute("aria-label", `Destaque ${idx + 1}: ${m.title}`);
+                dot.addEventListener("click", () => goToHeroSlide(idx));
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        if (btnPrev) {
+            btnPrev.onclick = () => {
+                const nextIndex = (currentHeroIndex - 1 + movies.length) % movies.length;
+                goToHeroSlide(nextIndex);
+            };
+        }
+
+        if (btnNext) {
+            btnNext.onclick = () => {
+                const nextIndex = (currentHeroIndex + 1) % movies.length;
+                goToHeroSlide(nextIndex);
+            };
+        }
+
+        renderHeroBanner(movies[0]);
+        startHeroAutoRotate();
+
+        if (heroSection) {
+            heroSection.onmouseenter = () => clearInterval(heroAutoRotateTimer);
+            heroSection.onmouseleave = () => startHeroAutoRotate();
+        }
+    }
+
+    function startHeroAutoRotate() {
+        clearInterval(heroAutoRotateTimer);
+        if (heroMoviesList.length <= 1) return;
+        heroAutoRotateTimer = setInterval(() => {
+            const nextIndex = (currentHeroIndex + 1) % heroMoviesList.length;
+            goToHeroSlide(nextIndex);
+        }, 7500);
+    }
+
+    function goToHeroSlide(index) {
+        if (!heroMoviesList || !heroMoviesList[index]) return;
+        currentHeroIndex = index;
+        renderHeroBanner(heroMoviesList[index]);
+
+        const dots = document.querySelectorAll("#movies-hero-dots .hero-dot");
+        dots.forEach((dot, idx) => {
+            dot.classList.toggle("active", idx === index);
+        });
+    }
+
+    function renderHeroBanner(movie) {
+        const backdropEl = document.getElementById("movies-hero-backdrop");
+        const titleEl = document.getElementById("movies-hero-title");
+        const logoEl = document.getElementById("movies-hero-title-logo");
+        const yearEl = document.getElementById("movies-hero-year");
+        const ratingEl = document.getElementById("movies-hero-rating");
+        const overviewEl = document.getElementById("movies-hero-overview");
+        const genresEl = document.getElementById("movies-hero-genres");
+        const btnWatch = document.getElementById("btn-hero-watch");
+
+        if (backdropEl && movie.backdrop_path) {
+            backdropEl.classList.add("fade-transition");
+            const newImg = new Image();
+            newImg.onload = () => {
+                backdropEl.src = newImg.src;
+                backdropEl.classList.remove("fade-transition");
+            };
+            newImg.src = `${TMDB_IMG_ORIGINAL}${movie.backdrop_path}`;
+        }
+
+        // Instant Zero-Delay Clearlogo Transition
+        if (movie.logo_url) {
+            // Logo already fetched & cached: render immediately with zero delay
+            if (logoEl) {
+                logoEl.src = movie.logo_url;
+                logoEl.classList.remove("hidden");
+            }
+            if (titleEl) {
+                titleEl.classList.add("hidden");
+                titleEl.textContent = movie.title || "Filme em Destaque";
+            }
+        } else if (movie.has_no_logo) {
+            // Confirmed no logo available: show clean text title
+            if (logoEl) {
+                logoEl.classList.add("hidden");
+                logoEl.src = "";
+            }
+            if (titleEl) {
+                titleEl.classList.remove("hidden");
+                titleEl.textContent = movie.title || "Filme em Destaque";
+            }
+        } else {
+            // Still fetching (very first load): show title fallback and fetch immediately
+            if (logoEl) {
+                logoEl.classList.add("hidden");
+                logoEl.src = "";
+            }
+            if (titleEl) {
+                titleEl.classList.remove("hidden");
+                titleEl.textContent = movie.title || "Filme em Destaque";
+            }
+
+            if (movie.id && logoEl) {
+                fetchTmdbEndpoint(`movie/${movie.id}/images?include_image_language=pt,en,null`).then(imgData => {
+                    if (imgData && imgData.logos && imgData.logos.length > 0) {
+                        const ptLogo = imgData.logos.find(l => l.iso_639_1 === 'pt');
+                        const enLogo = imgData.logos.find(l => l.iso_639_1 === 'en');
+                        const chosenLogo = ptLogo || enLogo || imgData.logos[0];
+                        if (chosenLogo && chosenLogo.file_path) {
+                            movie.logo_url = `${TMDB_IMG_W500}${chosenLogo.file_path}`;
+                            const img = new Image();
+                            img.src = movie.logo_url;
+                            img.onload = () => {
+                                if (heroMoviesList[currentHeroIndex] && heroMoviesList[currentHeroIndex].id === movie.id) {
+                                    logoEl.src = movie.logo_url;
+                                    logoEl.classList.remove("hidden");
+                                    if (titleEl) titleEl.classList.add("hidden");
+                                }
+                            };
+                        } else {
+                            movie.has_no_logo = true;
+                        }
+                    } else {
+                        movie.has_no_logo = true;
+                    }
+                }).catch(() => {
+                    movie.has_no_logo = true;
+                });
+            }
+        }
+
+        if (yearEl) yearEl.textContent = (movie.release_date || '').substring(0, 4) || 'Cinema';
+        if (ratingEl) ratingEl.textContent = `★ ${movie.vote_average ? movie.vote_average.toFixed(1) : '8.5'}`;
+        if (overviewEl) overviewEl.textContent = movie.overview || "Uma emocionante experiência cinematográfica disponível para assistir online agora.";
+
+        if (genresEl && movie.genre_ids && Array.isArray(movie.genre_ids)) {
+            genresEl.innerHTML = movie.genre_ids.slice(0, 3).map(id => {
+                const genreName = TMDB_GENRES[id];
+                return genreName ? `<span class="movies-genre-tag">${genreName}</span>` : '';
+            }).join('');
+        }
+
+        if (btnWatch) {
+            btnWatch.onclick = () => openMovieDetailsModal(movie, true);
+        }
+    }
+
+    function setupMoviesCarouselNavigation() {
+        document.querySelectorAll('.btn-carousel-arrow').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const trackId = btn.getAttribute('data-track');
+                const track = document.getElementById(trackId);
+                if (!track) return;
+                const isNext = btn.classList.contains('btn-next');
+                // Scroll by 2 cards smoothly: (175px card width + 16px gap) * 2 = 382px
+                const scrollDistance = 382;
+                track.scrollBy({
+                    left: isNext ? scrollDistance : -scrollDistance,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    }
+
+    function populateTrack(trackId, movies) {
+        const track = document.getElementById(trackId);
+        if (!track) return;
+        track.innerHTML = "";
+        if (!movies || movies.length === 0) {
+            track.innerHTML = `<p style="color: #71717a; font-size: 0.82rem; padding: 10px;">Nenhum título disponível no momento.</p>`;
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        movies.forEach(movie => {
+            fragment.appendChild(createMovieCardElement(movie));
+        });
+        track.appendChild(fragment);
+    }
+
+    function populateDirectorsTrack(trackId, directors) {
+        const track = document.getElementById(trackId);
+        if (!track) return;
+        track.innerHTML = "";
+        const fragment = document.createDocumentFragment();
+
+        directors.forEach(director => {
+            const card = document.createElement("div");
+            card.className = "director-card";
+            card.tabIndex = 0;
+            card.setAttribute("role", "button");
+            card.setAttribute("aria-label", `Diretor: ${director.name}`);
+
+            card.innerHTML = `
+                <img class="director-avatar" src="${director.photo}" alt="${director.name}" loading="lazy" onerror="this.src='logos/fav/icon-detailed.svg'">
+                <h4 class="director-name">${director.name}</h4>
+                <span class="director-meta">${director.knownFor}</span>
+            `;
+
+            card.addEventListener("click", () => openCollectionView('director', director));
+            card.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openCollectionView('director', director);
+                }
+            });
+
+            fragment.appendChild(card);
+        });
+
+        track.appendChild(fragment);
+    }
+
+    function populateStudiosTrack(trackId, studios) {
+        const track = document.getElementById(trackId);
+        if (!track) return;
+        track.innerHTML = "";
+        const fragment = document.createDocumentFragment();
+
+        studios.forEach(studio => {
+            const card = document.createElement("div");
+            card.className = "studio-card";
+            card.tabIndex = 0;
+            card.setAttribute("role", "button");
+            card.setAttribute("aria-label", `Estúdio: ${studio.name}`);
+
+            card.innerHTML = `
+                <div class="studio-logo-wrapper">
+                    <img class="studio-logo-img" src="${studio.logo}" alt="${studio.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                    <span class="studio-fallback-name" style="display:none;">${studio.badge || studio.name}</span>
+                </div>
+                <h4 class="studio-name">${studio.name}</h4>
+            `;
+
+            card.addEventListener("click", () => openCollectionView('studio', studio));
+            card.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openCollectionView('studio', studio);
+                }
+            });
+
+            fragment.appendChild(card);
+        });
+
+        track.appendChild(fragment);
+    }
+
+    function renderPaginationControls(containerId, currentPage, totalPages, totalResults, onPageChange) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        if (!totalPages || totalPages <= 1) {
+            container.innerHTML = "";
+            container.classList.add("hidden");
+            return;
+        }
+
+        container.classList.remove("hidden");
+        const effectiveTotalPages = Math.min(totalPages, 500); // TMDB API maximum page limit is 500
+
+        // Build pagination page number array with ellipses
+        const pageItems = [];
+        if (effectiveTotalPages <= 7) {
+            for (let i = 1; i <= effectiveTotalPages; i++) pageItems.push(i);
+        } else {
+            pageItems.push(1);
+            if (currentPage > 3) {
+                pageItems.push('...');
+            }
+            const start = Math.max(2, currentPage - 1);
+            const end = Math.min(effectiveTotalPages - 1, currentPage + 1);
+            for (let i = start; i <= end; i++) {
+                pageItems.push(i);
+            }
+            if (currentPage < effectiveTotalPages - 2) {
+                pageItems.push('...');
+            }
+            pageItems.push(effectiveTotalPages);
+        }
+
+        const pagesHtml = pageItems.map(item => {
+            if (item === '...') {
+                return `<span class="pagination-ellipsis">…</span>`;
+            }
+            const isActive = item === currentPage;
+            return `<button class="btn-page-number ${isActive ? 'active' : ''}" data-page="${item}" aria-label="Página ${item}" ${isActive ? 'aria-current="page"' : ''}>${item}</button>`;
+        }).join('');
+
+        const formattedTotal = totalResults ? totalResults.toLocaleString('pt-BR') : '';
+
+        container.innerHTML = `
+            <div class="pagination-info">
+                Página <strong class="text-white">${currentPage}</strong> de <strong class="text-white">${effectiveTotalPages}</strong>
+                ${totalResults ? ` • <span class="pagination-total-count">${formattedTotal} filmes no catálogo</span>` : ''}
+            </div>
+            <div class="pagination-nav-group">
+                <button class="btn-pagination-nav btn-page-prev" ${currentPage <= 1 ? 'disabled' : ''} aria-label="Página anterior">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>Anterior</span>
+                </button>
+                <div class="pagination-numbers-list">
+                    ${pagesHtml}
+                </div>
+                <button class="btn-pagination-nav btn-page-next" ${currentPage >= effectiveTotalPages ? 'disabled' : ''} aria-label="Próxima página">
+                    <span>Próxima</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+        `;
+
+        const btnPrev = container.querySelector(".btn-page-prev");
+        const btnNext = container.querySelector(".btn-page-next");
+
+        if (btnPrev && currentPage > 1) {
+            btnPrev.addEventListener("click", () => onPageChange(currentPage - 1));
+        }
+        if (btnNext && currentPage < effectiveTotalPages) {
+            btnNext.addEventListener("click", () => onPageChange(currentPage + 1));
+        }
+
+        container.querySelectorAll(".btn-page-number").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const targetPage = Number(btn.getAttribute("data-page"));
+                if (targetPage && targetPage !== currentPage) {
+                    onPageChange(targetPage);
+                }
+            });
+        });
+    }
+
+    async function openCollectionView(type, item, page = 1) {
+        const collectionSection = document.getElementById("movies-collection-section");
+        const discoveryFeed = document.getElementById("movies-discovery-feed");
+        const searchSection = document.getElementById("movies-search-section");
+        const grid = document.getElementById("movies-collection-grid");
+        const titleEl = document.getElementById("collection-title");
+        const metaEl = document.getElementById("collection-meta");
+        const badgeEl = document.getElementById("collection-badge");
+        const avatarEl = document.getElementById("collection-avatar");
+
+        if (!collectionSection || !grid) return;
+
+        if (searchSection) searchSection.classList.add("hidden");
+        if (discoveryFeed) discoveryFeed.classList.add("hidden");
+        collectionSection.classList.remove("hidden");
+
+        if (page === 1) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            collectionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        if (type === 'director') {
+            if (badgeEl) badgeEl.textContent = "Mestre da Direção";
+            if (titleEl) titleEl.textContent = item.name;
+            if (metaEl) metaEl.textContent = `Filmografia Selecionada • ${item.knownFor}`;
+            if (avatarEl) {
+                avatarEl.src = item.photo;
+                avatarEl.classList.remove("collection-logo");
+                avatarEl.classList.remove("hidden");
+            }
+        } else {
+            if (badgeEl) badgeEl.textContent = "Grande Estúdio & Produtora";
+            if (titleEl) titleEl.textContent = item.name;
+            if (metaEl) metaEl.textContent = `Produções & Clássicos do Estúdio (${item.badge || item.name})`;
+            if (avatarEl) {
+                if (item.logo) {
+                    avatarEl.src = item.logo;
+                    avatarEl.classList.add("collection-logo");
+                    avatarEl.classList.remove("hidden");
+                } else {
+                    avatarEl.classList.add("hidden");
+                }
+            }
+        }
+
+        grid.innerHTML = `<p style="color:#a1a1aa; grid-column:1/-1; padding:30px 0;">Carregando página ${page}...</p>`;
+
+        try {
+            const endpoint = type === 'director'
+                ? `discover/movie?with_crew=${item.id}&sort_by=vote_average.desc&vote_count.gte=30&page=${page}`
+                : `discover/movie?with_companies=${item.id}&sort_by=popularity.desc&page=${page}`;
+
+            const data = await fetchTmdbEndpoint(endpoint);
+            const results = (data.results || []).filter(m => m.poster_path);
+
+            grid.innerHTML = "";
+            if (results.length === 0) {
+                grid.innerHTML = `<p style="color:#71717a; grid-column:1/-1; padding:30px 0; text-align:center;">Nenhum título encontrado para esta coleção.</p>`;
+                renderPaginationControls("movies-collection-pagination", 1, 0, 0, () => {});
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            results.forEach(m => fragment.appendChild(createMovieCardElement(m)));
+            grid.appendChild(fragment);
+
+            // Render Pagination
+            renderPaginationControls(
+                "movies-collection-pagination",
+                data.page || page,
+                data.total_pages || 1,
+                data.total_results || results.length,
+                (newPage) => openCollectionView(type, item, newPage)
+            );
+        } catch (e) {
+            console.error("Erro ao carregar coleção:", e);
+            grid.innerHTML = `<p style="color:#f87171; grid-column:1/-1;">Erro ao carregar títulos desta coleção.</p>`;
+            renderPaginationControls("movies-collection-pagination", 1, 0, 0, () => {});
+        }
+    }
+
+    function setupMoviesSearchAndFilters() {
+        const searchInput = document.getElementById("movies-search-input");
+        const btnClear = document.getElementById("btn-clear-movie-search");
+        const btnToggleFilters = document.getElementById("btn-toggle-movie-filters");
+        const filtersDrawer = document.getElementById("movies-filters-drawer");
+        const btnCollectionBack = document.getElementById("btn-collection-back");
+        const collectionSection = document.getElementById("movies-collection-section");
+        const searchSection = document.getElementById("movies-search-section");
+        const discoveryFeed = document.getElementById("movies-discovery-feed");
+        const searchGrid = document.getElementById("movies-search-grid");
+        const searchCount = document.getElementById("movies-search-count");
+        const categoryPills = document.getElementById("movies-category-pills");
+
+        if (btnToggleFilters && filtersDrawer) {
+            btnToggleFilters.addEventListener("click", () => {
+                const isHidden = filtersDrawer.classList.toggle("hidden");
+                btnToggleFilters.classList.toggle("active", !isHidden);
+            });
+        }
+
+        if (btnCollectionBack) {
+            btnCollectionBack.addEventListener("click", () => {
+                if (collectionSection) collectionSection.classList.add("hidden");
+                if (discoveryFeed) discoveryFeed.classList.remove("hidden");
+                renderPaginationControls("movies-collection-pagination", 1, 0, 0, () => {});
+            });
+        }
+
+        // Filter chips logic (genres, timeline, sort)
+        const setupFilterPillsGroup = (containerId, onSelect) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.addEventListener("click", (e) => {
+                const chip = e.target.closest(".filter-chip");
+                if (!chip) return;
+                container.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+                chip.classList.add("active");
+                onSelect(chip);
+                executeFilteredMovieSearch(1);
+            });
+        };
+
+        setupFilterPillsGroup("filter-genres-pills", (chip) => {
+            activeFilterGenre = chip.dataset.genre || '';
+        });
+
+        setupFilterPillsGroup("filter-timeline-pills", (chip) => {
+            activeFilterYearRange = chip.dataset.yearRange || '';
+        });
+
+        setupFilterPillsGroup("filter-sort-pills", (chip) => {
+            activeFilterSort = chip.dataset.sort || 'popularity.desc';
+        });
+
+        async function executeFilteredMovieSearch(page = 1) {
+            const query = searchInput ? searchInput.value.trim() : '';
+
+            // If no query and all filters are in default state, return to discovery feed
+            if (!query && !activeFilterGenre && !activeFilterYearRange && activeFilterSort === 'popularity.desc') {
+                if (searchSection) searchSection.classList.add("hidden");
+                if (discoveryFeed) discoveryFeed.classList.remove("hidden");
+                if (collectionSection) collectionSection.classList.add("hidden");
+                renderPaginationControls("movies-search-pagination", 1, 0, 0, () => {});
+                return;
+            }
+
+            if (searchSection) searchSection.classList.remove("hidden");
+            if (discoveryFeed) discoveryFeed.classList.add("hidden");
+            if (collectionSection) collectionSection.classList.add("hidden");
+
+            if (page === 1) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                searchSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            if (searchGrid) searchGrid.innerHTML = `<p style="color:#a1a1aa; grid-column: 1/-1; padding: 20px 0;">Buscando filmes (página ${page})...</p>`;
+
+            try {
+                let endpoint = '';
+                if (query) {
+                    endpoint = `search/movie?query=${encodeURIComponent(query)}&page=${page}`;
+                } else {
+                    let params = `discover/movie?sort_by=${activeFilterSort}&page=${page}`;
+                    if (activeFilterGenre) params += `&with_genres=${activeFilterGenre}`;
+                    if (activeFilterYearRange) {
+                        const [startYear, endYear] = activeFilterYearRange.split('-');
+                        params += `&primary_release_date.gte=${startYear}-01-01&primary_release_date.lte=${endYear}-12-31`;
+                    }
+                    endpoint = params;
+                }
+
+                const data = await fetchTmdbEndpoint(endpoint);
+                let results = (data.results || []).filter(m => m.poster_path);
+
+                // If query + genre filter active, apply in-memory filter
+                if (query && activeFilterGenre) {
+                    results = results.filter(m => m.genre_ids && m.genre_ids.includes(Number(activeFilterGenre)));
+                }
+
+                const totalFormatted = (data.total_results || results.length).toLocaleString('pt-BR');
+                if (searchCount) searchCount.textContent = `${totalFormatted} filmes encontrados`;
+
+                if (searchGrid) {
+                    searchGrid.innerHTML = "";
+                    if (results.length === 0) {
+                        searchGrid.innerHTML = `<p style="color:#71717a; grid-column: 1/-1; padding: 30px 0; text-align: center;">Nenhum filme encontrado com os filtros selecionados.</p>`;
+                        renderPaginationControls("movies-search-pagination", 1, 0, 0, () => {});
+                        return;
+                    }
+                    const fragment = document.createDocumentFragment();
+                    results.forEach(m => fragment.appendChild(createMovieCardElement(m)));
+                    searchGrid.appendChild(fragment);
+                }
+
+                // Render Pagination
+                renderPaginationControls(
+                    "movies-search-pagination",
+                    data.page || page,
+                    data.total_pages || 1,
+                    data.total_results || results.length,
+                    (newPage) => executeFilteredMovieSearch(newPage)
+                );
+            } catch (err) {
+                console.error("Erro na busca de filmes:", err);
+                if (searchGrid) searchGrid.innerHTML = `<p style="color:#f87171; grid-column: 1/-1;">Erro ao consultar catálogo.</p>`;
+                renderPaginationControls("movies-search-pagination", 1, 0, 0, () => {});
+            }
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener("input", () => {
+                const query = searchInput.value.trim();
+                if (btnClear) {
+                    btnClear.classList.toggle("hidden", query.length === 0);
+                }
+
+                clearTimeout(movieSearchDebounceTimer);
+                movieSearchDebounceTimer = setTimeout(() => {
+                    executeFilteredMovieSearch();
+                }, 320);
+            });
+        }
+
+        if (btnClear) {
+            btnClear.addEventListener("click", () => {
+                if (searchInput) {
+                    searchInput.value = "";
+                    searchInput.focus();
+                }
+                btnClear.classList.add("hidden");
+                executeFilteredMovieSearch();
+            });
+        }
+
+        // Category Pills (Smooth Scroll to Row)
+        if (categoryPills) {
+            categoryPills.addEventListener("click", (e) => {
+                const pill = e.target.closest(".movie-pill");
+                if (!pill) return;
+                categoryPills.querySelectorAll(".movie-pill").forEach(p => p.classList.remove("active"));
+                pill.classList.add("active");
+
+                const target = pill.dataset.target || pill.dataset.filter;
+                if (target === "all") {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    const targetEl = document.getElementById(target.startsWith("row-") ? target : `row-${target}`);
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+        }
+    }
+
+    // Modal & Player Handlers
+    function setupMovieModal() {
+        const modal = document.getElementById("movie-modal");
+        const btnClose = document.getElementById("btn-close-movie-modal");
+        const btnReload = document.getElementById("btn-reload-movie-player");
+        const btnClosePlayer = document.getElementById("btn-close-movie-player");
+
+        if (btnClose) {
+            btnClose.addEventListener("click", () => closeMovieDetailsModal());
+        }
+
+        if (modal) {
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) closeMovieDetailsModal();
+            });
+        }
+
+        if (btnReload) {
+            btnReload.addEventListener("click", () => {
+                const iframe = document.getElementById("movie-modal-iframe");
+                if (iframe && activeMovieServer && currentSelectedMovie) {
+                    const currentSrc = iframe.src;
+                    iframe.src = "";
+                    setTimeout(() => { iframe.src = currentSrc; }, 100);
+                }
+            });
+        }
+
+        if (btnClosePlayer) {
+            btnClosePlayer.addEventListener("click", () => {
+                const playerContainer = document.getElementById("movie-modal-player-container");
+                const backdropBox = document.getElementById("movie-modal-backdrop-box");
+                const iframe = document.getElementById("movie-modal-iframe");
+
+                if (iframe) iframe.src = "";
+                if (playerContainer) playerContainer.classList.add("hidden");
+                if (backdropBox) backdropBox.classList.remove("hidden");
+                document.querySelectorAll(".btn-movie-server").forEach(btn => btn.classList.remove("active"));
+                activeMovieServer = null;
+            });
+        }
+    }
+
+    function openMovieDetailsModal(movie, autoplayFirstServer = false) {
+        currentSelectedMovie = movie;
+        const modal = document.getElementById("movie-modal");
+        if (!modal) return;
+
+        // Reset player state
+        const playerContainer = document.getElementById("movie-modal-player-container");
+        const backdropBox = document.getElementById("movie-modal-backdrop-box");
+        const iframe = document.getElementById("movie-modal-iframe");
+        if (iframe) iframe.src = "";
+        if (playerContainer) playerContainer.classList.add("hidden");
+        if (backdropBox) backdropBox.classList.remove("hidden");
+
+        // Fill modal content
+        const backdropImg = document.getElementById("movie-modal-backdrop-img");
+        const titleEl = document.getElementById("movie-modal-title");
+        const yearEl = document.getElementById("movie-modal-year");
+        const ratingEl = document.getElementById("movie-modal-rating");
+        const overviewEl = document.getElementById("movie-modal-overview");
+
+        const backdropUrl = movie.backdrop_path
+            ? `${TMDB_IMG_ORIGINAL}${movie.backdrop_path}`
+            : (movie.poster_path ? `${TMDB_IMG_W500}${movie.poster_path}` : '');
+
+        if (backdropImg) backdropImg.src = backdropUrl;
+        if (titleEl) titleEl.textContent = movie.title;
+        if (yearEl) yearEl.textContent = (movie.release_date || '').substring(0, 4) || 'Cinema';
+        if (ratingEl) ratingEl.textContent = `★ ${movie.vote_average ? movie.vote_average.toFixed(1) : '8.0'}`;
+        if (overviewEl) overviewEl.textContent = movie.overview || "Sinopse não disponível em português.";
+
+        // Populate server buttons
+        const serversGrid = document.getElementById("movie-servers-grid");
+        if (serversGrid) {
+            serversGrid.innerHTML = "";
+            MOVIE_SERVERS.forEach((server, idx) => {
+                const btn = document.createElement("button");
+                btn.className = "btn-movie-server";
+                btn.innerHTML = `
+                    <span>${server.name}</span>
+                    <span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.8;">▶ Reproduzir</span>
+                `;
+                btn.addEventListener("click", () => selectMovieServer(server, btn));
+                serversGrid.appendChild(btn);
+
+                if (autoplayFirstServer && idx === 0) {
+                    setTimeout(() => selectMovieServer(server, btn), 150);
+                }
+            });
+        }
+
+        modal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+    }
+
+    function selectMovieServer(server, buttonElement) {
+        if (!currentSelectedMovie) return;
+        activeMovieServer = server;
+
+        document.querySelectorAll(".btn-movie-server").forEach(b => b.classList.remove("active"));
+        if (buttonElement) buttonElement.classList.add("active");
+
+        const playerContainer = document.getElementById("movie-modal-player-container");
+        const backdropBox = document.getElementById("movie-modal-backdrop-box");
+        const serverTitle = document.getElementById("movie-player-server-title");
+        const iframe = document.getElementById("movie-modal-iframe");
+
+        if (serverTitle) serverTitle.textContent = server.name;
+        if (backdropBox) backdropBox.classList.add("hidden");
+        if (playerContainer) playerContainer.classList.remove("hidden");
+
+        const embedUrl = server.buildUrl(currentSelectedMovie.id);
+        if (iframe) {
+            iframe.src = embedUrl;
+        }
+
+        // Smooth scroll to player on mobile
+        if (window.innerWidth <= 768) {
+            playerContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function closeMovieDetailsModal() {
+        const modal = document.getElementById("movie-modal");
+        const iframe = document.getElementById("movie-modal-iframe");
+        if (iframe) iframe.src = "";
+        if (modal) modal.classList.add("hidden");
+        document.body.style.overflow = "";
+        currentSelectedMovie = null;
+        activeMovieServer = null;
+    }
+
+    // --- 7. TV Remote & D-Pad Spatial Navigation Module ---
+    function setupTvRemoteNavigation() {
         function getFocusableElements() {
             const selector = [
+                '#floating-nav-capsule .nav-capsule-item',
+                '#movies-search-input',
+                '#btn-hero-watch',
+                '#btn-hero-info',
+                '#movies-category-pills .movie-pill',
+                '.movie-poster-card',
+                '#btn-close-movie-modal',
+                '.btn-movie-server',
+                '.btn-player-action-mini',
                 '#filter-pills .pill',
                 '#quick-grid .quick-card',
                 '#btn-change-team',
@@ -1974,11 +3054,32 @@ function setupTvRemoteNavigation() {
             const key = e.key;
             const code = e.keyCode;
 
+            // If user is actively typing in an input or textarea, preserve all native editing (Backspace, Delete, arrows, typing)
+            const isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+            if (isTyping) {
+                if (key === 'Escape') {
+                    document.activeElement.blur();
+                }
+                return;
+            }
+
             // Handle Back / Return keys (Samsung 10009, webOS 461, Android 4, Esc 27, Backspace 8)
             const isBackKey = key === 'Escape' || key === 'Backspace' || code === 27 || code === 8 || code === 10009 || code === 461 || code === 4;
 
             if (isBackKey) {
-                if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+
+                // If movie modal is open, back key closes it
+                const movieModal = document.getElementById("movie-modal");
+                if (movieModal && !movieModal.classList.contains("hidden")) {
+                    e.preventDefault();
+                    closeMovieDetailsModal();
+                    return;
+                }
+
+                // If in movies view and no modal, back key returns to TV view
+                if (currentAppView === 'movies') {
+                    e.preventDefault();
+                    switchAppView('tv');
                     return;
                 }
 
@@ -2018,7 +3119,10 @@ function setupTvRemoteNavigation() {
 
                 if (!currentEl || currentEl === document.body || !focusables.includes(currentEl)) {
                     e.preventDefault();
-                    if (activeChannel) {
+                    if (currentAppView === 'movies') {
+                        const defaultMovieEl = document.getElementById('btn-hero-watch') || document.querySelector('.movie-poster-card') || focusables[0];
+                        if (defaultMovieEl) defaultMovieEl.focus();
+                    } else if (activeChannel) {
                         const defaultPlayerBtn = document.querySelector('.btn-server-option.active') || document.querySelector('.btn-server-option') || document.getElementById('btn-fullscreen-player');
                         if (defaultPlayerBtn) defaultPlayerBtn.focus();
                         else focusables[0].focus();
@@ -2041,6 +3145,7 @@ function setupTvRemoteNavigation() {
 
     // --- Initialize ---
     initApp();
+    setupSpaNavigation();
     setupTvRemoteNavigation();
     checkAdblockNoticeStatus();
 });

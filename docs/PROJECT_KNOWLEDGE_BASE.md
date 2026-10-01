@@ -206,9 +206,8 @@ External embeds frequently insert aggressive pop-unders and redirection scripts.
 
 ### 7.3 Permanent UI Triggers
 Users can reopen the instructions anytime using:
-1. **Mobile Header:** Top-right emerald pill button (`#btn-mobile-adblock`) with shield icon.
+1. **Sidebar Filter Pills:** First pill (`#btn-sidebar-adblock`) positioned before "Todos" in the channels drawer.
 2. **Desktop Home Hero:** `#btn-hero-adblock` placed prominently on the welcome screen.
-3. **Sidebar Filter Pills:** First pill (`#btn-sidebar-adblock`) positioned before "Todos".
 
 ---
 
@@ -265,25 +264,63 @@ Tvzinha uses a custom streaming dark mode inspired by Spotify, Kick, and premium
 * Channel logos and team crests use fixed dimension wrappers (`.duel-badge-wrapper`, `.channel-logo-img-wrapper`).
 * Skeleton loaders (`.skeleton-wrapper`, `.skeleton-match-card`) preserve layout during data fetches.
 
+### 9.3 Mobile Responsive Architecture (`max-width: 768px`)
+* **Header & Floating Capsule:** The floating navigation capsule (`.floating-nav-capsule`) is pinned at the top center with `top: 9px; z-index: 1100`, hiding `.mobile-brand` and `.nav-capsule-badge` on mobile to prevent overlapping the hamburger icon or adblock button.
+* **Hero Banner on Mobile:** Banner uses `margin-top: 0` (no negative margins) to prevent overlapping the search bar. Hero title clearlogos are capped at `max-width: 180px; max-height: 48px;`. Carousel dots (`.movies-hero-nav`) are positioned cleanly in the top-right corner.
+* **2-Column Native Movie Poster Grid:** In mobile viewports, `.movies-poster-grid` explicitly enforces `repeat(2, 1fr)` with `gap: 12px` and `100%` card width, preventing single-column card stretching and delivering a native streaming app feel (similar to Netflix/Disney+).
+* **Touch Carousels:** Desktop arrow buttons (`.btn-carousel-arrow`) and row subtitle badges (`.movies-row-badge`) are hidden on touch mobile devices to eliminate visual clutter and emphasize native swipe gestures.
+
 ---
 
-## 10. LocalStorage Keys Inventory
+## 10. Movies On-Demand Catalog & TMDB Subsystem (Nuvio Cinema Style)
+
+### 10.1 Concept & Architectural Decoupling
+Tvzinha separates Live TV from On-Demand Movies into two dedicated views toggled via the floating top navigation capsule (`.floating-nav-capsule`):
+* **`#view-tv`**: Channels accordion, multi-server TV players, and upcoming match agenda.
+* **`#view-movies`**: Monochromatic cinema interface (`#080808`), spotlight search, and dynamic carousels.
+
+### 10.2 Universal TMDB ID & Multi-Server Pipeline
+Instead of manually maintaining thousands of video links or scraping pirated sites, Tvzinha fetches movie metadata from **The Movie Database (TMDB) API** and maps the global integer `tmdb_id` directly to live embed providers:
+* **SuperFlix**: `https://superflixapi.quest/filme/{tmdb_id}`
+* **MGEB (Dublado)**: `https://mgeb.top/embed/{tmdb_id}`
+* **MyEmbed**: `https://myembed.biz/filme/{tmdb_id}`
+* **VSEmbed (Multi-Áudio / Legendado)**: `https://vsembed.ru/embed/movie/{tmdb_id}?ds_lang=pob,pt,en`
+* **EmbedPlay**: `https://www.embedplay.one/filme/{tmdb_id}`
+* **FEmbed**: `https://fembed.lol/filme/e/{tmdb_id}`
+
+### 10.3 12-Hour Client-Side Discovery Cache
+To minimize API requests and ensure 0ms instant loading, discovery carousels (*Trending*, *Now Playing*, *Marvel*, *Anime*, *Action*) are cached in `localStorage` under `tvzinha_movies_cache_v1` with a 12-hour TTL (`12 * 60 * 60 * 1000`). If expired, fresh data is fetched in the background without blocking the UI.
+
+### 10.4 Spotlight Search
+The search bar queries TMDB in real time using a 320ms debounce (`/search/movie?query=...&language=pt-BR`). When a query is active, the discovery feed is replaced with an auto-filling grid of 2:3 movie posters.
+
+---
+
+## 11. LocalStorage Keys Inventory
 
 | Key Name | Type | Description |
 | :--- | :--- | :--- |
 | `tvzinha_favorites` | JSON Array (strings) | List of favorited channel names |
 | `tvzinha_selected_team_id` | String | Active club ID for match agenda (e.g. `'vasco'`, `'flamengo'`) |
-| `tvzinha_adblock_ack_timestamp` | String (number) | Epoch timestamp in ms of last adblock disclaimer acknowledgment |
-| `tvzinha_sidebar_width` | String (pixels) | Custom resized width of the desktop sidebar |
+| `tvzinha_movies_cache_v2` | JSON Object | 12-hour cached discovery feed payload for movies catalog |
+
+### 10.3 Curated Tracks, Collections & Search Drawer
+* **Curated Rows:** Populares, Lançamentos, Animações, Mestres da Direção (`FAMOUS_DIRECTORS`), Grandes Estúdios (`FAMOUS_STUDIOS`), Cinema Nacional (`with_origin_country=BR`), and Clássicos (`vote_count.gte=1000`).
+* **Instant Hero Clearlogo Preloading:** Transparent PNG movie logos are pre-fetched and pre-loaded concurrently across all 5 hero spotlight movies during startup. When slides rotate or are clicked, cached PNGs swap with 0ms latency.
+* **Verified Directors & Studios CDN:** 12 curated directors and 11 iconic studios use verified 200 OK CDN assets. Studio cards display sleek monochromatic white logos with crisp hover animations.
+* **Dedicated Collection View (`#movies-collection-section`):** Clicking any Director or Studio navigates to an isolated, clean collection view with bio/badge and dynamic TMDB filmography without page reload.
+* **Cinematic Dynamic Pagination:** Implemented in `renderPaginationControls` for both Collections (Directors/Studios) and Advanced Search/Filters. Renders total catalog count (`total_results`), current page, previous/next buttons, and numbered page pills with ellipses (`1, 2, 3 ... 8`), ensuring strict 20 items per page in the DOM for lightweight 60 FPS performance on Smart TVs.
+* **Advanced Filters Drawer:** Spotlight search includes an expandable panel with Genre chips, Decade Timeline filters, and Sort criteria.
 
 ---
 
-## 11. Operational Guide for Future AI Agents
+## 12. Operational Guide for Future AI Agents
 
-### 11.1 Golden Rules
-1. **Never hardcode external stream sources into `index.html` or `script.js`:** All channels must live strictly in `canais.json`.
+### 12.1 Golden Rules
+1. **Never hardcode external stream sources into `index.html` or `script.js`:** All channels must live strictly in `canais.json`, and movie embeds must use the `MOVIE_SERVERS` configuration array.
 2. **Never break the 24-hour AdBlock logic:** Always honor the timestamp stored in `tvzinha_adblock_ack_timestamp`.
 3. **Keep `test_get_matches.py` zero-dependency:** The GitHub Actions runner must execute it without needing `pip install`. Use Python standard library only (`urllib`, `json`, `datetime`, `re`).
 4. **Preserve TV Navigation:** Whenever adding interactive buttons, modals, or links, ensure they are focusable (`<button>`, `<a>`, `<input>` or `tabindex="0"`) so spatial D-Pad navigation does not lose focus.
-5. **No AI Purple/Blue Gradients:** Adhere strictly to the **Obsidian Emerald** palette defined in [DESIGN_SYSTEM.md](file:///c:/Users/ratew/OneDrive/Área%20de%20Trabalho/PESSOAL/CODE/ANTIGRAVITY/PROJETO1%20-%20TV/docs/DESIGN_SYSTEM.md).
+5. **Aesthetic Separation:** TV Ao Vivo uses the **Obsidian Emerald** palette; Movies catalog strictly uses the **Nuvio Monochromatic Cinema** palette (`#080808` to `#18181b` with pure white focus rings).
 6. **Language Constraints:** All conversation with the user must be in **Brazilian Portuguese (PT-BR)**. All code, variables, file names, commit messages, and documentation (`.md`) must be in **English**.
+
