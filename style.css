@@ -391,16 +391,18 @@ body.is-resizing {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.07);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.28);
+    background: rgba(16, 185, 129, 0.08);
     font-weight: 600;
+    transition: all var(--transition-fast);
 }
 
 .pill.pill-adblock:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.35);
-    color: #ffffff;
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #6ee7b7;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
     transform: translateY(-1px);
 }
 
@@ -1576,9 +1578,9 @@ button.hero-badge:hover,
 
 /* Featured Next Match */
 .match-card.featured {
-    border-color: rgba(255, 255, 255, 0.25);
-    background: linear-gradient(145deg, rgba(24, 24, 28, 0.95), rgba(16, 16, 20, 0.98));
-    box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 255, 255, 0.08);
+    border-color: rgba(16, 185, 129, 0.45);
+    background: linear-gradient(145deg, rgba(16, 26, 20, 0.95), rgba(12, 18, 14, 0.98));
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.7), 0 0 20px rgba(16, 185, 129, 0.16);
 }
 
 .match-card.featured::before {
@@ -1588,7 +1590,12 @@ button.hero-badge:hover,
     left: 0;
     right: 0;
     height: 2px;
-    background: #ffffff;
+    background: linear-gradient(90deg, transparent, #10b981 30%, #34d399 70%, transparent);
+}
+
+.match-card.featured:hover {
+    border-color: rgba(16, 185, 129, 0.65);
+    box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.8), 0 0 24px rgba(16, 185, 129, 0.25);
 }
 
 /* Top bar: Championship + Status pill */
@@ -1629,9 +1636,9 @@ button.hero-badge:hover,
 }
 
 .match-status-badge.featured {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    color: #ffffff;
+    background: rgba(16, 185, 129, 0.16);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399;
 }
 
 .match-status-badge.today {
@@ -1640,10 +1647,11 @@ button.hero-badge:hover,
     color: #f87171;
 }
 
-.match-status-badge.tomorrow {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #e4e4e7;
+.match-status-badge.tomorrow,
+.match-status-badge.countdown {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
 }
 
 /* Match Face-off / Duel */
@@ -1765,7 +1773,7 @@ button.hero-badge:hover,
 }
 
 .match-card.featured .duel-date-hour {
-    color: #ffffff;
+    color: #34d399;
     font-weight: 700;
 }
 
@@ -1830,18 +1838,20 @@ button.hero-badge:hover,
 }
 
 .broadcast-pill.playable {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.22);
-    color: #ffffff;
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #34d399;
     cursor: pointer;
+    font-weight: 600;
 }
 
 .broadcast-pill.playable:hover {
-    background: #ffffff;
+    background: #10b981;
     color: #080808;
-    border-color: #ffffff;
+    border-color: #10b981;
     transform: scale(1.04);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+    font-weight: 700;
 }
 
 .broadcast-pill.empty {
@@ -2842,10 +2852,14 @@ textarea:focus-visible {
 }
 
 .nav-capsule-item.active[data-view="tv"] {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.28);
-    color: #ffffff;
-    box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
+    background: rgba(16, 185, 129, 0.16);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #34d399;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+}
+
+.nav-capsule-item.active[data-view="tv"] .nav-capsule-icon {
+    color: #34d399;
 }
 
 .nav-capsule-item.active[data-view="movies"] {
