@@ -2851,6 +2851,25 @@ textarea:focus-visible {
     background: rgba(255, 255, 255, 0.08);
 }
 
+.nav-capsule-item.active {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+}
+
+/* 1. Início: Cinema Pure White / Platinum */
+.nav-capsule-item.active[data-view="home"] {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.22);
+}
+
+.nav-capsule-item.active[data-view="home"] .nav-capsule-icon {
+    color: #ffffff;
+}
+
+/* 2. Canais: Broadcast Emerald Live */
 .nav-capsule-item.active[data-view="tv"] {
     background: rgba(16, 185, 129, 0.16);
     border-color: rgba(16, 185, 129, 0.45);
@@ -2862,11 +2881,16 @@ textarea:focus-visible {
     color: #34d399;
 }
 
+/* 3. Filmes: Cinema Amber Gold (matching spotlight rating & feature badges) */
 .nav-capsule-item.active[data-view="movies"] {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.28);
-    color: #ffffff;
-    box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.48);
+    color: #fbbf24;
+    box-shadow: 0 0 16px rgba(251, 191, 36, 0.25);
+}
+
+.nav-capsule-item.active[data-view="movies"] .nav-capsule-icon {
+    color: #fbbf24;
 }
 
 .nav-capsule-icon {
