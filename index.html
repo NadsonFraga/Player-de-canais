@@ -21,7 +21,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css?v=20261002_explore_system_v3">
+    <link rel="stylesheet" href="style.css?v=20261002_v4">
 </head>
 
 <body>
@@ -1664,7 +1664,7 @@
                             <line x1="3" y1="12" x2="3.01" y2="12"></line>
                             <line x1="3" y1="18" x2="3.01" y2="18"></line>
                         </svg>
-                        <span>Lista Contínua (1 a 1000+)</span>
+                        <span>Lista Contínua</span>
                     </button>
                 </div>
 
@@ -1691,11 +1691,11 @@
                     </div>
                 </div>
 
-                <!-- Panel 2: Continuous 1 to 1000+ Navigation Panel -->
+                <!-- Panel 2: Continuous Navigation Panel -->
                 <div id="series-continuous-panel" class="series-panel-content hidden">
                     <div class="continuous-search-bar">
                         <div class="continuous-input-box">
-                            <input type="number" id="series-quick-ep-search" class="continuous-ep-input" placeholder="Ir para o Ep. número..." min="1" max="2000">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" id="series-quick-ep-search" class="continuous-ep-input" placeholder="Digitar número do episódio...">
                             <button id="btn-go-to-ep" class="btn-continuous-go" type="button">Ir</button>
                         </div>
                         <div id="series-chunks-container" class="continuous-chunks-scroller">
@@ -1800,7 +1800,7 @@
     <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
 
     <!-- Application Script -->
-    <script src="script.js?v=20261002_explore_system_v3"></script>
+    <script src="script.js?v=20261002_v4"></script>
 </body>
 
 </html>
