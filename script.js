@@ -2427,7 +2427,8 @@ document.addEventListener("DOMContentLoaded", () => {
         99: "Documentário", 18: "Drama", 10751: "Família", 14: "Fantasia",
         36: "História", 27: "Terror", 10402: "Música", 9648: "Mistério",
         10749: "Romance", 878: "Ficção Científica", 10770: "Cinema TV",
-        53: "Thriller", 10752: "Guerra", 37: "Faroeste"
+        53: "Thriller", 10752: "Guerra", 37: "Faroeste",
+        10759: "Ação & Aventura", 10765: "Sci-Fi & Fantasia", 10768: "Guerra & Política"
     };
 
     let heroMoviesList = [];
@@ -3794,9 +3795,70 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // --- Dedicated Full-Screen Explore & Filter System for Séries ---
+    let activeSeriesFilterGenre = '';
+    let activeSeriesFilterYearRange = '';
+    let activeSeriesFilterSort = 'popularity.desc';
+    let seriesSearchDebounceTimer = null;
+
+    function openSeriesExploreView(autoFocus = false) {
+        const seriesExploreView = document.getElementById("series-explore-view");
+        const seriesDiscoveryFeed = document.getElementById("series-discovery-feed");
+        const exploreSearchInput = document.getElementById("series-explore-search-input");
+        const seriesSearchInput = document.getElementById("series-search-input");
+        const btnClear = document.getElementById("btn-clear-series-explore-search");
+
+        if (!seriesExploreView) return;
+
+        seriesExploreView.classList.remove("hidden");
+        if (seriesDiscoveryFeed) seriesDiscoveryFeed.classList.add("hidden");
+
+        const initialQuery = seriesSearchInput ? seriesSearchInput.value.trim() : '';
+        if (exploreSearchInput) {
+            exploreSearchInput.value = initialQuery;
+            if (btnClear) btnClear.classList.toggle("hidden", initialQuery.length === 0);
+            if (autoFocus) {
+                setTimeout(() => exploreSearchInput.focus(), 80);
+            }
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        executeFilteredSeriesSearch(1);
+    }
+
+    function closeSeriesExploreView() {
+        const seriesExploreView = document.getElementById("series-explore-view");
+        const seriesDiscoveryFeed = document.getElementById("series-discovery-feed");
+        const exploreSearchInput = document.getElementById("series-explore-search-input");
+        const seriesSearchInput = document.getElementById("series-search-input");
+        const btnClearSeriesSearch = document.getElementById("btn-clear-series-search");
+        const sortDropdownMenu = document.getElementById("series-explore-sort-dropdown-menu");
+        const btnSort = document.getElementById("btn-series-explore-sort-dropdown");
+
+        if (!seriesExploreView) return;
+
+        seriesExploreView.classList.add("hidden");
+        if (seriesDiscoveryFeed) seriesDiscoveryFeed.classList.remove("hidden");
+
+        if (seriesSearchInput && exploreSearchInput) {
+            seriesSearchInput.value = exploreSearchInput.value.trim();
+            if (btnClearSeriesSearch) {
+                btnClearSeriesSearch.classList.toggle("hidden", seriesSearchInput.value.length === 0);
+            }
+        }
+
+        if (sortDropdownMenu) {
+            sortDropdownMenu.classList.add("hidden");
+            if (btnSort) btnSort.setAttribute("aria-expanded", "false");
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function setupSeriesToolbarAndNavigation() {
         const categoryPills = document.getElementById("series-category-pills");
         const searchInput = document.getElementById("series-search-input");
+        const searchContainer = document.getElementById("series-search-container");
         const btnClear = document.getElementById("btn-clear-series-search");
 
         if (categoryPills) {
@@ -3828,80 +3890,240 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Real-Time Dedicated Series Catalog Search (Stays in Series View)
-        let seriesSearchTimer = null;
+        // Trigger open explore view on search interaction
         if (searchInput) {
-            searchInput.addEventListener("input", () => {
-                const query = searchInput.value.trim();
-                if (btnClear) btnClear.classList.toggle("hidden", query.length === 0);
-                clearTimeout(seriesSearchTimer);
-                seriesSearchTimer = setTimeout(() => {
-                    searchSeriesCatalog(query);
-                }, 300);
-            });
-            searchInput.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    clearTimeout(seriesSearchTimer);
-                    searchSeriesCatalog(searchInput.value.trim());
-                }
+            searchInput.addEventListener("focus", () => openSeriesExploreView(true));
+            searchInput.addEventListener("input", () => openSeriesExploreView(false));
+        }
+
+        if (searchContainer) {
+            searchContainer.addEventListener("click", (e) => {
+                if (e.target.closest("#btn-clear-series-search")) return;
+                openSeriesExploreView(true);
             });
         }
 
         if (btnClear) {
             btnClear.addEventListener("click", () => {
-                if (searchInput) {
-                    searchInput.value = "";
-                    searchInput.focus();
-                }
+                if (searchInput) searchInput.value = "";
                 btnClear.classList.add("hidden");
-                searchSeriesCatalog("");
             });
+        }
+
+        setupSeriesExploreModule();
+    }
+
+    function setupSeriesExploreModule() {
+        const btnBack = document.getElementById("btn-series-explore-back");
+        const exploreSearchInput = document.getElementById("series-explore-search-input");
+        const btnClearExplore = document.getElementById("btn-clear-series-explore-search");
+        const btnSort = document.getElementById("btn-series-explore-sort-dropdown");
+        const sortMenu = document.getElementById("series-explore-sort-dropdown-menu");
+        const sortLabel = document.getElementById("series-sort-current-label");
+        const genresChips = document.getElementById("series-explore-genres-chips");
+        const timelineChips = document.getElementById("series-explore-timeline-chips");
+
+        if (btnBack) btnBack.addEventListener("click", closeSeriesExploreView);
+
+        // Sort dropdown
+        if (btnSort && sortMenu) {
+            btnSort.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const isExpanded = !sortMenu.classList.contains("hidden");
+                sortMenu.classList.toggle("hidden", isExpanded);
+                btnSort.setAttribute("aria-expanded", String(!isExpanded));
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!sortMenu.contains(e.target) && !btnSort.contains(e.target)) {
+                    sortMenu.classList.add("hidden");
+                    btnSort.setAttribute("aria-expanded", "false");
+                }
+            });
+
+            sortMenu.querySelectorAll(".sort-dropdown-item").forEach(item => {
+                item.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    sortMenu.querySelectorAll(".sort-dropdown-item").forEach(it => it.classList.remove("active"));
+                    item.classList.add("active");
+                    activeSeriesFilterSort = item.dataset.sort || 'popularity.desc';
+                    if (sortLabel) {
+                        const rawText = item.querySelector(".sort-item-text")?.textContent || "Populares";
+                        sortLabel.textContent = rawText.replace("Mais ", "").replace("Melhor ", "");
+                    }
+                    sortMenu.classList.add("hidden");
+                    btnSort.setAttribute("aria-expanded", "false");
+                    executeFilteredSeriesSearch(1);
+                });
+            });
+        }
+
+        // Genre and Timeline chips
+        if (genresChips) {
+            genresChips.addEventListener("click", (e) => {
+                const chip = e.target.closest(".explore-chip");
+                if (!chip) return;
+                genresChips.querySelectorAll(".explore-chip").forEach(c => c.classList.remove("active"));
+                chip.classList.add("active");
+                activeSeriesFilterGenre = chip.dataset.genre || '';
+                executeFilteredSeriesSearch(1);
+            });
+        }
+
+        if (timelineChips) {
+            timelineChips.addEventListener("click", (e) => {
+                const chip = e.target.closest(".explore-chip");
+                if (!chip) return;
+                timelineChips.querySelectorAll(".explore-chip").forEach(c => c.classList.remove("active"));
+                chip.classList.add("active");
+                activeSeriesFilterYearRange = chip.dataset.yearRange || '';
+                executeFilteredSeriesSearch(1);
+            });
+        }
+
+        // Search input
+        if (exploreSearchInput) {
+            exploreSearchInput.addEventListener("input", () => {
+                const val = exploreSearchInput.value.trim();
+                if (btnClearExplore) btnClearExplore.classList.toggle("hidden", val.length === 0);
+                clearTimeout(seriesSearchDebounceTimer);
+                seriesSearchDebounceTimer = setTimeout(() => {
+                    executeFilteredSeriesSearch(1);
+                }, 320);
+            });
+
+            if (btnClearExplore) {
+                btnClearExplore.addEventListener("click", () => {
+                    exploreSearchInput.value = "";
+                    btnClearExplore.classList.add("hidden");
+                    exploreSearchInput.focus();
+                    executeFilteredSeriesSearch(1);
+                });
+            }
         }
     }
 
-    async function searchSeriesCatalog(query) {
-        const searchSection = document.getElementById("series-search-section");
-        const carouselsContainer = document.getElementById("series-carousels-container");
-        const resultsGrid = document.getElementById("series-search-grid");
-        const resultsTitle = document.getElementById("series-search-results-title");
-        const resultsCount = document.getElementById("series-search-results-count");
+    function updateActiveSeriesFilterTags() {
+        const container = document.getElementById("series-explore-active-tags");
+        const genresChips = document.getElementById("series-explore-genres-chips");
+        const timelineChips = document.getElementById("series-explore-timeline-chips");
+        if (!container) return;
 
-        if (!query) {
-            if (searchSection) searchSection.classList.add("hidden");
-            if (carouselsContainer) carouselsContainer.classList.remove("hidden");
+        const tags = [];
+        if (activeSeriesFilterGenre) {
+            const genreName = TMDB_GENRES[activeSeriesFilterGenre] || "Gênero";
+            tags.push({ label: `Gênero: ${genreName}`, type: 'genre' });
+        }
+        if (activeSeriesFilterYearRange) {
+            tags.push({ label: `Época: ${activeSeriesFilterYearRange}`, type: 'year' });
+        }
+
+        if (tags.length === 0) {
+            container.innerHTML = "";
             return;
         }
 
-        if (searchSection) searchSection.classList.remove("hidden");
-        if (carouselsContainer) carouselsContainer.classList.add("hidden");
+        container.innerHTML = tags.map(t => `
+            <span class="active-filter-tag">
+                <span>${t.label}</span>
+                <button type="button" class="btn-remove-tag" data-tag-type="${t.type}" aria-label="Remover filtro">&times;</button>
+            </span>
+        `).join('');
 
-        if (resultsTitle) resultsTitle.textContent = `Resultados para "${query}"`;
-        if (resultsCount) resultsCount.textContent = "Buscando séries...";
-        if (resultsGrid) resultsGrid.innerHTML = `<p style="color:#a1a1aa; padding:24px; grid-column:1/-1;">Pesquisando séries no catálogo...</p>`;
+        container.querySelectorAll(".btn-remove-tag").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const tagType = btn.dataset.tagType;
+                if (tagType === 'genre') {
+                    activeSeriesFilterGenre = '';
+                    if (genresChips) genresChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.genre === ""));
+                } else if (tagType === 'year') {
+                    activeSeriesFilterYearRange = '';
+                    if (timelineChips) timelineChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.yearRange === ""));
+                }
+                executeFilteredSeriesSearch(1);
+            });
+        });
+    }
+
+    async function executeFilteredSeriesSearch(page = 1) {
+        const exploreView = document.getElementById("series-explore-view");
+        const posterGrid = document.getElementById("series-explore-poster-grid");
+        const sectionTitle = document.getElementById("series-explore-section-title");
+        const resultsCount = document.getElementById("series-explore-results-count");
+        const searchInput = document.getElementById("series-explore-search-input");
+        const query = searchInput ? searchInput.value.trim() : '';
+
+        if (posterGrid) {
+            posterGrid.innerHTML = `<p style="color:#a1a1aa; grid-column: 1/-1; padding: 30px 0; text-align:center;">Buscando séries no catálogo (página ${page})...</p>`;
+        }
+
+        if (page === 1) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (exploreView) {
+            exploreView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        updateActiveSeriesFilterTags();
 
         try {
-            const data = await fetchTmdbEndpoint(`search/tv?query=${encodeURIComponent(query)}`);
-            const results = (data.results || []).filter(item => item.poster_path);
+            let endpoint = '';
+            const todayDate = new Date().toISOString().split('T')[0];
 
-            if (resultsCount) resultsCount.textContent = `${results.length} séries encontradas`;
+            if (query) {
+                if (sectionTitle) sectionTitle.textContent = `Resultados para "${query}"`;
+                endpoint = `search/tv?query=${encodeURIComponent(query)}&page=${page}`;
+            } else {
+                if (sectionTitle) sectionTitle.textContent = "Catálogo de Séries";
+                let params = `discover/tv?sort_by=${activeSeriesFilterSort}&page=${page}`;
+
+                if (activeSeriesFilterGenre) {
+                    params += `&with_genres=${activeSeriesFilterGenre}`;
+                }
+
+                if (activeSeriesFilterYearRange) {
+                    const parts = activeSeriesFilterYearRange.split('-');
+                    if (parts.length === 2) {
+                        params += `&first_air_date.gte=${parts[0]}-01-01&first_air_date.lte=${parts[1]}-12-31`;
+                    }
+                } else {
+                    params += `&first_air_date.lte=${todayDate}`;
+                }
+
+                endpoint = params;
+            }
+
+            const data = await fetchTmdbEndpoint(endpoint);
+            const results = (data.results || []).filter(item => item.poster_path);
+            const totalResults = data.total_results || results.length;
+            const totalPages = Math.min(data.total_pages || 1, 100);
+
+            if (resultsCount) {
+                resultsCount.textContent = `${totalResults.toLocaleString('pt-BR')} ${totalResults === 1 ? 'série encontrada' : 'séries encontradas'}`;
+            }
 
             if (results.length === 0) {
-                if (resultsGrid) resultsGrid.innerHTML = `<p style="color:#71717a; padding:40px 20px; grid-column:1/-1; text-align:center;">Nenhuma série encontrada para "${query}". Tente outro termo.</p>`;
+                if (posterGrid) {
+                    posterGrid.innerHTML = `<p style="color:#71717a; padding: 40px 20px; grid-column: 1/-1; text-align:center;">Nenhuma série encontrada para os filtros selecionados.</p>`;
+                }
+                renderPaginationControls("series-explore-pagination", 1, 0, 0, () => {});
                 return;
             }
 
-            if (resultsGrid) {
-                resultsGrid.innerHTML = "";
+            if (posterGrid) {
+                posterGrid.innerHTML = "";
                 const fragment = document.createDocumentFragment();
                 results.forEach(seriesItem => {
                     fragment.appendChild(createSeriesCardElement(seriesItem, 'tv'));
                 });
-                resultsGrid.appendChild(fragment);
+                posterGrid.appendChild(fragment);
             }
-        } catch (e) {
-            console.error("Erro na busca de séries:", e);
-            if (resultsGrid) resultsGrid.innerHTML = `<p style="color:#f87171; padding:20px; grid-column:1/-1;">Erro ao pesquisar séries.</p>`;
+
+            renderPaginationControls("series-explore-pagination", page, totalPages, totalResults, (p) => {
+                executeFilteredSeriesSearch(p);
+            });
+        } catch (err) {
+            console.error("Erro na busca de séries:", err);
+            if (posterGrid) posterGrid.innerHTML = `<p style="color:#f87171; padding: 20px; grid-column: 1/-1; text-align:center;">Erro ao carregar séries do catálogo.</p>`;
         }
     }
 
@@ -4057,9 +4279,70 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // --- Dedicated Full-Screen Explore & Filter System for Animes ---
+    let activeAnimesFilterGenre = '';
+    let activeAnimesFilterYearRange = '';
+    let activeAnimesFilterSort = 'popularity.desc';
+    let animesSearchDebounceTimer = null;
+
+    function openAnimesExploreView(autoFocus = false) {
+        const animesExploreView = document.getElementById("animes-explore-view");
+        const animesDiscoveryFeed = document.getElementById("animes-discovery-feed");
+        const exploreSearchInput = document.getElementById("animes-explore-search-input");
+        const animesSearchInput = document.getElementById("animes-search-input");
+        const btnClear = document.getElementById("btn-clear-animes-explore-search");
+
+        if (!animesExploreView) return;
+
+        animesExploreView.classList.remove("hidden");
+        if (animesDiscoveryFeed) animesDiscoveryFeed.classList.add("hidden");
+
+        const initialQuery = animesSearchInput ? animesSearchInput.value.trim() : '';
+        if (exploreSearchInput) {
+            exploreSearchInput.value = initialQuery;
+            if (btnClear) btnClear.classList.toggle("hidden", initialQuery.length === 0);
+            if (autoFocus) {
+                setTimeout(() => exploreSearchInput.focus(), 80);
+            }
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        executeFilteredAnimesSearch(1);
+    }
+
+    function closeAnimesExploreView() {
+        const animesExploreView = document.getElementById("animes-explore-view");
+        const animesDiscoveryFeed = document.getElementById("animes-discovery-feed");
+        const exploreSearchInput = document.getElementById("animes-explore-search-input");
+        const animesSearchInput = document.getElementById("animes-search-input");
+        const btnClearAnimesSearch = document.getElementById("btn-clear-animes-search");
+        const sortDropdownMenu = document.getElementById("animes-explore-sort-dropdown-menu");
+        const btnSort = document.getElementById("btn-animes-explore-sort-dropdown");
+
+        if (!animesExploreView) return;
+
+        animesExploreView.classList.add("hidden");
+        if (animesDiscoveryFeed) animesDiscoveryFeed.classList.remove("hidden");
+
+        if (animesSearchInput && exploreSearchInput) {
+            animesSearchInput.value = exploreSearchInput.value.trim();
+            if (btnClearAnimesSearch) {
+                btnClearAnimesSearch.classList.toggle("hidden", animesSearchInput.value.length === 0);
+            }
+        }
+
+        if (sortDropdownMenu) {
+            sortDropdownMenu.classList.add("hidden");
+            if (btnSort) btnSort.setAttribute("aria-expanded", "false");
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function setupAnimesToolbarAndNavigation() {
         const categoryPills = document.getElementById("animes-category-pills");
         const searchInput = document.getElementById("animes-search-input");
+        const searchContainer = document.getElementById("animes-search-container");
         const btnClear = document.getElementById("btn-clear-animes-search");
 
         if (categoryPills) {
@@ -4091,86 +4374,254 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Real-Time Dedicated Animes Catalog Search (Stays in Animes View)
-        let animesSearchTimer = null;
+        // Trigger open explore view on search interaction
         if (searchInput) {
-            searchInput.addEventListener("input", () => {
-                const query = searchInput.value.trim();
-                if (btnClear) btnClear.classList.toggle("hidden", query.length === 0);
-                clearTimeout(animesSearchTimer);
-                animesSearchTimer = setTimeout(() => {
-                    searchAnimesCatalog(query);
-                }, 300);
-            });
-            searchInput.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    clearTimeout(animesSearchTimer);
-                    searchAnimesCatalog(searchInput.value.trim());
-                }
+            searchInput.addEventListener("focus", () => openAnimesExploreView(true));
+            searchInput.addEventListener("input", () => openAnimesExploreView(false));
+        }
+
+        if (searchContainer) {
+            searchContainer.addEventListener("click", (e) => {
+                if (e.target.closest("#btn-clear-animes-search")) return;
+                openAnimesExploreView(true);
             });
         }
 
         if (btnClear) {
             btnClear.addEventListener("click", () => {
-                if (searchInput) {
-                    searchInput.value = "";
-                    searchInput.focus();
-                }
+                if (searchInput) searchInput.value = "";
                 btnClear.classList.add("hidden");
-                searchAnimesCatalog("");
             });
+        }
+
+        setupAnimesExploreModule();
+    }
+
+    function setupAnimesExploreModule() {
+        const btnBack = document.getElementById("btn-animes-explore-back");
+        const exploreSearchInput = document.getElementById("animes-explore-search-input");
+        const btnClearExplore = document.getElementById("btn-clear-animes-explore-search");
+        const btnSort = document.getElementById("btn-animes-explore-sort-dropdown");
+        const sortMenu = document.getElementById("animes-explore-sort-dropdown-menu");
+        const sortLabel = document.getElementById("animes-sort-current-label");
+        const genresChips = document.getElementById("animes-explore-genres-chips");
+        const timelineChips = document.getElementById("animes-explore-timeline-chips");
+
+        if (btnBack) btnBack.addEventListener("click", closeAnimesExploreView);
+
+        // Sort dropdown
+        if (btnSort && sortMenu) {
+            btnSort.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const isExpanded = !sortMenu.classList.contains("hidden");
+                sortMenu.classList.toggle("hidden", isExpanded);
+                btnSort.setAttribute("aria-expanded", String(!isExpanded));
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!sortMenu.contains(e.target) && !btnSort.contains(e.target)) {
+                    sortMenu.classList.add("hidden");
+                    btnSort.setAttribute("aria-expanded", "false");
+                }
+            });
+
+            sortMenu.querySelectorAll(".sort-dropdown-item").forEach(item => {
+                item.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    sortMenu.querySelectorAll(".sort-dropdown-item").forEach(it => it.classList.remove("active"));
+                    item.classList.add("active");
+                    activeAnimesFilterSort = item.dataset.sort || 'popularity.desc';
+                    if (sortLabel) {
+                        const rawText = item.querySelector(".sort-item-text")?.textContent || "Populares";
+                        sortLabel.textContent = rawText.replace("Mais ", "").replace("Melhor ", "");
+                    }
+                    sortMenu.classList.add("hidden");
+                    btnSort.setAttribute("aria-expanded", "false");
+                    executeFilteredAnimesSearch(1);
+                });
+            });
+        }
+
+        // Genre/Theme chips
+        if (genresChips) {
+            genresChips.addEventListener("click", (e) => {
+                const chip = e.target.closest(".explore-chip");
+                if (!chip) return;
+                genresChips.querySelectorAll(".explore-chip").forEach(c => c.classList.remove("active"));
+                chip.classList.add("active");
+                activeAnimesFilterGenre = chip.dataset.genre || '';
+                executeFilteredAnimesSearch(1);
+            });
+        }
+
+        // Timeline chips
+        if (timelineChips) {
+            timelineChips.addEventListener("click", (e) => {
+                const chip = e.target.closest(".explore-chip");
+                if (!chip) return;
+                timelineChips.querySelectorAll(".explore-chip").forEach(c => c.classList.remove("active"));
+                chip.classList.add("active");
+                activeAnimesFilterYearRange = chip.dataset.yearRange || '';
+                executeFilteredAnimesSearch(1);
+            });
+        }
+
+        // Search input
+        if (exploreSearchInput) {
+            exploreSearchInput.addEventListener("input", () => {
+                const val = exploreSearchInput.value.trim();
+                if (btnClearExplore) btnClearExplore.classList.toggle("hidden", val.length === 0);
+                clearTimeout(animesSearchDebounceTimer);
+                animesSearchDebounceTimer = setTimeout(() => {
+                    executeFilteredAnimesSearch(1);
+                }, 320);
+            });
+
+            if (btnClearExplore) {
+                btnClearExplore.addEventListener("click", () => {
+                    exploreSearchInput.value = "";
+                    btnClearExplore.classList.add("hidden");
+                    exploreSearchInput.focus();
+                    executeFilteredAnimesSearch(1);
+                });
+            }
         }
     }
 
-    async function searchAnimesCatalog(query) {
-        const searchSection = document.getElementById("animes-search-section");
-        const carouselsContainer = document.getElementById("animes-carousels-container");
-        const resultsGrid = document.getElementById("animes-search-grid");
-        const resultsTitle = document.getElementById("animes-search-results-title");
-        const resultsCount = document.getElementById("animes-search-results-count");
+    function updateActiveAnimesFilterTags() {
+        const container = document.getElementById("animes-explore-active-tags");
+        const genresChips = document.getElementById("animes-explore-genres-chips");
+        const timelineChips = document.getElementById("animes-explore-timeline-chips");
+        if (!container) return;
 
-        if (!query) {
-            if (searchSection) searchSection.classList.add("hidden");
-            if (carouselsContainer) carouselsContainer.classList.remove("hidden");
+        const tags = [];
+        if (activeAnimesFilterGenre) {
+            const genreName = TMDB_GENRES[activeAnimesFilterGenre] || "Tema";
+            tags.push({ label: `Tema: ${genreName}`, type: 'genre' });
+        }
+        if (activeAnimesFilterYearRange) {
+            tags.push({ label: `Época: ${activeAnimesFilterYearRange}`, type: 'year' });
+        }
+
+        if (tags.length === 0) {
+            container.innerHTML = "";
             return;
         }
 
-        if (searchSection) searchSection.classList.remove("hidden");
-        if (carouselsContainer) carouselsContainer.classList.add("hidden");
+        container.innerHTML = tags.map(t => `
+            <span class="active-filter-tag">
+                <span>${t.label}</span>
+                <button type="button" class="btn-remove-tag" data-tag-type="${t.type}" aria-label="Remover filtro">&times;</button>
+            </span>
+        `).join('');
 
-        if (resultsTitle) resultsTitle.textContent = `Resultados para "${query}"`;
-        if (resultsCount) resultsCount.textContent = "Buscando animes...";
-        if (resultsGrid) resultsGrid.innerHTML = `<p style="color:#a1a1aa; padding:24px; grid-column:1/-1;">Pesquisando animes no catálogo...</p>`;
+        container.querySelectorAll(".btn-remove-tag").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const tagType = btn.dataset.tagType;
+                if (tagType === 'genre') {
+                    activeAnimesFilterGenre = '';
+                    if (genresChips) genresChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.genre === ""));
+                } else if (tagType === 'year') {
+                    activeAnimesFilterYearRange = '';
+                    if (timelineChips) timelineChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.yearRange === ""));
+                }
+                executeFilteredAnimesSearch(1);
+            });
+        });
+    }
+
+    async function executeFilteredAnimesSearch(page = 1) {
+        const exploreView = document.getElementById("animes-explore-view");
+        const posterGrid = document.getElementById("animes-explore-poster-grid");
+        const sectionTitle = document.getElementById("animes-explore-section-title");
+        const resultsCount = document.getElementById("animes-explore-results-count");
+        const searchInput = document.getElementById("animes-explore-search-input");
+        const query = searchInput ? searchInput.value.trim() : '';
+
+        if (posterGrid) {
+            posterGrid.innerHTML = `<p style="color:#a1a1aa; grid-column: 1/-1; padding: 30px 0; text-align:center;">Buscando animes no catálogo (página ${page})...</p>`;
+        }
+
+        if (page === 1) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (exploreView) {
+            exploreView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        updateActiveAnimesFilterTags();
 
         try {
-            const data = await fetchTmdbEndpoint(`search/tv?query=${encodeURIComponent(query)}`);
-            const allResults = (data.results || []).filter(item => item.poster_path);
-            const animeResults = allResults.filter(item => {
-                const isAnim = item.genre_ids && item.genre_ids.includes(16);
-                const isJp = item.original_language === 'ja' || (item.origin_country && item.origin_country.includes('JP'));
-                return isAnim || isJp;
-            });
-            const results = (animeResults.length > 0) ? animeResults : allResults;
+            let endpoint = '';
+            const todayDate = new Date().toISOString().split('T')[0];
 
-            if (resultsCount) resultsCount.textContent = `${results.length} animes encontrados`;
+            if (query) {
+                if (sectionTitle) sectionTitle.textContent = `Resultados para "${query}"`;
+                endpoint = `search/tv?query=${encodeURIComponent(query)}&page=${page}`;
+            } else {
+                if (sectionTitle) sectionTitle.textContent = "Catálogo de Animes";
+                let genresList = ['16'];
+                if (activeAnimesFilterGenre) {
+                    genresList.push(activeAnimesFilterGenre);
+                }
+
+                let params = `discover/tv?sort_by=${activeAnimesFilterSort}&page=${page}&with_genres=${genresList.join(',')}&with_original_language=ja`;
+
+                if (activeAnimesFilterYearRange) {
+                    const parts = activeAnimesFilterYearRange.split('-');
+                    if (parts.length === 2) {
+                        params += `&first_air_date.gte=${parts[0]}-01-01&first_air_date.lte=${parts[1]}-12-31`;
+                    }
+                } else {
+                    params += `&first_air_date.lte=${todayDate}`;
+                }
+
+                endpoint = params;
+            }
+
+            const data = await fetchTmdbEndpoint(endpoint);
+            const allResults = (data.results || []).filter(item => item.poster_path);
+            let results = allResults;
+
+            // In text search mode, prioritize Japanese animations if mixed
+            if (query) {
+                const animeFiltered = allResults.filter(item => {
+                    const isAnim = item.genre_ids && item.genre_ids.includes(16);
+                    const isJp = item.original_language === 'ja' || (item.origin_country && item.origin_country.includes('JP'));
+                    return isAnim || isJp;
+                });
+                results = (animeFiltered.length > 0) ? animeFiltered : allResults;
+            }
+
+            const totalResults = data.total_results || results.length;
+            const totalPages = Math.min(data.total_pages || 1, 100);
+
+            if (resultsCount) {
+                resultsCount.textContent = `${totalResults.toLocaleString('pt-BR')} ${totalResults === 1 ? 'anime encontrado' : 'animes encontrados'}`;
+            }
 
             if (results.length === 0) {
-                if (resultsGrid) resultsGrid.innerHTML = `<p style="color:#71717a; padding:40px 20px; grid-column:1/-1; text-align:center;">Nenhum anime encontrado para "${query}". Tente outro termo.</p>`;
+                if (posterGrid) {
+                    posterGrid.innerHTML = `<p style="color:#71717a; padding: 40px 20px; grid-column: 1/-1; text-align:center;">Nenhum anime encontrado para os filtros selecionados.</p>`;
+                }
+                renderPaginationControls("animes-explore-pagination", 1, 0, 0, () => {});
                 return;
             }
 
-            if (resultsGrid) {
-                resultsGrid.innerHTML = "";
+            if (posterGrid) {
+                posterGrid.innerHTML = "";
                 const fragment = document.createDocumentFragment();
                 results.forEach(animeItem => {
                     fragment.appendChild(createSeriesCardElement(animeItem, 'anime'));
                 });
-                resultsGrid.appendChild(fragment);
+                posterGrid.appendChild(fragment);
             }
-        } catch (e) {
-            console.error("Erro na busca de animes:", e);
-            if (resultsGrid) resultsGrid.innerHTML = `<p style="color:#f87171; padding:20px; grid-column:1/-1;">Erro ao pesquisar animes.</p>`;
+
+            renderPaginationControls("animes-explore-pagination", page, totalPages, totalResults, (p) => {
+                executeFilteredAnimesSearch(p);
+            });
+        } catch (err) {
+            console.error("Erro na busca de animes:", err);
+            if (posterGrid) posterGrid.innerHTML = `<p style="color:#f87171; padding: 20px; grid-column: 1/-1; text-align:center;">Erro ao carregar animes do catálogo.</p>`;
         }
     }
 
@@ -4368,6 +4819,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
         modal.classList.remove("hidden");
         document.body.style.overflow = "hidden";
+
+        // Reset mode toggle to Arcs view by default
+        const btnModeArcs = document.getElementById("btn-mode-arcs");
+        const btnModeContinuous = document.getElementById("btn-mode-continuous");
+        const arcsPanel = document.getElementById("series-arcs-panel");
+        const continuousPanel = document.getElementById("series-continuous-panel");
+        const modalCard = modal.querySelector(".series-modal-card");
+
+        if (modalCard) {
+            modalCard.classList.toggle("theme-anime", mediaType === 'anime');
+        }
+
+        if (btnModeArcs && btnModeContinuous) {
+            btnModeArcs.classList.add("active");
+            btnModeContinuous.classList.remove("active");
+        }
+        if (arcsPanel) arcsPanel.classList.remove("hidden");
+        if (continuousPanel) continuousPanel.classList.add("hidden");
 
         // Fetch detailed series metadata (seasons, total episodes)
         try {

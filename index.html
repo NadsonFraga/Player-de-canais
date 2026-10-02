@@ -21,7 +21,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css?v=20261002_theater_fix">
+    <link rel="stylesheet" href="style.css?v=20261002_explore_system_v3">
 </head>
 
 <body>
@@ -878,17 +878,6 @@
                 </div>
             </div>
 
-            <!-- Dedicated Series Search Results Section (Stays inside Séries) -->
-            <section id="series-search-section" class="movies-search-section hidden" aria-label="Resultados da busca de séries">
-                <div class="search-section-header">
-                    <div class="search-section-title-box">
-                        <h2 id="series-search-results-title">Resultados da Busca</h2>
-                        <span id="series-search-results-count" class="search-results-count"></span>
-                    </div>
-                </div>
-                <div id="series-search-grid" class="movies-poster-grid"></div>
-            </section>
-
             <!-- Horizontal Rows for Series -->
             <div id="series-carousels-container" class="movies-carousels-container">
                 <!-- 1. Trending Series -->
@@ -1007,6 +996,109 @@
                 </section>
             </div>
         </div>
+
+        <!-- Dedicated Full-Screen Explore & Filter View for Séries -->
+        <section id="series-explore-view" class="movies-explore-view series-explore-view hidden" aria-label="Catálogo Completo e Filtros de Séries">
+            <!-- Explorer Top Navigation & Sticky Search Bar -->
+            <div class="explore-top-bar">
+                <button id="btn-series-explore-back" class="btn-cinema-secondary btn-explore-back btn-series-back" title="Voltar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Voltar</span>
+                </button>
+
+                <div class="explore-search-wrapper">
+                    <svg class="explore-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="series-explore-search-input" class="explore-search-input" placeholder="Pesquisar séries no catálogo..." autocomplete="off">
+                    <button id="btn-clear-series-explore-search" class="explore-search-clear hidden" aria-label="Limpar busca">&times;</button>
+                </div>
+            </div>
+
+            <!-- Fixed Filter Controls Bar (Series Genres and Timeline) -->
+            <div class="explore-controls-panel">
+                <!-- 1. Series Genres Filter Chips -->
+                <div class="explore-filter-row genres-row">
+                    <span class="explore-row-label">Gêneros:</span>
+                    <div class="explore-chips-group scrollable-chips" id="series-explore-genres-chips">
+                        <button class="explore-chip active" data-genre="">Todas</button>
+                        <button class="explore-chip" data-genre="10759">Ação & Aventura</button>
+                        <button class="explore-chip" data-genre="16">Animação</button>
+                        <button class="explore-chip" data-genre="35">Comédia</button>
+                        <button class="explore-chip" data-genre="80">Crime</button>
+                        <button class="explore-chip" data-genre="99">Documentário</button>
+                        <button class="explore-chip" data-genre="18">Drama</button>
+                        <button class="explore-chip" data-genre="10751">Família</button>
+                        <button class="explore-chip" data-genre="9648">Mistério</button>
+                        <button class="explore-chip" data-genre="10765">Ficção & Fantasia</button>
+                        <button class="explore-chip" data-genre="10768">Guerra & Política</button>
+                    </div>
+                </div>
+
+                <!-- 2. Timeline Filter Chips -->
+                <div class="explore-filter-row timeline-row">
+                    <span class="explore-row-label">Época:</span>
+                    <div class="explore-chips-group scrollable-chips" id="series-explore-timeline-chips">
+                        <button class="explore-chip active" data-year-range="">Todas</button>
+                        <button class="explore-chip" data-year-range="2020-2026">2020–2026</button>
+                        <button class="explore-chip" data-year-range="2010-2019">Anos 2010</button>
+                        <button class="explore-chip" data-year-range="2000-2009">Anos 2000</button>
+                        <button class="explore-chip" data-year-range="1990-1999">Anos 90</button>
+                        <button class="explore-chip" data-year-range="1980-1989">Anos 80</button>
+                        <button class="explore-chip" data-year-range="1900-1979">Clássicos (&lt;1980)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Results Status Bar -->
+            <div class="explore-status-header">
+                <div class="status-left">
+                    <h2 id="series-explore-section-title" class="explore-section-title">Catálogo de Séries</h2>
+                    <span id="series-explore-results-count" class="explore-results-count">Carregando títulos...</span>
+                </div>
+                <div id="series-explore-active-tags" class="explore-active-tags"></div>
+                <div class="status-right">
+                    <div class="explore-sort-dropdown-container" id="series-explore-sort-dropdown-container">
+                        <button type="button" id="btn-series-explore-sort-dropdown" class="explore-sort-dropdown-btn" aria-haspopup="true" aria-expanded="false" title="Opções de ordenação">
+                            <svg class="sort-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 5v14M5 19l-3-3M5 19l3-3"/>
+                                <rect x="11" y="5" width="9" height="2.5" rx="1" fill="currentColor"/>
+                                <rect x="11" y="11" width="6" height="2.5" rx="1" fill="currentColor"/>
+                                <rect x="11" y="17" width="3.5" height="2.5" rx="1" fill="currentColor"/>
+                            </svg>
+                            <span class="sort-current-label" id="series-sort-current-label">Populares</span>
+                            <svg class="sort-chevron-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div id="series-explore-sort-dropdown-menu" class="explore-sort-dropdown-menu hidden" role="menu">
+                            <button type="button" class="sort-dropdown-item active" data-sort="popularity.desc" role="menuitem">
+                                <span class="sort-item-check">✓</span>
+                                <span class="sort-item-text">Mais Populares</span>
+                            </button>
+                            <button type="button" class="sort-dropdown-item" data-sort="vote_average.desc" role="menuitem">
+                                <span class="sort-item-check">✓</span>
+                                <span class="sort-item-text">Melhor Avaliadas</span>
+                            </button>
+                            <button type="button" class="sort-dropdown-item" data-sort="first_air_date.desc" role="menuitem">
+                                <span class="sort-item-check">✓</span>
+                                <span class="sort-item-text">Lançamentos Recentes</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic 2:3 Results Poster Grid -->
+            <div id="series-explore-poster-grid" class="movies-poster-grid"></div>
+
+            <!-- Cinematic Dynamic Pagination Bar -->
+            <div id="series-explore-pagination" class="movies-pagination hidden"></div>
+        </section>
     </main>
 
     <!-- View 4: Animes Showcase & Discovery -->
@@ -1075,16 +1167,6 @@
                 </div>
             </div>
 
-            <!-- Dedicated Animes Search Results Section (Stays inside Animes) -->
-            <section id="animes-search-section" class="movies-search-section hidden" aria-label="Resultados da busca de animes">
-                <div class="search-section-header">
-                    <div class="search-section-title-box">
-                        <h2 id="animes-search-results-title">Resultados da Busca</h2>
-                        <span id="animes-search-results-count" class="search-results-count"></span>
-                    </div>
-                </div>
-                <div id="animes-search-grid" class="movies-poster-grid"></div>
-            </section>
 
             <!-- Horizontal Rows for Animes -->
             <div id="animes-carousels-container" class="movies-carousels-container">
@@ -1204,6 +1286,104 @@
                 </section>
             </div>
         </div>
+
+        <!-- Dedicated Full-Screen Explore & Filter View for Animes -->
+        <section id="animes-explore-view" class="movies-explore-view animes-explore-view hidden" aria-label="Catálogo Completo e Filtros de Animes">
+            <!-- Explorer Top Navigation & Sticky Search Bar -->
+            <div class="explore-top-bar">
+                <button id="btn-animes-explore-back" class="btn-cinema-secondary btn-explore-back btn-animes-back" title="Voltar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Voltar</span>
+                </button>
+
+                <div class="explore-search-wrapper">
+                    <svg class="explore-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="animes-explore-search-input" class="explore-search-input" placeholder="Pesquisar animes no catálogo..." autocomplete="off">
+                    <button id="btn-clear-animes-explore-search" class="explore-search-clear hidden" aria-label="Limpar busca">&times;</button>
+                </div>
+            </div>
+
+            <!-- Fixed Filter Controls Bar (Anime Genres and Timeline) -->
+            <div class="explore-controls-panel">
+                <!-- 1. Anime Themes / Genres Filter Chips -->
+                <div class="explore-filter-row genres-row">
+                    <span class="explore-row-label">Temas & Gêneros:</span>
+                    <div class="explore-chips-group scrollable-chips" id="animes-explore-genres-chips">
+                        <button class="explore-chip active" data-genre="">Todos</button>
+                        <button class="explore-chip" data-genre="10759">Shonen & Ação</button>
+                        <button class="explore-chip" data-genre="10765">Fantasia & Isekai</button>
+                        <button class="explore-chip" data-genre="35">Comédia</button>
+                        <button class="explore-chip" data-genre="18">Drama & Romance</button>
+                        <button class="explore-chip" data-genre="9648">Mistério & Suspense</button>
+                        <button class="explore-chip" data-genre="878">Sci-Fi & Mecha</button>
+                    </div>
+                </div>
+
+                <!-- 2. Timeline Filter Chips -->
+                <div class="explore-filter-row timeline-row">
+                    <span class="explore-row-label">Época:</span>
+                    <div class="explore-chips-group scrollable-chips" id="animes-explore-timeline-chips">
+                        <button class="explore-chip active" data-year-range="">Todas</button>
+                        <button class="explore-chip" data-year-range="2020-2026">2020–2026 (Modernos)</button>
+                        <button class="explore-chip" data-year-range="2010-2019">Anos 2010 (Época de Ouro)</button>
+                        <button class="explore-chip" data-year-range="2000-2009">Anos 2000 (Clássicos)</button>
+                        <button class="explore-chip" data-year-range="1990-1999">Anos 90 (Nostalgia)</button>
+                        <button class="explore-chip" data-year-range="1900-1989">Retrô (&lt;1990)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Results Status Bar -->
+            <div class="explore-status-header">
+                <div class="status-left">
+                    <h2 id="animes-explore-section-title" class="explore-section-title">Catálogo de Animes</h2>
+                    <span id="animes-explore-results-count" class="explore-results-count">Carregando títulos...</span>
+                </div>
+                <div id="animes-explore-active-tags" class="explore-active-tags"></div>
+                <div class="status-right">
+                    <div class="explore-sort-dropdown-container" id="animes-explore-sort-dropdown-container">
+                        <button type="button" id="btn-animes-explore-sort-dropdown" class="explore-sort-dropdown-btn" aria-haspopup="true" aria-expanded="false" title="Opções de ordenação">
+                            <svg class="sort-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 5v14M5 19l-3-3M5 19l3-3"/>
+                                <rect x="11" y="5" width="9" height="2.5" rx="1" fill="currentColor"/>
+                                <rect x="11" y="11" width="6" height="2.5" rx="1" fill="currentColor"/>
+                                <rect x="11" y="17" width="3.5" height="2.5" rx="1" fill="currentColor"/>
+                            </svg>
+                            <span class="sort-current-label" id="animes-sort-current-label">Populares</span>
+                            <svg class="sort-chevron-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div id="animes-explore-sort-dropdown-menu" class="explore-sort-dropdown-menu hidden" role="menu">
+                            <button type="button" class="sort-dropdown-item active" data-sort="popularity.desc" role="menuitem">
+                                <span class="sort-item-check">✓</span>
+                                <span class="sort-item-text">Mais Populares</span>
+                            </button>
+                            <button type="button" class="sort-dropdown-item" data-sort="vote_average.desc" role="menuitem">
+                                <span class="sort-item-check">✓</span>
+                                <span class="sort-item-text">Melhor Avaliados</span>
+                            </button>
+                            <button type="button" class="sort-dropdown-item" data-sort="first_air_date.desc" role="menuitem">
+                                <span class="sort-item-check">✓</span>
+                                <span class="sort-item-text">Lançamentos Recentes</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic 2:3 Results Poster Grid -->
+            <div id="animes-explore-poster-grid" class="movies-poster-grid"></div>
+
+            <!-- Cinematic Dynamic Pagination Bar -->
+            <div id="animes-explore-pagination" class="movies-pagination hidden"></div>
+        </section>
     </main>
 
     <!-- Team Selection Modal -->
@@ -1464,25 +1644,67 @@
                     <p id="series-modal-overview" class="movie-modal-overview"></p>
                 </div>
 
-                <!-- Clean Episode Selection Section -->
-                <div class="series-season-bar-clean">
-                    <div class="series-season-selector-clean">
-                        <div class="season-select-title">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-                                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-                            </svg>
-                            <span>Selecione a Temporada:</span>
-                        </div>
-                        <div class="custom-select-wrapper">
-                            <select id="series-season-select" class="series-season-select" aria-label="Selecione a Temporada"></select>
-                        </div>
-                    </div>
-                    <span id="series-season-episodes-total" class="season-episodes-count"></span>
+                <!-- Mode Switcher: Arcs vs Continuous (Essential for Long-Running Animes) -->
+                <div class="series-mode-switcher" id="series-mode-switcher">
+                    <button type="button" id="btn-mode-arcs" class="btn-mode-switch active">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span>Temporadas & Arcos</span>
+                    </button>
+                    <button type="button" id="btn-mode-continuous" class="btn-mode-switch">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                        <span>Lista Contínua (1 a 1000+)</span>
+                    </button>
                 </div>
 
-                <div id="series-episodes-grid" class="series-episodes-grid">
-                    <!-- Populated dynamically with clean episode cards -->
+                <!-- Panel 1: Seasons & Arcs Grid (Default) -->
+                <div id="series-arcs-panel" class="series-panel-content">
+                    <div class="series-season-bar-clean">
+                        <div class="series-season-selector-clean">
+                            <div class="season-select-title">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                                </svg>
+                                <span>Selecione a Temporada:</span>
+                            </div>
+                            <div class="custom-select-wrapper">
+                                <select id="series-season-select" class="series-season-select" aria-label="Selecione a Temporada"></select>
+                            </div>
+                        </div>
+                        <span id="series-season-episodes-total" class="season-episodes-count"></span>
+                    </div>
+
+                    <div id="series-episodes-grid" class="series-episodes-grid">
+                        <!-- Populated dynamically with clean episode cards -->
+                    </div>
+                </div>
+
+                <!-- Panel 2: Continuous 1 to 1000+ Navigation Panel -->
+                <div id="series-continuous-panel" class="series-panel-content hidden">
+                    <div class="continuous-search-bar">
+                        <div class="continuous-input-box">
+                            <input type="number" id="series-quick-ep-search" class="continuous-ep-input" placeholder="Ir para o Ep. número..." min="1" max="2000">
+                            <button id="btn-go-to-ep" class="btn-continuous-go" type="button">Ir</button>
+                        </div>
+                        <div id="series-chunks-container" class="continuous-chunks-scroller">
+                            <!-- Populated with batch chunks 1-50, 51-100, etc. -->
+                        </div>
+                    </div>
+                    <div id="series-continuous-grid" class="series-episodes-grid">
+                        <!-- Populated with continuous episodes -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -1578,7 +1800,7 @@
     <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
 
     <!-- Application Script -->
-    <script src="script.js?v=20261002_fix_search_and_thumbs"></script>
+    <script src="script.js?v=20261002_explore_system_v3"></script>
 </body>
 
 </html>
