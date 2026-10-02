@@ -878,6 +878,17 @@
                 </div>
             </div>
 
+            <!-- Dedicated Series Search Results Section (Stays inside Séries) -->
+            <section id="series-search-section" class="movies-search-section hidden" aria-label="Resultados da busca de séries">
+                <div class="search-section-header">
+                    <div class="search-section-title-box">
+                        <h2 id="series-search-results-title">Resultados da Busca</h2>
+                        <span id="series-search-results-count" class="search-results-count"></span>
+                    </div>
+                </div>
+                <div id="series-search-grid" class="movies-poster-grid"></div>
+            </section>
+
             <!-- Horizontal Rows for Series -->
             <div id="series-carousels-container" class="movies-carousels-container">
                 <!-- 1. Trending Series -->
@@ -1063,6 +1074,17 @@
                     <button id="btn-clear-animes-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
                 </div>
             </div>
+
+            <!-- Dedicated Animes Search Results Section (Stays inside Animes) -->
+            <section id="animes-search-section" class="movies-search-section hidden" aria-label="Resultados da busca de animes">
+                <div class="search-section-header">
+                    <div class="search-section-title-box">
+                        <h2 id="animes-search-results-title">Resultados da Busca</h2>
+                        <span id="animes-search-results-count" class="search-results-count"></span>
+                    </div>
+                </div>
+                <div id="animes-search-grid" class="movies-poster-grid"></div>
+            </section>
 
             <!-- Horizontal Rows for Animes -->
             <div id="animes-carousels-container" class="movies-carousels-container">
@@ -1556,7 +1578,7 @@
     <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
 
     <!-- Application Script -->
-    <script src="script.js?v=20261002_mgeb_theater_v1"></script>
+    <script src="script.js?v=20261002_fix_search_and_thumbs"></script>
 </body>
 
 </html>
