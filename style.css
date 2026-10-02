@@ -6114,9 +6114,20 @@ textarea:focus-visible {
     background: transparent;
     border: none;
     color: #ffffff;
-    font-size: 0.84rem;
+    font-size: 0.86rem;
     outline: none;
     width: 100%;
+}
+
+/* Remove spin buttons from number inputs globally */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
 }
 
 .btn-continuous-go {
@@ -6124,15 +6135,17 @@ textarea:focus-visible {
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #ffffff;
     border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .btn-continuous-go:hover {
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 .continuous-chunks-scroller {

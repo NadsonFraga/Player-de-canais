@@ -2078,6 +2078,148 @@ document.addEventListener("DOMContentLoaded", () => {
         }, duration);
     }
 
+
+    // --- View State Reset Modules (Guarantees fresh state when switching tabs or clicking back) ---
+    function resetMoviesViewState() {
+        const moviesExploreView = document.getElementById("movies-explore-view");
+        const discoveryFeed = document.getElementById("movies-discovery-feed");
+        const collectionSection = document.getElementById("movies-collection-section");
+        const moviesSearchInput = document.getElementById("movies-search-input");
+        const exploreSearchInput = document.getElementById("explore-search-input");
+        const btnClearMovieSearch = document.getElementById("btn-clear-movie-search");
+        const btnClearExploreSearch = document.getElementById("btn-clear-explore-search");
+        const categoryPills = document.getElementById("movies-category-pills");
+        const exploreGenresChips = document.getElementById("explore-genres-chips");
+        const exploreTimelineChips = document.getElementById("explore-timeline-chips");
+        const sortCurrentLabel = document.getElementById("sort-current-label");
+        const exploreSortDropdownMenu = document.getElementById("explore-sort-dropdown-menu");
+        const btnExploreSortDropdown = document.getElementById("btn-explore-sort-dropdown");
+
+        if (moviesExploreView) moviesExploreView.classList.add("hidden");
+        if (collectionSection) collectionSection.classList.add("hidden");
+        if (discoveryFeed) discoveryFeed.classList.remove("hidden");
+
+        if (moviesSearchInput) moviesSearchInput.value = "";
+        if (exploreSearchInput) exploreSearchInput.value = "";
+        if (btnClearMovieSearch) btnClearMovieSearch.classList.add("hidden");
+        if (btnClearExploreSearch) btnClearExploreSearch.classList.add("hidden");
+
+        activeFilterGenre = '';
+        activeFilterYearRange = '';
+        activeFilterSort = 'popularity.desc';
+
+        if (sortCurrentLabel) sortCurrentLabel.textContent = "Populares";
+        if (exploreSortDropdownMenu) {
+            exploreSortDropdownMenu.classList.add("hidden");
+            exploreSortDropdownMenu.querySelectorAll(".sort-dropdown-item").forEach(it => {
+                it.classList.toggle("active", it.dataset.sort === 'popularity.desc');
+            });
+        }
+        if (btnExploreSortDropdown) btnExploreSortDropdown.setAttribute("aria-expanded", "false");
+
+        if (exploreGenresChips) {
+            exploreGenresChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.genre === ""));
+        }
+        if (exploreTimelineChips) {
+            exploreTimelineChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.yearRange === ""));
+        }
+        if (categoryPills) {
+            categoryPills.querySelectorAll(".movie-pill").forEach(p => p.classList.toggle("active", p.dataset.target === "all"));
+        }
+    }
+
+    function resetSeriesViewState() {
+        const seriesExploreView = document.getElementById("series-explore-view");
+        const seriesDiscoveryFeed = document.getElementById("series-discovery-feed");
+        const seriesSearchInput = document.getElementById("series-search-input");
+        const exploreSearchInput = document.getElementById("series-explore-search-input");
+        const btnClearSeriesSearch = document.getElementById("btn-clear-series-search");
+        const btnClearExplore = document.getElementById("btn-clear-series-explore-search");
+        const categoryPills = document.getElementById("series-category-pills");
+        const genresChips = document.getElementById("series-explore-genres-chips");
+        const timelineChips = document.getElementById("series-explore-timeline-chips");
+        const sortLabel = document.getElementById("series-sort-current-label");
+        const sortMenu = document.getElementById("series-explore-sort-dropdown-menu");
+        const btnSort = document.getElementById("btn-series-explore-sort-dropdown");
+
+        if (seriesExploreView) seriesExploreView.classList.add("hidden");
+        if (seriesDiscoveryFeed) seriesDiscoveryFeed.classList.remove("hidden");
+
+        if (seriesSearchInput) seriesSearchInput.value = "";
+        if (exploreSearchInput) exploreSearchInput.value = "";
+        if (btnClearSeriesSearch) btnClearSeriesSearch.classList.add("hidden");
+        if (btnClearExplore) btnClearExplore.classList.add("hidden");
+
+        activeSeriesFilterGenre = '';
+        activeSeriesFilterYearRange = '';
+        activeSeriesFilterSort = 'popularity.desc';
+
+        if (sortLabel) sortLabel.textContent = "Populares";
+        if (sortMenu) {
+            sortMenu.classList.add("hidden");
+            sortMenu.querySelectorAll(".sort-dropdown-item").forEach(it => {
+                it.classList.toggle("active", it.dataset.sort === 'popularity.desc');
+            });
+        }
+        if (btnSort) btnSort.setAttribute("aria-expanded", "false");
+
+        if (genresChips) {
+            genresChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.genre === ""));
+        }
+        if (timelineChips) {
+            timelineChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.yearRange === ""));
+        }
+        if (categoryPills) {
+            categoryPills.querySelectorAll(".series-pill").forEach(p => p.classList.toggle("active", p.dataset.target === "all"));
+        }
+    }
+
+    function resetAnimesViewState() {
+        const animesExploreView = document.getElementById("animes-explore-view");
+        const animesDiscoveryFeed = document.getElementById("animes-discovery-feed");
+        const animesSearchInput = document.getElementById("animes-search-input");
+        const exploreSearchInput = document.getElementById("animes-explore-search-input");
+        const btnClearAnimesSearch = document.getElementById("btn-clear-animes-search");
+        const btnClearExplore = document.getElementById("btn-clear-animes-explore-search");
+        const categoryPills = document.getElementById("animes-category-pills");
+        const genresChips = document.getElementById("animes-explore-genres-chips");
+        const timelineChips = document.getElementById("animes-explore-timeline-chips");
+        const sortLabel = document.getElementById("animes-sort-current-label");
+        const sortMenu = document.getElementById("animes-explore-sort-dropdown-menu");
+        const btnSort = document.getElementById("btn-animes-explore-sort-dropdown");
+
+        if (animesExploreView) animesExploreView.classList.add("hidden");
+        if (animesDiscoveryFeed) animesDiscoveryFeed.classList.remove("hidden");
+
+        if (animesSearchInput) animesSearchInput.value = "";
+        if (exploreSearchInput) exploreSearchInput.value = "";
+        if (btnClearAnimesSearch) btnClearAnimesSearch.classList.add("hidden");
+        if (btnClearExplore) btnClearExplore.classList.add("hidden");
+
+        activeAnimesFilterGenre = '';
+        activeAnimesFilterYearRange = '';
+        activeAnimesFilterSort = 'popularity.desc';
+
+        if (sortLabel) sortLabel.textContent = "Populares";
+        if (sortMenu) {
+            sortMenu.classList.add("hidden");
+            sortMenu.querySelectorAll(".sort-dropdown-item").forEach(it => {
+                it.classList.toggle("active", it.dataset.sort === 'popularity.desc');
+            });
+        }
+        if (btnSort) btnSort.setAttribute("aria-expanded", "false");
+
+        if (genresChips) {
+            genresChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.genre === ""));
+        }
+        if (timelineChips) {
+            timelineChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.yearRange === ""));
+        }
+        if (categoryPills) {
+            categoryPills.querySelectorAll(".anime-pill").forEach(p => p.classList.toggle("active", p.dataset.target === "all"));
+        }
+    }
+
     function switchAppView(viewName) {
         if (viewName === 'sports') {
             showToast("Hub Esportivo em breve! Acompanhe as transmissões na tela inicial de Canais.");
@@ -2121,6 +2263,11 @@ document.addEventListener("DOMContentLoaded", () => {
         allTabs.forEach(t => {
             if (t) t.classList.remove("active");
         });
+
+        // Always reset search, explore views, and filters when changing views
+        resetMoviesViewState();
+        resetSeriesViewState();
+        resetAnimesViewState();
 
         if (viewName === 'home') {
             if (viewHome) viewHome.classList.remove("hidden");
@@ -2978,24 +3125,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         function closeExploreView() {
             if (!moviesExploreView) return;
-
-            moviesExploreView.classList.add("hidden");
-            if (discoveryFeed) discoveryFeed.classList.remove("hidden");
-            if (collectionSection) collectionSection.classList.add("hidden");
-
-            // Sync query back to spotlight input
-            if (moviesSearchInput && exploreSearchInput) {
-                moviesSearchInput.value = exploreSearchInput.value.trim();
-                if (btnClearMovieSearch) {
-                    btnClearMovieSearch.classList.toggle("hidden", moviesSearchInput.value.length === 0);
-                }
-            }
-
-            if (exploreSortDropdownMenu) {
-                exploreSortDropdownMenu.classList.add("hidden");
-                if (btnExploreSortDropdown) btnExploreSortDropdown.setAttribute("aria-expanded", "false");
-            }
-
+            resetMoviesViewState();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -3828,30 +3958,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function closeSeriesExploreView() {
         const seriesExploreView = document.getElementById("series-explore-view");
-        const seriesDiscoveryFeed = document.getElementById("series-discovery-feed");
-        const exploreSearchInput = document.getElementById("series-explore-search-input");
-        const seriesSearchInput = document.getElementById("series-search-input");
-        const btnClearSeriesSearch = document.getElementById("btn-clear-series-search");
-        const sortDropdownMenu = document.getElementById("series-explore-sort-dropdown-menu");
-        const btnSort = document.getElementById("btn-series-explore-sort-dropdown");
-
         if (!seriesExploreView) return;
-
-        seriesExploreView.classList.add("hidden");
-        if (seriesDiscoveryFeed) seriesDiscoveryFeed.classList.remove("hidden");
-
-        if (seriesSearchInput && exploreSearchInput) {
-            seriesSearchInput.value = exploreSearchInput.value.trim();
-            if (btnClearSeriesSearch) {
-                btnClearSeriesSearch.classList.toggle("hidden", seriesSearchInput.value.length === 0);
-            }
-        }
-
-        if (sortDropdownMenu) {
-            sortDropdownMenu.classList.add("hidden");
-            if (btnSort) btnSort.setAttribute("aria-expanded", "false");
-        }
-
+        resetSeriesViewState();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -4312,30 +4420,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function closeAnimesExploreView() {
         const animesExploreView = document.getElementById("animes-explore-view");
-        const animesDiscoveryFeed = document.getElementById("animes-discovery-feed");
-        const exploreSearchInput = document.getElementById("animes-explore-search-input");
-        const animesSearchInput = document.getElementById("animes-search-input");
-        const btnClearAnimesSearch = document.getElementById("btn-clear-animes-search");
-        const sortDropdownMenu = document.getElementById("animes-explore-sort-dropdown-menu");
-        const btnSort = document.getElementById("btn-animes-explore-sort-dropdown");
-
         if (!animesExploreView) return;
-
-        animesExploreView.classList.add("hidden");
-        if (animesDiscoveryFeed) animesDiscoveryFeed.classList.remove("hidden");
-
-        if (animesSearchInput && exploreSearchInput) {
-            animesSearchInput.value = exploreSearchInput.value.trim();
-            if (btnClearAnimesSearch) {
-                btnClearAnimesSearch.classList.toggle("hidden", animesSearchInput.value.length === 0);
-            }
-        }
-
-        if (sortDropdownMenu) {
-            sortDropdownMenu.classList.add("hidden");
-            if (btnSort) btnSort.setAttribute("aria-expanded", "false");
-        }
-
+        resetAnimesViewState();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -4715,7 +4801,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const iframe = document.getElementById("series-modal-iframe");
                 if (iframe && activeSeriesPlaying.show) {
                     const serverDef = SERIES_SERVERS[activeSeriesPlaying.server] || SERIES_SERVERS.mgeb;
-                    iframe.src = serverDef.buildUrl(activeSeriesPlaying.show.id, activeSeriesPlaying.seasonNumber, activeSeriesPlaying.episodeNumber);
+                    const nextUrl = serverDef.buildUrl(activeSeriesPlaying.show.id, activeSeriesPlaying.seasonNumber, activeSeriesPlaying.episodeNumber);
+                    // Instant unloader: terminate previous player processes immediately
+                    iframe.src = "about:blank";
+                    requestAnimationFrame(() => {
+                        iframe.src = nextUrl;
+                    });
                 }
             });
         });
@@ -5002,7 +5093,45 @@ document.addEventListener("DOMContentLoaded", () => {
         container.appendChild(fragment);
     }
 
-    // --- Continuous 1 to 1000+ Mode for Long-Running Animes ---
+    // --- Continuous Absolute Episode Navigation (Accurately Mapped to TMDB Seasons) ---
+    function mapAbsoluteEpisodeToSeason(seasons, absoluteEp) {
+        if (!seasons || !Array.isArray(seasons) || seasons.length === 0) {
+            return { season: 1, episode: absoluteEp };
+        }
+
+        // Filter valid broadcast seasons (ignore specials season 0)
+        const regularSeasons = seasons
+            .filter(s => s.season_number > 0 && typeof s.episode_count === 'number' && s.episode_count > 0)
+            .sort((a, b) => a.season_number - b.season_number);
+
+        if (regularSeasons.length === 0) {
+            return { season: 1, episode: absoluteEp };
+        }
+
+        let accumulated = 0;
+        for (const s of regularSeasons) {
+            if (accumulated + s.episode_count >= absoluteEp) {
+                const epInSeason = absoluteEp - accumulated;
+                return {
+                    season: s.season_number,
+                    episode: epInSeason,
+                    seasonName: s.name || `Temporada ${s.season_number}`
+                };
+            }
+            accumulated += s.episode_count;
+        }
+
+        // If absoluteEp exceeds total cumulative count, map to the last season
+        const lastSeason = regularSeasons[regularSeasons.length - 1];
+        const prevAccumulated = accumulated - lastSeason.episode_count;
+        const fallbackEp = Math.max(1, absoluteEp - prevAccumulated);
+        return {
+            season: lastSeason.season_number,
+            episode: fallbackEp,
+            seasonName: lastSeason.name || `Temporada ${lastSeason.season_number}`
+        };
+    }
+
     function initContinuousModeForCurrentShow() {
         const chunksContainer = document.getElementById("series-chunks-container");
         if (!chunksContainer || !currentSeriesDetails) return;
@@ -5036,11 +5165,20 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!grid) return;
         grid.innerHTML = "";
 
+        const seasons = (currentSeriesDetails && currentSeriesDetails.seasons) ? currentSeriesDetails.seasons : [];
         const fragment = document.createDocumentFragment();
+
         for (let epNum = startEp; epNum <= endEp; epNum++) {
             const card = document.createElement("div");
             card.className = "series-ep-card";
             card.tabIndex = 0;
+
+            const mapped = mapAbsoluteEpisodeToSeason(seasons, epNum);
+
+            const isCurrentPlaying = (activeSeriesPlaying.show && activeSeriesPlaying.show.id === currentSelectedSeries.id &&
+                                      activeSeriesPlaying.seasonNumber === mapped.season &&
+                                      activeSeriesPlaying.episodeNumber === mapped.episode);
+            if (isCurrentPlaying) card.classList.add("is-active-playing");
 
             const stillUrl = currentSelectedSeries.backdrop_path
                 ? `${TMDB_IMG_W500}${currentSelectedSeries.backdrop_path}`
@@ -5060,14 +5198,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
                 <div class="ep-info-box">
                     <h4 class="ep-title">Episódio ${epNum}</h4>
-                    <span class="ep-meta-row">Toque para reproduzir</span>
+                    <div class="ep-meta-row">
+                        <span>T${mapped.season} • Ep. ${mapped.episode}</span>
+                        <span>Reproduzir ▶</span>
+                    </div>
                 </div>
             `;
 
             const currentEpNum = epNum;
             const playAction = () => {
-                // In continuous mode, estimate or map season 1 or canonical
-                playSeriesEpisode(currentSelectedSeries, 1, currentEpNum);
+                const targetMapped = mapAbsoluteEpisodeToSeason(seasons, currentEpNum);
+                playSeriesEpisode(currentSelectedSeries, targetMapped.season, targetMapped.episode, { name: `Episódio ${currentEpNum}` });
             };
 
             card.addEventListener("click", playAction);
@@ -5086,8 +5227,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function goToEpisodeByAbsoluteNumber(epNumber) {
         if (!currentSelectedSeries) return;
-        playSeriesEpisode(currentSelectedSeries, 1, epNumber);
-        showToast(`Carregando Episódio ${epNumber}...`);
+        const seasons = (currentSeriesDetails && currentSeriesDetails.seasons) ? currentSeriesDetails.seasons : [];
+        const mapped = mapAbsoluteEpisodeToSeason(seasons, epNumber);
+        playSeriesEpisode(currentSelectedSeries, mapped.season, mapped.episode, { name: `Episódio ${epNumber}` });
+        showToast(`Carregando Episódio ${epNumber} (T${mapped.season}:E${mapped.episode})...`);
     }
 
     // --- 6. Series Video Player Controller ---
@@ -5119,7 +5262,13 @@ document.addEventListener("DOMContentLoaded", () => {
         // Build embed URL with active server
         const serverDef = SERIES_SERVERS[activeSeriesPlaying.server] || SERIES_SERVERS.mgeb;
         const embedUrl = serverDef.buildUrl(showItem.id, seasonNumber, episodeNumber);
-        if (iframe) iframe.src = embedUrl;
+        // Instant unloader: kill previous stream immediately to avoid buffering collision and delay
+        if (iframe) {
+            iframe.src = "about:blank";
+            requestAnimationFrame(() => {
+                iframe.src = embedUrl;
+            });
+        }
 
         // Sync active server pill in bottom bar
         document.querySelectorAll("#series-server-pills .btn-series-server-pill").forEach(p => {
