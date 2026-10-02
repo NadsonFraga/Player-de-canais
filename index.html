@@ -27,6 +27,13 @@
 <body>
     <!-- Floating Glass Nav Capsule (Top Central - Nuvio Style) -->
     <nav id="floating-nav-capsule" class="floating-nav-capsule" aria-label="Navegação Principal">
+        <button id="nav-tab-home" class="nav-capsule-item" data-view="home" aria-label="Aba Início">
+            <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Início</span>
+        </button>
         <button id="nav-tab-tv" class="nav-capsule-item active" data-view="tv" aria-label="Aba Canais de TV">
             <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
@@ -56,6 +63,159 @@
             <span class="nav-capsule-badge">Em Breve</span>
         </button>
     </nav>
+
+    <!-- View 0: Home Hub Portal View -->
+    <main id="view-home" class="view-home hidden" aria-label="Central de Início">
+        <div class="home-container">
+            <!-- Hero Welcome Header -->
+            <section class="home-hero-card">
+                <div class="home-hero-content">
+                    <div class="home-hero-badge">
+                        <span class="pulse-dot"></span>
+                        <span>Central Multimídia Tvzinha</span>
+                    </div>
+                    <h1 class="home-hero-title">O que você quer assistir hoje?</h1>
+                    <p class="home-hero-subtitle">
+                        Transmissões de TV aberta e fechada em alta definição, catálogo de cinema sob demanda e esportes ao vivo com múltiplos servidores.
+                    </p>
+                </div>
+                <div class="home-hero-emblem" aria-hidden="true">
+                    <img src="logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="home-emblem-img">
+                </div>
+            </section>
+
+            <!-- Main Entertainment Portal Grid -->
+            <section class="home-portals-section">
+                <div class="home-section-header">
+                    <h2>Navegação Rápida</h2>
+                    <span class="home-section-hint">Selecione uma área para entrar</span>
+                </div>
+
+                <div class="home-portals-grid">
+                    <!-- Portal 1: TV Channels -->
+                    <div class="home-portal-card active-portal" data-view-target="tv" tabindex="0" role="button" aria-label="Abrir Canais de TV">
+                        <div class="portal-card-glow"></div>
+                        <div class="portal-header">
+                            <div class="portal-icon-box tv-accent">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                                    <polyline points="17 2 12 7 7 2"></polyline>
+                                </svg>
+                            </div>
+                            <span class="portal-badge live-badge">66+ Canais HD</span>
+                        </div>
+                        <div class="portal-body">
+                            <h3>Canais Ao Vivo</h3>
+                            <p>Globo, SBT, Band, Record, SporTV, Premiere, ESPN, Combate, HBO e canais infantis.</p>
+                        </div>
+                        <div class="portal-footer">
+                            <span class="portal-action-btn">Assistir TV Ao Vivo <span>&rarr;</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Portal 2: Movies Catalog -->
+                    <div class="home-portal-card active-portal" data-view-target="movies" tabindex="0" role="button" aria-label="Abrir Catálogo de Filmes">
+                        <div class="portal-card-glow"></div>
+                        <div class="portal-header">
+                            <div class="portal-icon-box movie-accent">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                                    <line x1="7" y1="2" x2="7" y2="22"></line>
+                                    <line x1="17" y1="2" x2="17" y2="22"></line>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <line x1="2" y1="7" x2="7" y2="7"></line>
+                                    <line x1="2" y1="17" x2="7" y2="17"></line>
+                                    <line x1="17" y1="17" x2="22" y2="17"></line>
+                                    <line x1="17" y1="7" x2="22" y2="7"></line>
+                                </svg>
+                            </div>
+                            <span class="portal-badge cinema-badge">Cinema On Demand</span>
+                        </div>
+                        <div class="portal-body">
+                            <h3>Filmes sob Demanda</h3>
+                            <p>Lançamentos populares, grandes diretores, estúdios renomados e clássicos mundiais.</p>
+                        </div>
+                        <div class="portal-footer">
+                            <span class="portal-action-btn">Explorar Filmes <span>&rarr;</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Portal 3: Series (Coming in Phase 2) -->
+                    <div class="home-portal-card disabled-portal" data-view-target="series" tabindex="0" role="button" aria-label="Séries de TV (Em Breve)">
+                        <div class="portal-header">
+                            <div class="portal-icon-box series-accent">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                                </svg>
+                            </div>
+                            <span class="portal-badge phase2-badge">Fase 2 • Em Breve</span>
+                        </div>
+                        <div class="portal-body">
+                            <h3>Séries de TV</h3>
+                            <p>Temporadas completas, controle ágil de episódios e histórico salvo no navegador.</p>
+                        </div>
+                        <div class="portal-footer">
+                            <span class="portal-action-hint">Próxima atualização</span>
+                        </div>
+                    </div>
+
+                    <!-- Portal 4: Anime (Coming in Phase 2) -->
+                    <div class="home-portal-card disabled-portal" data-view-target="animes" tabindex="0" role="button" aria-label="Animes Japoneses (Em Breve)">
+                        <div class="portal-header">
+                            <div class="portal-icon-box anime-accent">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                            </div>
+                            <span class="portal-badge phase2-badge">Fase 2 • Em Breve</span>
+                        </div>
+                        <div class="portal-body">
+                            <h3>Animes</h3>
+                            <p>One Piece, Naruto, Attack on Titan, animes da temporada e clássicos com busca por episódios.</p>
+                        </div>
+                        <div class="portal-footer">
+                            <span class="portal-action-hint">Próxima atualização</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Utility Shortcuts Row -->
+            <section class="home-utilities-section">
+                <div class="home-utilities-grid">
+                    <button id="btn-home-adblock-shortcut" class="home-utility-card" type="button" aria-label="Aviso e configuração do Bloqueador de Anúncios">
+                        <div class="utility-icon-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                <polyline points="9 12 11 14 15 10"></polyline>
+                            </svg>
+                        </div>
+                        <div class="utility-text-box">
+                            <h4>Dicas de Bloqueador de Anúncios & DNS</h4>
+                            <p>Saiba como assistir aos servidores sem pop-ups no PC, Celular e Smart TV.</p>
+                        </div>
+                    </button>
+
+                    <button id="btn-home-team-shortcut" class="home-utility-card" type="button" aria-label="Escolher clube de futebol favorito">
+                        <div class="utility-icon-box football-accent">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polygon points="12 6 16.5 9.5 15 14.5 9 14.5 7.5 9.5 12 6"></polygon>
+                            </svg>
+                        </div>
+                        <div class="utility-text-box">
+                            <h4>Personalizar Meu Time de Futebol</h4>
+                            <p>Defina seu clube para ver a agenda de jogos e onde assistir na grade de TV.</p>
+                        </div>
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
     <!-- View 1: TV Channels Application Layout -->
     <div class="app-layout" id="view-tv">
         <!-- Mobile Top Navigation Bar (Channels Tab Only) -->
@@ -249,72 +409,117 @@
 
     <!-- View 2: Movies Catalog View (Nuvio Cinema Style) -->
     <main id="view-movies" class="view-movies hidden" aria-label="Catálogo de Filmes">
-        <!-- Spotlight Search Bar -->
+        <!-- Spotlight Trigger Bar (Clean & Cinematic) -->
         <header class="movies-spotlight-header">
-            <div class="spotlight-search-container">
+            <div class="spotlight-search-container" id="spotlight-search-container">
                 <svg class="spotlight-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" id="movies-search-input" class="spotlight-input" placeholder="Buscar filmes por título, gênero..." autocomplete="off">
+                <input type="text" id="movies-search-input" class="spotlight-input" placeholder="Buscar filmes por título, diretor, gênero..." autocomplete="off">
                 <button id="btn-clear-movie-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
-                <button id="btn-toggle-movie-filters" class="spotlight-filter-btn" aria-label="Abrir Filtros Avançados" title="Filtros Avançados">
+                <button id="btn-open-movie-explore" class="spotlight-filter-btn" aria-label="Abrir Catálogo Completo e Filtros" title="Abrir Catálogo Completo">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                     </svg>
+                    <span class="btn-filter-text">Filtros</span>
                 </button>
-            </div>
-
-            <!-- Advanced Filters Drawer (Genres, Timeline, Sort) -->
-            <div id="movies-filters-drawer" class="movies-filters-drawer hidden">
-                <div class="filter-group">
-                    <span class="filter-group-label">Gênero</span>
-                    <div class="filter-pills-row" id="filter-genres-pills">
-                        <button class="filter-chip active" data-genre="">Todos</button>
-                        <button class="filter-chip" data-genre="28">Ação</button>
-                        <button class="filter-chip" data-genre="27">Terror</button>
-                        <button class="filter-chip" data-genre="878">Ficção Científica</button>
-                        <button class="filter-chip" data-genre="35">Comédia</button>
-                        <button class="filter-chip" data-genre="18">Drama</button>
-                        <button class="filter-chip" data-genre="53">Suspense</button>
-                        <button class="filter-chip" data-genre="16">Animação</button>
-                        <button class="filter-chip" data-genre="10749">Romance</button>
-                        <button class="filter-chip" data-genre="99">Documentário</button>
-                    </div>
-                </div>
-                <div class="filter-group">
-                    <span class="filter-group-label">Época</span>
-                    <div class="filter-pills-row" id="filter-timeline-pills">
-                        <button class="filter-chip active" data-year-range="">Todas</button>
-                        <button class="filter-chip" data-year-range="2020-2026">2020–2026</button>
-                        <button class="filter-chip" data-year-range="2010-2019">Anos 2010</button>
-                        <button class="filter-chip" data-year-range="2000-2009">Anos 2000</button>
-                        <button class="filter-chip" data-year-range="1990-1999">Anos 90</button>
-                        <button class="filter-chip" data-year-range="1980-1989">Anos 80</button>
-                        <button class="filter-chip" data-year-range="1900-1979">Clássicos (&lt;1980)</button>
-                    </div>
-                </div>
-                <div class="filter-group">
-                    <span class="filter-group-label">Ordenar</span>
-                    <div class="filter-pills-row" id="filter-sort-pills">
-                        <button class="filter-chip active" data-sort="popularity.desc">Mais Populares</button>
-                        <button class="filter-chip" data-sort="vote_average.desc">Melhor Avaliados</button>
-                        <button class="filter-chip" data-sort="primary_release_date.desc">Lançamentos</button>
-                    </div>
-                </div>
             </div>
         </header>
 
-        <!-- Search Results Grid (dynamically toggled) -->
-        <section id="movies-search-section" class="movies-search-section hidden">
-            <div class="movies-section-header">
-                <h2 id="movies-search-title">Resultados da Busca</h2>
-                <span id="movies-search-count" class="movies-results-count"></span>
+        <!-- Dedicated Full-Screen Explore & Filter View (Fixed Page View) -->
+        <section id="movies-explore-view" class="movies-explore-view hidden" aria-label="Catálogo Completo e Filtros">
+            <!-- Explorer Top Navigation & Sticky Search Bar -->
+            <div class="explore-top-bar">
+                <button id="btn-explore-back" class="btn-cinema-secondary btn-explore-back" title="Voltar à vitrine principal de filmes">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Voltar à Vitrine</span>
+                </button>
+
+                <div class="explore-search-wrapper">
+                    <svg class="spotlight-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="explore-search-input" class="explore-search-input" placeholder="Pesquisar no catálogo..." autocomplete="off">
+                    <button id="btn-clear-explore-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
+                </div>
+
+                <div class="explore-media-badge" id="explore-media-badge">
+                    <span>Filmes</span>
+                </div>
             </div>
-            <div id="movies-search-grid" class="movies-poster-grid">
-                <!-- Search cards dynamically rendered -->
+
+            <!-- Fixed Filter Controls Bar (Sort, Genres, Decades) -->
+            <div class="explore-controls-panel">
+                <!-- 1. Sort Criteria Segmented Control -->
+                <div class="explore-filter-row sort-row">
+                    <span class="explore-row-label">Ordenar:</span>
+                    <div class="explore-chips-group" id="explore-sort-chips">
+                        <button class="explore-chip active" data-sort="popularity.desc">Mais Populares</button>
+                        <button class="explore-chip" data-sort="vote_average.desc">Melhor Avaliados</button>
+                        <button class="explore-chip" data-sort="primary_release_date.desc">Lançamentos Recentes</button>
+                    </div>
+                </div>
+
+                <!-- 2. Genres Filter Chips -->
+                <div class="explore-filter-row genres-row">
+                    <span class="explore-row-label">Gêneros:</span>
+                    <div class="explore-chips-group scrollable-chips" id="explore-genres-chips">
+                        <button class="explore-chip active" data-genre="">Todos</button>
+                        <button class="explore-chip" data-genre="28">Ação</button>
+                        <button class="explore-chip" data-genre="12">Aventura</button>
+                        <button class="explore-chip" data-genre="16">Animação</button>
+                        <button class="explore-chip" data-genre="35">Comédia</button>
+                        <button class="explore-chip" data-genre="80">Crime</button>
+                        <button class="explore-chip" data-genre="99">Documentário</button>
+                        <button class="explore-chip" data-genre="18">Drama</button>
+                        <button class="explore-chip" data-genre="10751">Família</button>
+                        <button class="explore-chip" data-genre="14">Fantasia</button>
+                        <button class="explore-chip" data-genre="878">Ficção Científica</button>
+                        <button class="explore-chip" data-genre="9648">Mistério</button>
+                        <button class="explore-chip" data-genre="10749">Romance</button>
+                        <button class="explore-chip" data-genre="53">Suspense</button>
+                        <button class="explore-chip" data-genre="27">Terror</button>
+                    </div>
+                </div>
+
+                <!-- 3. Timeline / Decades Filter Chips -->
+                <div class="explore-filter-row timeline-row">
+                    <span class="explore-row-label">Época:</span>
+                    <div class="explore-chips-group scrollable-chips" id="explore-timeline-chips">
+                        <button class="explore-chip active" data-year-range="">Todas</button>
+                        <button class="explore-chip" data-year-range="2020-2026">2020–2026</button>
+                        <button class="explore-chip" data-year-range="2010-2019">Anos 2010</button>
+                        <button class="explore-chip" data-year-range="2000-2009">Anos 2000</button>
+                        <button class="explore-chip" data-year-range="1990-1999">Anos 90</button>
+                        <button class="explore-chip" data-year-range="1980-1989">Anos 80</button>
+                        <button class="explore-chip" data-year-range="1900-1979">Clássicos (&lt;1980)</button>
+                    </div>
+                </div>
             </div>
-            <div id="movies-search-pagination" class="movies-pagination hidden"></div>
+
+            <!-- Dynamic Results Status Bar -->
+            <div class="explore-status-header">
+                <div class="status-left">
+                    <h2 id="explore-section-title" class="explore-section-title">Catálogo Completo</h2>
+                    <span id="explore-results-count" class="explore-results-count">Carregando títulos...</span>
+                </div>
+                <div id="explore-active-tags" class="explore-active-tags">
+                    <!-- Dynamic active filter tags -->
+                </div>
+            </div>
+
+            <!-- Dynamic 2:3 Results Poster Grid -->
+            <div id="explore-poster-grid" class="movies-poster-grid">
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- Cinematic Dynamic Pagination Bar -->
+            <div id="explore-pagination" class="movies-pagination hidden"></div>
         </section>
 
         <!-- Dedicated Collection Section (Directors, Studios) -->

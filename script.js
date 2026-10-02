@@ -2085,22 +2085,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         currentAppView = viewName;
-        window.location.hash = viewName === 'movies' ? 'filmes' : 'canais';
+        window.location.hash = viewName === 'movies' ? 'filmes' : (viewName === 'home' ? 'inicio' : 'canais');
 
         // Close channels mobile sidebar if leaving tv view
         if (viewName !== 'tv') {
             closeMobileMenu();
         }
 
+        const viewHome = document.getElementById("view-home");
         const viewTv = document.getElementById("view-tv");
         const viewMovies = document.getElementById("view-movies");
+
+        const tabHome = document.getElementById("nav-tab-home");
         const tabTv = document.getElementById("nav-tab-tv");
         const tabMovies = document.getElementById("nav-tab-movies");
         const tabSports = document.getElementById("nav-tab-sports");
 
-        if (viewName === 'movies') {
+        if (viewName === 'home') {
+            if (viewHome) viewHome.classList.remove("hidden");
+            if (viewTv) viewTv.classList.add("hidden");
+            if (viewMovies) viewMovies.classList.add("hidden");
+
+            if (tabHome) tabHome.classList.add("active");
+            if (tabTv) tabTv.classList.remove("active");
+            if (tabMovies) tabMovies.classList.remove("active");
+            if (tabSports) tabSports.classList.remove("active");
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (viewName === 'movies') {
+            if (viewHome) viewHome.classList.add("hidden");
             if (viewTv) viewTv.classList.add("hidden");
             if (viewMovies) viewMovies.classList.remove("hidden");
+
+            if (tabHome) tabHome.classList.remove("active");
             if (tabTv) tabTv.classList.remove("active");
             if (tabMovies) tabMovies.classList.add("active");
             if (tabSports) tabSports.classList.remove("active");
@@ -2110,8 +2127,11 @@ document.addEventListener("DOMContentLoaded", () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             // 'tv'
+            if (viewHome) viewHome.classList.add("hidden");
             if (viewTv) viewTv.classList.remove("hidden");
             if (viewMovies) viewMovies.classList.add("hidden");
+
+            if (tabHome) tabHome.classList.remove("active");
             if (tabTv) tabTv.classList.add("active");
             if (tabMovies) tabMovies.classList.remove("active");
             if (tabSports) tabSports.classList.remove("active");
@@ -2119,17 +2139,66 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function setupSpaNavigation() {
+        const tabHome = document.getElementById("nav-tab-home");
         const tabTv = document.getElementById("nav-tab-tv");
         const tabMovies = document.getElementById("nav-tab-movies");
         const tabSports = document.getElementById("nav-tab-sports");
 
+        if (tabHome) tabHome.addEventListener("click", () => switchAppView('home'));
         if (tabTv) tabTv.addEventListener("click", () => switchAppView('tv'));
         if (tabMovies) tabMovies.addEventListener("click", () => switchAppView('movies'));
         if (tabSports) tabSports.addEventListener("click", () => switchAppView('sports'));
 
+        // Setup Home Portal Navigation Cards
+        document.querySelectorAll("#view-home .home-portal-card").forEach(card => {
+            const target = card.getAttribute("data-view-target");
+            const handleCardAction = () => {
+                if (target === 'tv') {
+                    switchAppView('tv');
+                } else if (target === 'movies') {
+                    switchAppView('movies');
+                } else if (target === 'series' || target === 'animes') {
+                    showToast("Em breve na Fase 2! O catálogo completo de Séries e Animes está em desenvolvimento.");
+                } else if (target === 'sports') {
+                    showToast("Hub Esportivo em breve! Acompanhe as partidas na aba Canais.");
+                }
+            };
+            card.addEventListener("click", handleCardAction);
+            card.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleCardAction();
+                }
+            });
+        });
+
+        // Setup Home Utility Shortcuts
+        const btnHomeAdblock = document.getElementById("btn-home-adblock-shortcut");
+        if (btnHomeAdblock) {
+            btnHomeAdblock.addEventListener("click", () => {
+                const adblockModal = document.getElementById("adblock-modal");
+                if (adblockModal) adblockModal.style.display = "flex";
+            });
+        }
+
+        const btnHomeTeam = document.getElementById("btn-home-team-shortcut");
+        if (btnHomeTeam) {
+            btnHomeTeam.addEventListener("click", () => {
+                const teamModal = document.getElementById("team-select-modal");
+                if (teamModal) {
+                    teamModal.classList.add("open");
+                    teamModal.setAttribute("aria-hidden", "false");
+                    const searchInput = document.getElementById("team-search-input");
+                    if (searchInput) searchInput.focus();
+                }
+            });
+        }
+
         function handleHash() {
             const hash = (window.location.hash || '').toLowerCase();
-            if (hash === '#filmes' || hash === '#movies') {
+            if (hash === '#inicio' || hash === '#home') {
+                switchAppView('home');
+            } else if (hash === '#filmes' || hash === '#movies') {
                 switchAppView('movies');
             } else if (hash === '#agenda' || hash === '#sports') {
                 switchAppView('sports');
@@ -2828,89 +2897,232 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function setupMoviesSearchAndFilters() {
-        const searchInput = document.getElementById("movies-search-input");
-        const btnClear = document.getElementById("btn-clear-movie-search");
-        const btnToggleFilters = document.getElementById("btn-toggle-movie-filters");
-        const filtersDrawer = document.getElementById("movies-filters-drawer");
-        const btnCollectionBack = document.getElementById("btn-collection-back");
-        const collectionSection = document.getElementById("movies-collection-section");
-        const searchSection = document.getElementById("movies-search-section");
+        const moviesSearchInput = document.getElementById("movies-search-input");
+        const btnClearMovieSearch = document.getElementById("btn-clear-movie-search");
+        const btnOpenMovieExplore = document.getElementById("btn-open-movie-explore");
+        const spotlightContainer = document.getElementById("spotlight-search-container");
+
+        const moviesExploreView = document.getElementById("movies-explore-view");
+        const btnExploreBack = document.getElementById("btn-explore-back");
+        const exploreSearchInput = document.getElementById("explore-search-input");
+        const btnClearExploreSearch = document.getElementById("btn-clear-explore-search");
+
+        const exploreSortChips = document.getElementById("explore-sort-chips");
+        const exploreGenresChips = document.getElementById("explore-genres-chips");
+        const exploreTimelineChips = document.getElementById("explore-timeline-chips");
+
+        const exploreSectionTitle = document.getElementById("explore-section-title");
+        const exploreResultsCount = document.getElementById("explore-results-count");
+        const exploreActiveTags = document.getElementById("explore-active-tags");
+        const explorePosterGrid = document.getElementById("explore-poster-grid");
+
         const discoveryFeed = document.getElementById("movies-discovery-feed");
-        const searchGrid = document.getElementById("movies-search-grid");
-        const searchCount = document.getElementById("movies-search-count");
+        const collectionSection = document.getElementById("movies-collection-section");
         const categoryPills = document.getElementById("movies-category-pills");
 
-        if (btnToggleFilters && filtersDrawer) {
-            btnToggleFilters.addEventListener("click", () => {
-                const isHidden = filtersDrawer.classList.toggle("hidden");
-                btnToggleFilters.classList.toggle("active", !isHidden);
+        // Generic decoupled media type: 'movie' in Phase 1, ready for 'tv' and 'anime' in Phase 2
+        let activeMediaType = 'movie';
+
+        function openExploreView(autoFocus = false) {
+            if (!moviesExploreView) return;
+
+            moviesExploreView.classList.remove("hidden");
+            if (discoveryFeed) discoveryFeed.classList.add("hidden");
+            if (collectionSection) collectionSection.classList.add("hidden");
+
+            // Sync input values
+            const initialQuery = moviesSearchInput ? moviesSearchInput.value.trim() : '';
+            if (exploreSearchInput) {
+                exploreSearchInput.value = initialQuery;
+                if (btnClearExploreSearch) {
+                    btnClearExploreSearch.classList.toggle("hidden", initialQuery.length === 0);
+                }
+                if (autoFocus) {
+                    setTimeout(() => exploreSearchInput.focus(), 80);
+                }
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            executeFilteredCatalogSearch(1);
+        }
+
+        function closeExploreView() {
+            if (!moviesExploreView) return;
+
+            moviesExploreView.classList.add("hidden");
+            if (discoveryFeed) discoveryFeed.classList.remove("hidden");
+            if (collectionSection) collectionSection.classList.add("hidden");
+
+            // Sync query back to spotlight input
+            if (moviesSearchInput && exploreSearchInput) {
+                moviesSearchInput.value = exploreSearchInput.value.trim();
+                if (btnClearMovieSearch) {
+                    btnClearMovieSearch.classList.toggle("hidden", moviesSearchInput.value.length === 0);
+                }
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Trigger open explore view
+        if (btnOpenMovieExplore) {
+            btnOpenMovieExplore.addEventListener("click", () => openExploreView(false));
+        }
+
+        if (moviesSearchInput) {
+            moviesSearchInput.addEventListener("focus", () => openExploreView(true));
+            moviesSearchInput.addEventListener("input", () => openExploreView(false));
+        }
+
+        if (spotlightContainer) {
+            spotlightContainer.addEventListener("click", (e) => {
+                if (e.target.closest("#btn-clear-movie-search")) return;
+                openExploreView(true);
             });
         }
 
+        if (btnExploreBack) {
+            btnExploreBack.addEventListener("click", closeExploreView);
+        }
+
+        // Back from collection view
+        const btnCollectionBack = document.getElementById("btn-collection-back");
         if (btnCollectionBack) {
             btnCollectionBack.addEventListener("click", () => {
                 if (collectionSection) collectionSection.classList.add("hidden");
-                if (discoveryFeed) discoveryFeed.classList.remove("hidden");
+                if (moviesExploreView && !moviesExploreView.classList.contains("hidden")) {
+                    // Remain in explore view
+                } else if (discoveryFeed) {
+                    discoveryFeed.classList.remove("hidden");
+                }
                 renderPaginationControls("movies-collection-pagination", 1, 0, 0, () => {});
             });
         }
 
-        // Filter chips logic (genres, timeline, sort)
-        const setupFilterPillsGroup = (containerId, onSelect) => {
-            const container = document.getElementById(containerId);
+        // Reusable chips listener helper
+        function setupExploreChipsGroup(container, onSelect) {
             if (!container) return;
             container.addEventListener("click", (e) => {
-                const chip = e.target.closest(".filter-chip");
+                const chip = e.target.closest(".explore-chip");
                 if (!chip) return;
-                container.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+                container.querySelectorAll(".explore-chip").forEach(c => c.classList.remove("active"));
                 chip.classList.add("active");
                 onSelect(chip);
-                executeFilteredMovieSearch(1);
+                executeFilteredCatalogSearch(1);
             });
-        };
+        }
 
-        setupFilterPillsGroup("filter-genres-pills", (chip) => {
-            activeFilterGenre = chip.dataset.genre || '';
-        });
-
-        setupFilterPillsGroup("filter-timeline-pills", (chip) => {
-            activeFilterYearRange = chip.dataset.yearRange || '';
-        });
-
-        setupFilterPillsGroup("filter-sort-pills", (chip) => {
+        setupExploreChipsGroup(exploreSortChips, (chip) => {
             activeFilterSort = chip.dataset.sort || 'popularity.desc';
         });
 
-        async function executeFilteredMovieSearch(page = 1) {
-            const query = searchInput ? searchInput.value.trim() : '';
+        setupExploreChipsGroup(exploreGenresChips, (chip) => {
+            activeFilterGenre = chip.dataset.genre || '';
+        });
 
-            // If no query and all filters are in default state, return to discovery feed
-            if (!query && !activeFilterGenre && !activeFilterYearRange && activeFilterSort === 'popularity.desc') {
-                if (searchSection) searchSection.classList.add("hidden");
-                if (discoveryFeed) discoveryFeed.classList.remove("hidden");
-                if (collectionSection) collectionSection.classList.add("hidden");
-                renderPaginationControls("movies-search-pagination", 1, 0, 0, () => {});
+        setupExploreChipsGroup(exploreTimelineChips, (chip) => {
+            activeFilterYearRange = chip.dataset.yearRange || '';
+        });
+
+        // Search inputs listeners
+        function setupSearchInputHandlers(inputEl, clearBtn) {
+            if (!inputEl) return;
+            inputEl.addEventListener("input", () => {
+                const val = inputEl.value.trim();
+                if (clearBtn) clearBtn.classList.toggle("hidden", val.length === 0);
+                if (exploreSearchInput && inputEl !== exploreSearchInput) exploreSearchInput.value = val;
+                if (moviesSearchInput && inputEl !== moviesSearchInput) moviesSearchInput.value = val;
+
+                clearTimeout(movieSearchDebounceTimer);
+                movieSearchDebounceTimer = setTimeout(() => {
+                    executeFilteredCatalogSearch(1);
+                }, 320);
+            });
+
+            if (clearBtn) {
+                clearBtn.addEventListener("click", () => {
+                    inputEl.value = "";
+                    if (exploreSearchInput) exploreSearchInput.value = "";
+                    if (moviesSearchInput) moviesSearchInput.value = "";
+                    clearBtn.classList.add("hidden");
+                    inputEl.focus();
+                    executeFilteredCatalogSearch(1);
+                });
+            }
+        }
+
+        setupSearchInputHandlers(exploreSearchInput, btnClearExploreSearch);
+        setupSearchInputHandlers(moviesSearchInput, btnClearMovieSearch);
+
+        // Active tags renderer
+        function updateActiveFilterTags() {
+            if (!exploreActiveTags) return;
+            const tags = [];
+
+            if (activeFilterGenre) {
+                const genreName = TMDB_GENRES[activeFilterGenre] || "Gênero";
+                tags.push({ label: `Gênero: ${genreName}`, type: 'genre' });
+            }
+
+            if (activeFilterYearRange) {
+                tags.push({ label: `Época: ${activeFilterYearRange}`, type: 'year' });
+            }
+
+            if (tags.length === 0) {
+                exploreActiveTags.innerHTML = "";
                 return;
             }
 
-            if (searchSection) searchSection.classList.remove("hidden");
-            if (discoveryFeed) discoveryFeed.classList.add("hidden");
-            if (collectionSection) collectionSection.classList.add("hidden");
+            exploreActiveTags.innerHTML = tags.map(t => `
+                <span class="active-filter-tag">
+                    <span>${t.label}</span>
+                    <button type="button" class="btn-remove-tag" data-tag-type="${t.type}" aria-label="Remover filtro">&times;</button>
+                </span>
+            `).join('');
+
+            exploreActiveTags.querySelectorAll(".btn-remove-tag").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const tagType = btn.dataset.tagType;
+                    if (tagType === 'genre') {
+                        activeFilterGenre = '';
+                        if (exploreGenresChips) {
+                            exploreGenresChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.genre === ""));
+                        }
+                    } else if (tagType === 'year') {
+                        activeFilterYearRange = '';
+                        if (exploreTimelineChips) {
+                            exploreTimelineChips.querySelectorAll(".explore-chip").forEach(c => c.classList.toggle("active", c.dataset.yearRange === ""));
+                        }
+                    }
+                    executeFilteredCatalogSearch(1);
+                });
+            });
+        }
+
+        // Generic Decoupled Query Engine for Catalog Explorer
+        async function executeFilteredCatalogSearch(page = 1) {
+            const query = (exploreSearchInput ? exploreSearchInput.value.trim() : '') || (moviesSearchInput ? moviesSearchInput.value.trim() : '');
+
+            if (explorePosterGrid) {
+                explorePosterGrid.innerHTML = `<p style="color:#a1a1aa; grid-column: 1/-1; padding: 30px 0; text-align:center;">Buscando títulos no catálogo (página ${page})...</p>`;
+            }
 
             if (page === 1) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else {
-                searchSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else if (moviesExploreView) {
+                moviesExploreView.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
-            if (searchGrid) searchGrid.innerHTML = `<p style="color:#a1a1aa; grid-column: 1/-1; padding: 20px 0;">Buscando filmes (página ${page})...</p>`;
+            updateActiveFilterTags();
 
             try {
                 let endpoint = '';
                 if (query) {
-                    endpoint = `search/movie?query=${encodeURIComponent(query)}&page=${page}`;
+                    if (exploreSectionTitle) exploreSectionTitle.textContent = `Resultados para "${query}"`;
+                    endpoint = `search/${activeMediaType}?query=${encodeURIComponent(query)}&page=${page}`;
                 } else {
-                    let params = `discover/movie?sort_by=${activeFilterSort}&page=${page}`;
+                    if (exploreSectionTitle) exploreSectionTitle.textContent = `Catálogo Completo de ${activeMediaType === 'movie' ? 'Filmes' : 'Títulos'}`;
+                    let params = `discover/${activeMediaType}?sort_by=${activeFilterSort}&page=${page}`;
                     if (activeFilterGenre) params += `&with_genres=${activeFilterGenre}`;
                     if (activeFilterYearRange) {
                         const [startYear, endYear] = activeFilterYearRange.split('-');
@@ -2928,67 +3140,49 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 const totalFormatted = (data.total_results || results.length).toLocaleString('pt-BR');
-                if (searchCount) searchCount.textContent = `${totalFormatted} filmes encontrados`;
+                if (exploreResultsCount) {
+                    exploreResultsCount.textContent = `${totalFormatted} ${activeMediaType === 'movie' ? 'filmes encontrados' : 'títulos encontrados'}`;
+                }
 
-                if (searchGrid) {
-                    searchGrid.innerHTML = "";
+                if (explorePosterGrid) {
+                    explorePosterGrid.innerHTML = "";
                     if (results.length === 0) {
-                        searchGrid.innerHTML = `<p style="color:#71717a; grid-column: 1/-1; padding: 30px 0; text-align: center;">Nenhum filme encontrado com os filtros selecionados.</p>`;
-                        renderPaginationControls("movies-search-pagination", 1, 0, 0, () => {});
+                        explorePosterGrid.innerHTML = `<p style="color:#71717a; grid-column: 1/-1; padding: 40px 0; text-align: center;">Nenhum título encontrado para os filtros selecionados.</p>`;
+                        renderPaginationControls("explore-pagination", 1, 0, 0, () => {});
                         return;
                     }
                     const fragment = document.createDocumentFragment();
                     results.forEach(m => fragment.appendChild(createMovieCardElement(m)));
-                    searchGrid.appendChild(fragment);
+                    explorePosterGrid.appendChild(fragment);
                 }
 
                 // Render Pagination
                 renderPaginationControls(
-                    "movies-search-pagination",
+                    "explore-pagination",
                     data.page || page,
                     data.total_pages || 1,
                     data.total_results || results.length,
-                    (newPage) => executeFilteredMovieSearch(newPage)
+                    (newPage) => executeFilteredCatalogSearch(newPage)
                 );
             } catch (err) {
-                console.error("Erro na busca de filmes:", err);
-                if (searchGrid) searchGrid.innerHTML = `<p style="color:#f87171; grid-column: 1/-1;">Erro ao consultar catálogo.</p>`;
-                renderPaginationControls("movies-search-pagination", 1, 0, 0, () => {});
+                console.error("Erro na busca de títulos:", err);
+                if (explorePosterGrid) explorePosterGrid.innerHTML = `<p style="color:#f87171; grid-column: 1/-1; padding: 30px 0; text-align: center;">Erro ao carregar o catálogo. Verifique sua conexão e tente novamente.</p>`;
+                renderPaginationControls("explore-pagination", 1, 0, 0, () => {});
             }
         }
 
-        if (searchInput) {
-            searchInput.addEventListener("input", () => {
-                const query = searchInput.value.trim();
-                if (btnClear) {
-                    btnClear.classList.toggle("hidden", query.length === 0);
-                }
-
-                clearTimeout(movieSearchDebounceTimer);
-                movieSearchDebounceTimer = setTimeout(() => {
-                    executeFilteredMovieSearch();
-                }, 320);
-            });
-        }
-
-        if (btnClear) {
-            btnClear.addEventListener("click", () => {
-                if (searchInput) {
-                    searchInput.value = "";
-                    searchInput.focus();
-                }
-                btnClear.classList.add("hidden");
-                executeFilteredMovieSearch();
-            });
-        }
-
-        // Category Pills (Smooth Scroll to Row)
+        // Category Pills (Smooth Scroll to Row on Showcase)
         if (categoryPills) {
             categoryPills.addEventListener("click", (e) => {
                 const pill = e.target.closest(".movie-pill");
                 if (!pill) return;
                 categoryPills.querySelectorAll(".movie-pill").forEach(p => p.classList.remove("active"));
                 pill.classList.add("active");
+
+                // If currently in explore view, return to showcase first
+                if (moviesExploreView && !moviesExploreView.classList.contains("hidden")) {
+                    closeExploreView();
+                }
 
                 const target = pill.dataset.target || pill.dataset.filter;
                 if (target === "all") {
@@ -3150,7 +3344,13 @@ document.addEventListener("DOMContentLoaded", () => {
         function getFocusableElements() {
             const selector = [
                 '#floating-nav-capsule .nav-capsule-item',
+                '.home-portal-card',
+                '.home-utility-card',
                 '#movies-search-input',
+                '#btn-open-movie-explore',
+                '#btn-explore-back',
+                '#explore-search-input',
+                '.explore-chip',
                 '#btn-hero-watch',
                 '#btn-hero-info',
                 '#movies-category-pills .movie-pill',
@@ -3158,6 +3358,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 '#btn-close-movie-modal',
                 '.btn-movie-server',
                 '.btn-player-action-mini',
+                '.btn-page-number',
+                '.btn-pagination-nav',
                 '#filter-pills .pill',
                 '#quick-grid .quick-card',
                 '#btn-change-team',
