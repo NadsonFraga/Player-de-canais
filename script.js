@@ -2321,11 +2321,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 fetchTmdbEndpoint('discover/movie?primary_release_date.lte=1999-12-31&vote_count.gte=1000&sort_by=vote_average.desc')
             ]);
 
-            const trending = trendingRes.status === 'fulfilled' ? (trendingRes.value.results || []) : [];
-            const releases = releasesRes.status === 'fulfilled' ? (releasesRes.value.results || []) : [];
-            const animation = animationRes.status === 'fulfilled' ? (animationRes.value.results || []) : [];
-            const national = nationalRes.status === 'fulfilled' ? (nationalRes.value.results || []) : [];
-            const classics = classicsRes.status === 'fulfilled' ? (classicsRes.value.results || []) : [];
+            const todayStr = new Date().toISOString().split('T')[0];
+            const filterReleased = (list) => (list || []).filter(m => {
+                const d = m.release_date || m.first_air_date;
+                return !d || d <= todayStr;
+            });
+
+            const trending = filterReleased(trendingRes.status === 'fulfilled' ? (trendingRes.value.results || []) : []);
+            const releases = filterReleased(releasesRes.status === 'fulfilled' ? (releasesRes.value.results || []) : []);
+            const animation = filterReleased(animationRes.status === 'fulfilled' ? (animationRes.value.results || []) : []);
+            const national = filterReleased(nationalRes.status === 'fulfilled' ? (nationalRes.value.results || []) : []);
+            const classics = filterReleased(classicsRes.status === 'fulfilled' ? (classicsRes.value.results || []) : []);
 
             moviesCacheData = { trending, releases, animation, national, classics };
 
@@ -3117,22 +3123,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 let endpoint = '';
+                const todayDate = new Date().toISOString().split('T')[0];
+                const isTv = (activeMediaType === 'tv');
+                const dateField = isTv ? 'first_air_date' : 'primary_release_date';
+
                 if (query) {
                     if (exploreSectionTitle) exploreSectionTitle.textContent = `Resultados para "${query}"`;
                     endpoint = `search/${activeMediaType}?query=${encodeURIComponent(query)}&page=${page}`;
                 } else {
                     if (exploreSectionTitle) exploreSectionTitle.textContent = `Catálogo Completo de ${activeMediaType === 'movie' ? 'Filmes' : 'Títulos'}`;
-                    let params = `discover/${activeMediaType}?sort_by=${activeFilterSort}&page=${page}`;
+
+                    let effectiveSort = activeFilterSort;
+                    if (isTv && effectiveSort.includes('primary_release_date')) {
+                        effectiveSort = effectiveSort.replace('primary_release_date', 'first_air_date');
+                    } else if (!isTv && effectiveSort.includes('first_air_date')) {
+                        effectiveSort = effectiveSort.replace('first_air_date', 'primary_release_date');
+                    }
+
+                    let params = `discover/${activeMediaType}?sort_by=${effectiveSort}&page=${page}`;
                     if (activeFilterGenre) params += `&with_genres=${activeFilterGenre}`;
+
                     if (activeFilterYearRange) {
                         const [startYear, endYear] = activeFilterYearRange.split('-');
-                        params += `&primary_release_date.gte=${startYear}-01-01&primary_release_date.lte=${endYear}-12-31`;
+                        const currentYear = new Date().getFullYear();
+                        const effectiveEnd = (Number(endYear) >= currentYear) ? todayDate : `${endYear}-12-31`;
+                        params += `&${dateField}.gte=${startYear}-01-01&${dateField}.lte=${effectiveEnd}`;
+                    } else {
+                        // Crucial: Cap at today's date so unreleased titles (e.g. 2027, 2030) are NEVER returned
+                        params += `&${dateField}.lte=${todayDate}`;
                     }
+
+                    // For release date descending sort, filter out 0-vote placeholders/junk so real releases appear
+                    if (effectiveSort.includes('release_date') || effectiveSort.includes('air_date')) {
+                        params += `&vote_count.gte=5`;
+                    }
+
                     endpoint = params;
                 }
 
                 const data = await fetchTmdbEndpoint(endpoint);
                 let results = (data.results || []).filter(m => m.poster_path);
+
+                // Enforce strict release check: never allow titles with a release/air date in the future
+                results = results.filter(m => {
+                    const itemDate = m.release_date || m.first_air_date;
+                    if (itemDate && itemDate > todayDate) return false;
+                    return true;
+                });
 
                 // If query + genre filter active, apply in-memory filter
                 if (query && activeFilterGenre) {
