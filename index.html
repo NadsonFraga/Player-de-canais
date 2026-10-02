@@ -21,7 +21,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css?v=20261001_cinema_rework">
+    <link rel="stylesheet" href="style.css?v=20261002_phase2_complete">
 </head>
 
 <body>
@@ -53,6 +53,21 @@
                 <line x1="17" y1="7" x2="22" y2="7"></line>
             </svg>
             <span>Filmes</span>
+        </button>
+        <button id="nav-tab-series" class="nav-capsule-item" data-view="series" aria-label="Aba Séries de TV">
+            <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+            <span>Séries</span>
+        </button>
+        <button id="nav-tab-animes" class="nav-capsule-item" data-view="animes" aria-label="Aba Animes">
+            <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span>Animes</span>
         </button>
         <button id="nav-tab-sports" class="nav-capsule-item" data-view="sports" aria-label="Aba Jogos de Futebol">
             <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -140,8 +155,9 @@
                         </div>
                     </div>
 
-                    <!-- Portal 3: Series (Coming in Phase 2) -->
-                    <div class="home-portal-card disabled-portal" data-view-target="series" tabindex="0" role="button" aria-label="Séries de TV (Em Breve)">
+                    <!-- Portal 3: Series -->
+                    <div class="home-portal-card active-portal" data-view-target="series" tabindex="0" role="button" aria-label="Abrir Catálogo de Séries de TV">
+                        <div class="portal-card-glow series-glow"></div>
                         <div class="portal-header">
                             <div class="portal-icon-box series-accent">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -151,34 +167,51 @@
                                     <line x1="6" y1="18" x2="6.01" y2="18"></line>
                                 </svg>
                             </div>
-                            <span class="portal-badge phase2-badge">Fase 2 • Em Breve</span>
+                            <span class="portal-badge series-badge">Séries & Temporadas</span>
                         </div>
                         <div class="portal-body">
                             <h3>Séries de TV</h3>
                             <p>Temporadas completas, controle ágil de episódios e histórico salvo no navegador.</p>
                         </div>
                         <div class="portal-footer">
-                            <span class="portal-action-hint">Próxima atualização</span>
+                            <span class="portal-action-btn">Explorar Séries <span>&rarr;</span></span>
                         </div>
                     </div>
 
-                    <!-- Portal 4: Anime (Coming in Phase 2) -->
-                    <div class="home-portal-card disabled-portal" data-view-target="animes" tabindex="0" role="button" aria-label="Animes Japoneses (Em Breve)">
+                    <!-- Portal 4: Anime -->
+                    <div class="home-portal-card active-portal" data-view-target="animes" tabindex="0" role="button" aria-label="Abrir Catálogo de Animes Japoneses">
+                        <div class="portal-card-glow anime-glow"></div>
                         <div class="portal-header">
                             <div class="portal-icon-box anime-accent">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                 </svg>
                             </div>
-                            <span class="portal-badge phase2-badge">Fase 2 • Em Breve</span>
+                            <span class="portal-badge anime-badge">Animações Japonesas</span>
                         </div>
                         <div class="portal-body">
                             <h3>Animes</h3>
                             <p>One Piece, Naruto, Attack on Titan, animes da temporada e clássicos com busca por episódios.</p>
                         </div>
                         <div class="portal-footer">
-                            <span class="portal-action-hint">Próxima atualização</span>
+                            <span class="portal-action-btn">Explorar Animes <span>&rarr;</span></span>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Home Continue Watching Rail (Shown when user has watch progress) -->
+            <section id="home-continue-watching-section" class="home-continue-watching-section hidden">
+                <div class="home-section-header">
+                    <div class="continue-watching-title-box">
+                        <span class="continue-icon-dot"></span>
+                        <h2>Continuar Assistindo</h2>
+                    </div>
+                    <span class="home-section-hint">De onde você parou</span>
+                </div>
+                <div class="continue-watching-carousel-wrapper">
+                    <div id="home-continue-watching-track" class="continue-watching-track">
+                        <!-- Populated dynamically from localStorage -->
                     </div>
                 </div>
             </section>
@@ -779,6 +812,378 @@
         </div>
     </main>
 
+    <!-- View 3: Series Showcase & Discovery -->
+    <main id="view-series" class="view-movies view-series hidden" aria-label="Catálogo de Séries de TV">
+        <!-- Default Discovery Feed -->
+        <div id="series-discovery-feed" class="movies-discovery-feed">
+            <!-- Hero Showcase Banner -->
+            <section id="series-hero" class="movies-hero">
+                <div class="movies-hero-backdrop-wrapper">
+                    <img id="series-hero-backdrop" src="" alt="Banner da Série em Destaque" class="movies-hero-backdrop">
+                    <div class="movies-hero-gradient-overlay series-gradient"></div>
+                </div>
+                <div class="movies-hero-content">
+                    <h1 id="series-hero-title" class="movies-hero-title">Carregando séries...</h1>
+                    <div class="movies-hero-meta">
+                        <span class="movies-hero-badge series-hero-badge"><span class="series-sparkle">✦</span> Destaque Série</span>
+                        <span id="series-hero-year" class="movies-meta-tag"></span>
+                        <span id="series-hero-rating" class="movies-meta-tag rating series-rating"></span>
+                        <div id="series-hero-genres" class="movies-hero-genres"></div>
+                    </div>
+                    <p id="series-hero-overview" class="movies-hero-overview"></p>
+                    <div class="movies-hero-actions">
+                        <button id="btn-series-hero-watch" class="btn-cinema-primary btn-series-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            <span>Assistir Episódios</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hero Navigation Controls -->
+                <div class="movies-hero-nav">
+                    <button id="btn-series-hero-prev" class="btn-hero-nav-arrow" aria-label="Destaque anterior" title="Destaque anterior">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <div id="series-hero-dots" class="hero-dots-container"></div>
+                    <button id="btn-series-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo destaque" title="Próximo destaque">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Quick Navigation Pills & Catalog Search Toolbar -->
+            <div class="movies-nav-toolbar">
+                <nav class="movies-category-pills" id="series-category-pills" aria-label="Navegar por Seções de Séries">
+                    <button class="movie-pill series-pill active" data-target="all">Todas</button>
+                    <button class="movie-pill series-pill" data-target="series-row-trending">Populares</button>
+                    <button class="movie-pill series-pill" data-target="series-row-releases">Lançamentos</button>
+                    <button class="movie-pill series-pill" data-target="series-row-drama">Drama & Suspense</button>
+                    <button class="movie-pill series-pill" data-target="series-row-scifi">Ficção Científica</button>
+                    <button class="movie-pill series-pill" data-target="series-row-comedy">Comédia</button>
+                </nav>
+
+                <div class="spotlight-search-container pills-search-box series-search-box" id="series-search-container" title="Clique para buscar no catálogo de séries">
+                    <svg class="spotlight-icon pills-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="series-search-input" class="spotlight-input pills-search-input" placeholder="Buscar séries no catálogo..." autocomplete="off">
+                    <button id="btn-clear-series-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
+                </div>
+            </div>
+
+            <!-- Horizontal Rows for Series -->
+            <div id="series-carousels-container" class="movies-carousels-container">
+                <!-- 1. Trending Series -->
+                <section class="movies-row-section" id="series-row-trending">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Séries Mais Populares da Semana</h2>
+                            <span class="movies-row-badge series-row-badge">Top Séries</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="series-track-trending" aria-label="Voltar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="series-track-trending" aria-label="Avançar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="series-track-trending">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Releases / New Seasons -->
+                <section class="movies-row-section" id="series-row-releases">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Lançamentos & Novas Temporadas</h2>
+                            <span class="movies-row-badge series-row-badge">Recentes</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="series-track-releases" aria-label="Voltar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="series-track-releases" aria-label="Avançar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="series-track-releases">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Drama & Suspense -->
+                <section class="movies-row-section" id="series-row-drama">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Dramas & Suspense Premiados</h2>
+                            <span class="movies-row-badge series-row-badge">Aclamadas</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="series-track-drama" aria-label="Voltar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="series-track-drama" aria-label="Avançar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="series-track-drama">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Sci-Fi & Fantasy -->
+                <section class="movies-row-section" id="series-row-scifi">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Ficção Científica & Fantasia</h2>
+                            <span class="movies-row-badge series-row-badge">Outros Mundos</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="series-track-scifi" aria-label="Voltar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="series-track-scifi" aria-label="Avançar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="series-track-scifi">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. Comedy -->
+                <section class="movies-row-section" id="series-row-comedy">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Comédias Imperdíveis</h2>
+                            <span class="movies-row-badge series-row-badge">Diversão</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="series-track-comedy" aria-label="Voltar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="series-track-comedy" aria-label="Avançar séries">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="series-track-comedy">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- View 4: Animes Showcase & Discovery -->
+    <main id="view-animes" class="view-movies view-animes hidden" aria-label="Catálogo de Animes Japoneses">
+        <!-- Default Discovery Feed -->
+        <div id="animes-discovery-feed" class="movies-discovery-feed">
+            <!-- Hero Showcase Banner -->
+            <section id="animes-hero" class="movies-hero">
+                <div class="movies-hero-backdrop-wrapper">
+                    <img id="animes-hero-backdrop" src="" alt="Banner do Anime em Destaque" class="movies-hero-backdrop">
+                    <div class="movies-hero-gradient-overlay anime-gradient"></div>
+                </div>
+                <div class="movies-hero-content">
+                    <h1 id="animes-hero-title" class="movies-hero-title">Carregando animes...</h1>
+                    <div class="movies-hero-meta">
+                        <span class="movies-hero-badge anime-hero-badge"><span class="anime-sparkle">✦</span> Destaque Anime</span>
+                        <span id="animes-hero-year" class="movies-meta-tag"></span>
+                        <span id="animes-hero-rating" class="movies-meta-tag rating anime-rating"></span>
+                        <div id="animes-hero-genres" class="movies-hero-genres"></div>
+                    </div>
+                    <p id="animes-hero-overview" class="movies-hero-overview"></p>
+                    <div class="movies-hero-actions">
+                        <button id="btn-animes-hero-watch" class="btn-cinema-primary btn-anime-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            <span>Assistir Episódios</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hero Navigation Controls -->
+                <div class="movies-hero-nav">
+                    <button id="btn-animes-hero-prev" class="btn-hero-nav-arrow" aria-label="Destaque anterior" title="Destaque anterior">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <div id="animes-hero-dots" class="hero-dots-container"></div>
+                    <button id="btn-animes-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo destaque" title="Próximo destaque">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Quick Navigation Pills & Catalog Search Toolbar -->
+            <div class="movies-nav-toolbar">
+                <nav class="movies-category-pills" id="animes-category-pills" aria-label="Navegar por Seções de Animes">
+                    <button class="movie-pill anime-pill active" data-target="all">Todos</button>
+                    <button class="movie-pill anime-pill" data-target="animes-row-trending">Populares</button>
+                    <button class="movie-pill anime-pill" data-target="animes-row-shonen">Ação & Shonen</button>
+                    <button class="movie-pill anime-pill" data-target="animes-row-isekai">Fantasia & Isekai</button>
+                    <button class="movie-pill anime-pill" data-target="animes-row-classics">Clássicos</button>
+                    <button class="movie-pill anime-pill" data-target="animes-row-releases">Lançamentos</button>
+                </nav>
+
+                <div class="spotlight-search-container pills-search-box anime-search-box" id="animes-search-container" title="Clique para buscar no catálogo de animes">
+                    <svg class="spotlight-icon pills-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="animes-search-input" class="spotlight-input pills-search-input" placeholder="Buscar animes no catálogo..." autocomplete="off">
+                    <button id="btn-clear-animes-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
+                </div>
+            </div>
+
+            <!-- Horizontal Rows for Animes -->
+            <div id="animes-carousels-container" class="movies-carousels-container">
+                <!-- 1. Trending Animes -->
+                <section class="movies-row-section" id="animes-row-trending">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Animes Mais Populares</h2>
+                            <span class="movies-row-badge anime-row-badge">Top Animes</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="animes-track-trending" aria-label="Voltar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="animes-track-trending" aria-label="Avançar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="animes-track-trending">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Shonen & Action -->
+                <section class="movies-row-section" id="animes-row-shonen">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Shonen & Batalhas Épicas</h2>
+                            <span class="movies-row-badge anime-row-badge">Ação Pura</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="animes-track-shonen" aria-label="Voltar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="animes-track-shonen" aria-label="Avançar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="animes-track-shonen">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Isekai & Fantasy -->
+                <section class="movies-row-section" id="animes-row-isekai">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Fantasia & Isekai</h2>
+                            <span class="movies-row-badge anime-row-badge">Outro Mundo</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="animes-track-isekai" aria-label="Voltar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="animes-track-isekai" aria-label="Avançar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="animes-track-isekai">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Legendary Classics -->
+                <section class="movies-row-section" id="animes-row-classics">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Clássicos Lendários dos Animes</h2>
+                            <span class="movies-row-badge anime-row-badge">Imortais</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="animes-track-classics" aria-label="Voltar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="animes-track-classics" aria-label="Avançar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="animes-track-classics">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. Releases -->
+                <section class="movies-row-section" id="animes-row-releases">
+                    <div class="movies-row-header">
+                        <div class="movies-row-title-box">
+                            <h2>Lançamentos & Temporada Atual</h2>
+                            <span class="movies-row-badge anime-row-badge">Em Exibição</span>
+                        </div>
+                        <div class="movies-row-nav-arrows">
+                            <button class="btn-carousel-arrow btn-prev" data-track="animes-track-releases" aria-label="Voltar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button class="btn-carousel-arrow btn-next" data-track="animes-track-releases" aria-label="Avançar animes">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="movies-carousel-wrapper">
+                        <div class="movies-carousel-track" id="animes-track-releases">
+                            <!-- Dynamic poster cards -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
     <!-- Team Selection Modal -->
     <div id="team-select-modal" class="team-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="team-modal-title">
         <div class="team-modal-card">
@@ -998,11 +1403,194 @@
         </div>
     </div>
 
+    <!-- Series & Animes Details & Episode Player Modal -->
+    <div id="series-modal" class="movie-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="series-modal-title">
+        <div class="movie-modal-card series-modal-card">
+            <button id="btn-close-series-modal" class="btn-movie-modal-close" aria-label="Fechar janela" title="Fechar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <!-- Media / Player Area -->
+            <div class="movie-modal-media-area" id="series-modal-media-area">
+                <div id="series-modal-backdrop-box" class="movie-modal-backdrop-box">
+                    <img id="series-modal-backdrop-img" src="" alt="Capa panorâmica da série" class="movie-modal-backdrop-img">
+                    <div class="movie-modal-backdrop-gradient"></div>
+                </div>
+
+                <!-- Video Player Container with Episode Controls -->
+                <div id="series-modal-player-container" class="movie-modal-player-container series-player-wrapper hidden">
+                    <div class="movie-player-top-bar">
+                        <div class="series-player-title-info">
+                            <span id="series-player-current-ep" class="movie-player-server-title">Episódio 1</span>
+                        </div>
+                        <div class="movie-player-actions">
+                            <button id="btn-reload-series-player" class="btn-player-action-mini" title="Recarregar player">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                </svg>
+                                <span>Recarregar</span>
+                            </button>
+                            <button id="btn-close-series-player" class="btn-player-action-mini danger" title="Fechar player e voltar aos episódios">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span>Fechar Player</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="series-iframe-container">
+                        <iframe id="series-modal-iframe" class="movie-modal-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
+                        
+                        <!-- Floating Episode Quick Drawer on top of player -->
+                        <div id="series-player-drawer" class="series-player-drawer hidden">
+                            <div class="series-drawer-header">
+                                <span>Episódios da Temporada</span>
+                                <button id="btn-close-series-drawer" class="btn-close-drawer">&times;</button>
+                            </div>
+                            <div id="series-drawer-list" class="series-drawer-list">
+                                <!-- Dynamic drawer items -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Player Episode Controls & Server Switcher -->
+                    <div class="series-player-bottom-bar">
+                        <div class="series-ep-nav-buttons">
+                            <button id="btn-series-prev-ep" class="btn-player-control" title="Episódio Anterior" disabled>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                                    <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="3"></line>
+                                </svg>
+                                <span>Anterior</span>
+                            </button>
+                            <button id="btn-toggle-drawer" class="btn-player-control secondary" title="Ver lista de episódios">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                </svg>
+                                <span>Lista</span>
+                            </button>
+                            <button id="btn-series-next-ep" class="btn-player-control" title="Próximo Episódio">
+                                <span>Próximo</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                                    <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="3"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="series-servers-selector" id="series-servers-selector">
+                            <span class="server-label">Servidor:</span>
+                            <div class="series-server-pills" id="series-server-pills">
+                                <button class="btn-series-server-pill active" data-server="superflix">Superflix</button>
+                                <button class="btn-series-server-pill" data-server="myembed">MyEmbed</button>
+                                <button class="btn-series-server-pill" data-server="vsembed">VsEmbed</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Body & Episode Navigator -->
+            <div class="movie-modal-body series-modal-body">
+                <div class="movie-modal-header-info">
+                    <h2 id="series-modal-title" class="movie-modal-title"></h2>
+                    <div class="movie-modal-meta-row">
+                        <span id="series-modal-year" class="movie-modal-badge"></span>
+                        <span id="series-modal-rating" class="movie-modal-badge rating"></span>
+                        <span id="series-modal-seasons-count" class="movie-modal-badge seasons-badge"></span>
+                        <div id="series-modal-genres" class="movie-modal-genres"></div>
+                    </div>
+                    <p id="series-modal-overview" class="movie-modal-overview"></p>
+
+                    <!-- Continue Watching Action Button -->
+                    <div id="series-continue-action-box" class="series-continue-action-box hidden">
+                        <button id="btn-series-continue-play" class="btn-cinema-primary btn-continue-play">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            <span id="series-continue-play-label">Continuar Assistindo</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dual-Mode Episode Navigator Container -->
+                <div class="series-episodes-section">
+                    <div class="series-navigator-header">
+                        <div class="series-navigator-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                            </svg>
+                            <span>Navegador de Episódios</span>
+                        </div>
+
+                        <!-- Mode Switcher Tabs: Arcs vs Continuous 1-1000+ -->
+                        <div class="series-mode-switcher" id="series-mode-switcher">
+                            <button id="btn-mode-arcs" class="btn-mode-switch active" type="button">
+                                <span>Temporadas & Arcos</span>
+                            </button>
+                            <button id="btn-mode-continuous" class="btn-mode-switch" type="button">
+                                <span>Lista Contínua (1 a 1000+)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panel 1: Seasons & Story Arcs Mode -->
+                    <div id="series-arcs-panel" class="series-navigator-panel">
+                        <div class="series-season-selector-bar">
+                            <label for="series-season-select" class="season-select-label">Temporada / Arco:</label>
+                            <div class="custom-select-wrapper">
+                                <select id="series-season-select" class="series-season-select" aria-label="Selecione a Temporada ou Arco"></select>
+                            </div>
+                            <span id="series-season-episodes-total" class="season-total-count">Carregando episódios...</span>
+                        </div>
+                        <div id="series-episodes-grid" class="series-episodes-grid">
+                            <!-- Populated dynamically with 16:9 episode cards -->
+                        </div>
+                    </div>
+
+                    <!-- Panel 2: Continuous 1 to 1000+ Mode (Optimized for long-running animes) -->
+                    <div id="series-continuous-panel" class="series-navigator-panel hidden">
+                        <div class="continuous-search-bar">
+                            <div class="continuous-input-box">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="number" id="series-quick-ep-search" class="continuous-ep-input" placeholder="Ir direto para o número do episódio... ex: 892" min="1">
+                                <button id="btn-go-to-ep" class="btn-continuous-go" type="button">Buscar</button>
+                            </div>
+                            <div class="continuous-chunks-scroller" id="series-chunks-container">
+                                <!-- Dynamic chunks: [1 - 50], [51 - 100], etc. -->
+                            </div>
+                        </div>
+                        <div id="series-continuous-grid" class="series-episodes-grid">
+                            <!-- Populated with currently selected 50 episodes chunk -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Global App Toast Notification -->
     <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
 
     <!-- Application Script -->
-    <script src="script.js?v=20261001_1"></script>
+    <script src="script.js?v=20261002_phase2_complete"></script>
 </body>
 
 </html>
