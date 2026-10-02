@@ -2227,14 +2227,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         currentAppView = viewName;
-        const hashMap = {
-            home: 'inicio',
-            tv: 'canais',
-            movies: 'filmes',
-            series: 'series',
-            animes: 'animes'
-        };
-        window.location.hash = hashMap[viewName] || 'canais';
+        // Keep clean URL so refresh always returns to initial Home view
+        try {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+        } catch (e) {}
 
         // Close channels mobile sidebar if leaving tv view
         if (viewName !== 'tv') {
@@ -2375,10 +2371,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        window.addEventListener("hashchange", handleHash);
+        // Always start fresh on the Home view upon page reload
         if (window.location.hash) {
-            handleHash();
+            try {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            } catch (e) {}
         }
+        switchAppView('home');
     }
 
     // ==========================================================================
@@ -5111,23 +5110,21 @@ document.addEventListener("DOMContentLoaded", () => {
         let accumulated = 0;
         for (const s of regularSeasons) {
             if (accumulated + s.episode_count >= absoluteEp) {
-                const epInSeason = absoluteEp - accumulated;
+                // In continuous anime providers (One Piece, Naruto, etc.), servers expect the absolute episode number paired with the season
                 return {
                     season: s.season_number,
-                    episode: epInSeason,
+                    episode: absoluteEp,
                     seasonName: s.name || `Temporada ${s.season_number}`
                 };
             }
             accumulated += s.episode_count;
         }
 
-        // If absoluteEp exceeds total cumulative count, map to the last season
+        // If absoluteEp exceeds total cumulative count, map to the last season with the absolute number
         const lastSeason = regularSeasons[regularSeasons.length - 1];
-        const prevAccumulated = accumulated - lastSeason.episode_count;
-        const fallbackEp = Math.max(1, absoluteEp - prevAccumulated);
         return {
             season: lastSeason.season_number,
-            episode: fallbackEp,
+            episode: absoluteEp,
             seasonName: lastSeason.name || `Temporada ${lastSeason.season_number}`
         };
     }
@@ -5208,7 +5205,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const currentEpNum = epNum;
             const playAction = () => {
                 const targetMapped = mapAbsoluteEpisodeToSeason(seasons, currentEpNum);
-                playSeriesEpisode(currentSelectedSeries, targetMapped.season, targetMapped.episode, { name: `Episódio ${currentEpNum}` });
+                playSeriesEpisode(currentSelectedSeries, targetMapped.season, currentEpNum, { name: `Episódio ${currentEpNum}` });
             };
 
             card.addEventListener("click", playAction);
@@ -5229,8 +5226,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!currentSelectedSeries) return;
         const seasons = (currentSeriesDetails && currentSeriesDetails.seasons) ? currentSeriesDetails.seasons : [];
         const mapped = mapAbsoluteEpisodeToSeason(seasons, epNumber);
-        playSeriesEpisode(currentSelectedSeries, mapped.season, mapped.episode, { name: `Episódio ${epNumber}` });
-        showToast(`Carregando Episódio ${epNumber} (T${mapped.season}:E${mapped.episode})...`);
+        playSeriesEpisode(currentSelectedSeries, mapped.season, epNumber, { name: `Episódio ${epNumber}` });
+        showToast(`Carregando Episódio ${epNumber} (T${mapped.season}:E${epNumber})...`);
     }
 
     // --- 6. Series Video Player Controller ---
