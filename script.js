@@ -3880,6 +3880,48 @@ document.addEventListener("DOMContentLoaded", () => {
         const btnNext = document.getElementById("btn-series-hero-next");
         const heroSection = document.getElementById("series-hero");
 
+        // Concurrent pre-fetch and pre-load of all hero series logos and backdrops
+        seriesItems.forEach(item => {
+            if (item.backdrop_path) {
+                const preBackdrop = new Image();
+                preBackdrop.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            }
+
+            if (!item.logo_url && !item.has_no_logo) {
+                fetchTmdbEndpoint(`tv/${item.id}/images?include_image_language=pt,en,null`).then(imgData => {
+                    if (imgData && imgData.logos && imgData.logos.length > 0) {
+                        const ptLogo = imgData.logos.find(l => l.iso_639_1 === 'pt');
+                        const enLogo = imgData.logos.find(l => l.iso_639_1 === 'en');
+                        const chosenLogo = ptLogo || enLogo || imgData.logos[0];
+                        if (chosenLogo && chosenLogo.file_path) {
+                            const logoUrl = `${TMDB_IMG_W500}${chosenLogo.file_path}`;
+                            item.logo_url = logoUrl;
+                            const preImg = new Image();
+                            preImg.src = logoUrl;
+                            preImg.onload = () => {
+                                item.logo_loaded = true;
+                                if (heroSeriesList[currentHeroSeriesIndex] && heroSeriesList[currentHeroSeriesIndex].id === item.id) {
+                                    const logoEl = document.getElementById("series-hero-title-logo");
+                                    const titleEl = document.getElementById("series-hero-title");
+                                    if (logoEl && titleEl) {
+                                        logoEl.src = item.logo_url;
+                                        logoEl.classList.remove("hidden");
+                                        titleEl.classList.add("hidden");
+                                    }
+                                }
+                            };
+                        } else {
+                            item.has_no_logo = true;
+                        }
+                    } else {
+                        item.has_no_logo = true;
+                    }
+                }).catch(() => {
+                    item.has_no_logo = true;
+                });
+            }
+        });
+
         if (dotsContainer) {
             dotsContainer.innerHTML = "";
             seriesItems.forEach((_, idx) => {
@@ -3898,6 +3940,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const backdropImg = document.getElementById("series-hero-backdrop");
             const titleEl = document.getElementById("series-hero-title");
+            const logoEl = document.getElementById("series-hero-title-logo");
             const yearEl = document.getElementById("series-hero-year");
             const ratingEl = document.getElementById("series-hero-rating");
             const genresEl = document.getElementById("series-hero-genres");
@@ -3907,7 +3950,65 @@ document.addEventListener("DOMContentLoaded", () => {
             if (backdropImg && item.backdrop_path) {
                 backdropImg.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
             }
-            if (titleEl) titleEl.textContent = item.name || item.title;
+
+            // Clearlogo transition for Series
+            if (item.logo_url) {
+                if (logoEl) {
+                    logoEl.src = item.logo_url;
+                    logoEl.classList.remove("hidden");
+                }
+                if (titleEl) {
+                    titleEl.classList.add("hidden");
+                    titleEl.textContent = item.name || item.title || "Série em Destaque";
+                }
+            } else if (item.has_no_logo) {
+                if (logoEl) {
+                    logoEl.classList.add("hidden");
+                    logoEl.src = "";
+                }
+                if (titleEl) {
+                    titleEl.classList.remove("hidden");
+                    titleEl.textContent = item.name || item.title || "Série em Destaque";
+                }
+            } else {
+                if (logoEl) {
+                    logoEl.classList.add("hidden");
+                    logoEl.src = "";
+                }
+                if (titleEl) {
+                    titleEl.classList.remove("hidden");
+                    titleEl.textContent = item.name || item.title || "Série em Destaque";
+                }
+
+                if (item.id && logoEl) {
+                    fetchTmdbEndpoint(`tv/${item.id}/images?include_image_language=pt,en,null`).then(imgData => {
+                        if (imgData && imgData.logos && imgData.logos.length > 0) {
+                            const ptLogo = imgData.logos.find(l => l.iso_639_1 === 'pt');
+                            const enLogo = imgData.logos.find(l => l.iso_639_1 === 'en');
+                            const chosenLogo = ptLogo || enLogo || imgData.logos[0];
+                            if (chosenLogo && chosenLogo.file_path) {
+                                item.logo_url = `${TMDB_IMG_W500}${chosenLogo.file_path}`;
+                                const img = new Image();
+                                img.src = item.logo_url;
+                                img.onload = () => {
+                                    if (heroSeriesList[currentHeroSeriesIndex] && heroSeriesList[currentHeroSeriesIndex].id === item.id) {
+                                        logoEl.src = item.logo_url;
+                                        logoEl.classList.remove("hidden");
+                                        if (titleEl) titleEl.classList.add("hidden");
+                                    }
+                                };
+                            } else {
+                                item.has_no_logo = true;
+                            }
+                        } else {
+                            item.has_no_logo = true;
+                        }
+                    }).catch(() => {
+                        item.has_no_logo = true;
+                    });
+                }
+            }
+
             if (yearEl) yearEl.textContent = (item.first_air_date || '').substring(0, 4) || 'Série';
             if (ratingEl) ratingEl.textContent = `★ ${item.vote_average ? item.vote_average.toFixed(1) : '8.0'}`;
             if (overviewEl) overviewEl.textContent = item.overview || "Sinopse não disponível em português.";
@@ -4344,6 +4445,48 @@ document.addEventListener("DOMContentLoaded", () => {
         const btnNext = document.getElementById("btn-animes-hero-next");
         const heroSection = document.getElementById("animes-hero");
 
+        // Concurrent pre-fetch and pre-load of all hero anime logos and backdrops
+        animeItems.forEach(item => {
+            if (item.backdrop_path) {
+                const preBackdrop = new Image();
+                preBackdrop.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            }
+
+            if (!item.logo_url && !item.has_no_logo) {
+                fetchTmdbEndpoint(`tv/${item.id}/images?include_image_language=pt,en,null,ja`).then(imgData => {
+                    if (imgData && imgData.logos && imgData.logos.length > 0) {
+                        const ptLogo = imgData.logos.find(l => l.iso_639_1 === 'pt');
+                        const enLogo = imgData.logos.find(l => l.iso_639_1 === 'en');
+                        const chosenLogo = ptLogo || enLogo || imgData.logos[0];
+                        if (chosenLogo && chosenLogo.file_path) {
+                            const logoUrl = `${TMDB_IMG_W500}${chosenLogo.file_path}`;
+                            item.logo_url = logoUrl;
+                            const preImg = new Image();
+                            preImg.src = logoUrl;
+                            preImg.onload = () => {
+                                item.logo_loaded = true;
+                                if (heroAnimesList[currentHeroAnimesIndex] && heroAnimesList[currentHeroAnimesIndex].id === item.id) {
+                                    const logoEl = document.getElementById("animes-hero-title-logo");
+                                    const titleEl = document.getElementById("animes-hero-title");
+                                    if (logoEl && titleEl) {
+                                        logoEl.src = item.logo_url;
+                                        logoEl.classList.remove("hidden");
+                                        titleEl.classList.add("hidden");
+                                    }
+                                }
+                            };
+                        } else {
+                            item.has_no_logo = true;
+                        }
+                    } else {
+                        item.has_no_logo = true;
+                    }
+                }).catch(() => {
+                    item.has_no_logo = true;
+                });
+            }
+        });
+
         if (dotsContainer) {
             dotsContainer.innerHTML = "";
             animeItems.forEach((_, idx) => {
@@ -4362,6 +4505,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const backdropImg = document.getElementById("animes-hero-backdrop");
             const titleEl = document.getElementById("animes-hero-title");
+            const logoEl = document.getElementById("animes-hero-title-logo");
             const yearEl = document.getElementById("animes-hero-year");
             const ratingEl = document.getElementById("animes-hero-rating");
             const genresEl = document.getElementById("animes-hero-genres");
@@ -4371,7 +4515,65 @@ document.addEventListener("DOMContentLoaded", () => {
             if (backdropImg && item.backdrop_path) {
                 backdropImg.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
             }
-            if (titleEl) titleEl.textContent = item.name || item.title;
+
+            // Clearlogo transition for Animes
+            if (item.logo_url) {
+                if (logoEl) {
+                    logoEl.src = item.logo_url;
+                    logoEl.classList.remove("hidden");
+                }
+                if (titleEl) {
+                    titleEl.classList.add("hidden");
+                    titleEl.textContent = item.name || item.title || "Anime em Destaque";
+                }
+            } else if (item.has_no_logo) {
+                if (logoEl) {
+                    logoEl.classList.add("hidden");
+                    logoEl.src = "";
+                }
+                if (titleEl) {
+                    titleEl.classList.remove("hidden");
+                    titleEl.textContent = item.name || item.title || "Anime em Destaque";
+                }
+            } else {
+                if (logoEl) {
+                    logoEl.classList.add("hidden");
+                    logoEl.src = "";
+                }
+                if (titleEl) {
+                    titleEl.classList.remove("hidden");
+                    titleEl.textContent = item.name || item.title || "Anime em Destaque";
+                }
+
+                if (item.id && logoEl) {
+                    fetchTmdbEndpoint(`tv/${item.id}/images?include_image_language=pt,en,null,ja`).then(imgData => {
+                        if (imgData && imgData.logos && imgData.logos.length > 0) {
+                            const ptLogo = imgData.logos.find(l => l.iso_639_1 === 'pt');
+                            const enLogo = imgData.logos.find(l => l.iso_639_1 === 'en');
+                            const chosenLogo = ptLogo || enLogo || imgData.logos[0];
+                            if (chosenLogo && chosenLogo.file_path) {
+                                item.logo_url = `${TMDB_IMG_W500}${chosenLogo.file_path}`;
+                                const img = new Image();
+                                img.src = item.logo_url;
+                                img.onload = () => {
+                                    if (heroAnimesList[currentHeroAnimesIndex] && heroAnimesList[currentHeroAnimesIndex].id === item.id) {
+                                        logoEl.src = item.logo_url;
+                                        logoEl.classList.remove("hidden");
+                                        if (titleEl) titleEl.classList.add("hidden");
+                                    }
+                                };
+                            } else {
+                                item.has_no_logo = true;
+                            }
+                        } else {
+                            item.has_no_logo = true;
+                        }
+                    }).catch(() => {
+                        item.has_no_logo = true;
+                    });
+                }
+            }
+
             if (yearEl) yearEl.textContent = (item.first_air_date || '').substring(0, 4) || 'Anime';
             if (ratingEl) ratingEl.textContent = `★ ${item.vote_average ? item.vote_average.toFixed(1) : '8.5'}`;
             if (overviewEl) overviewEl.textContent = item.overview || "Sinopse não disponível em português.";
