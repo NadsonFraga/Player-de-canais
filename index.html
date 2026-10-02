@@ -409,23 +409,6 @@
 
     <!-- View 2: Movies Catalog View (Nuvio Cinema Style) -->
     <main id="view-movies" class="view-movies hidden" aria-label="Catálogo de Filmes">
-        <!-- Spotlight Trigger Bar (Clean & Cinematic) -->
-        <header class="movies-spotlight-header">
-            <div class="spotlight-search-container" id="spotlight-search-container">
-                <svg class="spotlight-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" id="movies-search-input" class="spotlight-input" placeholder="Buscar filmes por título, diretor, gênero..." autocomplete="off">
-                <button id="btn-clear-movie-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
-                <button id="btn-open-movie-explore" class="spotlight-filter-btn" aria-label="Abrir Catálogo Completo e Filtros" title="Abrir Catálogo Completo">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                    </svg>
-                    <span class="btn-filter-text">Filtros</span>
-                </button>
-            </div>
-        </header>
 
         <!-- Dedicated Full-Screen Explore & Filter View (Fixed Page View) -->
         <section id="movies-explore-view" class="movies-explore-view hidden" aria-label="Catálogo Completo e Filtros">
@@ -607,17 +590,28 @@
                 </div>
             </section>
 
-            <!-- Quick Navigation Pills -->
-            <nav class="movies-category-pills" id="movies-category-pills" aria-label="Navegar por Seções">
-                <button class="movie-pill active" data-target="all">Todos</button>
-                <button class="movie-pill" data-target="row-trending">Populares</button>
-                <button class="movie-pill" data-target="row-releases">Lançamentos</button>
-                <button class="movie-pill" data-target="row-animation">Animações</button>
-                <button class="movie-pill" data-target="row-directors">Diretores</button>
-                <button class="movie-pill" data-target="row-studios">Estúdios</button>
-                <button class="movie-pill" data-target="row-national">Cinema Nacional</button>
-                <button class="movie-pill" data-target="row-classics">Clássicos</button>
-            </nav>
+            <!-- Quick Navigation Pills & Catalog Search Toolbar -->
+            <div class="movies-nav-toolbar">
+                <nav class="movies-category-pills" id="movies-category-pills" aria-label="Navegar por Seções">
+                    <button class="movie-pill active" data-target="all">Todos</button>
+                    <button class="movie-pill" data-target="row-trending">Populares</button>
+                    <button class="movie-pill" data-target="row-releases">Lançamentos</button>
+                    <button class="movie-pill" data-target="row-animation">Animações</button>
+                    <button class="movie-pill" data-target="row-directors">Diretores</button>
+                    <button class="movie-pill" data-target="row-studios">Estúdios</button>
+                    <button class="movie-pill" data-target="row-national">Cinema Nacional</button>
+                    <button class="movie-pill" data-target="row-classics">Clássicos</button>
+                </nav>
+
+                <div class="spotlight-search-container pills-search-box" id="spotlight-search-container" title="Clique para buscar no catálogo">
+                    <svg class="spotlight-icon pills-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="movies-search-input" class="spotlight-input pills-search-input" placeholder="Buscar no catálogo..." autocomplete="off">
+                    <button id="btn-clear-movie-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
+                </div>
+            </div>
 
             <!-- Horizontal Rows -->
             <div id="movies-carousels-container" class="movies-carousels-container">

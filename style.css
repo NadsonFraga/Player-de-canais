@@ -2902,15 +2902,7 @@ textarea:focus-visible {
     position: relative;
 }
 
-/* Spotlight Search */
-.movies-spotlight-header {
-    position: relative;
-    z-index: 25;
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 76px 20px 24px 20px;
-    pointer-events: auto;
-}
+/* Spotlight Search (Deprecated Header - now inside movies-nav-toolbar) */
 
 .spotlight-search-container {
     position: relative;
@@ -3094,9 +3086,9 @@ textarea:focus-visible {
     overflow: hidden;
     display: flex;
     align-items: flex-end;
-    padding: 48px 48px;
-    margin-top: -144px;
-    margin-bottom: 28px;
+    padding: 84px 48px 48px 48px;
+    margin-top: 0;
+    margin-bottom: 26px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -3355,18 +3347,77 @@ textarea:focus-visible {
     box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
 }
 
-/* Category Filter Pills (Nuvio Style) */
+/* Quick Navigation & Catalog Search Toolbar */
+.movies-nav-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 48px;
+    margin-bottom: 34px;
+}
+
 .movies-category-pills {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 0 48px 24px 48px;
     overflow-x: auto;
     scrollbar-width: none;
+    padding: 4px 0;
+    flex: 1;
 }
 
 .movies-category-pills::-webkit-scrollbar {
     display: none;
+}
+
+.pills-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+    padding: 7px 16px;
+    min-width: 210px;
+    max-width: 270px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pills-search-box:hover,
+.pills-search-box:focus-within {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.08);
+}
+
+.pills-search-icon {
+    color: #71717a;
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+}
+
+.pills-search-box:hover .pills-search-icon,
+.pills-search-box:focus-within .pills-search-icon {
+    color: #ffffff;
+}
+
+.pills-search-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f4f4f5;
+    font-size: 0.82rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.pills-search-input::placeholder {
+    color: #71717a;
 }
 
 .movie-pill {
@@ -3380,6 +3431,7 @@ textarea:focus-visible {
     white-space: nowrap;
     cursor: pointer;
     transition: all var(--transition-fast);
+    flex-shrink: 0;
 }
 
 .movie-pill:hover {
@@ -3400,8 +3452,8 @@ textarea:focus-visible {
 .movies-carousels-container {
     display: flex;
     flex-direction: column;
-    gap: 36px;
-    padding: 0 48px 40px 48px;
+    gap: 38px;
+    padding: 6px 48px 40px 48px;
 }
 
 .movies-row-header {
@@ -4338,13 +4390,24 @@ textarea:focus-visible {
         height: 12px;
     }
 
-    /* Category Quick Filter Pills */
+    /* Movies Navigation Toolbar on Mobile */
+    .movies-nav-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0 14px;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
     .movies-category-pills {
-        padding: 0 14px 14px 14px;
+        padding: 0;
         gap: 6px;
-        overflow-x: auto;
-        scrollbar-width: none;
-        flex-wrap: nowrap;
+    }
+
+    .pills-search-box {
+        max-width: none;
+        width: 100%;
+        padding: 9px 14px;
     }
 
     .movies-category-pills::-webkit-scrollbar {
