@@ -453,19 +453,9 @@
                 </div>
             </div>
 
-            <!-- Fixed Filter Controls Bar (Sort, Genres, Decades) -->
+            <!-- Fixed Filter Controls Bar (Genres and Decades) -->
             <div class="explore-controls-panel">
-                <!-- 1. Sort Criteria Segmented Control -->
-                <div class="explore-filter-row sort-row">
-                    <span class="explore-row-label">Ordenar:</span>
-                    <div class="explore-chips-group" id="explore-sort-chips">
-                        <button class="explore-chip active" data-sort="popularity.desc">Mais Populares</button>
-                        <button class="explore-chip" data-sort="vote_average.desc">Melhor Avaliados</button>
-                        <button class="explore-chip" data-sort="primary_release_date.desc">Lançamentos Recentes</button>
-                    </div>
-                </div>
-
-                <!-- 2. Genres Filter Chips -->
+                <!-- 1. Genres Filter Chips -->
                 <div class="explore-filter-row genres-row">
                     <span class="explore-row-label">Gêneros:</span>
                     <div class="explore-chips-group scrollable-chips" id="explore-genres-chips">
@@ -487,7 +477,7 @@
                     </div>
                 </div>
 
-                <!-- 3. Timeline / Decades Filter Chips -->
+                <!-- 2. Timeline / Decades Filter Chips -->
                 <div class="explore-filter-row timeline-row">
                     <span class="explore-row-label">Época:</span>
                     <div class="explore-chips-group scrollable-chips" id="explore-timeline-chips">
@@ -510,6 +500,36 @@
                 </div>
                 <div id="explore-active-tags" class="explore-active-tags">
                     <!-- Dynamic active filter tags -->
+                </div>
+                <div class="status-right">
+                    <div class="explore-sort-dropdown-container" id="explore-sort-dropdown-container">
+                        <button type="button" id="btn-explore-sort-dropdown" class="explore-sort-dropdown-btn" aria-haspopup="true" aria-expanded="false" title="Opções de ordenação">
+                            <svg class="sort-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 5v14M5 19l-3-3M5 19l3-3"/>
+                                <rect x="11" y="5" width="9" height="2.5" rx="1" fill="currentColor"/>
+                                <rect x="11" y="11" width="6" height="2.5" rx="1" fill="currentColor"/>
+                                <rect x="11" y="17" width="3.5" height="2.5" rx="1" fill="currentColor"/>
+                            </svg>
+                            <span class="sort-current-label" id="sort-current-label">Populares</span>
+                            <svg class="sort-chevron-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div id="explore-sort-dropdown-menu" class="explore-sort-dropdown-menu hidden" role="menu">
+                            <button type="button" class="sort-dropdown-item active" data-sort="popularity.desc" role="menuitem">
+                                <span class="sort-item-check">✓</span>
+                                <span class="sort-item-text">Mais Populares</span>
+                            </button>
+                            <button type="button" class="sort-dropdown-item" data-sort="vote_average.desc" role="menuitem">
+                                <span class="sort-item-check">✓</span>
+                                <span class="sort-item-text">Melhor Avaliados</span>
+                            </button>
+                            <button type="button" class="sort-dropdown-item" data-sort="primary_release_date.desc" role="menuitem">
+                                <span class="sort-item-check">✓</span>
+                                <span class="sort-item-text">Lançamentos Recentes</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
