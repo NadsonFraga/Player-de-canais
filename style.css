@@ -5878,6 +5878,51 @@ textarea:focus-visible {
     border-color: rgba(255, 255, 255, 0.4);
 }
 
+/* Series & Anime Episode Mode Switcher */
+.series-mode-switcher {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 4px;
+    gap: 4px;
+    margin-bottom: 18px;
+}
+
+.btn-mode-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.btn-mode-switch:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.btn-mode-switch.active {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.series-modal-card.theme-anime .btn-mode-switch.active {
+    background: rgba(217, 70, 239, 0.22);
+    border-color: rgba(217, 70, 239, 0.5);
+    color: #f5d0fe;
+}
+
 .season-total-count {
     font-size: 0.78rem;
     color: var(--text-muted);
@@ -5905,7 +5950,7 @@ textarea:focus-visible {
 }
 
 .series-ep-card {
-    background: rgba(24, 24, 27, 0.7);
+    background: rgba(24, 24, 27, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     overflow: hidden;
@@ -5913,6 +5958,7 @@ textarea:focus-visible {
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     flex-direction: column;
+    min-height: 250px;
 }
 
 .series-ep-card:hover {
@@ -5929,10 +5975,10 @@ textarea:focus-visible {
 .ep-thumbnail-box {
     position: relative;
     width: 100%;
-    height: 165px;
-    min-height: 165px;
+    height: 142px;
+    min-height: 142px;
     flex-shrink: 0;
-    background: #18181b;
+    background: #121215;
     overflow: hidden;
 }
 
@@ -5953,7 +5999,7 @@ textarea:focus-visible {
     position: absolute;
     top: 8px;
     left: 8px;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(4px);
     color: #ffffff;
     font-size: 0.70rem;
@@ -5968,7 +6014,7 @@ textarea:focus-visible {
     position: absolute;
     top: 8px;
     right: 8px;
-    background: rgba(16, 185, 129, 0.85);
+    background: rgba(16, 185, 129, 0.9);
     color: #ffffff;
     font-size: 0.65rem;
     font-weight: 800;
@@ -5981,7 +6027,7 @@ textarea:focus-visible {
 .ep-play-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -6011,30 +6057,32 @@ textarea:focus-visible {
     flex-direction: column;
     gap: 6px;
     flex: 1;
+    min-width: 0;
 }
 
 .ep-title {
-    font-size: 0.88rem;
+    font-size: 0.92rem;
     font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.3;
+    color: #ffffff !important;
+    line-height: 1.35;
     display: -webkit-box;
-    -webkit-line-clamp: 1;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    word-break: break-word;
 }
 
 .ep-meta-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 0.74rem;
-    color: var(--text-muted);
+    font-size: 0.76rem;
+    color: #a1a1aa !important;
 }
 
 .ep-overview {
-    font-size: 0.76rem;
-    color: var(--text-secondary);
+    font-size: 0.78rem;
+    color: #d4d4d8 !important;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -6420,5 +6468,45 @@ textarea:focus-visible {
     }
 }
 
+/* ==========================================================================
+   5. DEDICATED SÉRIES & ANIMES EXPLORE VIEW ACCENTS
+   ========================================================================== */
+.series-explore-view .explore-chip.active {
+    background: rgba(225, 29, 72, 0.22);
+    border-color: rgba(244, 63, 94, 0.6);
+    color: #fda4af;
+}
 
+.series-explore-view .explore-chip:hover {
+    border-color: rgba(244, 63, 94, 0.35);
+}
 
+.series-explore-view .btn-series-back:hover {
+    border-color: rgba(244, 63, 94, 0.5);
+    color: #fda4af;
+}
+
+.series-explore-view .explore-search-wrapper:focus-within {
+    border-color: rgba(244, 63, 94, 0.6);
+    box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.2);
+}
+
+.animes-explore-view .explore-chip.active {
+    background: rgba(217, 70, 239, 0.22);
+    border-color: rgba(232, 121, 249, 0.6);
+    color: #f5d0fe;
+}
+
+.animes-explore-view .explore-chip:hover {
+    border-color: rgba(232, 121, 249, 0.35);
+}
+
+.animes-explore-view .btn-animes-back:hover {
+    border-color: rgba(232, 121, 249, 0.5);
+    color: #f5d0fe;
+}
+
+.animes-explore-view .explore-search-wrapper:focus-within {
+    border-color: rgba(232, 121, 249, 0.6);
+    box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.2);
+}
