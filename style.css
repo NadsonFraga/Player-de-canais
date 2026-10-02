@@ -4304,27 +4304,63 @@ textarea:focus-visible {
 
     .floating-nav-capsule {
         position: fixed;
-        top: 9px;
+        top: 8px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 1100;
-        padding: 3px 6px;
-        background: rgba(14, 14, 18, 0.92);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
+        padding: 3px 5px;
+        background: rgba(14, 14, 18, 0.94);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
         border: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+        box-shadow: 0 4px 22px rgba(0, 0, 0, 0.7);
+        max-width: calc(100vw - 16px);
+        width: max-content;
+        gap: 3px;
+        transition: all var(--transition-fast);
+    }
+
+    body.view-tv-active .floating-nav-capsule {
         max-width: calc(100vw - 110px);
     }
 
     .nav-capsule-item {
-        padding: 5px 11px;
-        font-size: 0.72rem;
-        gap: 5px;
+        padding: 5px 8px;
+        font-size: 0.70rem;
+        gap: 4px;
+        flex-shrink: 0;
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .nav-capsule-badge {
-        display: none !important; /* Hide 'Em Breve' badge text to keep capsule compact */
+        display: none !important; /* Hide 'Em Breve' badge text to keep capsule compact on mobile */
+    }
+
+    /* On mobile screens (<600px), inactive tabs display sleek icons while active tab expands with label */
+    @media (max-width: 600px) {
+        .floating-nav-capsule {
+            max-width: calc(100vw - 12px);
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .nav-capsule-item:not(.active) span:not(.nav-capsule-badge) {
+            display: none;
+        }
+
+        .nav-capsule-item {
+            padding: 6px 9px;
+            border-radius: 9999px;
+        }
+
+        .nav-capsule-item.active {
+            padding: 6px 12px;
+        }
+
+        .nav-capsule-icon {
+            width: 15px;
+            height: 15px;
+        }
     }
 
     /* Channels View Layout on Mobile */
@@ -5442,13 +5478,29 @@ textarea:focus-visible {
     }
 
     .explore-controls-panel {
-        padding: 16px 14px;
-        gap: 14px;
+        padding: 10px 12px;
+        gap: 8px;
+        border-radius: 12px;
+    }
+
+    .explore-filter-row {
+        gap: 6px;
+        align-items: center;
     }
 
     .explore-row-label {
-        min-width: 52px;
-        font-size: 0.7rem;
+        display: none; /* Hide labels on mobile to let chips span full width without wasting space */
+    }
+
+    .explore-chips-group {
+        gap: 6px;
+        padding-bottom: 2px;
+    }
+
+    .explore-chip {
+        padding: 5px 11px;
+        font-size: 0.72rem;
+        white-space: nowrap;
     }
 
     .explore-status-header {
@@ -6458,6 +6510,32 @@ input[type="number"] {
 }
 
 @media (max-width: 768px) {
+    .series-theater-container {
+        border-radius: 12px;
+        margin: 6px;
+    }
+
+    .series-theater-top-bar {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .series-theater-title-group {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .series-theater-title {
+        font-size: 0.80rem;
+        max-width: 48vw;
+    }
+
+    .btn-player-action-mini {
+        padding: 5px 8px;
+        font-size: 0.70rem;
+        gap: 4px;
+    }
+
     .series-episodes-grid {
         grid-template-columns: 1fr;
     }
@@ -6465,14 +6543,53 @@ input[type="number"] {
     .series-player-bottom-bar {
         flex-direction: column;
         align-items: stretch;
+        padding: 8px 10px;
+        gap: 8px;
     }
 
     .series-ep-nav-buttons {
+        display: flex;
+        align-items: center;
         justify-content: space-between;
+        gap: 6px;
+        width: 100%;
+    }
+
+    .btn-player-control {
+        padding: 7px 8px;
+        font-size: 0.74rem;
+        flex: 1;
+        justify-content: center;
+        gap: 4px;
+        white-space: nowrap;
     }
 
     .series-servers-selector {
-        justify-content: space-between;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 2px 0;
+    }
+
+    .series-servers-selector::-webkit-scrollbar {
+        display: none;
+    }
+
+    .series-server-pills {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .btn-series-server-pill {
+        padding: 4px 10px;
+        font-size: 0.72rem;
+        white-space: nowrap;
     }
 
     .series-player-drawer {

@@ -2147,6 +2147,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (seriesSearchInput) seriesSearchInput.value = "";
         if (exploreSearchInput) exploreSearchInput.value = "";
+        const quickEpInput = document.getElementById("series-quick-ep-search");
+        if (quickEpInput) quickEpInput.value = "";
         if (btnClearSeriesSearch) btnClearSeriesSearch.classList.add("hidden");
         if (btnClearExplore) btnClearExplore.classList.add("hidden");
 
@@ -2222,15 +2224,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function switchAppView(viewName) {
         if (viewName === 'sports') {
-            showToast("Hub Esportivo em breve! Acompanhe as transmissões na tela inicial de Canais.");
+            showToast("⚽ Agenda de Esportes estará disponível em breve!");
             return;
         }
 
         currentAppView = viewName;
+        document.body.classList.toggle('view-tv-active', viewName === 'tv');
+        document.body.setAttribute('data-app-view', viewName);
+
         // Keep clean URL so refresh always returns to initial Home view
         try {
             history.replaceState(null, '', window.location.pathname + window.location.search);
         } catch (e) {}
+
+        // Reset episode quick search input across views
+        const quickEpInput = document.getElementById("series-quick-ep-search");
+        if (quickEpInput) quickEpInput.value = "";
 
         // Close channels mobile sidebar if leaving tv view
         if (viewName !== 'tv') {
@@ -2387,7 +2396,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
     const TMDB_IMG_W500 = 'https://image.tmdb.org/t/p/w500';
     const TMDB_IMG_ORIGINAL = 'https://image.tmdb.org/t/p/original';
-    const TMDB_CACHE_KEY = 'tvzinha_movies_cache_v2';
+    const TMDB_CACHE_KEY = 'tvzinha_movies_cache_v3';
     const TMDB_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 
     // Curated Masters of Cinema (Directors) - TMDB verified 200 OK profile photos
@@ -2477,6 +2486,21 @@ document.addEventListener("DOMContentLoaded", () => {
         await loadMoviesFromTmdb();
     }
 
+    function deduplicateFeedRows(sections) {
+        const seenIds = new Set();
+        const result = {};
+        for (const [key, list] of Object.entries(sections)) {
+            result[key] = [];
+            for (const item of (list || [])) {
+                if (item && item.id && !seenIds.has(item.id)) {
+                    seenIds.add(item.id);
+                    result[key].push(item);
+                }
+            }
+        }
+        return result;
+    }
+
     async function loadMoviesFromTmdb() {
         showTrackSkeletons();
         try {
@@ -2500,7 +2524,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const national = filterReleased(nationalRes.status === 'fulfilled' ? (nationalRes.value.results || []) : []);
             const classics = filterReleased(classicsRes.status === 'fulfilled' ? (classicsRes.value.results || []) : []);
 
-            moviesCacheData = { trending, releases, animation, national, classics };
+            moviesCacheData = deduplicateFeedRows({ trending, releases, animation, national, classics });
 
             // Save to cache
             try {
@@ -3575,8 +3599,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let isAnimesInitialized = false;
     let activeAnimeFilter = false;
 
-    const TMDB_SERIES_CACHE_KEY = 'tvzinha_series_cache_v1';
-    const TMDB_ANIMES_CACHE_KEY = 'tvzinha_animes_cache_v1';
+    const TMDB_SERIES_CACHE_KEY = 'tvzinha_series_cache_v2';
+    const TMDB_ANIMES_CACHE_KEY = 'tvzinha_animes_cache_v2';
     const WATCH_PROGRESS_KEY = 'tvzinha_watch_progress_v1';
 
     let currentSelectedSeries = null;
@@ -3787,11 +3811,11 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const todayStr = new Date().toISOString().split('T')[0];
             const [trendingRes, releasesRes, dramaRes, scifiRes, comedyRes] = await Promise.allSettled([
-                fetchTmdbEndpoint('trending/tv/week'),
-                fetchTmdbEndpoint(`discover/tv?without_genres=16,10767&sort_by=first_air_date.desc&first_air_date.lte=${todayStr}&vote_count.gte=10`),
-                fetchTmdbEndpoint('discover/tv?with_genres=18&without_genres=16&sort_by=vote_average.desc&vote_count.gte=300'),
-                fetchTmdbEndpoint('discover/tv?with_genres=10765&without_genres=16&sort_by=popularity.desc'),
-                fetchTmdbEndpoint('discover/tv?with_genres=35&without_genres=16&sort_by=popularity.desc')
+                fetchTmdbEndpoint('discover/tv?without_genres=16,10767,10766,10763&sort_by=popularity.desc&vote_count.gte=30'),
+                fetchTmdbEndpoint(`discover/tv?without_genres=16,10767,10766,10763&sort_by=first_air_date.desc&first_air_date.lte=${todayStr}&vote_count.gte=10`),
+                fetchTmdbEndpoint('discover/tv?with_genres=18&without_genres=16,10767,10766,10763&sort_by=vote_average.desc&vote_count.gte=300'),
+                fetchTmdbEndpoint('discover/tv?with_genres=10765&without_genres=16,10767,10766,10763&sort_by=popularity.desc'),
+                fetchTmdbEndpoint('discover/tv?with_genres=35&without_genres=16,10767,10766,10763&sort_by=popularity.desc')
             ]);
 
             const filterReleased = (list) => (list || []).filter(s => {
@@ -3799,13 +3823,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 return !d || d <= todayStr;
             });
 
-            const seriesData = {
+            const seriesData = deduplicateFeedRows({
                 trending: filterReleased(trendingRes.status === 'fulfilled' ? trendingRes.value.results : []),
                 releases: filterReleased(releasesRes.status === 'fulfilled' ? releasesRes.value.results : []),
                 drama: filterReleased(dramaRes.status === 'fulfilled' ? dramaRes.value.results : []),
                 scifi: filterReleased(scifiRes.status === 'fulfilled' ? scifiRes.value.results : []),
                 comedy: filterReleased(comedyRes.status === 'fulfilled' ? comedyRes.value.results : [])
-            };
+            });
 
             localStorage.setItem(TMDB_SERIES_CACHE_KEY, JSON.stringify({
                 timestamp: Date.now(),
@@ -4185,6 +4209,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (activeSeriesFilterGenre) {
                     params += `&with_genres=${activeSeriesFilterGenre}`;
+                } else {
+                    params += `&without_genres=16,10767,10766,10763&vote_count.gte=10`;
                 }
 
                 if (activeSeriesFilterYearRange) {
@@ -4262,11 +4288,11 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const todayStr = new Date().toISOString().split('T')[0];
             const [trendingRes, shonenRes, isekaiRes, classicsRes, releasesRes] = await Promise.allSettled([
-                fetchTmdbEndpoint('discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc'),
-                fetchTmdbEndpoint('discover/tv?with_genres=16,10759&with_original_language=ja&sort_by=popularity.desc'),
-                fetchTmdbEndpoint('discover/tv?with_genres=16,10765&with_original_language=ja&sort_by=popularity.desc'),
-                fetchTmdbEndpoint('discover/tv?with_genres=16&with_original_language=ja&first_air_date.lte=2010-12-31&vote_count.gte=200&sort_by=vote_average.desc'),
-                fetchTmdbEndpoint(`discover/tv?with_genres=16&with_original_language=ja&sort_by=first_air_date.desc&first_air_date.lte=${todayStr}&vote_count.gte=5`)
+                fetchTmdbEndpoint('discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&vote_count.gte=30&without_keywords=256466,157145'),
+                fetchTmdbEndpoint('discover/tv?with_genres=16,10759&without_genres=10762&with_original_language=ja&sort_by=popularity.desc&without_keywords=256466,157145'),
+                fetchTmdbEndpoint('discover/tv?with_genres=16,10765&without_genres=10762&with_original_language=ja&sort_by=popularity.desc&without_keywords=256466,157145'),
+                fetchTmdbEndpoint('discover/tv?with_genres=16&with_original_language=ja&first_air_date.lte=2010-12-31&vote_count.gte=200&sort_by=vote_average.desc&without_keywords=256466,157145'),
+                fetchTmdbEndpoint(`discover/tv?with_genres=16&with_original_language=ja&sort_by=first_air_date.desc&first_air_date.lte=${todayStr}&vote_count.gte=5&without_keywords=256466,157145`)
             ]);
 
             const filterReleased = (list) => (list || []).filter(s => {
@@ -4274,13 +4300,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 return !d || d <= todayStr;
             });
 
-            const animesData = {
+            const animesData = deduplicateFeedRows({
                 trending: filterReleased(trendingRes.status === 'fulfilled' ? trendingRes.value.results : []),
                 shonen: filterReleased(shonenRes.status === 'fulfilled' ? shonenRes.value.results : []),
                 isekai: filterReleased(isekaiRes.status === 'fulfilled' ? isekaiRes.value.results : []),
                 classics: filterReleased(classicsRes.status === 'fulfilled' ? classicsRes.value.results : []),
                 releases: filterReleased(releasesRes.status === 'fulfilled' ? releasesRes.value.results : [])
-            };
+            });
 
             localStorage.setItem(TMDB_ANIMES_CACHE_KEY, JSON.stringify({
                 timestamp: Date.now(),
@@ -4649,7 +4675,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     genresList.push(activeAnimesFilterGenre);
                 }
 
-                let params = `discover/tv?sort_by=${activeAnimesFilterSort}&page=${page}&with_genres=${genresList.join(',')}&with_original_language=ja`;
+                let params = `discover/tv?sort_by=${activeAnimesFilterSort}&page=${page}&with_genres=${genresList.join(',')}&with_original_language=ja&without_keywords=256466,157145&vote_count.gte=5`;
 
                 if (activeAnimesFilterYearRange) {
                     const parts = activeAnimesFilterYearRange.split('-');
@@ -4875,6 +4901,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Reset player UI
         stopSeriesPlayer();
+
+        // Clear quick episode search field
+        const quickSearchInput = document.getElementById("series-quick-ep-search");
+        if (quickSearchInput) quickSearchInput.value = "";
 
         // Fill basic header info
         const backdropImg = document.getElementById("series-modal-backdrop-img");
@@ -5347,6 +5377,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (modal) modal.classList.add("hidden");
 
         document.body.style.overflow = "";
+        const quickSearchInput = document.getElementById("series-quick-ep-search");
+        if (quickSearchInput) quickSearchInput.value = "";
         currentSelectedSeries = null;
         currentSeriesDetails = null;
     }
