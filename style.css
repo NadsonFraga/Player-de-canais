@@ -5752,10 +5752,10 @@ textarea:focus-visible {
 }
 
 /* ==========================================================================
-   3. SERIES MODAL & DUAL-MODE EPISODE NAVIGATOR
+   3. SERIES MODAL & CLEAN EPISODE SELECTOR (MATCHING MOVIES MODAL)
    ========================================================================== */
 .series-modal-card {
-    max-width: 960px;
+    max-width: 840px;
 }
 
 .seasons-badge {
@@ -5764,85 +5764,40 @@ textarea:focus-visible {
     color: #e4e4e7;
 }
 
-/* Continue Watching Action Button inside modal */
-.series-continue-action-box {
-    margin-top: 14px;
-    margin-bottom: 8px;
-}
-
-.btn-continue-play {
-    background: linear-gradient(135deg, #e11d48, #be123c);
-    padding: 10px 20px;
-    font-size: 0.88rem;
-    font-weight: 700;
-}
-
-/* Episode Navigator Header */
-.series-episodes-section {
-    margin-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding-top: 20px;
-}
-
-.series-navigator-header {
+/* Clean Season Bar aligned with Movies Modal */
+.series-season-bar-clean {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 18px;
+    padding: 14px 0 16px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.series-navigator-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.series-mode-switcher {
-    display: flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 9999px;
-    padding: 3px;
-    gap: 4px;
-}
-
-.btn-mode-switch {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    padding: 6px 14px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    border-radius: 9999px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-mode-switch.active {
-    background: rgba(255, 255, 255, 0.16);
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-/* Season Selector Bar */
-.series-season-selector-bar {
+.series-season-selector-clean {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 18px;
     flex-wrap: wrap;
 }
 
-.season-select-label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+.season-select-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.season-select-title svg {
+    color: #fb7185;
+}
+
+.season-episodes-count {
+    font-size: 0.80rem;
+    color: var(--text-muted);
 }
 
 .custom-select-wrapper {
@@ -5853,17 +5808,23 @@ textarea:focus-visible {
 .series-season-select {
     appearance: none;
     -webkit-appearance: none;
-    background: rgba(24, 24, 27, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 8px;
+    background: rgba(24, 24, 27, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
     color: #ffffff;
-    padding: 8px 36px 8px 14px;
+    padding: 7px 34px 7px 16px;
     font-size: 0.84rem;
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
     outline: none;
-    transition: border-color 0.2s ease;
+    transition: all 0.2s ease;
+}
+
+.series-season-select:hover,
+.series-season-select:focus {
+    border-color: #fb7185;
+    background: rgba(30, 30, 35, 1);
 }
 
 .custom-select-wrapper::after {
@@ -6130,7 +6091,7 @@ textarea:focus-visible {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 24px 20px;
     box-sizing: border-box;
     overflow-y: auto;
     animation: fadeInModal 0.25s ease forwards;
@@ -6142,14 +6103,16 @@ textarea:focus-visible {
 
 .series-theater-container {
     width: 100%;
-    max-width: 1360px;
+    max-width: 1040px;
     display: flex;
     flex-direction: column;
     background: #111114;
     border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 14px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85), 0 0 50px rgba(225, 29, 72, 0.15);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85), 0 0 45px rgba(225, 29, 72, 0.12);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .series-theater-top-bar {
@@ -6157,7 +6120,7 @@ textarea:focus-visible {
     align-items: center;
     justify-content: space-between;
     background: #16161a;
-    padding: 14px 22px;
+    padding: 12px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     flex-wrap: wrap;
     gap: 12px;
@@ -6177,7 +6140,7 @@ textarea:focus-visible {
 }
 
 .series-theater-title {
-    font-size: 1.05rem;
+    font-size: 0.98rem;
     font-weight: 700;
     color: #ffffff;
     margin: 0;
@@ -6197,7 +6160,7 @@ textarea:focus-visible {
     width: 100%;
     aspect-ratio: 16 / 9;
     background: #000000;
-    max-height: 75vh;
+    max-height: 58vh;
 }
 
 .series-theater-iframe {
@@ -6213,10 +6176,12 @@ textarea:focus-visible {
     align-items: center;
     justify-content: space-between;
     background: #141418;
-    padding: 14px 22px;
+    padding: 12px 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 12px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .series-ep-nav-buttons {
@@ -6226,77 +6191,89 @@ textarea:focus-visible {
 }
 
 .btn-player-control {
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     color: #ffffff;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 0.82rem;
+    border-radius: 9999px;
+    padding: 8px 18px;
+    font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     transition: all 0.2s ease;
+    user-select: none;
 }
 
 .btn-player-control:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
 }
 
 .btn-player-control:disabled {
     opacity: 0.35;
     cursor: not-allowed;
+    transform: none;
 }
 
 .btn-player-control.secondary {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.14);
     color: var(--text-secondary);
 }
 
 .btn-player-control.secondary:hover {
     color: #ffffff;
+    background: rgba(255, 255, 255, 0.14);
     border-color: rgba(255, 255, 255, 0.3);
 }
 
 .series-servers-selector {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .server-label {
-    font-size: 0.74rem;
+    font-size: 0.80rem;
+    font-weight: 600;
     color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .series-server-pills {
     display: flex;
+    align-items: center;
     gap: 6px;
 }
 
 .btn-series-server-pill {
     background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.16);
     color: var(--text-secondary);
-    border-radius: 4px;
-    padding: 4px 9px;
-    font-size: 0.72rem;
+    border-radius: 9999px;
+    padding: 5px 14px;
+    font-size: 0.80rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.18s ease;
+    user-select: none;
 }
 
 .btn-series-server-pill:hover {
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.28);
 }
 
 .btn-series-server-pill.active {
-    background: rgba(225, 29, 72, 0.2);
-    border-color: rgba(225, 29, 72, 0.55);
-    color: #fb7185;
+    background: rgba(225, 29, 72, 0.28);
+    border-color: #fb7185;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(225, 29, 72, 0.35);
 }
 
 /* Floating Episode Quick Drawer on top of player */

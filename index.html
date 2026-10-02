@@ -1403,7 +1403,7 @@
         </div>
     </div>
 
-    <!-- Series & Animes Details & Episode Player Modal -->
+    <!-- Series & Animes Details & Episode Selection Modal -->
     <div id="series-modal" class="movie-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="series-modal-title">
         <div class="movie-modal-card series-modal-card">
             <button id="btn-close-series-modal" class="btn-movie-modal-close" aria-label="Fechar janela" title="Fechar">
@@ -1418,11 +1418,18 @@
                 <div id="series-modal-backdrop-box" class="movie-modal-backdrop-box">
                     <img id="series-modal-backdrop-img" src="" alt="Capa panorâmica da série" class="movie-modal-backdrop-img">
                     <div class="movie-modal-backdrop-gradient"></div>
+                    <div class="movie-modal-play-cta">
+                        <button id="btn-series-modal-direct-play" class="btn-cinema-primary" aria-label="Assistir episódio">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            <span id="series-modal-direct-play-label">Assistir Agora</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-            </div>
 
-            <!-- Modal Body & Episode Navigator -->
+            <!-- Modal Body & Episode Selection (Aligned with Movie Modal) -->
             <div class="movie-modal-body series-modal-body">
                 <div class="movie-modal-header-info">
                     <h2 id="series-modal-title" class="movie-modal-title"></h2>
@@ -1433,75 +1440,27 @@
                         <div id="series-modal-genres" class="movie-modal-genres"></div>
                     </div>
                     <p id="series-modal-overview" class="movie-modal-overview"></p>
-
-                    <!-- Continue Watching Action Button -->
-                    <div id="series-continue-action-box" class="series-continue-action-box hidden">
-                        <button id="btn-series-continue-play" class="btn-cinema-primary btn-continue-play">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                            </svg>
-                            <span id="series-continue-play-label">Continuar Assistindo</span>
-                        </button>
-                    </div>
                 </div>
 
-                <!-- Dual-Mode Episode Navigator Container -->
-                <div class="series-episodes-section">
-                    <div class="series-navigator-header">
-                        <div class="series-navigator-title">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Clean Episode Selection Section -->
+                <div class="series-season-bar-clean">
+                    <div class="series-season-selector-clean">
+                        <div class="season-select-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
                                 <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-                                <line x1="6" y1="6" x2="6.01" y2="6"></line>
-                                <line x1="6" y1="18" x2="6.01" y2="18"></line>
                             </svg>
-                            <span>Navegador de Episódios</span>
+                            <span>Selecione a Temporada:</span>
                         </div>
-
-                        <!-- Mode Switcher Tabs: Arcs vs Continuous 1-1000+ -->
-                        <div class="series-mode-switcher" id="series-mode-switcher">
-                            <button id="btn-mode-arcs" class="btn-mode-switch active" type="button">
-                                <span>Temporadas & Arcos</span>
-                            </button>
-                            <button id="btn-mode-continuous" class="btn-mode-switch" type="button">
-                                <span>Lista Contínua (1 a 1000+)</span>
-                            </button>
+                        <div class="custom-select-wrapper">
+                            <select id="series-season-select" class="series-season-select" aria-label="Selecione a Temporada"></select>
                         </div>
                     </div>
+                    <span id="series-season-episodes-total" class="season-episodes-count"></span>
+                </div>
 
-                    <!-- Panel 1: Seasons & Story Arcs Mode -->
-                    <div id="series-arcs-panel" class="series-navigator-panel">
-                        <div class="series-season-selector-bar">
-                            <label for="series-season-select" class="season-select-label">Temporada / Arco:</label>
-                            <div class="custom-select-wrapper">
-                                <select id="series-season-select" class="series-season-select" aria-label="Selecione a Temporada ou Arco"></select>
-                            </div>
-                            <span id="series-season-episodes-total" class="season-total-count">Carregando episódios...</span>
-                        </div>
-                        <div id="series-episodes-grid" class="series-episodes-grid">
-                            <!-- Populated dynamically with 16:9 episode cards -->
-                        </div>
-                    </div>
-
-                    <!-- Panel 2: Continuous 1 to 1000+ Mode (Optimized for long-running animes) -->
-                    <div id="series-continuous-panel" class="series-navigator-panel hidden">
-                        <div class="continuous-search-bar">
-                            <div class="continuous-input-box">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                </svg>
-                                <input type="number" id="series-quick-ep-search" class="continuous-ep-input" placeholder="Ir direto para o número do episódio... ex: 892" min="1">
-                                <button id="btn-go-to-ep" class="btn-continuous-go" type="button">Buscar</button>
-                            </div>
-                            <div class="continuous-chunks-scroller" id="series-chunks-container">
-                                <!-- Dynamic chunks: [1 - 50], [51 - 100], etc. -->
-                            </div>
-                        </div>
-                        <div id="series-continuous-grid" class="series-episodes-grid">
-                            <!-- Populated with currently selected 50 episodes chunk -->
-                        </div>
-                    </div>
+                <div id="series-episodes-grid" class="series-episodes-grid">
+                    <!-- Populated dynamically with clean episode cards -->
                 </div>
             </div>
         </div>
@@ -1583,9 +1542,10 @@
                 <div class="series-servers-selector" id="series-servers-selector">
                     <span class="server-label">Servidor:</span>
                     <div class="series-server-pills" id="series-server-pills">
-                        <button class="btn-series-server-pill active" data-server="superflix">Superflix</button>
-                        <button class="btn-series-server-pill" data-server="myembed">MyEmbed</button>
-                        <button class="btn-series-server-pill" data-server="vsembed">VsEmbed</button>
+                        <button class="btn-series-server-pill active" data-server="mgeb" type="button">MGEB</button>
+                        <button class="btn-series-server-pill" data-server="superflix" type="button">Superflix</button>
+                        <button class="btn-series-server-pill" data-server="myembed" type="button">MyEmbed</button>
+                        <button class="btn-series-server-pill" data-server="vsembed" type="button">VsEmbed</button>
                     </div>
                 </div>
             </div>
@@ -1596,7 +1556,7 @@
     <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
 
     <!-- Application Script -->
-    <script src="script.js?v=20261002_theater_fix"></script>
+    <script src="script.js?v=20261002_mgeb_theater_v1"></script>
 </body>
 
 </html>
