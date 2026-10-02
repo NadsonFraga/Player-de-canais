@@ -2277,8 +2277,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Multi-server embed generators based on universal TMDB ID
     const MOVIE_SERVERS = [
-        { id: 'superflix', name: 'Servidor 1 (SuperFlix)', buildUrl: (id) => `https://superflixapi.quest/filme/${id}` },
-        { id: 'mgeb',      name: 'Servidor 2 (MGEB - Dublado)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
+        { id: 'mgeb',      name: 'Servidor 1 (MGEB - Principal)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
+        { id: 'superflix', name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.quest/filme/${id}` },
         { id: 'myembed',   name: 'Servidor 3 (MyEmbed)', buildUrl: (id) => `https://myembed.biz/filme/${id}` },
         { id: 'vsembed',   name: 'Servidor 4 (VSEmbed - Multi-Áudio)', buildUrl: (id) => `https://vsembed.ru/embed/movie/${id}?ds_lang=pob,pt,en` },
         { id: 'embedplay', name: 'Servidor 5 (EmbedPlay)', buildUrl: (id) => `https://www.embedplay.one/filme/${id}` },
@@ -3458,7 +3458,7 @@ document.addEventListener("DOMContentLoaded", () => {
         seasonNumber: 1,
         episodeNumber: 1,
         episodeData: null,
-        server: 'superflix'
+        server: 'mgeb'
     };
 
     let heroSeriesList = [];
@@ -3471,6 +3471,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Series Video Providers (Verified 200 OK)
     const SERIES_SERVERS = {
+        mgeb: {
+            name: "MGEB",
+            buildUrl: (id, s, e) => `https://mgeb.top/embed/serie/${id}/${s}/${e}`
+        },
         superflix: {
             name: "Superflix",
             buildUrl: (id, s, e) => `https://superflixapi.quest/serie/${id}/${s}/${e}`
@@ -4166,15 +4170,29 @@ document.addEventListener("DOMContentLoaded", () => {
             pill.addEventListener("click", () => {
                 document.querySelectorAll("#series-server-pills .btn-series-server-pill").forEach(p => p.classList.remove("active"));
                 pill.classList.add("active");
-                activeSeriesPlaying.server = pill.dataset.server || 'superflix';
+                activeSeriesPlaying.server = pill.dataset.server || 'mgeb';
 
                 const iframe = document.getElementById("series-modal-iframe");
                 if (iframe && activeSeriesPlaying.show) {
-                    const serverDef = SERIES_SERVERS[activeSeriesPlaying.server] || SERIES_SERVERS.superflix;
+                    const serverDef = SERIES_SERVERS[activeSeriesPlaying.server] || SERIES_SERVERS.mgeb;
                     iframe.src = serverDef.buildUrl(activeSeriesPlaying.show.id, activeSeriesPlaying.seasonNumber, activeSeriesPlaying.episodeNumber);
                 }
             });
         });
+
+        // Direct play button on backdrop in series modal (matching movie modal)
+        const directPlayBtn = document.getElementById("btn-series-modal-direct-play");
+        if (directPlayBtn) {
+            directPlayBtn.addEventListener("click", () => {
+                if (!currentSelectedSeries) return;
+                const progress = getStoredWatchProgress()[currentSelectedSeries.id];
+                if (progress && progress.season && progress.episode) {
+                    playSeriesEpisode(currentSelectedSeries, progress.season, progress.episode);
+                } else {
+                    playSeriesEpisode(currentSelectedSeries, 1, 1);
+                }
+            });
+        }
 
         // Dual-Mode Toggle: Arcs vs Continuous
         const btnModeArcs = document.getElementById("btn-mode-arcs");
@@ -4248,22 +4266,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (ratingEl) ratingEl.textContent = `★ ${seriesItem.vote_average ? seriesItem.vote_average.toFixed(1) : '8.0'}`;
         if (overviewEl) overviewEl.textContent = seriesItem.overview || "Sinopse não disponível em português.";
 
-        // Continue watching button check
-        const continueBox = document.getElementById("series-continue-action-box");
-        const continueLabel = document.getElementById("series-continue-play-label");
-        const btnContinuePlay = document.getElementById("btn-series-continue-play");
-
+        // Backdrop direct play CTA label check (matching movie modal)
+        const directPlayLabel = document.getElementById("series-modal-direct-play-label");
         const progress = getStoredWatchProgress()[seriesItem.id];
-        if (progress && continueBox && continueLabel) {
-            continueBox.classList.remove("hidden");
-            continueLabel.textContent = `Continuar da T${progress.season}:E${progress.episode} (${progress.episodeTitle || 'Episódio ' + progress.episode})`;
-            if (btnContinuePlay) {
-                btnContinuePlay.onclick = () => {
-                    playSeriesEpisode(seriesItem, progress.season, progress.episode);
-                };
+        if (directPlayLabel) {
+            if (progress && progress.season && progress.episode) {
+                directPlayLabel.textContent = `Continuar T${progress.season}:E${progress.episode}`;
+            } else {
+                directPlayLabel.textContent = "Assistir Agora (T1:E1)";
             }
-        } else if (continueBox) {
-            continueBox.classList.add("hidden");
         }
 
         modal.classList.remove("hidden");
@@ -4548,9 +4559,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Build embed URL with active server
-        const serverDef = SERIES_SERVERS[activeSeriesPlaying.server] || SERIES_SERVERS.superflix;
+        const serverDef = SERIES_SERVERS[activeSeriesPlaying.server] || SERIES_SERVERS.mgeb;
         const embedUrl = serverDef.buildUrl(showItem.id, seasonNumber, episodeNumber);
         if (iframe) iframe.src = embedUrl;
+
+        // Sync active server pill in bottom bar
+        document.querySelectorAll("#series-server-pills .btn-series-server-pill").forEach(p => {
+            p.classList.toggle("active", p.dataset.server === activeSeriesPlaying.server);
+        });
 
         // Update Prev / Next buttons state
         if (btnPrev) {

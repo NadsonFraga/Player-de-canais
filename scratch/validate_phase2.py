@@ -15,12 +15,11 @@ critical_ids = [
     'series-hero-backdrop', 'series-hero-title', 'series-hero-dots',
     'animes-hero-backdrop', 'animes-hero-title', 'animes-hero-dots',
     'series-modal', 'btn-close-series-modal', 'series-modal-iframe',
+    'btn-series-modal-direct-play', 'series-modal-direct-play-label',
     'series-player-view', 'series-player-current-ep',
     'btn-series-prev-ep', 'btn-series-next-ep', 'btn-toggle-drawer',
     'series-player-drawer', 'series-drawer-list', 'series-season-select',
-    'series-episodes-grid', 'btn-mode-arcs', 'btn-mode-continuous',
-    'series-arcs-panel', 'series-continuous-panel', 'series-quick-ep-search',
-    'series-chunks-container', 'series-continuous-grid',
+    'series-episodes-grid', 'series-servers-selector', 'series-server-pills',
     'home-continue-watching-section', 'home-continue-watching-track'
 ]
 
@@ -29,8 +28,9 @@ missing = [cid for cid in critical_ids if f'id="{cid}"' not in html and f"id='{c
 print(f"Total critical IDs checked: {len(critical_ids)}")
 if missing:
     print(f"MISSING IDs: {missing}")
+    exit(1)
 else:
-    print("SUCCESS: All 31 critical IDs are present in index.html!")
+    print("SUCCESS: All critical IDs are present in index.html!")
 
 # Verify CSS active colors
 assert '[data-view="series"]' in css, "CSS missing [data-view='series']"
