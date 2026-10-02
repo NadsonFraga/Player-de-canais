@@ -4530,27 +4530,24 @@ document.addEventListener("DOMContentLoaded", () => {
         activeSeriesPlaying.episodeNumber = Number(episodeNumber);
         activeSeriesPlaying.episodeData = epData;
 
-        // UI containers
-        const backdropBox = document.getElementById("series-modal-backdrop-box");
-        const playerContainer = document.getElementById("series-modal-player-container");
+        // UI: Hide details modal and display the Dedicated Theater View
+        const detailsModal = document.getElementById("series-modal");
+        const theaterView = document.getElementById("series-player-view");
         const currentEpTitle = document.getElementById("series-player-current-ep");
         const iframe = document.getElementById("series-modal-iframe");
-        const modalCard = document.querySelector(".series-modal-card");
-
         const btnPrev = document.getElementById("btn-series-prev-ep");
-        const btnNext = document.getElementById("btn-series-next-ep");
 
-        if (backdropBox) backdropBox.classList.add("hidden");
-        if (playerContainer) playerContainer.classList.remove("hidden");
-        if (modalCard) modalCard.classList.add("is-playing");
+        if (detailsModal) detailsModal.classList.add("hidden");
+        if (theaterView) theaterView.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
 
         const showName = showItem.name || showItem.title || 'Série';
-        const epName = (epData && epData.name) ? ` - ${epData.name}` : '';
+        const epName = (epData && epData.name) ? ` – ${epData.name}` : '';
         if (currentEpTitle) {
             currentEpTitle.textContent = `${showName} • T${seasonNumber}:E${episodeNumber}${epName}`;
         }
 
-        // Build embed URL
+        // Build embed URL with active server
         const serverDef = SERIES_SERVERS[activeSeriesPlaying.server] || SERIES_SERVERS.superflix;
         const embedUrl = serverDef.buildUrl(showItem.id, seasonNumber, episodeNumber);
         if (iframe) iframe.src = embedUrl;
@@ -4568,10 +4565,7 @@ document.addEventListener("DOMContentLoaded", () => {
             c.classList.remove("is-active-playing");
         });
 
-        // Smooth scroll to video on mobile
-        if (window.innerWidth <= 768 && playerContainer) {
-            playerContainer.scrollIntoView({ behavior: 'smooth' });
-        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function populateSeriesDrawer() {
@@ -4605,23 +4599,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function stopSeriesPlayer() {
-        const backdropBox = document.getElementById("series-modal-backdrop-box");
-        const playerContainer = document.getElementById("series-modal-player-container");
+        const theaterView = document.getElementById("series-player-view");
         const iframe = document.getElementById("series-modal-iframe");
-        const modalCard = document.querySelector(".series-modal-card");
         const drawer = document.getElementById("series-player-drawer");
 
         if (iframe) iframe.src = "";
-        if (playerContainer) playerContainer.classList.add("hidden");
-        if (backdropBox) backdropBox.classList.remove("hidden");
-        if (modalCard) modalCard.classList.remove("is-playing");
+        if (theaterView) theaterView.classList.add("hidden");
         if (drawer) drawer.classList.add("hidden");
+
+        // Reopen details modal so user returns directly to the episode list
+        const detailsModal = document.getElementById("series-modal");
+        if (detailsModal && currentSelectedSeries) {
+            detailsModal.classList.remove("hidden");
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
     }
 
     function closeSeriesModal() {
         const modal = document.getElementById("series-modal");
-        stopSeriesPlayer();
+        const theaterView = document.getElementById("series-player-view");
+        const iframe = document.getElementById("series-modal-iframe");
+
+        if (iframe) iframe.src = "";
+        if (theaterView) theaterView.classList.add("hidden");
         if (modal) modal.classList.add("hidden");
+
         document.body.style.overflow = "";
         currentSelectedSeries = null;
         currentSeriesDetails = null;
@@ -4762,6 +4766,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const isBackKey = key === 'Escape' || key === 'Backspace' || code === 27 || code === 8 || code === 10009 || code === 461 || code === 4;
 
             if (isBackKey) {
+                // If dedicated episode theater player is open, back key closes theater and returns to episode list
+                const theaterView = document.getElementById("series-player-view");
+                if (theaterView && !theaterView.classList.contains("hidden")) {
+                    e.preventDefault();
+                    stopSeriesPlayer();
+                    return;
+                }
+
                 // If series modal is open, back key closes it
                 const seriesModal = document.getElementById("series-modal");
                 if (seriesModal && !seriesModal.classList.contains("hidden")) {
