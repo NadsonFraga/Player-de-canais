@@ -2913,7 +2913,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const exploreSearchInput = document.getElementById("explore-search-input");
         const btnClearExploreSearch = document.getElementById("btn-clear-explore-search");
 
-        const exploreSortChips = document.getElementById("explore-sort-chips");
+        const btnExploreSortDropdown = document.getElementById("btn-explore-sort-dropdown");
+        const exploreSortDropdownMenu = document.getElementById("explore-sort-dropdown-menu");
+        const sortCurrentLabel = document.getElementById("sort-current-label");
         const exploreGenresChips = document.getElementById("explore-genres-chips");
         const exploreTimelineChips = document.getElementById("explore-timeline-chips");
 
@@ -2967,6 +2969,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
+            if (exploreSortDropdownMenu) {
+                exploreSortDropdownMenu.classList.add("hidden");
+                if (btnExploreSortDropdown) btnExploreSortDropdown.setAttribute("aria-expanded", "false");
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -3005,6 +3012,39 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
+        // Windows-style Sort Dropdown Interactive Logic
+        if (btnExploreSortDropdown && exploreSortDropdownMenu) {
+            btnExploreSortDropdown.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const isExpanded = !exploreSortDropdownMenu.classList.contains("hidden");
+                exploreSortDropdownMenu.classList.toggle("hidden", isExpanded);
+                btnExploreSortDropdown.setAttribute("aria-expanded", String(!isExpanded));
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!exploreSortDropdownMenu.contains(e.target) && !btnExploreSortDropdown.contains(e.target)) {
+                    exploreSortDropdownMenu.classList.add("hidden");
+                    btnExploreSortDropdown.setAttribute("aria-expanded", "false");
+                }
+            });
+
+            exploreSortDropdownMenu.querySelectorAll(".sort-dropdown-item").forEach(item => {
+                item.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    exploreSortDropdownMenu.querySelectorAll(".sort-dropdown-item").forEach(it => it.classList.remove("active"));
+                    item.classList.add("active");
+                    activeFilterSort = item.dataset.sort || 'popularity.desc';
+                    if (sortCurrentLabel) {
+                        const rawText = item.querySelector(".sort-item-text")?.textContent || "Populares";
+                        sortCurrentLabel.textContent = rawText.replace("Mais ", "").replace("Melhor ", "");
+                    }
+                    exploreSortDropdownMenu.classList.add("hidden");
+                    btnExploreSortDropdown.setAttribute("aria-expanded", "false");
+                    executeFilteredCatalogSearch(1);
+                });
+            });
+        }
+
         // Reusable chips listener helper
         function setupExploreChipsGroup(container, onSelect) {
             if (!container) return;
@@ -3017,10 +3057,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 executeFilteredCatalogSearch(1);
             });
         }
-
-        setupExploreChipsGroup(exploreSortChips, (chip) => {
-            activeFilterSort = chip.dataset.sort || 'popularity.desc';
-        });
 
         setupExploreChipsGroup(exploreGenresChips, (chip) => {
             activeFilterGenre = chip.dataset.genre || '';
@@ -3387,6 +3423,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 '#btn-open-movie-explore',
                 '#btn-explore-back',
                 '#explore-search-input',
+                '#btn-explore-sort-dropdown',
+                '.sort-dropdown-item',
                 '.explore-chip',
                 '#btn-hero-watch',
                 '#btn-hero-info',
