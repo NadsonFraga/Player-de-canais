@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TVZINHA ONLINE - Modern Core Application Logic
  */
 
@@ -594,7 +594,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadScheduleFeed() {
         if (cachedScheduleFeed) return cachedScheduleFeed;
         try {
-            const response = await fetch("arquivos/proximos_jogos.json?t=" + Date.now(), { cache: "no-store" });
+            const response = await fetch("proximos_jogos.json?t=" + Date.now(), { cache: "no-store" });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             cachedScheduleFeed = data;
@@ -5817,3 +5817,4 @@ document.addEventListener("DOMContentLoaded", () => {
     setupTvRemoteNavigation();
     checkAdblockNoticeStatus();
 });
+

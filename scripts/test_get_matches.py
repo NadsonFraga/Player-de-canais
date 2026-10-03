@@ -1,4 +1,4 @@
-"""
+﻿"""
 Multi-team fixture scraper for Brazilian football clubs and national team.
 Extracts upcoming match data directly from Globo Esporte (GE) schedules
 and generates a consolidated, resilient JSON feed for Tvzinha.
@@ -17,7 +17,7 @@ USER_AGENT = (
     "Chrome/124.0.0.0 Safari/537.36"
 )
 
-OUTPUT_FILE_PATH = os.path.join("arquivos", "proximos_jogos.json")
+OUTPUT_FILE_PATH = "proximos_jogos.json"
 
 # Verified Globo Esporte schedule endpoints (20 Serie A clubs + Brazilian National Team)
 TEAMS_CONFIG = [
@@ -357,3 +357,4 @@ def fetch_and_process_all_teams():
 
 if __name__ == "__main__":
     fetch_and_process_all_teams()
+
