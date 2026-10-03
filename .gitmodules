@@ -1,0 +1,4 @@
+[submodule ".archives"]
+	path = .archives
+	url = https://github.com/NadsonFraga/Player-de-canais-archives.git
+	branch = main
