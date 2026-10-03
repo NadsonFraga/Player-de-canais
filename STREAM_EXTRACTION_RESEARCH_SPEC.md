@@ -1,8 +1,8 @@
-# Tvzinha Online - Stream Extraction Research & Player Modernization Specification
+# Tvzinha Online - Stream Integration Analysis & Player Modernization Specification
 
 ## 1. Executive Summary & Objective
 
-The primary objective of this initiative is to perform **reverse engineering and feasibility research on video stream extraction** from third-party embed providers currently utilized by Tvzinha Online (specifically for Animes, Séries, and Movies).
+The primary objective of this initiative is to conduct a **technical feasibility analysis and integration test for web stream extraction** from public embed endpoints currently integrated into Tvzinha Online (specifically for Animes, Séries, and Movies). This document outlines standard developer testing, endpoint benchmarking, and player integration procedures.
 
 ### The Endgame Feature Set:
 By extracting raw stream manifests (`.m3u8` HLS playlists or `.mp4` video files), Tvzinha can replace third-party cross-origin `<iframe>` wrappers with a **custom, high-performance native video player** (e.g., Artplayer, Video.js, or Plyr), unlocking:
@@ -67,7 +67,7 @@ To bypass this barrier without rebuilding everything prematurely, **we must firs
 
 ## 4. Phased Research & Testing Methodology (Step-by-Step)
 
-When opening the dedicated reverse engineering thread, execute the research following this sequence:
+When opening the dedicated technical analysis thread, execute the testing sequence following these steps:
 
 ### Phase 1: Benchmark Candidate Selection
 * Choose **one specific popular anime episode** (e.g., *Jujutsu Kaisen* Season 1 Episode 1 or *Demon Slayer* Season 1 Episode 1) and **one trending movie** (e.g., TMDB ID `550` or a recent 2025/2026 title).
@@ -120,6 +120,4 @@ Before provisioning cloud infrastructure, the entire feature can be fully proven
 ## 6. How to Feed This File into the New Workflow
 
 When starting the new conversation/workflow:
-1. Reference this file: `SOURCES_SUMMARY.md` and `STREAM_EXTRACTION_RESEARCH_SPEC.md`.
-2. Initial Prompt suggestion:
-   > *"Estou iniciando o workflow de Pesquisa e Extração de Streams para o Tvzinha Online com base no arquivo `STREAM_EXTRACTION_RESEARCH_SPEC.md`. Vamos iniciar a Fase 1 e 2: inspecionar o provedor Superflix e MGEB para um anime de teste e extrair a URL pura `.m3u8`."*
+    > *"Estou iniciando a análise técnica e testes de integração de scrapers para o Tvzinha Online com base no arquivo `STREAM_EXTRACTION_RESEARCH_SPEC.md`. Vamos iniciar a Fase 1 e 2: inspecionar as chamadas de rede e testar a captura das URLs dos players Superflix e MGEB para um título de exemplo."*
