@@ -591,8 +591,26 @@ document.addEventListener("DOMContentLoaded", () => {
         renderMatchesSection();
     }
 
-    async function loadScheduleFeed() {
-        if (cachedScheduleFeed) return cachedScheduleFeed;
+    const GITHUB_RAW_FEED_URL = "https://raw.githubusercontent.com/NadsonFraga/Player-de-canais/master/proximos_jogos.json";
+    let matchesRefreshTimer = null;
+
+    async function loadScheduleFeed(forceRefresh = false) {
+        if (cachedScheduleFeed && !forceRefresh) return cachedScheduleFeed;
+
+        // 1. Try public GitHub Raw CDN first (always up-to-date, zero Cloudflare build consumption)
+        try {
+            const remoteUrl = `${GITHUB_RAW_FEED_URL}?t=${Date.now()}`;
+            const response = await fetch(remoteUrl, { cache: "no-store" });
+            if (response.ok) {
+                const data = await response.json();
+                cachedScheduleFeed = data;
+                return data;
+            }
+        } catch (err) {
+            // Quietly fallback to local path
+        }
+
+        // 2. Fallback to local origin
         try {
             const response = await fetch("proximos_jogos.json?t=" + Date.now(), { cache: "no-store" });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -601,7 +619,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return data;
         } catch (err) {
             console.warn("Aviso ao carregar feed consolidado de jogos:", err);
-            return null;
+            return cachedScheduleFeed || null;
         }
     }
 
@@ -800,7 +818,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return null;
     }
 
-    async function renderMatchesSection() {
+    async function renderMatchesSection(forceRefresh = false) {
         const sectionEl = document.getElementById("vasco-matches-section");
         const headingTitle = document.getElementById("matches-section-title");
         const headingHint = document.getElementById("matches-section-hint");
@@ -812,6 +830,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const wrapperEl = document.getElementById("matches-carousel-wrapper");
 
         if (!sectionEl || !wrapperEl) return;
+
+        // Setup background auto-refresh every 2 minutes for active tabs
+        if (!matchesRefreshTimer) {
+            matchesRefreshTimer = setInterval(() => {
+                if (!document.hidden && getFavoriteTeam()) {
+                    renderMatchesSection(true);
+                }
+            }, 120000);
+        }
 
         // Ensure Team Selection Modal is initialized
         setupTeamSelectModal();
@@ -862,7 +889,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btnChangeTeamLabel) btnChangeTeamLabel.textContent = "Alterar time";
 
         // Load data feed
-        const feed = await loadScheduleFeed();
+        const feed = await loadScheduleFeed(forceRefresh);
         const teams = feed?.teams || {};
         const teamData = teams[favoriteTeamId];
 
