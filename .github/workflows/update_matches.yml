@@ -2,10 +2,8 @@ name: Update Match Schedule
 
 on:
   schedule:
-    # A cada 5 minutos no horário de jogos (11h às 00h59 BRT = 14h às 03h59 UTC)
-    - cron: '*/5 14-23,0-3 * * *'
-    # A cada 1 hora de madrugada e início de manhã (01h às 10h59 BRT = 04h às 13h59 UTC)
-    - cron: '0 4-13 * * *'
+    # Runs every 5 minutes continuously (unlimited for public repositories)
+    - cron: '*/5 * * * *'
   workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
 
 jobs:
