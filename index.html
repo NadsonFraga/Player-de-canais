@@ -1575,6 +1575,10 @@
                             </button>
                         </div>
                     </div>
+                    <div id="movie-player-loader" class="video-loader-overlay hidden">
+                        <div class="spinner"></div>
+                        <span>Carregando filme...</span>
+                    </div>
                     <iframe id="movie-modal-iframe" class="movie-modal-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
                 </div>
             </div>
@@ -1742,6 +1746,10 @@
 
             <!-- Central Theater Stage (Generous 16:9 Big Size) -->
             <div class="series-theater-stage">
+                <div id="series-theater-loader" class="video-loader-overlay hidden">
+                    <div class="spinner"></div>
+                    <span>Carregando reprodução...</span>
+                </div>
                 <iframe id="series-modal-iframe" class="series-theater-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
                 
                 <!-- Floating Episode Quick Drawer on top of player -->
