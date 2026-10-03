@@ -3637,6 +3637,10 @@ document.addEventListener("DOMContentLoaded", () => {
             name: "MyEmbed",
             buildUrl: (id, s, e) => `https://myembed.biz/embed/tv/${id}/${s}/${e}`
         },
+        warezcdn: {
+            name: "WarezCDN",
+            buildUrl: (id, s, e) => `https://embed.warezcdn.net/serie/${id}/${s}/${e}`
+        },
         vsembed: {
             name: "VsEmbed",
             buildUrl: (id, s, e) => `https://vsembed.ru/embed/tv/${id}/${s}/${e}`
@@ -4367,6 +4371,7 @@ document.addEventListener("DOMContentLoaded", () => {
         isAnimesInitialized = true;
 
         setupAnimesToolbarAndNavigation();
+        setupSeriesModalHandlers();
 
         // Check local cache
         try {
@@ -4939,7 +4944,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- 5. SERIES & ANIMES DETAILS MODAL & DUAL-MODE EPISODE NAVIGATOR ---
+    let isSeriesModalHandlersInitialized = false;
     function setupSeriesModalHandlers() {
+        if (isSeriesModalHandlersInitialized) return;
+        isSeriesModalHandlersInitialized = true;
         const modal = document.getElementById("series-modal");
         const btnClose = document.getElementById("btn-close-series-modal");
         const btnReload = document.getElementById("btn-reload-series-player");
@@ -5716,6 +5724,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            // Handle OK / Enter / Select keys (Smart TV OK, Remote Select, Keyboard Enter)
+            const isEnterKey = key === 'Enter' || code === 13 || key === 'Select' || code === 10001;
+            if (isEnterKey) {
+                const el = document.activeElement;
+                if (el && el !== document.body && typeof el.click === 'function') {
+                    e.preventDefault();
+                    el.click();
+                    return;
+                }
+            }
+
             // Handle Back / Return keys (Samsung 10009, webOS 461, Android 4, Esc 27, Backspace 8)
             const isBackKey = key === 'Escape' || key === 'Backspace' || code === 27 || code === 8 || code === 10009 || code === 461 || code === 4;
 
@@ -5812,9 +5831,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Initialize ---
+    setupSeriesModalHandlers();
     initApp();
     setupSpaNavigation();
     setupTvRemoteNavigation();
     checkAdblockNoticeStatus();
 });
+
 

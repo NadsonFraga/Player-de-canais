@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    TVZINHA ONLINE - DESIGN SYSTEM & MODERN STYLING
    ========================================================================== */
 
@@ -6239,7 +6239,7 @@ input[type="number"] {
 .series-theater-overlay {
     position: fixed;
     inset: 0;
-    z-index: 1000;
+    z-index: 5000;
     background: rgba(8, 8, 10, 0.96);
     backdrop-filter: blur(16px);
     display: flex;
@@ -6639,4 +6639,20 @@ input[type="number"] {
 .animes-explore-view .explore-search-wrapper:focus-within {
     border-color: rgba(232, 121, 249, 0.6);
     box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.2);
+}
+
+
+/* Interactive controls defense for series/animes theater */
+.series-theater-top-bar,
+.series-player-bottom-bar {
+    position: relative;
+    z-index: 20;
+}
+
+.btn-player-action-mini,
+.btn-player-control,
+.btn-series-server-pill,
+.drawer-item {
+    cursor: pointer !important;
+    pointer-events: auto !important;
 }
