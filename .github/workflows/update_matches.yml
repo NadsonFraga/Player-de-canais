@@ -30,8 +30,10 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          cp proximos_jogos.json /tmp/proximos_jogos.json
           git checkout --orphan data-temp
           git rm -rf .
+          cp /tmp/proximos_jogos.json proximos_jogos.json
           git add proximos_jogos.json
           git commit -m "chore: update match schedule [skip ci]"
           git push -f origin data-temp:data
