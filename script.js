@@ -1,4 +1,4 @@
-﻿/**
+/**
  * TVZINHA ONLINE - Modern Core Application Logic
  */
 
@@ -913,7 +913,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const { formattedDate, dateDayText, timePart, isToday, isTomorrow, countdownBadge } = formatMatchDateTime(match.data, match.hora);
 
             let statusBadgeHtml = '';
-            if (isToday) {
+            if (match.aoVivo) {
+                statusBadgeHtml = `<span class="match-status-badge live"><span class="live-dot pulse"></span> AO VIVO</span>`;
+            } else if (isToday) {
                 statusBadgeHtml = `<span class="match-status-badge today"><span class="live-dot"></span> HOJE</span>`;
             } else if (isTomorrow) {
                 statusBadgeHtml = `<span class="match-status-badge tomorrow">AMANHÃ</span>`;
@@ -960,11 +962,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div class="duel-vs-box">
                         <div class="duel-vs-circle-wrapper">
-                            <span class="duel-vs">VS</span>
+                            ${match.placar ? `<span class="duel-score-badge" title="Placar do jogo">${match.placar.mandante} - ${match.placar.visitante}</span>` : `<span class="duel-vs">VS</span>`}
                         </div>
                         <div class="duel-date-time">
                             <span class="duel-date-day">${dateDayText}</span>
-                            <span class="duel-date-hour">${timePart}</span>
+                            <span class="duel-date-hour">${match.aoVivo ? 'Em andamento' : timePart}</span>
                         </div>
                     </div>
 
