@@ -232,7 +232,7 @@ def normalize_broadcast_source(source_name: str) -> str:
     return clean
 
 def fetch_single_team(team: dict) -> list:
-    """Fetches and parses upcoming matches for a single club."""
+    """Fetches and parses live and upcoming matches for a single club."""
     req = urllib.request.Request(team["url"], headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(req, timeout=12) as res:
         if res.status != 200:
@@ -240,12 +240,33 @@ def fetch_single_team(team: dict) -> list:
         html = res.read().decode("utf-8", errors="ignore")
 
     data = extract_schedule_payload(html)
-    future_events = (data.get("teamAgenda") or {}).get("future") or []
-    cutoff_date = datetime.now().date() - timedelta(days=1)
+    agenda = data.get("teamAgenda") or {}
+
+    # GE separates matches into 'now' (currently playing / today), 'future' (upcoming), and 'past' (completed)
+    now_events = agenda.get("now") or []
+    future_events = agenda.get("future") or []
+    past_events = (agenda.get("past") or [])[-5:]
+
+    raw_candidates = []
+    for item in now_events:
+        raw_candidates.append((item, True))
+    for item in future_events:
+        raw_candidates.append((item, False))
+    for item in past_events:
+        raw_candidates.append((item, False))
+
+    today_date = datetime.now().date()
+    cutoff_date = today_date - timedelta(days=1)
 
     parsed_matches = []
-    for item in future_events:
+    seen_ids = set()
+
+    for item, is_now in raw_candidates:
         match_info = (item or {}).get("match") or {}
+        match_id = match_info.get("id")
+        if not match_id or match_id in seen_ids:
+            continue
+
         start_date_str = match_info.get("startDate")
         if not start_date_str:
             continue
@@ -255,49 +276,82 @@ def fetch_single_team(team: dict) -> list:
         except ValueError:
             continue
 
-        if match_date >= cutoff_date:
-            start_hour_raw = match_info.get("startHour")
-            hora_fmt = start_hour_raw[:5] if start_hour_raw else "A definir"
+        # If it's a completed past match not in 'now', only keep if it was played today
+        if not is_now and item in past_events:
+            if match_date < today_date:
+                continue
+        elif match_date < cutoff_date:
+            continue
 
-            first_contestant = match_info.get("firstContestant") or {}
-            second_contestant = match_info.get("secondContestant") or {}
+        seen_ids.add(match_id)
 
-            phase_data = match_info.get("phase") or {}
-            championship_edition = phase_data.get("championshipEdition") or {}
-            championship = championship_edition.get("championship") or {}
-            championship_name = championship.get("name") or "Competição"
+        start_hour_raw = match_info.get("startHour")
+        hora_fmt = start_hour_raw[:5] if start_hour_raw else "A definir"
 
-            location_data = match_info.get("location") or {}
-            stadium_name = location_data.get("popularName") or "A definir"
+        first_contestant = match_info.get("firstContestant") or {}
+        second_contestant = match_info.get("secondContestant") or {}
 
-            # Extract and filter broadcast sources
-            raw_sources = match_info.get("liveWatchSources") or []
-            live_sources = []
-            for src in raw_sources:
-                if not src:
-                    continue
-                normalized = normalize_broadcast_source(src.get("name", ""))
-                if normalized and normalized not in live_sources:
-                    live_sources.append(normalized)
+        phase_data = match_info.get("phase") or {}
+        championship_edition = phase_data.get("championshipEdition") or {}
+        championship = championship_edition.get("championship") or {}
+        championship_name = championship.get("name") or "Competição"
 
-            parsed_matches.append({
-                "id": match_info.get("id"),
-                "data": start_date_str,
-                "hora": hora_fmt,
-                "campeonato": championship_name,
-                "local": stadium_name,
-                "mandante": {
-                    "nome": first_contestant.get("popularName") or "Time Casa",
-                    "escudo": first_contestant.get("badgeSvg") or first_contestant.get("badgePng") or ""
-                },
-                "visitante": {
-                    "nome": second_contestant.get("popularName") or "Time Fora",
-                    "escudo": second_contestant.get("badgeSvg") or second_contestant.get("badgePng") or ""
-                },
-                "ondeAssistir": live_sources
-            })
+        location_data = match_info.get("location") or {}
+        stadium_name = location_data.get("popularName") or "A definir"
 
-    # Return top 7 upcoming matches
+        # Check live status & scoreboard
+        transmission = match_info.get("transmission") or {}
+        broadcast_status = (transmission.get("broadcastStatus") or {}).get("id")
+        moment = match_info.get("moment")
+        is_live = bool(is_now or moment == "NOW" or broadcast_status == "LIVE")
+
+        scoreboard = match_info.get("scoreboard") or {}
+        placar = None
+        if scoreboard.get("home") is not None and scoreboard.get("away") is not None:
+            placar = {
+                "mandante": scoreboard.get("home"),
+                "visitante": scoreboard.get("away")
+            }
+
+        # Extract and filter broadcast sources
+        raw_sources = match_info.get("liveWatchSources") or []
+        live_sources = []
+        for src in raw_sources:
+            if not src:
+                continue
+            normalized = normalize_broadcast_source(src.get("name", ""))
+            if normalized and normalized not in live_sources:
+                live_sources.append(normalized)
+
+        parsed_matches.append({
+            "id": match_id,
+            "data": start_date_str,
+            "hora": hora_fmt,
+            "campeonato": championship_name,
+            "local": stadium_name,
+            "aoVivo": is_live,
+            "placar": placar,
+            "mandante": {
+                "nome": first_contestant.get("popularName") or "Time Casa",
+                "escudo": first_contestant.get("badgeSvg") or first_contestant.get("badgePng") or ""
+            },
+            "visitante": {
+                "nome": second_contestant.get("popularName") or "Time Fora",
+                "escudo": second_contestant.get("badgeSvg") or second_contestant.get("badgePng") or ""
+            },
+            "ondeAssistir": live_sources
+        })
+
+    # Sort matches chronologically: date, then hour
+    def sort_key(m):
+        hora = m.get("hora") or "99:99"
+        if hora == "A definir":
+            hora = "99:99"
+        return (m.get("data") or "9999-99-99", hora)
+
+    parsed_matches.sort(key=sort_key)
+
+    # Return top 7 upcoming/live matches
     return parsed_matches[:7]
 
 def fetch_and_process_all_teams():
