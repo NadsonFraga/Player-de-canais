@@ -1,4 +1,4 @@
-﻿name: Update Match Schedule
+name: Update Match Schedule
 
 on:
   schedule:

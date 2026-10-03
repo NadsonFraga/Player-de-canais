@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-03T00:12:23.955078",
+  "updatedAt": "2026-10-03T11:30:28.615633",
   "teams": {
     "athletico-pr": {
       "name": "Athletico-PR",
@@ -2660,26 +2660,6 @@
       "name": "Seleção Brasileira",
       "escudo": "https://s.sde.globo.com/media/organizations/2019/07/16/Brasil_rgYHF6Z.svg",
       "matches": [
-        {
-          "id": 354169,
-          "data": "2026-10-03",
-          "hora": "11:00",
-          "campeonato": "Amistosos da Seleção Brasileira",
-          "local": "Calcutá",
-          "mandante": {
-            "nome": "Índia",
-            "escudo": "https://s.sde.globo.com/media/organizations/2019/09/09/Índia.svg"
-          },
-          "visitante": {
-            "nome": "Brasil",
-            "escudo": "https://s.sde.globo.com/media/organizations/2019/07/16/Brasil_rgYHF6Z.svg"
-          },
-          "ondeAssistir": [
-            "SporTV",
-            "Globo",
-            "Ge TV"
-          ]
-        },
         {
           "id": 357056,
           "data": "2026-11-14",
