@@ -26,10 +26,13 @@ jobs:
       - name: Execute match extraction script
         run: python scripts/test_get_matches.py
 
-      - name: Commit and push updated match schedule
+      - name: Publish match schedule to data branch
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan data-temp
+          git rm -rf .
           git add proximos_jogos.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: auto-update match schedule [skip ci]" && git push)
+          git commit -m "chore: update match schedule [skip ci]"
+          git push -f origin data-temp:data
 

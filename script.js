@@ -591,7 +591,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderMatchesSection();
     }
 
-    const GITHUB_RAW_FEED_URL = "https://raw.githubusercontent.com/NadsonFraga/Player-de-canais/master/proximos_jogos.json";
+    const GITHUB_RAW_FEED_URL = "https://raw.githubusercontent.com/NadsonFraga/Player-de-canais/data/proximos_jogos.json";
     let matchesRefreshTimer = null;
 
     async function loadScheduleFeed(forceRefresh = false) {
