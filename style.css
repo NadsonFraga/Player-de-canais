@@ -6701,3 +6701,116 @@ input[type="number"] {
     cursor: pointer !important;
     pointer-events: auto !important;
 }
+
+/* ==========================================================================
+   STREAMING ENGINE V3 - NATIVE ARTPLAYER SHELL & SERVER PILLS
+   ========================================================================== */
+
+.movie-artplayer-stage,
+.series-artplayer-stage {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    background: #000000;
+}
+
+/* Artplayer Shell Custom Styling - Zero Overlays & Native Brightness */
+.art-video-player {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+    border-radius: 0 !important;
+}
+
+/* Confine controls gradient strictly to the bottom 75px bar */
+.art-video-player .art-bottom {
+    top: auto !important;
+    bottom: 0 !important;
+    height: 75px !important;
+    width: 100% !important;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.75) 100%) !important;
+}
+
+/* Neutralize full-screen masks and backdrops */
+.art-video-player .art-mask,
+.art-video-player.art-mask-show .art-mask {
+    background: transparent !important;
+}
+
+.art-video-player.art-backdrop,
+.art-video-player.art-backdrop-filter {
+    background: transparent !important;
+}
+
+/* Hide poster layer completely when playing */
+.art-video-player.art-playing .art-poster {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+/* Ensure clean video rendering without brightness degradation */
+.art-video-player video,
+.art-video-player .art-video {
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+.art-video-player .art-progress {
+    height: 5px !important;
+    transition: height 0.2s ease !important;
+}
+
+.art-video-player .art-progress:hover {
+    height: 8px !important;
+}
+
+/* Native Option Badges in Movie Servers Grid */
+.btn-movie-server.native-direct {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #e4e4e7;
+    font-weight: 600;
+}
+
+.btn-movie-server.native-direct:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+}
+
+.btn-movie-server.native-direct.active {
+    background: #16a34a !important;
+    color: #ffffff !important;
+    border-color: #22c55e !important;
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.45) !important;
+    font-weight: 700 !important;
+}
+
+/* Native Server Pills in Series Theater Bar */
+.btn-series-server-pill[data-server="native_direct"],
+.btn-series-server-pill[data-server="native_anime"] {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #d4d4d8;
+    font-weight: 600;
+}
+
+.btn-series-server-pill[data-server="native_direct"]:hover,
+.btn-series-server-pill[data-server="native_anime"]:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+.btn-series-server-pill[data-server="native_direct"].active,
+.btn-series-server-pill[data-server="native_anime"].active {
+    background: #16a34a !important;
+    color: #ffffff !important;
+    border-color: #22c55e !important;
+    box-shadow: 0 0 14px rgba(34, 197, 94, 0.45) !important;
+    font-weight: 700 !important;
+}
+

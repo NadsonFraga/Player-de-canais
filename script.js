@@ -2013,12 +2013,13 @@ document.addEventListener("DOMContentLoaded", () => {
             serversGridEl.appendChild(btn);
         });
 
-        // Video Loader Management
+        // Video Loader & Screen Wake Lock Management
         const iframe = document.getElementById("stream-iframe");
         const loader = document.getElementById("video-loader");
         if (iframe && loader) {
             iframe.onload = () => {
                 loader.classList.add("hidden");
+                setPlaybackActiveState(true);
             };
             setTimeout(() => {
                 loader.classList.add("hidden");
@@ -2253,7 +2254,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function switchAppView(viewName) {
         if (viewName === 'sports') {
-            showToast("⚽ Agenda de Esportes estará disponível em breve!");
+            showToast("Agenda de Esportes estará disponível em breve!");
             return;
         }
 
@@ -2270,9 +2271,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const quickEpInput = document.getElementById("series-quick-ep-search");
         if (quickEpInput) quickEpInput.value = "";
 
-        // Close channels mobile sidebar if leaving tv view
+        // Close channels mobile sidebar and handle wake lock release if leaving tv view
         if (viewName !== 'tv') {
             closeMobileMenu();
+            const isMovieModalActive = !document.getElementById("movie-modal")?.classList.contains("hidden");
+            const isSeriesPlayerActive = !document.getElementById("series-player-view")?.classList.contains("hidden");
+            if (!isMovieModalActive && !isSeriesPlayerActive) {
+                setPlaybackActiveState(false);
+            }
         }
 
         const viewHome = document.getElementById("view-home");
@@ -2459,8 +2465,361 @@ document.addEventListener("DOMContentLoaded", () => {
         { id: 521, name: "DreamWorks", badge: "DreamWorks", logo: "https://image.tmdb.org/t/p/w500/3BPX5VGBov8SDqTV7wC1L1xShAS.png" }
     ];
 
+    // =========================================================================
+    // SCREEN WAKE LOCK CONTROLLER (Display Sleep Prevention During Playback)
+    // =========================================================================
+    let screenWakeLockSentinel = null;
+    let isPlaybackActive = false;
+
+    async function requestScreenWakeLock() {
+        if (!('wakeLock' in navigator)) {
+            return;
+        }
+        if (screenWakeLockSentinel !== null && !screenWakeLockSentinel.released) {
+            return;
+        }
+        try {
+            screenWakeLockSentinel = await navigator.wakeLock.request('screen');
+            screenWakeLockSentinel.addEventListener('release', () => {
+                screenWakeLockSentinel = null;
+            });
+            console.log("[WakeLock] Screen wake lock acquired successfully.");
+        } catch (err) {
+            console.warn("[WakeLock] Failed to acquire screen wake lock:", err.name, err.message);
+        }
+    }
+
+    async function releaseScreenWakeLock() {
+        if (screenWakeLockSentinel) {
+            try {
+                await screenWakeLockSentinel.release();
+            } catch (err) {
+                console.warn("[WakeLock] Error releasing screen wake lock:", err);
+            }
+            screenWakeLockSentinel = null;
+            console.log("[WakeLock] Screen wake lock released.");
+        }
+    }
+
+    function setPlaybackActiveState(active) {
+        isPlaybackActive = Boolean(active);
+        if (isPlaybackActive) {
+            requestScreenWakeLock();
+        } else {
+            releaseScreenWakeLock();
+        }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && isPlaybackActive) {
+            requestScreenWakeLock();
+        }
+    });
+
+    // =========================================================================
+    // STREAMING ENGINE V3 - NATIVE ARTPLAYER CONTROLLER & ATOMIC RESET
+    // =========================================================================
+    const STREAM_ENGINE_API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+        ? "http://127.0.0.1:8787"
+        : "";
+
+    window.artInstance = null;
+    window.hlsInstance = null;
+    window.cascadeTimer = null;
+    window.activeAniSkipData = null;
+
+    function atomicPlayerReset() {
+        setPlaybackActiveState(false);
+        if (window.cascadeTimer) {
+            clearTimeout(window.cascadeTimer);
+            window.cascadeTimer = null;
+        }
+        if (window.artInstance) {
+            try {
+                window.artInstance.pause();
+                window.artInstance.destroy(true);
+            } catch (e) {
+                console.warn("[Artplayer] Aviso ao destruir instância:", e);
+            }
+            window.artInstance = null;
+        }
+        if (window.hlsInstance) {
+            try {
+                window.hlsInstance.stopLoad();
+                window.hlsInstance.detachMedia();
+                window.hlsInstance.destroy();
+            } catch (e) {
+                console.warn("[HLS] Aviso ao destruir Hls.js:", e);
+            }
+            window.hlsInstance = null;
+        }
+
+        const movieContainer = document.getElementById("movie-artplayer-container");
+        if (movieContainer) {
+            movieContainer.innerHTML = "";
+            movieContainer.classList.add("hidden");
+        }
+
+        const seriesContainer = document.getElementById("series-artplayer-container");
+        if (seriesContainer) {
+            seriesContainer.innerHTML = "";
+            seriesContainer.classList.add("hidden");
+        }
+    }
+
+    async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', mal_id = null }) {
+        const params = new URLSearchParams();
+        if (id) params.set("id", id);
+        if (type) params.set("type", type);
+        params.set("season", season);
+        params.set("episode", episode);
+        params.set("lang", lang);
+        if (title) params.set("title", title);
+        if (mal_id) params.set("mal_id", mal_id);
+
+        const url = `${STREAM_ENGINE_API_BASE}/api/resolve?${params.toString()}`;
+        try {
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data && data.success ? data : null;
+        } catch (err) {
+            console.error("[StreamEngine] Erro ao resolver stream:", err);
+            return null;
+        }
+    }
+
+    function mountNativePlayer({ containerId, streamUrl, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null }) {
+        atomicPlayerReset();
+
+        const container = document.getElementById(containerId);
+        if (!container) return null;
+        container.innerHTML = "";
+        container.classList.remove("hidden");
+
+        const isHls = streamUrl.includes(".m3u8") || streamUrl.includes("type=hls") || !streamUrl.includes(".mp4");
+        let activeSourcesQueue = [...fallbackSources];
+        let hasMountedSuccessfully = false;
+
+        function markStreamSuccess() {
+            if (!hasMountedSuccessfully) {
+                hasMountedSuccessfully = true;
+                if (window.cascadeTimer) {
+                    clearTimeout(window.cascadeTimer);
+                    window.cascadeTimer = null;
+                }
+                console.log("[StreamEngine] Stream reproduzindo com sucesso no player nativo!");
+            }
+        }
+
+        function triggerCascade(reason) {
+            if (window.cascadeTimer) {
+                clearTimeout(window.cascadeTimer);
+                window.cascadeTimer = null;
+            }
+            const currentTime = window.artInstance ? (window.artInstance.currentTime || startTime) : startTime;
+            console.warn(`[StreamEngine Auto-Cascade] Falha detectada (${reason}). Restantes na fila: ${activeSourcesQueue.length}`);
+            
+            if (activeSourcesQueue.length > 0) {
+                const nextSource = activeSourcesQueue.shift();
+                showToast(`Alternando servidor para ${nextSource.label}...`);
+                mountNativePlayer({
+                    containerId,
+                    streamUrl: nextSource.stream_url,
+                    title,
+                    poster,
+                    subtitles,
+                    fallbackSources: activeSourcesQueue,
+                    startTime: currentTime,
+                    onAllFailed
+                });
+            } else if (typeof onAllFailed === "function") {
+                onAllFailed(currentTime);
+            }
+        }
+
+        // Generous safety cascade timer (14s timeout for stream start)
+        window.cascadeTimer = setTimeout(() => {
+            if (!hasMountedSuccessfully) {
+                console.warn("[StreamEngine] Timeout de inicialização atingido (14s). Iniciando contingência...");
+                triggerCascade("Timeout de inicialização");
+            }
+        }, 14000);
+
+        let initialSubtitle = undefined;
+        let defaultSubtitleObj = null;
+
+        if (subtitles && subtitles.length > 0) {
+            // Find Portuguese subtitle first (pt-BR, Portuguese, Brasil)
+            const ptSub = subtitles.find(s => {
+                const text = `${s.label || ''} ${s.lang || ''}`.toLowerCase();
+                return text.includes('portug') || text.includes('pt') || text.includes('brasil') || text.includes('brazil');
+            });
+            defaultSubtitleObj = ptSub || subtitles[0];
+            initialSubtitle = {
+                url: defaultSubtitleObj.url,
+                type: 'vtt',
+                style: {
+                    color: '#ffffff',
+                    fontSize: '20px',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.95)',
+                },
+                encoding: 'utf-8',
+            };
+        }
+
+        try {
+            const artOptions = {
+                container: container,
+                url: streamUrl,
+                type: isHls ? 'm3u8' : 'mp4',
+                customType: {
+                    m3u8: function (video, url, art) {
+                        if (window.Hls && Hls.isSupported()) {
+                            if (window.hlsInstance) window.hlsInstance.destroy();
+                            const hls = new Hls({
+                                enableWorker: true,
+                                lowLatencyMode: false,
+                                backBufferLength: 90,
+                            });
+                            window.hlsInstance = hls;
+                            hls.loadSource(url);
+                            hls.attachMedia(video);
+                            art.on('destroy', () => hls.destroy());
+
+                            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                                markStreamSuccess();
+                                if (startTime > 0) {
+                                    art.currentTime = startTime;
+                                }
+                                art.play().catch(() => {});
+                            });
+
+                            hls.on(Hls.Events.ERROR, function (event, data) {
+                                if (data.fatal) {
+                                    console.warn("[Hls.js] Erro fatal no stream:", data);
+                                    triggerCascade("Erro fatal HLS");
+                                }
+                            });
+                        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                            video.src = url;
+                            if (startTime > 0) video.currentTime = startTime;
+                            video.play().catch(() => {});
+                            markStreamSuccess();
+                        }
+                    }
+                },
+                title: title,
+                poster: poster,
+                volume: 0.85,
+                isLive: false,
+                autoplay: true,
+                pip: true,
+                autoSize: true,
+                screenshot: true,
+                setting: true,
+                playbackRate: true,
+                aspectRatio: true,
+                fullscreen: true,
+                fullscreenWeb: true,
+                subtitleOffset: true,
+                miniProgressBar: true,
+                mutex: true,
+                playsInline: true,
+                autoPlayback: true,
+                airplay: true,
+                theme: '#22c55e',
+                icons: {
+                    loading: '<div class="spinner"></div>',
+                },
+            };
+
+            if (initialSubtitle) {
+                artOptions.subtitle = initialSubtitle;
+            }
+
+            const art = new Artplayer(artOptions);
+
+            // Dynamic subtitle tracks selector inside Artplayer Settings
+            if (subtitles && subtitles.length > 0) {
+                art.setting.add({
+                    id: 'subtitles-selector',
+                    name: 'Legenda',
+                    width: 250,
+                    tooltip: defaultSubtitleObj ? (defaultSubtitleObj.label || defaultSubtitleObj.lang || 'Ativa') : 'Desativada',
+                    selector: [
+                        {
+                            default: false,
+                            html: 'Desativar Legendas',
+                            url: null,
+                        },
+                        ...subtitles.map(s => ({
+                            default: defaultSubtitleObj && s.url === defaultSubtitleObj.url,
+                            html: s.label || s.lang || 'Legenda',
+                            url: s.url,
+                        }))
+                    ],
+                    onSelect: function (item) {
+                        if (!item.url) {
+                            art.subtitle.show = false;
+                            return 'Desativada';
+                        }
+                        art.subtitle.switch(item.url, {
+                            name: item.html,
+                        });
+                        art.subtitle.show = true;
+                        return item.html;
+                    }
+                });
+            }
+
+            art.on('ready', () => {
+                markStreamSuccess();
+                if (startTime > 0) {
+                    art.currentTime = startTime;
+                }
+            });
+
+            art.on('video:canplay', () => markStreamSuccess());
+            art.on('video:playing', () => {
+                markStreamSuccess();
+                setPlaybackActiveState(true);
+                if (art.$player) art.$player.classList.add('art-playing');
+            });
+            art.on('video:pause', () => {
+                setPlaybackActiveState(false);
+            });
+            art.on('video:loadeddata', () => markStreamSuccess());
+
+            art.on('error', (err) => {
+                setPlaybackActiveState(false);
+                console.warn("[Artplayer] Erro no player:", err);
+                triggerCascade("Erro no elemento de vídeo");
+            });
+
+            // Prepared hook for AniSkip feature integration
+            art.on('video:timeupdate', () => {
+                const current = art.currentTime;
+                if (window.activeAniSkipData && current >= window.activeAniSkipData.start && current <= window.activeAniSkipData.end) {
+                    // Reserved for AniSkip UI banner
+                }
+            });
+
+            window.artInstance = art;
+            art.on('destroy', () => {
+                setPlaybackActiveState(false);
+            });
+            return art;
+        } catch (e) {
+            console.error("[Artplayer] Falha ao instanciar:", e);
+            triggerCascade("Exceção na montagem");
+            return null;
+        }
+    }
+
     // Multi-server embed generators based on universal TMDB ID
     const MOVIE_SERVERS = [
+        { id: 'native_direct', name: 'Player Nativo - Sem Anúncios (BETA)', isNative: true },
         { id: 'mgeb',      name: 'Servidor 1 (MGEB - Principal)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
         { id: 'superflix', name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.quest/filme/${id}` },
         { id: 'myembed',   name: 'Servidor 3 (MyEmbed)', buildUrl: (id) => `https://myembed.biz/filme/${id}` },
@@ -3498,17 +3857,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (btnReload) {
             btnReload.addEventListener("click", () => {
-                const iframe = document.getElementById("movie-modal-iframe");
-                if (iframe && activeMovieServer && currentSelectedMovie) {
-                    const currentSrc = iframe.src;
-                    iframe.src = "";
-                    setTimeout(() => { iframe.src = currentSrc; }, 100);
+                if (activeMovieServer && currentSelectedMovie) {
+                    selectMovieServer(activeMovieServer);
                 }
             });
         }
 
         if (btnClosePlayer) {
             btnClosePlayer.addEventListener("click", () => {
+                atomicPlayerReset();
                 const playerContainer = document.getElementById("movie-modal-player-container");
                 const backdropBox = document.getElementById("movie-modal-backdrop-box");
                 const iframe = document.getElementById("movie-modal-iframe");
@@ -3562,11 +3919,10 @@ document.addEventListener("DOMContentLoaded", () => {
             serversGrid.innerHTML = "";
             MOVIE_SERVERS.forEach((server, idx) => {
                 const btn = document.createElement("button");
-                btn.className = "btn-movie-server";
-                btn.innerHTML = `
-                    <span>${server.name}</span>
-                    <span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.8;">▶ Reproduzir</span>
-                `;
+                btn.className = server.isNative ? "btn-movie-server native-direct" : "btn-movie-server";
+                btn.innerHTML = server.isNative 
+                    ? `<span>${server.name}</span>`
+                    : `<span>${server.name}</span><span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.85;">Reproduzir</span>`;
                 btn.addEventListener("click", () => selectMovieServer(server, btn));
                 serversGrid.appendChild(btn);
 
@@ -3585,24 +3941,92 @@ document.addEventListener("DOMContentLoaded", () => {
         activeMovieServer = server;
 
         document.querySelectorAll(".btn-movie-server").forEach(b => b.classList.remove("active"));
-        if (buttonElement) buttonElement.classList.add("active");
+        if (buttonElement) {
+            buttonElement.classList.add("active");
+        } else {
+            const btnFound = Array.from(document.querySelectorAll(".btn-movie-server")).find(b => b.textContent.includes(server.name));
+            if (btnFound) btnFound.classList.add("active");
+        }
 
         const playerContainer = document.getElementById("movie-modal-player-container");
         const backdropBox = document.getElementById("movie-modal-backdrop-box");
         const serverTitle = document.getElementById("movie-player-server-title");
         const iframe = document.getElementById("movie-modal-iframe");
+        const movieArt = document.getElementById("movie-artplayer-container");
         const modalCard = document.querySelector(".movie-modal-card");
+        const movieLoader = document.getElementById("movie-player-loader");
 
         if (serverTitle) serverTitle.textContent = server.name;
         if (backdropBox) backdropBox.classList.add("hidden");
         if (playerContainer) playerContainer.classList.remove("hidden");
         if (modalCard) modalCard.classList.add("is-playing");
 
-        const movieLoader = document.getElementById("movie-player-loader");
-        if (movieLoader) movieLoader.classList.remove("hidden");
+        // Handle Native Ad-Free Player
+        if (server.isNative) {
+            if (iframe) {
+                iframe.src = "about:blank";
+                iframe.classList.add("hidden");
+            }
+            if (movieLoader) movieLoader.classList.remove("hidden");
 
-        const embedUrl = server.buildUrl(currentSelectedMovie.id);
+            resolveDirectStream({
+                id: currentSelectedMovie.id,
+                type: "movie",
+                title: currentSelectedMovie.title
+            }).then(data => {
+                if (movieLoader) movieLoader.classList.add("hidden");
+                if (!data || !data.primary_source) {
+                    showToast("Fontes diretas indisponíveis para este filme. Selecione outro servidor abaixo se desejar.");
+                    if (movieArt) {
+                        movieArt.innerHTML = `
+                            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);border-radius:12px;">
+                                <svg width="44" height="44" fill="none" stroke="#eab308" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
+                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Stream nativo indisponível</div>
+                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Não encontramos transmissões diretas sem anúncios ativas para este título no momento. Por favor, escolha um dos servidores alternativos (MGEB, Superflix, etc.) na lista abaixo.</div>
+                            </div>`;
+                        movieArt.classList.remove("hidden");
+                    }
+                    return;
+                }
+
+                const backdropUrl = currentSelectedMovie.backdrop_path
+                    ? `${TMDB_IMG_ORIGINAL}${currentSelectedMovie.backdrop_path}`
+                    : '';
+
+                mountNativePlayer({
+                    containerId: "movie-artplayer-container",
+                    streamUrl: data.primary_source.stream_url,
+                    title: data.title || currentSelectedMovie.title,
+                    poster: backdropUrl,
+                    subtitles: data.subtitles || [],
+                    fallbackSources: data.fallback_sources || [],
+                    onAllFailed: () => {
+                        showToast("Todas as fontes diretas falharam. Selecione outro servidor abaixo se desejar.");
+                        if (movieArt) {
+                            movieArt.innerHTML = `
+                                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);border-radius:12px;">
+                                    <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                                    <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Falha na reprodução nativa</div>
+                                    <div style="font-size:13px;max-width:380px;line-height:1.5;">Os links diretos deste filme estão temporariamente instáveis. Selecione um servidor alternativo (MGEB, Superflix, etc.) abaixo para continuar assistindo.</div>
+                                </div>`;
+                            movieArt.classList.remove("hidden");
+                        }
+                    }
+                });
+            }).catch(err => {
+                if (movieLoader) movieLoader.classList.add("hidden");
+                showToast("Erro ao conectar ao motor de streaming nativo.");
+            });
+            return;
+        }
+
+        // Handle Legacy Iframe Servers
+        atomicPlayerReset();
+        if (movieArt) movieArt.classList.add("hidden");
         if (iframe) {
+            iframe.classList.remove("hidden");
+            if (movieLoader) movieLoader.classList.remove("hidden");
+            const embedUrl = server.buildUrl(currentSelectedMovie.id);
             iframe.src = "about:blank";
             setTimeout(() => {
                 iframe.src = embedUrl;
@@ -3611,6 +4035,7 @@ document.addEventListener("DOMContentLoaded", () => {
             iframe.onload = () => {
                 if (iframe.src && !iframe.src.endsWith("about:blank")) {
                     if (movieLoader) movieLoader.classList.add("hidden");
+                    setPlaybackActiveState(true);
                 }
             };
             setTimeout(() => {
@@ -3625,6 +4050,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function closeMovieDetailsModal() {
+        setPlaybackActiveState(false);
+        atomicPlayerReset();
         const modal = document.getElementById("movie-modal");
         const iframe = document.getElementById("movie-modal-iframe");
         const movieLoader = document.getElementById("movie-player-loader");
@@ -3658,7 +4085,7 @@ document.addEventListener("DOMContentLoaded", () => {
         seasonNumber: 1,
         episodeNumber: 1,
         episodeData: null,
-        server: 'mgeb'
+        server: 'native_direct'
     };
 
     let heroSeriesList = [];
@@ -5077,28 +5504,15 @@ document.addEventListener("DOMContentLoaded", () => {
             pill.addEventListener("click", () => {
                 document.querySelectorAll("#series-server-pills .btn-series-server-pill").forEach(p => p.classList.remove("active"));
                 pill.classList.add("active");
-                activeSeriesPlaying.server = pill.dataset.server || 'mgeb';
+                activeSeriesPlaying.server = pill.dataset.server || 'native_direct';
 
-                const iframe = document.getElementById("series-modal-iframe");
-                const seriesLoader = document.getElementById("series-theater-loader");
-                if (iframe && activeSeriesPlaying.show) {
-                    const serverDef = SERIES_SERVERS[activeSeriesPlaying.server] || SERIES_SERVERS.mgeb;
-                    const nextUrl = serverDef.buildUrl(activeSeriesPlaying.show.id, activeSeriesPlaying.seasonNumber, activeSeriesPlaying.episodeNumber);
-                    
-                    if (seriesLoader) seriesLoader.classList.remove("hidden");
-                    iframe.src = "about:blank";
-                    setTimeout(() => {
-                        iframe.src = nextUrl;
-                    }, 60);
-
-                    iframe.onload = () => {
-                        if (iframe.src && !iframe.src.endsWith("about:blank")) {
-                            if (seriesLoader) seriesLoader.classList.add("hidden");
-                        }
-                    };
-                    setTimeout(() => {
-                        if (seriesLoader) seriesLoader.classList.add("hidden");
-                    }, 3000);
+                if (activeSeriesPlaying.show) {
+                    playSeriesEpisode(
+                        activeSeriesPlaying.show,
+                        activeSeriesPlaying.seasonNumber,
+                        activeSeriesPlaying.episodeNumber,
+                        activeSeriesPlaying.episodeData
+                    );
                 }
             });
         });
@@ -5553,34 +5967,124 @@ document.addEventListener("DOMContentLoaded", () => {
             currentEpTitle.textContent = `${showName} • T${seasonNumber}:E${episodeNumber}${epName}`;
         }
 
-        // Build embed URL with active server
-        const serverDef = SERIES_SERVERS[activeSeriesPlaying.server] || SERIES_SERVERS.mgeb;
-        const embedUrl = serverDef.buildUrl(showItem.id, seasonNumber, episodeNumber);
-        
-        const seriesLoader = document.getElementById("series-theater-loader");
-        if (seriesLoader) seriesLoader.classList.remove("hidden");
+        const isAnime = Boolean(
+            (showItem.genre_ids && showItem.genre_ids.includes(16)) ||
+            (showItem.original_language === 'ja') ||
+            (showItem.origin_country && (showItem.origin_country.includes('JP') || showItem.origin_country.includes('Japan')))
+        );
 
-        // Safe stream loading with guaranteed unbuffering
-        if (iframe) {
-            iframe.src = "about:blank";
-            setTimeout(() => {
-                iframe.src = embedUrl;
-            }, 60);
-
-            iframe.onload = () => {
-                if (iframe.src && !iframe.src.endsWith("about:blank")) {
-                    if (seriesLoader) seriesLoader.classList.add("hidden");
+        // Control conditional visibility of Anime Server Pill in Theater Bar
+        const animePill = document.querySelector('#series-server-pills [data-server="native_anime"]');
+        if (animePill) {
+            if (isAnime) {
+                animePill.style.display = '';
+            } else {
+                animePill.style.display = 'none';
+                if (activeSeriesPlaying.server === 'native_anime') {
+                    activeSeriesPlaying.server = 'native_direct';
                 }
-            };
-            setTimeout(() => {
-                if (seriesLoader) seriesLoader.classList.add("hidden");
-            }, 3000);
+            }
         }
 
         // Sync active server pill in bottom bar
         document.querySelectorAll("#series-server-pills .btn-series-server-pill").forEach(p => {
             p.classList.toggle("active", p.dataset.server === activeSeriesPlaying.server);
         });
+
+        const seriesArt = document.getElementById("series-artplayer-container");
+        const seriesLoader = document.getElementById("series-theater-loader");
+        const serverKey = activeSeriesPlaying.server;
+
+        // Route A: Native Direct Player (Movies/Series/Dubbed) or Native Animes (Subbed/Dubbed)
+        if (serverKey === 'native_direct' || serverKey === 'native_anime') {
+            if (iframe) {
+                iframe.src = "about:blank";
+                iframe.classList.add("hidden");
+            }
+            if (seriesLoader) seriesLoader.classList.remove("hidden");
+
+            const isAnimeMode = serverKey === 'native_anime';
+            const mediaType = isAnimeMode ? "anime" : "serie";
+            const lang = isAnimeMode ? "sub" : "dub";
+
+            resolveDirectStream({
+                id: showItem.id,
+                type: mediaType,
+                season: seasonNumber,
+                episode: episodeNumber,
+                lang: lang,
+                title: showName
+            }).then(data => {
+                if (seriesLoader) seriesLoader.classList.add("hidden");
+                if (!data || !data.primary_source) {
+                    showToast("Fontes diretas indisponíveis para este episódio. Selecione outro servidor abaixo se desejar.");
+                    if (seriesArt) {
+                        seriesArt.innerHTML = `
+                            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);">
+                                <svg width="44" height="44" fill="none" stroke="#eab308" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
+                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Stream nativo indisponível</div>
+                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Não encontramos transmissões diretas sem anúncios ativas para este episódio no momento. Por favor, escolha um dos servidores alternativos na barra abaixo.</div>
+                            </div>`;
+                        seriesArt.classList.remove("hidden");
+                    }
+                    return;
+                }
+
+                const backdropUrl = showItem.backdrop_path
+                    ? `${TMDB_IMG_ORIGINAL}${showItem.backdrop_path}`
+                    : '';
+
+                mountNativePlayer({
+                    containerId: "series-artplayer-container",
+                    streamUrl: data.primary_source.stream_url,
+                    title: `${showName} • T${seasonNumber}:E${episodeNumber}`,
+                    poster: backdropUrl,
+                    subtitles: data.subtitles || [],
+                    fallbackSources: data.fallback_sources || [],
+                    onAllFailed: () => {
+                        showToast("Todas as fontes diretas deste episódio falharam. Selecione outro servidor abaixo se desejar.");
+                        if (seriesArt) {
+                            seriesArt.innerHTML = `
+                                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);">
+                                    <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                                    <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Falha na reprodução nativa</div>
+                                    <div style="font-size:13px;max-width:380px;line-height:1.5;">Os links diretos deste episódio estão temporariamente indisponíveis. Selecione um servidor alternativo (MGEB, Superflix, etc.) abaixo para continuar assistindo.</div>
+                                </div>`;
+                            seriesArt.classList.remove("hidden");
+                        }
+                    }
+                });
+            }).catch(err => {
+                if (seriesLoader) seriesLoader.classList.add("hidden");
+                showToast("Erro ao conectar ao motor de streaming nativo.");
+            });
+        } else {
+            // Route B: Legacy Iframe Servers
+            atomicPlayerReset();
+            if (seriesArt) seriesArt.classList.add("hidden");
+            if (iframe) {
+                iframe.classList.remove("hidden");
+                if (seriesLoader) seriesLoader.classList.remove("hidden");
+
+                const serverDef = SERIES_SERVERS[serverKey] || SERIES_SERVERS.mgeb;
+                const embedUrl = serverDef.buildUrl(showItem.id, seasonNumber, episodeNumber);
+
+                iframe.src = "about:blank";
+                setTimeout(() => {
+                    iframe.src = embedUrl;
+                }, 60);
+
+                iframe.onload = () => {
+                    if (iframe.src && !iframe.src.endsWith("about:blank")) {
+                        if (seriesLoader) seriesLoader.classList.add("hidden");
+                        setPlaybackActiveState(true);
+                    }
+                };
+                setTimeout(() => {
+                    if (seriesLoader) seriesLoader.classList.add("hidden");
+                }, 3000);
+            }
+        }
 
         // Update Prev / Next buttons state
         if (btnPrev) {
@@ -5629,6 +6133,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function stopSeriesPlayer() {
+        setPlaybackActiveState(false);
+        atomicPlayerReset();
         const theaterView = document.getElementById("series-player-view");
         const iframe = document.getElementById("series-modal-iframe");
         const seriesLoader = document.getElementById("series-theater-loader");
