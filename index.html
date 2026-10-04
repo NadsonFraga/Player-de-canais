@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -1579,6 +1579,7 @@
                         <div class="spinner"></div>
                         <span>Carregando filme...</span>
                     </div>
+                    <div id="movie-artplayer-container" class="movie-artplayer-stage hidden"></div>
                     <iframe id="movie-modal-iframe" class="movie-modal-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
                 </div>
             </div>
@@ -1750,6 +1751,7 @@
                     <div class="spinner"></div>
                     <span>Carregando reprodução...</span>
                 </div>
+                <div id="series-artplayer-container" class="series-artplayer-stage hidden"></div>
                 <iframe id="series-modal-iframe" class="series-theater-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
                 
                 <!-- Floating Episode Quick Drawer on top of player -->
@@ -1796,7 +1798,9 @@
                 <div class="series-servers-selector" id="series-servers-selector">
                     <span class="server-label">Servidor:</span>
                     <div class="series-server-pills" id="series-server-pills">
-                        <button class="btn-series-server-pill active" data-server="mgeb" type="button">MGEB</button>
+                        <button class="btn-series-server-pill active" data-server="native_direct" type="button" title="Player Nativo Direto sem anúncios (BETA)">Player Nativo - Sem Anúncios (BETA)</button>
+                        <button class="btn-series-server-pill" data-server="native_anime" type="button" title="Player Nativo Especializado em Animes (BETA)">Player Nativo Animes - Sem Anúncios (BETA)</button>
+                        <button class="btn-series-server-pill" data-server="mgeb" type="button">MGEB</button>
                         <button class="btn-series-server-pill" data-server="superflix" type="button">Superflix</button>
                         <button class="btn-series-server-pill" data-server="myembed" type="button">MyEmbed</button>
                         <button class="btn-series-server-pill" data-server="warezcdn" type="button">Warez</button>
@@ -1809,6 +1813,10 @@
 
     <!-- Global App Toast Notification -->
     <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
+
+    <!-- Streaming Engine V3: Hls.js & Artplayer -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/artplayer@5.1.7/dist/artplayer.js"></script>
 
     <!-- Application Script -->
     <script src="script.js?v=20261002_v7"></script>
