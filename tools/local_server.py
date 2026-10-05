@@ -5,6 +5,7 @@ Mirrors the exact behavior of Cloudflare Pages Functions (/api/resolve and /api/
 for zero-friction local testing on port 8787.
 """
 
+import os
 import sys
 import re
 import json
@@ -131,9 +132,21 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 import http.server
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
+    extensions_map = {
+        **http.server.SimpleHTTPRequestHandler.extensions_map,
+        '.js': 'application/javascript; charset=utf-8',
+        '.mjs': 'application/javascript; charset=utf-8',
+        '.json': 'application/json; charset=utf-8',
+        '.css': 'text/css; charset=utf-8',
+        '.svg': 'image/svg+xml',
+        '.webp': 'image/webp',
+    }
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=".", **kwargs)
+        super().__init__(*args, directory=PROJECT_ROOT, **kwargs)
 
     def send_cors_headers(self, status=200, content_type="application/json"):
         self.send_response(status)

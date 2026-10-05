@@ -408,45 +408,45 @@ document.addEventListener("DOMContentLoaded", () => {
         return icons[name] || '';
     }
 
-    // --- Mapping Channels to Images in logos/ ---
+    // --- Mapping Channels to Images in assets/logos/channels/ ---
     const CHANNEL_LOGOS = {
-        "globo": "logos/globo.png",
-        "band": "logos/Band.png",
-        "sbt": "logos/sbt.png",
-        "record": "logos/record.png",
-        "sportv 3": "logos/sportv3.png",
-        "sportv 2": "logos/sportv2.png",
-        "sportv": "logos/sportv.png",
-        "premiere": "logos/premiere.png",
-        "prime": "logos/amazonprimevideo.png",
-        "cazetv": "logos/cazetv.png",
-        "disney": "logos/disneyplus.png",
-        "max": "logos/max.png",
-        "paramount": "logos/paramountplus.png",
-        "espn": "logos/espn.png",
-        "bandsports": "logos/bandsports.png",
-        "combate": "logos/combate.png",
-        "xsports": "logos/xsports.png",
-        "globonews": "logos/globonews.png",
-        "bandnews": "logos/bandnews.png",
-        "multishow": "logos/multishow.png",
-        "mtv": "logos/mtv.png",
-        "cartoonnetwork": "logos/cartoonnetwork.png",
-        "cartoonito": "logos/cartoonito.png",
-        "discoverykids": "logos/discoverykids.png",
-        "gloob": "logos/gloob.png",
-        "gloobinho": "logos/gloobinho.png",
-        "comedycentral": "logos/comedycentral.png",
-        "nickelodeon": "logos/nickelodeon.png",
-        "nickjr": "logos/nickjr.png",
-        "dreamworks": "logos/dreamworks.png",
-        "animalplanet": "logos/animalplanet.png",
-        "discoverychannel": "logos/discoverychannel.png",
-        "hbo": "logos/hbo.png",
-        "hbo2": "logos/hbo2.png",
-        "hboplus": "logos/hboplus.png",
-        "hbosignature": "logos/hbosignature.png",
-        "hbofamily": "logos/hbofamily.png"
+        "globo": "assets/logos/channels/globo.webp",
+        "band": "assets/logos/channels/Band.png",
+        "sbt": "assets/logos/channels/sbt.png",
+        "record": "assets/logos/channels/record.png",
+        "sportv 3": "assets/logos/channels/sportv3.png",
+        "sportv 2": "assets/logos/channels/sportv2.png",
+        "sportv": "assets/logos/channels/sportv.png",
+        "premiere": "assets/logos/channels/premiere.png",
+        "prime": "assets/logos/channels/amazonprimevideo.png",
+        "cazetv": "assets/logos/channels/cazetv.png",
+        "disney": "assets/logos/channels/disneyplus.png",
+        "max": "assets/logos/channels/max.png",
+        "paramount": "assets/logos/channels/paramountplus.png",
+        "espn": "assets/logos/channels/espn.png",
+        "bandsports": "assets/logos/channels/bandsports.png",
+        "combate": "assets/logos/channels/combate.png",
+        "xsports": "assets/logos/channels/xsports.png",
+        "globonews": "assets/logos/channels/globonews.png",
+        "bandnews": "assets/logos/channels/bandnews.png",
+        "multishow": "assets/logos/channels/multishow.png",
+        "mtv": "assets/logos/channels/mtv.png",
+        "cartoonnetwork": "assets/logos/channels/cartoonnetwork.png",
+        "cartoonito": "assets/logos/channels/cartoonito.png",
+        "discoverykids": "assets/logos/channels/discoverykids.png",
+        "gloob": "assets/logos/channels/gloob.png",
+        "gloobinho": "assets/logos/channels/gloobinho.png",
+        "comedycentral": "assets/logos/channels/comedycentral.png",
+        "nickelodeon": "assets/logos/channels/nickelodeon.png",
+        "nickjr": "assets/logos/channels/nickjr.png",
+        "dreamworks": "assets/logos/channels/dreamworks.png",
+        "animalplanet": "assets/logos/channels/animalplanet.png",
+        "discoverychannel": "assets/logos/channels/discoverychannel.png",
+        "hbo": "assets/logos/channels/hbo.png",
+        "hbo2": "assets/logos/channels/hbo2.png",
+        "hboplus": "assets/logos/channels/hboplus.png",
+        "hbosignature": "assets/logos/channels/hbosignature.png",
+        "hbofamily": "assets/logos/channels/hbofamily.png"
     };
 
     function getChannelLogoSrc(channelName) {
@@ -513,7 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- 1. Initialization & Data Fetching ---
     async function initApp() {
         try {
-            const response = await fetch("canais.json?v=" + Date.now(), { cache: "no-store" });
+            const response = await fetch("data/canais.json?v=" + Date.now(), { cache: "no-store" });
             if (!response.ok) {
                 throw new Error(`Erro HTTP: ${response.status}`);
             }
@@ -575,7 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (KNOWN_TEAM_CRESTS[teamId]) {
             return KNOWN_TEAM_CRESTS[teamId];
         }
-        return 'logos/fav/favicon.svg';
+        return 'assets/logos/fav/favicon.svg';
     }
 
     function getFavoriteTeam() {
@@ -612,7 +612,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 2. Fallback to local origin
         try {
-            const response = await fetch("proximos_jogos.json?t=" + Date.now(), { cache: "no-store" });
+            const response = await fetch("data/proximos_jogos.json?t=" + Date.now(), { cache: "no-store" });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             cachedScheduleFeed = data;
@@ -904,7 +904,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (headingHint) headingHint.textContent = `Agenda atualizada do ${teamData.name} (via ge.globo)`;
         if (teamBadgeEl) {
             const crestUrl = resolveClientTeamCrest(favoriteTeamId, teamData);
-            teamBadgeEl.innerHTML = `<img src="${crestUrl}" alt="${teamData.name}" class="team-header-crest" onerror="this.src='logos/fav/favicon.svg'">`;
+            teamBadgeEl.innerHTML = `<img src="${crestUrl}" alt="${teamData.name}" class="team-header-crest" onerror="this.src='assets/logos/fav/favicon.svg'">`;
         }
 
         const matches = teamData.matches || [];
@@ -953,8 +953,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const championshipFormatted = normalizeChampionshipName(match.campeonato);
-            const mandanteEscudo = match.mandante?.escudo || 'logos/fav/favicon.svg';
-            const visitanteEscudo = match.visitante?.escudo || 'logos/fav/favicon.svg';
+            const mandanteEscudo = match.mandante?.escudo || 'assets/logos/fav/favicon.svg';
+            const visitanteEscudo = match.visitante?.escudo || 'assets/logos/fav/favicon.svg';
 
             const broadcastList = match.ondeAssistir || [];
             let broadcastPillsHtml = '';
@@ -982,7 +982,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="match-duel">
                     <div class="duel-team duel-mandante">
                         <div class="duel-badge-wrapper">
-                            <img src="${mandanteEscudo}" alt="${match.mandante?.nome || 'Mandante'}" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
+                            <img src="${mandanteEscudo}" alt="${match.mandante?.nome || 'Mandante'}" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
                         </div>
                         <span class="duel-team-name" title="${match.mandante?.nome || ''}">${match.mandante?.nome || 'Mandante'}</span>
                     </div>
@@ -999,7 +999,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div class="duel-team duel-visitante">
                         <div class="duel-badge-wrapper">
-                            <img src="${visitanteEscudo}" alt="${match.visitante?.nome || 'Visitante'}" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
+                            <img src="${visitanteEscudo}" alt="${match.visitante?.nome || 'Visitante'}" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
                         </div>
                         <span class="duel-team-name" title="${match.visitante?.nome || ''}">${match.visitante?.nome || 'Visitante'}</span>
                     </div>
@@ -1140,7 +1140,7 @@ document.addEventListener("DOMContentLoaded", () => {
             card.innerHTML = `
                 ${checkHtml}
                 <div class="team-card-crest-wrapper">
-                    <img src="${crestUrl}" alt="${teamInfo.name}" class="team-card-crest" loading="lazy" onerror="this.src='logos/fav/favicon.svg'">
+                    <img src="${crestUrl}" alt="${teamInfo.name}" class="team-card-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
                 </div>
                 <span class="team-card-name">${teamInfo.name}</span>
             `;
@@ -1438,7 +1438,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </p>
                     </div>
                     <div class="welcome-hero-emblem" aria-hidden="true" title="Tvzinha Online">
-                        <img src="logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="hero-emblem-img">
+                        <img src="assets/logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="hero-emblem-img">
                     </div>
                 </div>
 
@@ -2995,13 +2995,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const posterUrl = movie.poster_path
             ? `${TMDB_IMG_W500}${movie.poster_path}`
-            : 'logos/fav/icon-detailed.svg';
+            : 'assets/logos/fav/icon-detailed.svg';
 
         const releaseYear = (movie.release_date || '').substring(0, 4) || 'N/A';
         const rating = movie.vote_average ? movie.vote_average.toFixed(1) : '—';
 
         card.innerHTML = `
-            <img class="movie-poster-img" src="${posterUrl}" alt="${movie.title}" loading="lazy" onerror="this.src='logos/fav/icon-detailed.svg'">
+            <img class="movie-poster-img" src="${posterUrl}" alt="${movie.title}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
             <div class="movie-poster-overlay">
                 <h4 class="movie-card-title" title="${movie.title}">${movie.title}</h4>
                 <div class="movie-card-meta">
@@ -3305,7 +3305,7 @@ document.addEventListener("DOMContentLoaded", () => {
             card.setAttribute("aria-label", `Diretor: ${director.name}`);
 
             card.innerHTML = `
-                <img class="director-avatar" src="${director.photo}" alt="${director.name}" loading="lazy" onerror="this.src='logos/fav/icon-detailed.svg'">
+                <img class="director-avatar" src="${director.photo}" alt="${director.name}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
                 <h4 class="director-name">${director.name}</h4>
                 <span class="director-meta">${director.knownFor}</span>
             `;
@@ -4221,11 +4221,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const imgUrl = item.backdrop_path
                 ? `${TMDB_IMG_W500}${item.backdrop_path}`
-                : (item.poster_path ? `${TMDB_IMG_W500}${item.poster_path}` : 'logos/fav/icon-detailed.svg');
+                : (item.poster_path ? `${TMDB_IMG_W500}${item.poster_path}` : 'assets/logos/fav/icon-detailed.svg');
 
             card.innerHTML = `
                 <div class="continue-card-media">
-                    <img src="${imgUrl}" alt="${item.title}" loading="lazy" onerror="this.src='logos/fav/icon-detailed.svg'">
+                    <img src="${imgUrl}" alt="${item.title}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
                     <div class="continue-play-overlay">
                         <div class="continue-play-btn">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -4278,10 +4278,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const posterUrl = seriesItem.poster_path
             ? `${TMDB_IMG_W500}${seriesItem.poster_path}`
-            : 'logos/fav/icon-detailed.svg';
+            : 'assets/logos/fav/icon-detailed.svg';
 
         card.innerHTML = `
-            <img class="movie-poster-img" src="${posterUrl}" alt="${title}" loading="lazy" onerror="this.src='logos/fav/icon-detailed.svg'">
+            <img class="movie-poster-img" src="${posterUrl}" alt="${title}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
             <div class="movie-poster-overlay">
                 <h4 class="movie-card-title" title="${title}">${title}</h4>
                 <div class="movie-card-meta">
@@ -5800,14 +5800,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const stillUrl = ep.still_path
                 ? `${TMDB_IMG_W500}${ep.still_path}`
-                : (currentSelectedSeries.backdrop_path ? `${TMDB_IMG_W500}${currentSelectedSeries.backdrop_path}` : 'logos/fav/icon-detailed.svg');
+                : (currentSelectedSeries.backdrop_path ? `${TMDB_IMG_W500}${currentSelectedSeries.backdrop_path}` : 'assets/logos/fav/icon-detailed.svg');
 
             const epTitle = ep.name || `Episódio ${ep.episode_number}`;
             const epDuration = ep.runtime ? `${ep.runtime} min` : '';
 
             card.innerHTML = `
                 <div class="ep-thumbnail-box">
-                    <img class="ep-thumbnail-img" src="${stillUrl}" alt="${epTitle}" loading="lazy" onerror="this.src='logos/fav/icon-detailed.svg'">
+                    <img class="ep-thumbnail-img" src="${stillUrl}" alt="${epTitle}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
                     <span class="ep-number-tag">Ep. ${ep.episode_number}</span>
                     ${isWatched ? '<span class="ep-watched-tag">Visto</span>' : ''}
                     <div class="ep-play-overlay">
@@ -5933,7 +5933,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const stillUrl = currentSelectedSeries.backdrop_path
                 ? `${TMDB_IMG_W500}${currentSelectedSeries.backdrop_path}`
-                : 'logos/fav/icon-detailed.svg';
+                : 'assets/logos/fav/icon-detailed.svg';
 
             card.innerHTML = `
                 <div class="ep-thumbnail-box">

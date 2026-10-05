@@ -1,7 +1,8 @@
 .agents/
+.gemini/
 .DS_Store
 Thumbs.db
 __pycache__/
 *.pyc
-
+scratch/
 .archives/
