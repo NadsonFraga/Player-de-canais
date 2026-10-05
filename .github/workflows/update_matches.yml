@@ -22,13 +22,13 @@ jobs:
           python-version: '3.11'
 
       - name: Execute match extraction script
-        run: python scripts/test_get_matches.py
+        run: python tools/test_get_matches.py
 
       - name: Publish match schedule to data branch
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          cp proximos_jogos.json /tmp/proximos_jogos.json
+          cp data/proximos_jogos.json /tmp/proximos_jogos.json
           git checkout --orphan data-temp
           git rm -rf .
           cp /tmp/proximos_jogos.json proximos_jogos.json

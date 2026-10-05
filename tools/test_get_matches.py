@@ -17,7 +17,8 @@ USER_AGENT = (
     "Chrome/124.0.0.0 Safari/537.36"
 )
 
-OUTPUT_FILE_PATH = "proximos_jogos.json"
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_FILE_PATH = os.path.join(ROOT_DIR, "data", "proximos_jogos.json")
 
 # Verified Globo Esporte schedule endpoints (20 Serie A clubs + Brazilian National Team)
 TEAMS_CONFIG = [
