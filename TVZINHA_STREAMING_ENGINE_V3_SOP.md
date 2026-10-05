@@ -347,6 +347,24 @@ Para que o usuário possa selecionar animes no catálogo principal indexado por 
   2. **Adaptive HLS Level Hooking:** Listened for `Hls.Events.MANIFEST_PARSED` inside `customType.m3u8`. If `hls.levels.length > 1`, dynamically registers a `Qualidade` menu inside `art.setting.add()` with options: `Automática` (level -1), `1080p`, `720p`, `480p`, etc., binding user selection directly to `hls.currentLevel`.
   3. **Static MP4 Quality Indicator:** For direct progressive MP4 streams (`!isHls`), registers a `Qualidade` menu in Artplayer settings indicating `1080p (Original)`.
 
+### 8.12 Eliminating Letterbox Bottom Deadzones (autoSize Deactivation & Centered Video)
+* **The Problem (Floating Controls & Bottom Black Band):**
+  * When `autoSize: true` was enabled in Artplayer's constructor, its internal `autoSizeMix` computed the ratio `videoWidth / videoHeight` against container dimensions. For cinemascope widescreen movies (e.g. 2.35:1 or 2.39:1 such as *Minions & Monstros* or *Shutter Island / Ilha do Medo*), Artplayer forced an inline style resizing `.art-video-player` to `height: ~74%` at `top: 0`.
+  * Because the parent modal theater stage had a 100% height (16:9), this shriveled the player toward the top, leaving a dead 26% black band below the controls bar, creating an awkward visual disconnect where controls floated in the middle of the modal.
+* **The Solution:**
+  1. **Disabling `autoSize`:** Set `autoSize: false` in `artOptions`.
+  2. **100% Stage Fill & Centered Letterboxing:** Styled `.art-video-player` with `width: 100% !important; height: 100% !important;` and `.art-video-player video` with `object-fit: contain !important; object-position: center !important;`. The controls bar rests firmly on the modal's bottom edge, and any widescreen letterboxing is distributed with optical symmetry above and below the video frame.
+
+### 8.13 Canonical IMDb Disambiguation & TV Series Collision Prevention
+* **The Problem (MGEB Numeric ID Ambiguity):**
+  * Certain movies share identical numeric IDs with TV series in TMDB or MGEB's database (e.g., TMDB movie ID `1422` is *The Departed / Os Infiltrados*, but TV series ID `1422` is the sitcom *The Middle*).
+  * When queried with purely numeric IDs (`https://mgeb.top/embed/1422`), MGEB's backend routing defaulted to the TV series, returning `The Middle: Uma Família Perdida no Meio do Nada - T1E1 - Piloto` instead of Scorsese's movie.
+* **The Solution:**
+  1. **Canonical IMDb ID Pre-Resolution:** In the movie resolution pipeline, if the target media identifier is a numeric TMDB ID, the resolver queries TMDB's movie endpoint (`/movie/{id}`) to obtain the globally unique IMDb ID (`tt0407887`).
+  2. **IMDb-First Query Routing:** MGEB natively accepts IMDb IDs (`https://mgeb.top/embed/tt0407887`), which eliminates ID space collisions with TV series and guarantees 100% accurate movie streams.
+  3. **Sanity Check Fallback Guard:** If a movie query unexpectedly returns a title with TV episode markers (`T\d+E\d+`, `S\d+E\d+`, `Episódio`, `Piloto`), the resolver rejects the TV collision, triggers an automated IMDb ID lookup, and re-queries MGEB before delivering the payload to the client.
+
+
 
 
 

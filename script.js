@@ -2567,7 +2567,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', mal_id = null }) {
+    async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', mal_id = null, imdb_id = null }) {
         const params = new URLSearchParams();
         if (id) params.set("id", id);
         if (type) params.set("type", type);
@@ -2576,6 +2576,7 @@ document.addEventListener("DOMContentLoaded", () => {
         params.set("lang", lang);
         if (title) params.set("title", title);
         if (mal_id) params.set("mal_id", mal_id);
+        if (imdb_id) params.set("imdb_id", imdb_id);
 
         const url = `${STREAM_ENGINE_API_BASE}/api/resolve?${params.toString()}`;
         try {
@@ -2740,7 +2741,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 isLive: false,
                 autoplay: true,
                 pip: true,
-                autoSize: true,
+                autoSize: false,
                 screenshot: true,
                 setting: true,
                 playbackRate: true,
@@ -4013,7 +4014,8 @@ document.addEventListener("DOMContentLoaded", () => {
             resolveDirectStream({
                 id: currentSelectedMovie.id,
                 type: "movie",
-                title: currentSelectedMovie.title
+                title: currentSelectedMovie.title,
+                imdb_id: currentSelectedMovie.imdb_id || null
             }).then(data => {
                 if (movieLoader) movieLoader.classList.add("hidden");
                 if (!data || !data.primary_source) {

@@ -18,9 +18,24 @@ from socketserver import ThreadingMixIn
 
 PORT = 8787
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d"
 
 # In-memory resolver cache (TTL 30 minutes)
 RESOLVE_CACHE = {}
+
+def fetch_imdb_id(tmdb_id: str):
+    """Fetches canonical IMDb ID (tt...) from TMDB for unambiguous movie resolution in MGEB."""
+    try:
+        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}"
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=6) as res:
+            data = json.loads(res.read().decode("utf-8"))
+        imdb_id = data.get("imdb_id")
+        if imdb_id and str(imdb_id).startswith("tt"):
+            return str(imdb_id)
+    except Exception as e:
+        print(f"[LocalServer] Error fetching IMDb ID for TMDB {tmdb_id}: {e}", file=sys.stderr)
+    return None
 
 def xor_decrypt(data_str: str, key: str = "otaku-embed-v1") -> str:
     raw_bytes = base64.b64decode(data_str)
@@ -190,8 +205,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         lang = params.get("lang", ["sub" if media_type == "anime" else "dub"])[0]
         title_param = params.get("title", [""])[0]
         mal_id = params.get("mal_id", [""])[0]
+        imdb_id = params.get("imdb_id", [""])[0]
 
-        cache_key = f"{media_type}_{media_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}"
+        cache_key = f"{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}"
         now = time.time()
         if cache_key in RESOLVE_CACHE:
             cached_time, cached_res = RESOLVE_CACHE[cache_key]
@@ -252,9 +268,35 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     }
 
         # Route 2: Movies, Series or Anime Dubbed via MGEB
-        if not result and media_id:
+        if not result and (media_id or imdb_id):
             mgeb_type = "serie" if media_type == "anime" else media_type
-            mgeb_data = fetch_mgeb(mgeb_type, media_id, season, episode)
+            target_id = imdb_id if (imdb_id and imdb_id.startswith("tt")) else media_id
+
+            # For movies: check canonical IMDb ID to eliminate TV series collisions (e.g. 1422 -> The Middle vs The Departed)
+            if media_type == "movie" and target_id and str(target_id).isdigit():
+                resolved_imdb = fetch_imdb_id(str(target_id))
+                if resolved_imdb:
+                    target_id = resolved_imdb
+
+            mgeb_data = fetch_mgeb(mgeb_type, target_id, season, episode)
+
+            # Sanity check: If movie resolution returned a TV episode title, fallback to IMDb resolution
+            if mgeb_data and media_type == "movie":
+                ret_title = mgeb_data.get("title", "")
+                is_tv_collision = bool(re.search(r'[-–]\s*T\d+E\d+|S\d+E\d+|Epis[oó]dio|\bPiloto\b', ret_title, re.I))
+                if is_tv_collision and not str(target_id).startswith("tt"):
+                    resolved_imdb = fetch_imdb_id(str(media_id))
+                    if resolved_imdb and resolved_imdb != target_id:
+                        retry_data = fetch_mgeb("movie", resolved_imdb)
+                        if retry_data and retry_data.get("sources"):
+                            mgeb_data = retry_data
+                            target_id = resolved_imdb
+                            is_tv_collision = False
+
+                if is_tv_collision:
+                    print(f"[LocalServer] Rejected TV series collision for movie: {ret_title}", file=sys.stderr)
+                    mgeb_data = None
+
             if mgeb_data and mgeb_data.get("sources"):
                 raw_sources = mgeb_data["sources"]
                 parsed_sources = []

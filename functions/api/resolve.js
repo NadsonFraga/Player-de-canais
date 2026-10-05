@@ -5,6 +5,26 @@
  */
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
+
+/**
+ * Fetches canonical IMDb ID (tt...) from TMDB for unambiguous movie resolution in MGEB.
+ */
+async function fetchImdbId(tmdbId) {
+  try {
+    const url = `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_API_KEY}`;
+    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.imdb_id && String(data.imdb_id).startsWith("tt")) {
+        return String(data.imdb_id);
+      }
+    }
+  } catch (e) {
+    // Graceful fallback
+  }
+  return null;
+}
 
 export async function onRequestOptions() {
   return new Response(null, {
@@ -223,9 +243,42 @@ export async function onRequestGet(context) {
   }
 
   // ROTA 2: Filmes, Séries ou Anime Dublado (MGEB)
-  if (!result && id) {
+  const imdbId = urlObj.searchParams.get("imdb_id");
+  if (!result && (id || imdbId)) {
     const mgebType = type === "anime" ? "serie" : type;
-    const mgebData = await resolveMgeb(mgebType, id, season, episode);
+    let targetId = (imdbId && imdbId.startsWith("tt")) ? imdbId : id;
+
+    // For movies: resolve canonical IMDb ID if target is numeric to eliminate TV series collisions (e.g. 1422 -> The Middle vs The Departed)
+    if (type === "movie" && targetId && /^\d+$/.test(targetId)) {
+      const resolvedImdb = await fetchImdbId(targetId);
+      if (resolvedImdb) {
+        targetId = resolvedImdb;
+      }
+    }
+
+    let mgebData = await resolveMgeb(mgebType, targetId, season, episode);
+
+    // Sanity check: If movie resolution returned a TV episode title, fallback to IMDb resolution or discard collision
+    if (mgebData && type === "movie") {
+      const retTitle = mgebData.title || "";
+      let isTvCollision = /[-–]\s*T\d+E\d+|S\d+E\d+|Epis[oó]dio|\bPiloto\b/i.test(retTitle);
+      if (isTvCollision && !String(targetId).startsWith("tt")) {
+        const resolvedImdb = await fetchImdbId(id);
+        if (resolvedImdb && resolvedImdb !== targetId) {
+          const retryData = await resolveMgeb("movie", resolvedImdb);
+          if (retryData && retryData.sources && retryData.sources.length > 0) {
+            mgebData = retryData;
+            targetId = resolvedImdb;
+            isTvCollision = false;
+          }
+        }
+      }
+
+      if (isTvCollision) {
+        mgebData = null;
+      }
+    }
+
     if (mgebData && mgebData.sources && mgebData.sources.length > 0) {
       const parsedSources = mgebData.sources.map((s, idx) => {
         let rawFile = (s.file || "").trim();
