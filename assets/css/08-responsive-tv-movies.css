@@ -1,0 +1,445 @@
+/* ==========================================================================
+   MOBILE RESPONSIVE OVERHAUL (SMARTPHONES & TABLETS)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* Mobile Header & Pinned Capsule Navigation */
+    .mobile-header {
+        display: flex;
+        height: 54px;
+        padding: 8px 14px;
+        background: rgba(12, 12, 15, 0.95);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Strictly isolate mobile header and sidebar to channels view only */
+    #view-tv.hidden .mobile-header,
+    #view-tv.hidden .sidebar,
+    #view-tv.hidden .sidebar-backdrop {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    .mobile-brand {
+        display: none !important; /* Hide brand text to give full space to the capsule */
+    }
+
+    .floating-nav-capsule {
+        position: fixed;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1100;
+        padding: 3px 5px;
+        background: rgba(14, 14, 18, 0.94);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 4px 22px rgba(0, 0, 0, 0.7);
+        max-width: calc(100vw - 16px);
+        width: max-content;
+        gap: 3px;
+        transition: all var(--transition-fast);
+    }
+
+    body.view-tv-active .floating-nav-capsule {
+        max-width: calc(100vw - 110px);
+    }
+
+    .nav-capsule-item {
+        padding: 5px 8px;
+        font-size: 0.70rem;
+        gap: 4px;
+        flex-shrink: 0;
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .nav-capsule-badge {
+        display: none !important; /* Hide 'Em Breve' badge text to keep capsule compact on mobile */
+    }
+
+    /* On mobile screens (<600px), inactive tabs display sleek icons while active tab expands with label */
+    @media (max-width: 600px) {
+        .floating-nav-capsule {
+            max-width: calc(100vw - 12px);
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .nav-capsule-item:not(.active) span:not(.nav-capsule-badge) {
+            display: none;
+        }
+
+        .nav-capsule-item {
+            padding: 6px 9px;
+            border-radius: 9999px;
+        }
+
+        .nav-capsule-item.active {
+            padding: 6px 12px;
+        }
+
+        .nav-capsule-icon {
+            width: 15px;
+            height: 15px;
+        }
+    }
+
+    /* Channels View Layout on Mobile */
+    .app-layout {
+        padding-top: 0;
+        height: auto;
+    }
+
+    .main-content {
+        padding: 68px 14px 24px 14px;
+    }
+
+    .welcome-hero {
+        padding: 18px 16px;
+        margin-top: 4px;
+        gap: 12px;
+    }
+
+    .welcome-hero-text p {
+        font-size: 0.82rem;
+    }
+
+    /* Movies View Spacing on Mobile */
+    .view-movies {
+        padding-top: 48px; /* Clean spacing for top navigation capsule */
+    }
+
+    .movies-spotlight-header {
+        padding: 14px 14px 10px 14px;
+        background: #080808;
+    }
+
+    .movies-search-input-box {
+        height: 44px;
+    }
+
+    .movies-search-input {
+        font-size: 0.85rem;
+    }
+
+    /* Hero Showcase Banner on Mobile */
+    .movies-hero {
+        min-height: 440px;
+        max-height: none;
+        padding: 20px 16px 20px 16px;
+        margin-top: 0 !important; /* Eliminate negative margin collision */
+        margin-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+
+    .movies-hero-content {
+        max-width: 100%;
+        gap: 8px;
+    }
+
+    .movies-hero-title-logo {
+        max-width: 180px !important;
+        max-height: 48px !important;
+        margin-bottom: 4px;
+    }
+
+    .movies-hero-title {
+        font-size: 1.55rem;
+        line-height: 1.15;
+    }
+
+    .movies-hero-overview {
+        font-size: 0.80rem;
+        line-height: 1.45;
+        -webkit-line-clamp: 2;
+    }
+
+    .movies-hero-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 6px;
+        width: 100%;
+    }
+
+    .btn-cinema-primary {
+        padding: 9px 16px;
+        font-size: 0.82rem;
+    }
+
+    .btn-cinema-secondary {
+        padding: 9px 14px;
+        font-size: 0.82rem;
+    }
+
+    /* Carousel navigation dots repositioned cleanly */
+    .movies-hero-nav {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        bottom: auto;
+        padding: 4px 8px;
+        gap: 6px;
+        background: rgba(14, 18, 16, 0.75);
+    }
+
+    .btn-hero-nav-arrow {
+        width: 24px;
+        height: 24px;
+    }
+
+    .btn-hero-nav-arrow svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    /* Movies Navigation Toolbar on Mobile */
+    .movies-nav-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0 14px;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
+    .movies-category-pills {
+        padding: 0;
+        gap: 6px;
+    }
+
+    .pills-search-box {
+        max-width: none;
+        width: 100%;
+        padding: 9px 14px;
+    }
+
+    .movies-category-pills::-webkit-scrollbar {
+        display: none;
+    }
+
+    .movie-pill {
+        padding: 6px 12px;
+        font-size: 0.76rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Row Headers and Horizontal Carousels */
+    .movies-carousels-container {
+        padding: 0;
+        gap: 20px;
+    }
+
+    .movies-section-header {
+        padding: 0 14px;
+        margin-bottom: 8px;
+    }
+
+    .movies-row-title {
+        font-size: 1.05rem;
+    }
+
+    .movies-row-badge {
+        display: none !important; /* Hide subtitle badge on mobile */
+    }
+
+    .btn-carousel-arrow {
+        display: none !important; /* Hide desktop arrow buttons on touch mobile */
+    }
+
+    .movies-carousel-track {
+        padding: 4px 14px 14px 14px;
+        gap: 10px;
+    }
+
+    .movies-carousel-track .movie-poster-card {
+        flex: 0 0 115px;
+        width: 115px;
+        border-radius: 8px;
+    }
+
+    /* Directors row on mobile */
+    .director-card {
+        flex: 0 0 95px;
+        width: 95px;
+        padding: 10px 6px;
+        border-radius: 12px;
+    }
+
+    .director-avatar {
+        width: 58px;
+        height: 58px;
+        margin-bottom: 6px;
+    }
+
+    .director-name {
+        font-size: 0.74rem;
+    }
+
+    .director-meta {
+        font-size: 0.65rem;
+    }
+
+    /* Studios row on mobile */
+    .studio-card {
+        flex: 0 0 120px;
+        width: 120px;
+        height: 68px;
+        padding: 6px 8px;
+        gap: 4px;
+    }
+
+    .studio-logo-wrapper {
+        height: 28px;
+    }
+
+    .studio-logo-img {
+        max-width: 85px;
+        max-height: 26px;
+    }
+
+    .studio-name {
+        font-size: 0.68rem;
+    }
+
+    /* Collection View (Directors & Studios) on Mobile */
+    .movies-collection-section {
+        padding: 14px 14px 36px 14px;
+    }
+
+    .movies-collection-header {
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .collection-profile-info {
+        gap: 12px;
+    }
+
+    .collection-avatar {
+        width: 56px;
+        height: 56px;
+    }
+
+    .collection-avatar.collection-logo {
+        max-width: 110px;
+        height: 38px;
+    }
+
+    .collection-title {
+        font-size: 1.4rem;
+    }
+
+    .collection-meta {
+        font-size: 0.78rem;
+    }
+
+    /* Responsive 2-Column Grid (Collections & Search Results) */
+    .movies-poster-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        padding: 0 14px 20px 14px !important;
+    }
+
+    .movies-poster-grid .movie-poster-card {
+        flex: none !important;
+        width: 100% !important;
+        aspect-ratio: 2/3;
+        border-radius: 10px;
+    }
+
+    /* Pagination on Mobile */
+    .movies-pagination {
+        padding: 18px 8px 10px 8px;
+        gap: 10px;
+    }
+
+    .pagination-info {
+        font-size: 0.75rem;
+    }
+
+    .pagination-nav-group {
+        gap: 5px;
+    }
+
+    .btn-pagination-nav {
+        padding: 6px 12px;
+        font-size: 0.76rem;
+    }
+
+    .btn-page-number {
+        min-width: 32px;
+        height: 32px;
+        font-size: 0.76rem;
+        padding: 0 4px;
+    }
+
+    /* Movie Modal on Mobile */
+    .movie-modal-card {
+        border-radius: 16px;
+        max-height: 94vh;
+        height: 94vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .movie-player-top-bar {
+        padding: 8px 56px 8px 12px; /* Leaves space for the floating close X button */
+    }
+
+    .movie-modal-card.is-playing .movie-modal-media-area {
+        aspect-ratio: auto;
+        height: 48vh;
+        min-height: 290px;
+        max-height: 400px;
+        flex-shrink: 0;
+    }
+
+    .movie-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 16px 28px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Bring server selector right under player when active */
+    .movie-modal-card.is-playing .movie-servers-section {
+        order: -1;
+        padding-top: 0;
+        border-top: none;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .movie-servers-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .btn-movie-server {
+        padding: 9px 10px;
+        font-size: 0.78rem;
+        border-radius: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .btn-movie-server span:last-child {
+        font-size: 0.68rem !important;
+    }
+}
+
