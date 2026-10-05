@@ -260,31 +260,44 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 parsed_sources = []
                 for idx, s in enumerate(raw_sources):
                     raw_file = s.get("file", "").strip().replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top")
+                    is_direct_mp4 = ".mp4" in raw_file and ("fontedecanais" in raw_file or "57lgoe65efxo71.com" in raw_file)
+                    direct_clean_url = raw_file
+                    if is_direct_mp4:
+                        # Convert to secure HTTPS and strip port :80 to prevent SSL handshake errors
+                        direct_clean_url = re.sub(r'^http://', 'https://', raw_file, flags=re.I).replace(':80/', '/')
+
                     referer = "https://embedplayer2.xyz/"
                     if "peliculaplay.com" in raw_file or "cache/hls" in raw_file or "mgeb.top" in raw_file:
                         referer = "https://mgeb.top/"
 
+                    final_stream_url = direct_clean_url if is_direct_mp4 else f"{proxy_base}?url={urllib.parse.quote(raw_file, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
+
                     parsed_sources.append({
                         "label": s.get("label", f"Servidor {idx + 1}"),
                         "type": s.get("type", "hls" if ".m3u8" in raw_file else "mp4"),
-                        "stream_url": f"{proxy_base}?url={urllib.parse.quote(raw_file, safe='')}&referer={urllib.parse.quote(referer, safe='')}",
-                        "raw_url": raw_file,
+                        "stream_url": final_stream_url,
+                        "raw_url": direct_clean_url,
                         "headers": {"Referer": referer},
                     })
 
                 def score_source(src):
                     url = src.get("raw_url", "").lower()
-                    if "playercdn.workers.dev" in url:
-                        return -100
-                    # Prioritize Datacenter & Cloudflare-compatible HLS adaptive streams
-                    if ".m3u8" in url or "cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "97bf1.com" in url:
+                    # Tier 1: Proven robust datacenter-safe HLS CDNs (Score 95)
+                    if "cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url:
                         return 95
-                    # Direct MP4 streams (great quality, preserved as mirror/fallback)
-                    if "fontedecanais" in url:
+                    # Tier 2: Direct sanitized HTTPS MP4 (Score 90 - Fast, zero-WAF, native seeking)
+                    if "fontedecanais" in url or "57lgoe65efxo71.com" in url:
+                        return 90
+                    # Tier 3: Standard generic HLS streams (Score 80)
+                    if ".m3u8" in url:
                         return 80
+                    # Tier 4: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
+                    if "playercdn" in url or "workers.dev" in url or "powestream" in url:
+                        return 60
+                    # Tier 5: Other MP4 streams (Score 50)
                     if ".mp4" in url:
-                        return 70
-                    return 20
+                        return 50
+                    return 10
 
                 valid_sources = [s for s in parsed_sources if score_source(s) > 0]
                 if valid_sources:
