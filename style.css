@@ -6723,6 +6723,8 @@ input[type="number"] {
 .art-video-player {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
     border-radius: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* Confine controls gradient strictly to the bottom 75px bar and ensure popups, tooltips, and volume panels are not clipped */
@@ -6756,11 +6758,13 @@ input[type="number"] {
     opacity: 0 !important;
 }
 
-/* Ensure clean video rendering without brightness degradation */
+/* Ensure clean video rendering without brightness degradation and centered letterboxing */
 .art-video-player video,
 .art-video-player .art-video {
     filter: none !important;
     opacity: 1 !important;
+    object-fit: contain !important;
+    object-position: center !important;
 }
 
 .art-video-player .art-progress {
