@@ -309,3 +309,14 @@ Para que o usuário possa selecionar animes no catálogo principal indexado por 
   3. **Live TV Channel Player:** Lock is acquired when the live stream iframe finishes loading in the theater stage and released when the user leaves the TV view (`switchAppView`) or changes destination.
   4. **Atomic Reset Integrity:** Any call to `atomicPlayerReset()` immediately invokes `setPlaybackActiveState(false)`, freeing system resources and preventing background battery drain.
 
+### 8.8 Cloudflare WAF Datacenter Block Tolerance & HLS Manifest Prioritization
+* **The Problem (Cloudflare-to-Cloudflare WAF Block):**
+  * Certain direct MP4 upstreams (such as `www-fontedecanais-sh.57lgoe65efxo71.com`) utilize aggressive Cloudflare WAF bot management rules. When accessed via residential client IPs (local development), requests succeed. However, when proxied through Cloudflare Pages Functions / Workers in production, the upstream WAF detects datacenter egress IPs (Cloudflare ASN 13335) and responds with `HTTP 403 Forbidden (Attention Required! | Cloudflare)`.
+  * Historically, the scoring algorithm penalized `cache/hls` links under the assumption that cached manifests were transient, which discarded active Playspelis/MGEB HLS mirrors and emptied the fallback queue for titles like *Game of Thrones*.
+* **The Solution:**
+  1. **URL Normalization & Referer Correction:** Relative path artifacts emitted by MGEB (e.g. `mgeb.top/../cache/hls/...`) are normalized to canonical absolute paths (`mgeb.top/cache/hls/...`), and appropriate referers (`https://mgeb.top/`) are assigned dynamically.
+  2. **HLS Manifest Prioritization (+95 Score):** Datacenter-safe HLS adaptive streams (`.m3u8`, `cache/hls`, `playspelis.com`, `peliculaplay.com`) are prioritized with score 95. These streams pass Cloudflare Pages Functions proxying cleanly with HTTP 200 OK and automatic segment URI rewriting.
+  3. **Preserving MP4 Mirrors as Fallbacks (+80 / +70 Score):** Direct MP4 streams remain registered in the secondary fallback queue (`fallback_sources`) rather than being discarded, ensuring complete fault tolerance across environments.
+  4. **Socket Disconnect Resiliency:** Added `ConnectionAbortedError` (Windows `WinError 10053`) to socket exception handlers to cleanly tolerate rapid browser pause, scrub, or range-cancellation events without producing spurious 502/500 proxy responses.
+
+

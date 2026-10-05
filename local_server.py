@@ -259,9 +259,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 raw_sources = mgeb_data["sources"]
                 parsed_sources = []
                 for idx, s in enumerate(raw_sources):
-                    raw_file = s.get("file", "")
+                    raw_file = s.get("file", "").strip().replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top")
                     referer = "https://embedplayer2.xyz/"
-                    if "peliculaplay.com" in raw_file:
+                    if "peliculaplay.com" in raw_file or "cache/hls" in raw_file or "mgeb.top" in raw_file:
                         referer = "https://mgeb.top/"
 
                     parsed_sources.append({
@@ -274,15 +274,16 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
                 def score_source(src):
                     url = src.get("raw_url", "").lower()
-                    if "playercdn.workers.dev" in url or "cache/hls" in url:
+                    if "playercdn.workers.dev" in url:
                         return -100
-                    # Prioritize official MGEB master streams (calibrated Rec.709 8-bit SDR)
+                    # Prioritize Datacenter & Cloudflare-compatible HLS adaptive streams
+                    if ".m3u8" in url or "cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "97bf1.com" in url:
+                        return 95
+                    # Direct MP4 streams (great quality, preserved as mirror/fallback)
                     if "fontedecanais" in url:
-                        return 100
-                    if ".m3u8" in url or "peliculaplay.com" in url:
-                        return 85
-                    if ".mp4" in url:
                         return 80
+                    if ".mp4" in url:
+                        return 70
                     return 20
 
                 valid_sources = [s for s in parsed_sources if score_source(s) > 0]
@@ -404,7 +405,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         if not chunk:
                             break
                         self.wfile.write(chunk)
-                except (ConnectionResetError, BrokenPipeError):
+                except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
                     pass
         except urllib.error.HTTPError as e:
             self.send_cors_headers(e.code, "text/plain")
