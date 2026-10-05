@@ -232,16 +232,28 @@ export async function onRequestGet(context) {
         // Normalize any relative path artifacts from MGEB embed
         rawFile = rawFile.replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top");
 
+        const isDirectMp4 = rawFile.includes(".mp4") && (rawFile.includes("fontedecanais") || rawFile.includes("57lgoe65efxo71.com"));
+        let directCleanUrl = rawFile;
+        if (isDirectMp4) {
+          // Explicitly convert to secure HTTPS and strip port :80 to prevent SSL handshake errors
+          directCleanUrl = rawFile.replace(/^http:\/\//i, "https://").replace(/:80\//, "/");
+        }
+
         let referer = "https://embedplayer2.xyz/";
         if (rawFile.includes("peliculaplay.com") || rawFile.includes("cache/hls") || rawFile.includes("mgeb.top")) {
           referer = "https://mgeb.top/";
         }
         
+        // Direct MP4 streams bypass datacenter proxy to eliminate Cloudflare WAF 403 blocks and enable native HTTP 206 byte-ranges
+        const finalStreamUrl = isDirectMp4
+          ? directCleanUrl
+          : `${proxyBase}?url=${encodeURIComponent(rawFile)}&referer=${encodeURIComponent(referer)}`;
+
         return {
           label: s.label || `Servidor ${idx + 1}`,
           type: s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4"),
-          stream_url: `${proxyBase}?url=${encodeURIComponent(rawFile)}&referer=${encodeURIComponent(referer)}`,
-          raw_url: rawFile,
+          stream_url: finalStreamUrl,
+          raw_url: directCleanUrl,
           headers: {
             "Referer": referer,
           },
@@ -250,15 +262,27 @@ export async function onRequestGet(context) {
 
       function scoreSource(src) {
         const u = (src.raw_url || "").toLowerCase();
-        if (u.includes("playercdn.workers.dev")) return -100;
-        // Prioritize Datacenter & Cloudflare-compatible HLS adaptive streams
-        if (u.includes(".m3u8") || u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("97bf1.com")) {
+        // Tier 1: Proven robust datacenter-safe HLS CDNs (Score 95)
+        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com")) {
           return 95;
         }
-        // Direct MP4 streams (great quality, preserved as mirror/fallback)
-        if (u.includes("fontedecanais")) return 80;
-        if (u.includes(".mp4")) return 70;
-        return 20;
+        // Tier 2: Direct sanitized HTTPS MP4 (Score 90 - Fast, zero-WAF, native seeking)
+        if (u.includes("fontedecanais") || u.includes("57lgoe65efxo71.com")) {
+          return 90;
+        }
+        // Tier 3: Standard generic HLS streams (Score 80)
+        if (u.includes(".m3u8")) {
+          return 80;
+        }
+        // Tier 4: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
+        if (u.includes("playercdn") || u.includes("workers.dev") || u.includes("powestream")) {
+          return 60;
+        }
+        // Tier 5: Other MP4 streams (Score 50)
+        if (u.includes(".mp4")) {
+          return 50;
+        }
+        return 10;
       }
 
       const validSources = parsedSources.filter(s => scoreSource(s) > 0);

@@ -319,4 +319,15 @@ Para que o usuário possa selecionar animes no catálogo principal indexado por 
   3. **Preserving MP4 Mirrors as Fallbacks (+80 / +70 Score):** Direct MP4 streams remain registered in the secondary fallback queue (`fallback_sources`) rather than being discarded, ensuring complete fault tolerance across environments.
   4. **Socket Disconnect Resiliency:** Added `ConnectionAbortedError` (Windows `WinError 10053`) to socket exception handlers to cleanly tolerate rapid browser pause, scrub, or range-cancellation events without producing spurious 502/500 proxy responses.
 
+### 8.9 Hybrid Streaming Architecture & Direct Secure MP4 Seeking
+* **Architecture Distinction (HLS Proxy vs. Direct MP4 Delivery):**
+  * **HLS Adaptive Streams (`.m3u8`):** Handled via `Hls.js` through JavaScript `fetch()` calls. Because browsers enforce strict CORS on JS fetches, HLS manifests and segment URIs must route through the Cloudflare edge proxy (`/api/stream`) to inject CORS headers (`Access-Control-Allow-Origin: *`) and spoof origin/referer policies.
+  * **Direct Progressive MP4 Streams (`.mp4`):** Handled directly by native HTML5 `<video src="...">` elements. The HTML5 specification permits cross-origin media playback without requiring CORS headers on standard video elements (omitting `crossorigin="anonymous"`). 
+* **Key Implementation Pillars:**
+  1. **Direct HTTPS Sanitization & Port 80 Stripping:** Raw MGEB links often present plain HTTP with an explicit port `:80` (e.g., `http://...:80/movies/...`). The resolver automatically sanitizes these to standard HTTPS on port 443 (`https://.../movies/...`). This eliminates Mixed Content warnings on secure HTTPS deployments while avoiding `ERR_SSL_PROTOCOL_ERROR` handshake rejections caused by attempting TLS over port 80.
+  2. **Bypassing Datacenter WAF 403 Blocks:** By delivering the direct HTTPS MP4 URL to the client player instead of wrapping it in the Cloudflare Worker proxy, video requests originate directly from the user's residential/mobile IP. Upstream WAF filters accept the connection without challenge, resolving 403 Forbidden errors across catalog titles like *Avengers: Endgame*, *Avengers: Infinity War*, and *City of God*.
+  3. **Instant Timeline Seeking (`HTTP 206 Partial Content`):** Native browser range requests (`Range: bytes=X-`) connect directly to the origin server, which responds with `206 Partial Content` and `Accept-Ranges: bytes`. Users can seek seamlessly through 4GB+ files without downloading the entire media payload.
+  4. **Automatic Fallback Safety Net:** Secondary HLS mirrors (`playercdn.xyz`, `workers.dev`, `powestream.workers.dev`) are assigned Tier 4 scoring (Score 60) and preserved in `fallback_sources`. If client-side network interruptions impact the direct MP4, the player's internal cascade transitions to the HLS mirror automatically without interface freezing.
+
+
 
