@@ -6725,13 +6725,18 @@ input[type="number"] {
     border-radius: 0 !important;
 }
 
-/* Confine controls gradient strictly to the bottom 75px bar */
+/* Confine controls gradient strictly to the bottom 75px bar and ensure popups, tooltips, and volume panels are not clipped */
 .art-video-player .art-bottom {
     top: auto !important;
     bottom: 0 !important;
     height: 75px !important;
     width: 100% !important;
-    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.75) 100%) !important;
+    overflow: visible !important;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 100%) !important;
+}
+
+.art-video-player .art-controls {
+    overflow: visible !important;
 }
 
 /* Neutralize full-screen masks and backdrops */

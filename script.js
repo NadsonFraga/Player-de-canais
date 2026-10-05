@@ -2677,6 +2677,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     m3u8: function (video, url, art) {
                         if (window.Hls && Hls.isSupported()) {
                             if (window.hlsInstance) window.hlsInstance.destroy();
+                            let qualityAdded = false;
                             const hls = new Hls({
                                 enableWorker: true,
                                 lowLatencyMode: false,
@@ -2693,6 +2694,30 @@ document.addEventListener("DOMContentLoaded", () => {
                                     art.currentTime = startTime;
                                 }
                                 art.play().catch(() => {});
+
+                                if (!qualityAdded && hls.levels && hls.levels.length > 1) {
+                                    qualityAdded = true;
+                                    const qualityOptions = [
+                                        { default: true, html: 'Automática', level: -1 },
+                                        ...hls.levels.map((level, idx) => ({
+                                            default: false,
+                                            html: level.height ? `${level.height}p` : `${Math.round(level.bitrate / 1000)}k`,
+                                            level: idx
+                                        }))
+                                    ];
+
+                                    art.setting.add({
+                                        id: 'quality-selector',
+                                        name: 'Qualidade',
+                                        width: 200,
+                                        tooltip: 'Automática',
+                                        selector: qualityOptions,
+                                        onSelect: function (item) {
+                                            hls.currentLevel = item.level;
+                                            return item.html;
+                                        }
+                                    });
+                                }
                             });
 
                             hls.on(Hls.Events.ERROR, function (event, data) {
@@ -2722,7 +2747,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 aspectRatio: true,
                 fullscreen: true,
                 fullscreenWeb: true,
-                subtitleOffset: true,
+                subtitleOffset: Boolean(initialSubtitle || (subtitles && subtitles.length > 0)),
                 miniProgressBar: true,
                 mutex: true,
                 playsInline: true,
@@ -2739,6 +2764,22 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const art = new Artplayer(artOptions);
+
+            // Register static quality indicator for direct single-resolution MP4s
+            if (!isHls) {
+                art.setting.add({
+                    id: 'quality-selector',
+                    name: 'Qualidade',
+                    width: 200,
+                    tooltip: '1080p (Original)',
+                    selector: [
+                        { default: true, html: '1080p (Original)' }
+                    ],
+                    onSelect: function (item) {
+                        return item.html;
+                    }
+                });
+            }
 
             // Dynamic subtitle tracks selector inside Artplayer Settings
             if (subtitles && subtitles.length > 0) {

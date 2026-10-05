@@ -329,5 +329,24 @@ Para que o usuário possa selecionar animes no catálogo principal indexado por 
   3. **Instant Timeline Seeking (`HTTP 206 Partial Content`):** Native browser range requests (`Range: bytes=X-`) connect directly to the origin server, which responds with `206 Partial Content` and `Accept-Ranges: bytes`. Users can seek seamlessly through 4GB+ files without downloading the entire media payload.
   4. **Automatic Fallback Safety Net:** Secondary HLS mirrors (`playercdn.xyz`, `workers.dev`, `powestream.workers.dev`) are assigned Tier 4 scoring (Score 60) and preserved in `fallback_sources`. If client-side network interruptions impact the direct MP4, the player's internal cascade transitions to the HLS mirror automatically without interface freezing.
 
+### 8.10 Artplayer Controls Overflow & Popup Menu Unclipping
+* **The Problem (75px Controls Clipping):**
+  * When applying custom CSS to confine the bottom dark vignette gradient to the lower 75px bar (`.art-video-player .art-bottom { height: 75px !important; }`), Artplayer's core style sheet enforces `overflow: hidden;` on `.art-bottom`.
+  * Because Artplayer renders its settings balloon menu (`.art-settings`, height ~250px) and vertical volume slider panel (`.art-volume-panel`, height ~100px) as children of `.art-bottom` positioned relative to the control bar, confining the parent container with `overflow: hidden` sliced off any elements expanding upward past 75px. Only the bottom 5px arrow of the settings menu was visible, and the volume slider was completely invisible.
+* **The Solution:**
+  * Enforced `overflow: visible !important;` on both `.art-video-player .art-bottom` and `.art-video-player .art-controls`.
+  * The dark bottom gradient (`linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 100%)`) remains cleanly confined to the bottom 75px bar, while all balloon menus, quality selectors, subtitle pickers, and volume sliders freely expand upward over the video stage without clipping.
+
+### 8.11 Dynamic Quality Hooking (HLS Levels & MP4 Single-Resolution) & Subtitle Offset UX
+* **The Problem (Missing Quality & Confusing Subtitle Offset):**
+  * Dubbed Brazilian movies (MGEB / fontedecanais) feature hardcoded Portuguese audio tracks and no external text subtitles (`subtitles: []`).
+  * While the custom subtitle selector was properly guarded, Artplayer's built-in option `subtitleOffset: true` remained active. This displayed an empty "Atraso da legenda" setting inside the menu when no subtitles existed, misleading users.
+  * Furthermore, Artplayer lacked automatic hooks to display stream resolution tiers (e.g. 1080p, 720p, 480p) from adaptive HLS manifests.
+* **The Solution:**
+  1. **Conditional Subtitle Offset:** Configured `subtitleOffset: Boolean(initialSubtitle || (subtitles && subtitles.length > 0))`. Subtitle offset controls now only render when subtitles are actively present.
+  2. **Adaptive HLS Level Hooking:** Listened for `Hls.Events.MANIFEST_PARSED` inside `customType.m3u8`. If `hls.levels.length > 1`, dynamically registers a `Qualidade` menu inside `art.setting.add()` with options: `Automática` (level -1), `1080p`, `720p`, `480p`, etc., binding user selection directly to `hls.currentLevel`.
+  3. **Static MP4 Quality Indicator:** For direct progressive MP4 streams (`!isHls`), registers a `Qualidade` menu in Artplayer settings indicating `1080p (Original)`.
+
+
 
 
