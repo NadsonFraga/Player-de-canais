@@ -1,0 +1,520 @@
+/* ==========================================================================
+   ADBLOCK & PRIVATE DNS DISCLAIMER MODAL
+   ========================================================================== */
+.mobile-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-header-adblock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-header-adblock:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.adblock-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 8, 10, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.adblock-modal-card {
+    background: linear-gradient(155deg, rgba(24, 24, 28, 0.98), rgba(12, 12, 15, 0.99));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 620px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 255, 255, 0.05);
+    animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    position: relative;
+}
+
+.adblock-modal-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+.adblock-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.adblock-modal-title-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.adblock-modal-shield-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.1);
+}
+
+.adblock-modal-header h2 {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.adblock-modal-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 2px 0 0 0;
+}
+
+.adblock-modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Disclaimer text container */
+.adblock-disclaimer-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+}
+
+.adblock-disclaimer-icon {
+    color: #f87171;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.adblock-disclaimer-text {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #fca5a5;
+    margin: 0;
+}
+
+.adblock-disclaimer-text strong {
+    color: #ffffff;
+}
+
+/* Solution Cards Grid */
+.adblock-solutions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.adblock-solution-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.adblock-solution-card:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.adblock-solution-card.featured {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.solution-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.solution-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    width: fit-content;
+}
+
+.solution-badge.highlight {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.solution-card-header h4 {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 2px 0 0 0;
+}
+
+.solution-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+    flex: 1;
+}
+
+/* Option 1 links */
+.solution-links {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 4px;
+}
+
+.btn-solution-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 7px 10px;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.btn-solution-action:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.btn-solution-action.secondary {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+}
+
+.btn-solution-action.secondary:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Option 2: DNS Copy box */
+.dns-copy-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #08080a;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: var(--radius-md);
+    padding: 4px 6px 4px 10px;
+    margin-top: 4px;
+}
+
+.dns-code {
+    font-family: monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+    user-select: all;
+}
+
+.btn-copy-dns {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 4px 9px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-copy-dns:hover {
+    background: #ffffff;
+    color: #080808;
+    border-color: #ffffff;
+}
+
+.btn-copy-dns.copied {
+    background: #ffffff;
+    color: #080808;
+    border-color: #ffffff;
+}
+
+.dns-tutorial-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    margin-top: 2px;
+}
+
+.dns-tutorial-link:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+
+/* Modal Footer & Confirmation button */
+.adblock-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-adblock-confirm {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #ffffff;
+    color: #080808;
+    font-size: 0.88rem;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: 0 4px 14px rgba(255, 255, 255, 0.2);
+}
+
+.btn-adblock-confirm:hover {
+    background: #e4e4e7;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.35);
+}
+
+.btn-adblock-confirm:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+    .adblock-modal-card {
+        max-height: 94vh;
+        border-radius: var(--radius-lg);
+    }
+
+    .adblock-modal-header {
+        padding: 16px 18px 12px 18px;
+    }
+
+    .adblock-modal-body {
+        padding: 14px 16px;
+        gap: 12px;
+    }
+
+    .adblock-solutions-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .adblock-modal-footer {
+        padding: 12px 16px;
+    }
+}
+
+/* ==========================================================================
+   NUVIO MULTIMEDIA & FLOATING CAPSULE NAVIGATION
+   ========================================================================== */
+
+/* Top Floating Glass Capsule Navigation */
+.floating-nav-capsule {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 8px;
+    background: rgba(14, 14, 18, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+    box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 0, 0, 0.5);
+    user-select: none;
+    transition: transform var(--transition-fast), opacity var(--transition-fast), top var(--transition-fast);
+}
+
+:fullscreen .floating-nav-capsule,
+:-webkit-full-screen .floating-nav-capsule {
+    display: none !important;
+}
+
+.nav-capsule-item {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    padding: 7px 18px;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+    outline: none;
+    white-space: nowrap;
+}
+
+.nav-capsule-item:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-capsule-item.active {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+}
+
+/* 1. Início: Cinema Pure White / Platinum */
+.nav-capsule-item.active[data-view="home"] {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.22);
+}
+
+.nav-capsule-item.active[data-view="home"] .nav-capsule-icon {
+    color: #ffffff;
+}
+
+/* 2. Canais: Broadcast Emerald Live */
+.nav-capsule-item.active[data-view="tv"] {
+    background: rgba(16, 185, 129, 0.16);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #34d399;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+}
+
+.nav-capsule-item.active[data-view="tv"] .nav-capsule-icon {
+    color: #34d399;
+}
+
+/* 3. Filmes: Cinema Amber Gold (matching spotlight rating & feature badges) */
+.nav-capsule-item.active[data-view="movies"] {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.48);
+    color: #fbbf24;
+    box-shadow: 0 0 16px rgba(251, 191, 36, 0.25);
+}
+
+.nav-capsule-item.active[data-view="movies"] .nav-capsule-icon {
+    color: #fbbf24;
+}
+
+/* 4. Séries: Pearlescent Deep Red / Ruby */
+.nav-capsule-item.active[data-view="series"] {
+    background: rgba(225, 29, 72, 0.16);
+    border-color: rgba(225, 29, 72, 0.50);
+    color: #fb7185;
+    box-shadow: 0 0 16px rgba(225, 29, 72, 0.30);
+}
+
+.nav-capsule-item.active[data-view="series"] .nav-capsule-icon {
+    color: #fb7185;
+}
+
+/* 5. Animes: Electric Neon Magenta */
+.nav-capsule-item.active[data-view="animes"] {
+    background: rgba(217, 70, 239, 0.16);
+    border-color: rgba(217, 70, 239, 0.50);
+    color: #e879f9;
+    box-shadow: 0 0 16px rgba(217, 70, 239, 0.30);
+}
+
+.nav-capsule-item.active[data-view="animes"] .nav-capsule-icon {
+    color: #e879f9;
+}
+
+.nav-capsule-icon {
+    flex-shrink: 0;
+}
+
+.nav-capsule-badge {
+    font-size: 0.60rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-left: 2px;
+}
+
