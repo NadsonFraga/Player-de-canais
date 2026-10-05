@@ -6,323 +6,1448 @@
 const FALLBACK_CHANNELS = {
   "TV Aberta": {
     "Globo": {
-      "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globosp",
-      "SP - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globosp",
-      "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/globo-sp",
-      "RJ - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=6120663-rj1",
-      "RJ - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globorj",
-      "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/globo-rj",
-      "Minas - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/globo-minas",
-      "BA - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoba",
-      "BA - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globoba"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "SP (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/globosp.txt",
+          "slug": "globosp",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "SP (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/globosp.txt",
+          "slug": "globosp",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "RJ (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/globorj.txt",
+          "slug": "globorj",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "RJ (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/globorj.txt",
+          "slug": "globorj",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globosp",
+        "SP - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globosp",
+        "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/globo-sp",
+        "RJ - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=6120663-rj1",
+        "RJ - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globorj",
+        "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/globo-rj",
+        "Minas - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/globo-minas",
+        "BA - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoba",
+        "BA - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globoba"
+      }
     },
     "Band": {
-      "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019a797e-eeb8-7eda-9518-132403ccb160",
-      "Servidor 2": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019cc41a-ccc4-75e0-a31f-9bf47fad8d8b",
-      "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/band-sp",
-      "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/band-rj",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/bandsp",
-      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/bandrj"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "SP (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/bandsp.txt",
+          "slug": "bandsp",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "SP (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/bandsp.txt",
+          "slug": "bandsp",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "RJ (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/bandrj.txt",
+          "slug": "bandrj",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "RJ (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/bandrj.txt",
+          "slug": "bandrj",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "Nacional (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/band.txt",
+          "slug": "band",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Nacional (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/band.txt",
+          "slug": "band",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019a797e-eeb8-7eda-9518-132403ccb160",
+        "Servidor 2": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019cc41a-ccc4-75e0-a31f-9bf47fad8d8b",
+        "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/band-sp",
+        "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/band-rj",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/bandsp",
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/bandrj"
+      }
     },
     "SBT": {
-      "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtsp",
-      "RJ - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtrj",
-      "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/sbt-sp",
-      "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/sbt-rj",
-      "Alternativo": "https://youtube-player.sbt.com.br/?videoID=ABVQXgr2LW4&t=0&adunit=/1011235/SBT_Videos/Especiais/SBT_Live/video"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Nacional (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sbt.txt",
+          "slug": "sbt",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Nacional (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sbt.txt",
+          "slug": "sbt",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "SP Alternativo (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sbtsp.txt",
+          "slug": "sbtsp",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "SP Alternativo (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sbtsp.txt",
+          "slug": "sbtsp",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "RJ (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sbtrj.txt",
+          "slug": "sbtrj",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "RJ (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sbtrj.txt",
+          "slug": "sbtrj",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtsp",
+        "RJ - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtrj",
+        "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/sbt-sp",
+        "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/sbt-rj",
+        "Alternativo": "https://youtube-player.sbt.com.br/?videoID=ABVQXgr2LW4&t=0&adunit=/1011235/SBT_Videos/Especiais/SBT_Live/video"
+      }
     },
     "Record": {
-      "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/record-sp",
-      "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/record-rj",
-      "SP - EmbedTV": "https://w7.embedtv.lat/recordsp",
-      "RJ - EmbedTV": "https://w7.embedtv.lat/recordrj",
-      "MG - EmbedTV": "https://w7.embedtv.lat/recordmg"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "SP (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/recordsp.txt",
+          "slug": "recordsp",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "SP (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/recordsp.txt",
+          "slug": "recordsp",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "RJ (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/recordrj.txt",
+          "slug": "recordrj",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "RJ (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/recordrj.txt",
+          "slug": "recordrj",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "MG (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/recordmg.txt",
+          "slug": "recordmg",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "MG (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/recordmg.txt",
+          "slug": "recordmg",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/record-sp",
+        "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/record-rj",
+        "SP - EmbedTV": "https://w7.embedtv.lat/recordsp",
+        "RJ - EmbedTV": "https://w7.embedtv.lat/recordrj",
+        "MG - EmbedTV": "https://w7.embedtv.lat/recordmg"
+      }
     }
   },
   "Esportes": {
     "SporTV": {
-      "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv",
-      "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/sportv",
-      "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
-      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sportv",
-      "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv.txt",
+          "slug": "sportv",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv.txt",
+          "slug": "sportv",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv",
+        "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/sportv",
+        "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
+        "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sportv",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv"
+      }
     },
     "SporTV 2": {
-      "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv2",
-      "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/sportv2",
-      "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-292.php",
-      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2sd",
-      "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv2"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv2.txt",
+          "slug": "sportv2",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv2.txt",
+          "slug": "sportv2",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv2",
+        "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/sportv2",
+        "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-292.php",
+        "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2sd",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv2"
+      }
     },
     "SporTV 3": {
-      "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/primebr.html?id=sportv3",
-      "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/sportv3",
-      "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-293.php",
-      "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3sd",
-      "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv3"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv3.txt",
+          "slug": "sportv3",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv3.txt",
+          "slug": "sportv3",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/primebr.html?id=sportv3",
+        "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/sportv3",
+        "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-293.php",
+        "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3sd",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv3"
+      }
     },
     "Premiere": {
-      "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=premiere",
-      "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere",
-      "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-294.php",
-      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/premiere"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere.txt",
+          "slug": "premiere",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere.txt",
+          "slug": "premiere",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=premiere",
+        "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere",
+        "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-294.php",
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/premiere"
+      }
     },
     "Premiere 2": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere2",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-295.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere2"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere2.txt",
+          "slug": "premiere2",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere2.txt",
+          "slug": "premiere2",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere2",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-295.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere2"
+      }
     },
     "Premiere 3": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere3",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-296.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere3"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere3.txt",
+          "slug": "premiere3",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere3.txt",
+          "slug": "premiere3",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere3",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-296.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere3"
+      }
     },
     "Premiere 4": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere4",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-297.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere4"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere4.txt",
+          "slug": "premiere4",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere4.txt",
+          "slug": "premiere4",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere4",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-297.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere4"
+      }
     },
     "Premiere 5": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere5",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-298.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere5"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere5.txt",
+          "slug": "premiere5",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere5.txt",
+          "slug": "premiere5",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere5",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-298.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere5"
+      }
     },
     "Premiere 6": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere6",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-299.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere6"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere6.txt",
+          "slug": "premiere6",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere6.txt",
+          "slug": "premiere6",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere6",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-299.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere6"
+      }
     },
     "Premiere 7": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere7",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-300.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere7"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere7.txt",
+          "slug": "premiere7",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere7.txt",
+          "slug": "premiere7",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere7",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-300.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere7"
+      }
     },
     "Premiere Clubes": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere-clubes",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/premiereclubes"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere.txt",
+          "slug": "premiere",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere.txt",
+          "slug": "premiere",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere-clubes",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/premiereclubes"
+      }
     },
     "ESPN": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-81.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn.txt",
+          "slug": "espn",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn.txt",
+          "slug": "espn",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-81.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn"
+      }
     },
     "ESPN 2": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn2",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-82.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn2"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn2.txt",
+          "slug": "espn2",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn2.txt",
+          "slug": "espn2",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn2",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-82.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn2"
+      }
     },
     "ESPN 3": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn3",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-83.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn3"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn3.txt",
+          "slug": "espn3",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn3.txt",
+          "slug": "espn3",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn3",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-83.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn3"
+      }
     },
     "ESPN 4": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn4",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-84.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn4"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn4.txt",
+          "slug": "espn4",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn4.txt",
+          "slug": "espn4",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn4",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-84.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn4"
+      }
     },
     "ESPN Extra": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn-extra",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/espnextra"
+      "status": "UNAVAILABLE",
+      "sources": [],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn-extra",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/espnextra"
+      }
     },
     "FOX Sports": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/fox-sports",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/foxsports"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn4.txt",
+          "slug": "espn4",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn4.txt",
+          "slug": "espn4",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/fox-sports",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/foxsports"
+      }
     },
     "FOX Sports 2": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/fox-sports2",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/foxsports2"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn5.txt",
+          "slug": "espn5",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn5.txt",
+          "slug": "espn5",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/fox-sports2",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/foxsports2"
+      }
     },
     "BandSports": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/bandsports",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandsports"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/bandsports.txt",
+          "slug": "bandsports",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/bandsports.txt",
+          "slug": "bandsports",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/bandsports",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandsports"
+      }
     },
     "CazéTV": {
-      "Servidor 1 (EmbedCanais)": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv/",
-      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv2/",
-      "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv3/",
-      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/caze1"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Sinal 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/caze1.txt",
+          "slug": "caze1",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Sinal 1 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/caze1.txt",
+          "slug": "caze1",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "Sinal 2 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/caze2.txt",
+          "slug": "caze2",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Sinal 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/caze2.txt",
+          "slug": "caze2",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (EmbedCanais)": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv/",
+        "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv2/",
+        "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv3/",
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/caze1"
+      }
     },
     "Combate": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/combate",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/combate"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/combate.txt",
+          "slug": "combate",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/combate.txt",
+          "slug": "combate",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/combate",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/combate"
+      }
     },
     "UFC Fight Pass": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/ufcfightpass",
-      "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
-      "Servidor 3 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/watch.html?id=paramount1",
-      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/ufcfightpass"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/ufcfightpass.txt",
+          "slug": "ufcfightpass",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/ufcfightpass.txt",
+          "slug": "ufcfightpass",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/ufcfightpass",
+        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
+        "Servidor 3 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/watch.html?id=paramount1",
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/ufcfightpass"
+      }
     },
     "XSports": {
-      "Servidor 1 (EmbedCanais)": "https://embedcanaisdetv.xyz/e/index.php?canal=xsports",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/xsports"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/xsports.txt",
+          "slug": "xsports",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/xsports.txt",
+          "slug": "xsports",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (EmbedCanais)": "https://embedcanaisdetv.xyz/e/index.php?canal=xsports",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/xsports"
+      }
     }
   },
   "Filmes & Séries": {
     "HBO": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbo"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo.txt",
+          "slug": "hbo",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo.txt",
+          "slug": "hbo",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbo"
+      }
     },
     "HBO 2": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo2",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbo2"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo2.txt",
+          "slug": "hbo2",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo2.txt",
+          "slug": "hbo2",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo2",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbo2"
+      }
     },
     "HBO Plus": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo-plus",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hboplus"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/hboplus.txt",
+          "slug": "hboplus",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/hboplus.txt",
+          "slug": "hboplus",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo-plus",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hboplus"
+      }
     },
     "HBO Signature": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo-signature",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbosignature"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo.txt",
+          "slug": "hbo",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo.txt",
+          "slug": "hbo",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo-signature",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbosignature"
+      }
     },
     "HBO Family": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo-family",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbofamily"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/hbofamily.txt",
+          "slug": "hbofamily",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/hbofamily.txt",
+          "slug": "hbofamily",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo-family",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbofamily"
+      }
     },
     "Comedy Central": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/comedycentral",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/comedycentral"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/comedycentral.txt",
+          "slug": "comedycentral",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/comedycentral.txt",
+          "slug": "comedycentral",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/comedycentral",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/comedycentral"
+      }
     },
     "FOX (Star Channel)": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/star-channel",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/starchannel"
+      "status": "UNAVAILABLE",
+      "sources": [],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/star-channel",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/starchannel"
+      }
     },
     "Disney+": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus/",
-      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus02/",
-      "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus03/",
-      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/disneyplus1"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Sinal 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/disneyplus1.txt",
+          "slug": "disneyplus1",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Sinal 1 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/disneyplus1.txt",
+          "slug": "disneyplus1",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus/",
+        "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus02/",
+        "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus03/",
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/disneyplus1"
+      }
     },
     "Max": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=max/",
-      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=max02/",
-      "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=max03/",
-      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/max1"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Sinal 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/max1.txt",
+          "slug": "max1",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Sinal 1 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/max1.txt",
+          "slug": "max1",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=max/",
+        "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=max02/",
+        "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=max03/",
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/max1"
+      }
     },
     "Paramount+": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus/",
-      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus02/",
-      "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus03/",
-      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/paramountplus"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/paramountplus.txt",
+          "slug": "paramountplus",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/paramountplus.txt",
+          "slug": "paramountplus",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus/",
+        "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus02/",
+        "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus03/",
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/paramountplus"
+      }
     },
     "Prime Video": {
-      "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo",
-      "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02",
-      "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/primevideo",
-      "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/primevideo2",
-      "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/primevideo4"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo.txt",
+          "slug": "primevideo",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo.txt",
+          "slug": "primevideo",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "Servidor 3 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo2.txt",
+          "slug": "primevideo2",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 4 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo2.txt",
+          "slug": "primevideo2",
+          "cdn": "CDN 2"
+        },
+        {
+          "name": "Servidor 5 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo4.txt",
+          "slug": "primevideo4",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 6 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo4.txt",
+          "slug": "primevideo4",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo",
+        "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02",
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/primevideo",
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/primevideo2",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/primevideo4"
+      }
     }
   },
   "Infantil": {
     "Cartoon Network": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/cartoon-network",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonnetwork"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonnetwork.txt",
+          "slug": "cartoonnetwork",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonnetwork.txt",
+          "slug": "cartoonnetwork",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/cartoon-network",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonnetwork"
+      }
     },
     "Cartoonito": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/cartoonito",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonito"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonito.txt",
+          "slug": "cartoonito",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonito.txt",
+          "slug": "cartoonito",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/cartoonito",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonito"
+      }
     },
     "Boomerang": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/boomerang",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/boomerang"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonito.txt",
+          "slug": "cartoonito",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonito.txt",
+          "slug": "cartoonito",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/boomerang",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/boomerang"
+      }
     },
     "Disney Channel": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/disney-channel",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/disneychannel"
+      "status": "UNAVAILABLE",
+      "sources": [],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/disney-channel",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/disneychannel"
+      }
     },
     "Disney Junior": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/disney-junior",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/disneyjunior"
+      "status": "UNAVAILABLE",
+      "sources": [],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/disney-junior",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/disneyjunior"
+      }
     },
     "Disney XD": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/disney-xd",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/disneyxd"
+      "status": "UNAVAILABLE",
+      "sources": [],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/disney-xd",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/disneyxd"
+      }
     },
     "DreamWorks TV": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/dreamworks",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/dreamworks"
+      "status": "UNAVAILABLE",
+      "sources": [],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/dreamworks",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/dreamworks"
+      }
     },
     "Nickelodeon": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/nickelodeon",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickelodeon"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/nickelodeon.txt",
+          "slug": "nickelodeon",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/nickelodeon.txt",
+          "slug": "nickelodeon",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/nickelodeon",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickelodeon"
+      }
     },
     "Nick Jr.": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/nick-jr",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickjr"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/nickjr.txt",
+          "slug": "nickjr",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/nickjr.txt",
+          "slug": "nickjr",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/nick-jr",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickjr"
+      }
     },
     "Discovery Kids": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/discovery-kids",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverykids"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/discoverykids.txt",
+          "slug": "discoverykids",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/discoverykids.txt",
+          "slug": "discoverykids",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/discovery-kids",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverykids"
+      }
     },
     "Gloob": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/gloob",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/gloob"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/gloob.txt",
+          "slug": "gloob",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/gloob.txt",
+          "slug": "gloob",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/gloob",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/gloob"
+      }
     },
     "Gloobinho": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/gloobinho",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/gloobinho"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/gloob.txt",
+          "slug": "gloob",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/gloob.txt",
+          "slug": "gloob",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/gloobinho",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/gloobinho"
+      }
     }
   },
   "Documentários & Variedades": {
     "Discovery Channel": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/discovery-channel",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverychannel"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/discoverychannel.txt",
+          "slug": "discoverychannel",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/discoverychannel.txt",
+          "slug": "discoverychannel",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/discovery-channel",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverychannel"
+      }
     },
     "Animal Planet": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/animal-planet",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/animalplanet"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/animalplanet.txt",
+          "slug": "animalplanet",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/animalplanet.txt",
+          "slug": "animalplanet",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/animal-planet",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/animalplanet"
+      }
     },
     "National Geographic": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/national-geographic",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nationalgeographic"
+      "status": "UNAVAILABLE",
+      "sources": [],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/national-geographic",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nationalgeographic"
+      }
     },
     "NatGeo Wild": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/natgeo-wild",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/natgeowild"
+      "status": "UNAVAILABLE",
+      "sources": [],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/natgeo-wild",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/natgeowild"
+      }
     },
     "NatGeo Kids": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/natgeo-kids",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/natgeokids"
+      "status": "UNAVAILABLE",
+      "sources": [],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/natgeo-kids",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/natgeokids"
+      }
     },
     "GloboNews": {
-      "Servidor 1 (EmbedCanais)": "https://embedcanaisdetv.xyz/e/index.php?canal=globonews",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/globonews"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/globonews.txt",
+          "slug": "globonews",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/globonews.txt",
+          "slug": "globonews",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (EmbedCanais)": "https://embedcanaisdetv.xyz/e/index.php?canal=globonews",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/globonews"
+      }
     },
     "BandNews": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/band-news",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandnews"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/bandnews.txt",
+          "slug": "bandnews",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/bandnews.txt",
+          "slug": "bandnews",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/band-news",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandnews"
+      }
     },
     "Multishow": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/multishow",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/multishow"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/multishow.txt",
+          "slug": "multishow",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/multishow.txt",
+          "slug": "multishow",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/multishow",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/multishow"
+      }
     },
     "MTV": {
-      "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/mtv",
-      "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/mtv"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/mtv.txt",
+          "slug": "mtv",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/mtv.txt",
+          "slug": "mtv",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/mtv",
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/mtv"
+      }
     }
   },
   "Séries 24h": {
     "Chaves 24h": {
-      "EmbedTV": "https://w7.embedtv.lat/24h_chaves"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_chaves.txt",
+          "slug": "24h_chaves",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_chaves.txt",
+          "slug": "24h_chaves",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "EmbedTV": "https://w7.embedtv.lat/24h_chaves"
+      }
     },
     "Dragon Ball 24h": {
-      "EmbedTV": "https://w7.embedtv.lat/24h_dragonball"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_dragonball.txt",
+          "slug": "24h_dragonball",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_dragonball.txt",
+          "slug": "24h_dragonball",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "EmbedTV": "https://w7.embedtv.lat/24h_dragonball"
+      }
     },
     "Naruto 24h": {
-      "EmbedTV": "https://w7.embedtv.lat/24h_naruto"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_naruto.txt",
+          "slug": "24h_naruto",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_naruto.txt",
+          "slug": "24h_naruto",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "EmbedTV": "https://w7.embedtv.lat/24h_naruto"
+      }
     },
     "Os Simpsons 24h": {
-      "EmbedTV": "https://w7.embedtv.lat/24h_simpsons"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_simpsons.txt",
+          "slug": "24h_simpsons",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_simpsons.txt",
+          "slug": "24h_simpsons",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "EmbedTV": "https://w7.embedtv.lat/24h_simpsons"
+      }
     },
     "Pica-Pau 24h": {
-      "EmbedTV": "https://w7.embedtv.lat/24h_picapau"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_picapau.txt",
+          "slug": "24h_picapau",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_picapau.txt",
+          "slug": "24h_picapau",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "EmbedTV": "https://w7.embedtv.lat/24h_picapau"
+      }
     },
     "Friends 24h": {
-      "EmbedTV": "https://w7.embedtv.lat/24h_friends"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_friends.txt",
+          "slug": "24h_friends",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_friends.txt",
+          "slug": "24h_friends",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "EmbedTV": "https://w7.embedtv.lat/24h_friends"
+      }
     },
     "Todo Mundo Odeia o Chris 24h": {
-      "EmbedTV": "https://w7.embedtv.lat/24h_odeiachris"
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Principal)",
+          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_odeiachris.txt",
+          "slug": "24h_odeiachris",
+          "cdn": "CDN 1"
+        },
+        {
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_odeiachris.txt",
+          "slug": "24h_odeiachris",
+          "cdn": "CDN 2"
+        }
+      ],
+      "contingency": {
+        "EmbedTV": "https://w7.embedtv.lat/24h_odeiachris"
+      }
     }
   }
 };
@@ -715,6 +1840,32 @@ document.addEventListener("DOMContentLoaded", () => {
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "")
             .replace(/[^a-z0-9]/g, "");
+    }
+
+    function normalizeChannelData(raw) {
+        if (!raw) return { status: 'ONLINE', sources: [], contingency: {} };
+        if (Array.isArray(raw.sources)) {
+            return {
+                status: raw.status || 'ONLINE',
+                sources: raw.sources,
+                contingency: raw.contingency || {}
+            };
+        }
+        return {
+            status: 'ONLINE',
+            sources: [],
+            contingency: raw
+        };
+    }
+
+    function getChannelOptionsCount(channelObj) {
+        if (!channelObj) return 0;
+        if (Array.isArray(channelObj.sources)) {
+            const directCount = channelObj.sources.length;
+            const contCount = channelObj.contingency ? Object.keys(channelObj.contingency).length : 0;
+            return directCount + contCount;
+        }
+        return Object.keys(channelObj).length;
     }
 
     function findChannelByName(targetName) {
@@ -1419,6 +2570,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Return to Home View ---
     function renderHomeView() {
+        atomicTvPlayerReset();
         activeChannel = null;
 
         contentDisplay.innerHTML = `
@@ -1730,7 +2882,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const channelBtn = document.createElement("button");
                 channelBtn.className = `channel-btn ${isCurrent ? "active" : ""}`;
                 
-                const playersCount = Object.keys(players).length;
+                const playersCount = getChannelOptionsCount(players);
                 const logoHtml = createLogoBadgeHtml(channelName, 'sm');
                 const channelKey = `${category}:${channelName}`;
                 const isFav = favorites.has(channelKey);
@@ -1808,7 +2960,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     selectChannel(category, channelName, players);
                 }
             });
-            const optionsCount = Object.keys(players).length;
+            const optionsCount = getChannelOptionsCount(players);
             const logoLargeHtml = createLogoBadgeHtml(channelName, 'lg');
             const channelKey = `${category}:${channelName}`;
             const isFav = favorites.has(channelKey);
@@ -1849,25 +3001,90 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- 6. Channel Selection & Player Rendering ---
-    function selectChannel(category, channelName, players, preferredPlayerName = null) {
-        const playerNames = Object.keys(players);
-        if (playerNames.length === 0) return;
+    let tvWatchdogTimer = null;
+    let tvLiveInterval = null;
+
+    function atomicTvPlayerReset() {
+        setPlaybackActiveState(false);
+        if (tvWatchdogTimer) {
+            clearTimeout(tvWatchdogTimer);
+            tvWatchdogTimer = null;
+        }
+        if (tvLiveInterval) {
+            clearInterval(tvLiveInterval);
+            tvLiveInterval = null;
+        }
+        if (window.tvArtInstance) {
+            try {
+                window.tvArtInstance.pause();
+                window.tvArtInstance.destroy(true);
+            } catch (e) {
+                console.warn("[TvArtplayer] Aviso ao destruir instância:", e);
+            }
+            window.tvArtInstance = null;
+        }
+        if (window.tvHlsInstance) {
+            try {
+                window.tvHlsInstance.stopLoad();
+                window.tvHlsInstance.detachMedia();
+                window.tvHlsInstance.destroy();
+            } catch (e) {
+                console.warn("[TvHLS] Aviso ao destruir Hls.js:", e);
+            }
+            window.tvHlsInstance = null;
+        }
+
+        const tvContainer = document.getElementById("tv-artplayer-container");
+        if (tvContainer) {
+            tvContainer.innerHTML = "";
+            tvContainer.classList.add("hidden");
+        }
+    }
+
+    function selectChannel(category, channelName, rawChannelData, preferredOption = null) {
+        const data = normalizeChannelData(rawChannelData);
+        const hasSources = data.sources && data.sources.length > 0;
+        const hasContingency = data.contingency && Object.keys(data.contingency).length > 0;
+
+        if (!hasSources && !hasContingency) return;
 
         if (currentAppView !== 'tv') {
             switchAppView('tv');
         }
 
-        const defaultPlayerName = preferredPlayerName && players[preferredPlayerName] 
-            ? preferredPlayerName 
-            : playerNames[0];
-        const defaultPlayerUrl = players[defaultPlayerName];
+        let selectedServerType = 'direct';
+        let selectedSourceIndex = 0;
+        let selectedContingencyName = null;
+        let selectedContingencyUrl = null;
+
+        if (preferredOption) {
+            const sIdx = hasSources ? data.sources.findIndex(s => s.name === preferredOption) : -1;
+            if (sIdx !== -1) {
+                selectedServerType = 'direct';
+                selectedSourceIndex = sIdx;
+            } else if (hasContingency && data.contingency[preferredOption]) {
+                selectedServerType = 'contingency';
+                selectedContingencyName = preferredOption;
+                selectedContingencyUrl = data.contingency[preferredOption];
+            }
+        } else if (hasSources) {
+            selectedServerType = 'direct';
+            selectedSourceIndex = 0;
+        } else {
+            const firstContKey = Object.keys(data.contingency)[0];
+            selectedServerType = 'contingency';
+            selectedContingencyName = firstContKey;
+            selectedContingencyUrl = data.contingency[firstContKey];
+        }
 
         activeChannel = {
             category,
             name: channelName,
-            players,
-            currentPlayerName: defaultPlayerName,
-            currentPlayerUrl: defaultPlayerUrl
+            data,
+            serverType: selectedServerType,
+            sourceIndex: selectedSourceIndex,
+            contingencyName: selectedContingencyName,
+            contingencyUrl: selectedContingencyUrl
         };
 
         renderPlayerView();
@@ -1881,19 +3098,28 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderPlayerView() {
         if (!activeChannel) return;
 
-        const { category, name, players, currentPlayerName, currentPlayerUrl } = activeChannel;
+        const { category, name, data, serverType, sourceIndex } = activeChannel;
         const logoLargeHtml = createLogoBadgeHtml(name, 'md');
         const channelKey = `${category}:${name}`;
         const isFav = favorites.has(channelKey);
 
-        const isEmbedTv = currentPlayerUrl.toLowerCase().includes("embedtv");
-        const shieldToolbarHtml = `
-            <div class="player-shield-badge" title="Proteção Anti-Popups nativa ativa">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        const isDirect = serverType === 'direct';
+
+        const statusBadgeHtml = isDirect ? `
+            <div class="player-shield-badge native-badge" title="Transmissão direta HLS ativa sem anúncios">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     <polyline points="9 12 11 14 15 10"></polyline>
                 </svg>
-                <span>${isEmbedTv ? 'EmbedTV Direct' : 'Proteção Ativa'}</span>
+                <span style="color:#4ade80;">HLS Direto Nativo</span>
+            </div>
+        ` : `
+            <div class="player-shield-badge contingency-badge" title="Contingência Web via Iframe com Proteção Ativa">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+                <span style="color:#fbbf24;">Contingência Web</span>
             </div>
         `;
 
@@ -1916,7 +3142,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                     <div class="player-toolbar">
-                        ${shieldToolbarHtml}
+                        ${statusBadgeHtml}
                         <button id="btn-reload-player" class="btn-player-action" title="Recarregar Transmissão">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="23 4 23 10 17 10"></polyline>
@@ -1947,14 +3173,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="spinner"></div>
                         <span style="color:var(--text-secondary);font-size:0.85rem;">Carregando transmissão...</span>
                     </div>
+                    <div id="tv-artplayer-container" class="tv-artplayer-stage"></div>
                     <iframe 
                         id="stream-iframe"
-                        src="${currentPlayerUrl}" 
+                        src="" 
                         allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
                         allowfullscreen
                         webkitallowfullscreen
                         mozallowfullscreen
                         referrerpolicy="no-referrer"
+                        class="hidden"
                     ></iframe>
                 </div>
 
@@ -1962,18 +3190,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="server-selector-card">
                     <div class="server-selector-header">
                         <h4>
-                            <span style="display:inline-flex;align-items:center;gap:6px;">${getUiSvg('server', 16)} Opções de Player & Servidores</span>
+                            <span style="display:inline-flex;align-items:center;gap:6px;">${getUiSvg('server', 16)} Opções de Transmissão & Servidores</span>
                         </h4>
-                        <span class="server-selector-hint">Se a transmissão travar, alterne para outra opção</span>
+                        <span class="server-selector-hint">Se a transmissão direta estiver instável, alterne o servidor direto ou selecione uma opção de contingência.</span>
                     </div>
-                    <div class="servers-grid" id="servers-grid">
-                        <!-- Server buttons -->
-                    </div>
+                    
+                    ${data.sources && data.sources.length > 0 ? `
+                        <div class="server-group-block" id="direct-servers-block">
+                            <div class="servers-section-title">
+                                <span>Transmissão Direta</span>
+                                <span class="badge-server-native">Nativo • Sem Anúncios</span>
+                            </div>
+                            <div class="servers-grid" id="direct-servers-grid"></div>
+                        </div>
+                    ` : ''}
+
+                    ${data.contingency && Object.keys(data.contingency).length > 0 ? `
+                        <div class="server-group-block" id="contingency-servers-block" style="margin-top:14px;">
+                            <div class="servers-section-title">
+                                <span>Servidores de Contingência</span>
+                                <span class="badge-server-contingency">Iframe Web</span>
+                            </div>
+                            <div class="servers-grid" id="contingency-servers-grid"></div>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
 
-        // Favorite button listener in player
+        // Favorite listener
         const favBtnCurrent = document.getElementById("btn-fav-current");
         if (favBtnCurrent) {
             favBtnCurrent.addEventListener("click", () => {
@@ -1982,48 +3227,52 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // Anti-Popups Shield Toggle Listener
-        const btnToggleShield = document.getElementById("btn-toggle-shield");
-        if (btnToggleShield) {
-            btnToggleShield.addEventListener("click", () => {
-                adShieldEnabled = !adShieldEnabled;
-                renderPlayerView();
+        // Populate Direct Servers Buttons
+        const directGridEl = document.getElementById("direct-servers-grid");
+        if (directGridEl && data.sources) {
+            data.sources.forEach((source, idx) => {
+                const isOptionActive = activeChannel.serverType === 'direct' && activeChannel.sourceIndex === idx;
+                const btn = document.createElement("button");
+                btn.className = `btn-server-option native-server ${isOptionActive ? "active" : ""}`;
+                btn.dataset.index = idx;
+                btn.innerHTML = `
+                    <span>${source.name}</span>
+                    ${isOptionActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}
+                `;
+                btn.addEventListener("click", () => {
+                    if (activeChannel.serverType !== 'direct' || activeChannel.sourceIndex !== idx) {
+                        activeChannel.serverType = 'direct';
+                        activeChannel.sourceIndex = idx;
+                        updateServerButtonsActiveState();
+                        mountTvDirectStream();
+                    }
+                });
+                directGridEl.appendChild(btn);
             });
         }
 
-        // Render Server Buttons
-        const serversGridEl = document.getElementById("servers-grid");
-        Object.entries(players).forEach(([optionName, optionUrl]) => {
-            const isOptionActive = optionName === currentPlayerName;
-            const btn = document.createElement("button");
-            btn.className = `btn-server-option ${isOptionActive ? "active" : ""}`;
-            btn.innerHTML = `
-                <span>${optionName}</span>
-                ${isOptionActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}
-            `;
-
-            btn.addEventListener("click", () => {
-                if (optionName !== activeChannel.currentPlayerName) {
-                    activeChannel.currentPlayerName = optionName;
-                    activeChannel.currentPlayerUrl = optionUrl;
-                    renderPlayerView();
-                }
+        // Populate Contingency Servers Buttons
+        const contingencyGridEl = document.getElementById("contingency-servers-grid");
+        if (contingencyGridEl && data.contingency) {
+            Object.entries(data.contingency).forEach(([optName, optUrl]) => {
+                const isOptionActive = activeChannel.serverType === 'contingency' && activeChannel.contingencyName === optName;
+                const btn = document.createElement("button");
+                btn.className = `btn-server-option contingency-server ${isOptionActive ? "active" : ""}`;
+                btn.dataset.name = optName;
+                btn.innerHTML = `
+                    <span>${optName}</span>
+                    ${isOptionActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}
+                `;
+                btn.addEventListener("click", () => {
+                    // Explicit manual switch to contingency iframe!
+                    activeChannel.serverType = 'contingency';
+                    activeChannel.contingencyName = optName;
+                    activeChannel.contingencyUrl = optUrl;
+                    updateServerButtonsActiveState();
+                    mountTvContingencyIframe();
+                });
+                contingencyGridEl.appendChild(btn);
             });
-
-            serversGridEl.appendChild(btn);
-        });
-
-        // Video Loader & Screen Wake Lock Management
-        const iframe = document.getElementById("stream-iframe");
-        const loader = document.getElementById("video-loader");
-        if (iframe && loader) {
-            iframe.onload = () => {
-                loader.classList.add("hidden");
-                setPlaybackActiveState(true);
-            };
-            setTimeout(() => {
-                loader.classList.add("hidden");
-            }, 3000);
         }
 
         // Attach Toolbar Actions
@@ -2032,40 +3281,531 @@ document.addEventListener("DOMContentLoaded", () => {
         const btnExternal = document.getElementById("btn-open-external");
         const videoTheater = document.getElementById("video-theater");
 
-        if (btnReload && iframe) {
+        if (btnReload) {
             btnReload.addEventListener("click", () => {
-                loader.classList.remove("hidden");
-                iframe.src = activeChannel.currentPlayerUrl;
-            });
-        }
-
-        if (btnExternal) {
-            btnExternal.addEventListener("click", () => {
-                isAuthorizedUserAction = true;
-                if (safeWindowOpen) {
-                    safeWindowOpen(activeChannel.currentPlayerUrl, "_blank", "noopener,noreferrer");
+                if (activeChannel.serverType === 'direct') {
+                    mountTvDirectStream();
+                } else {
+                    mountTvContingencyIframe();
                 }
             });
         }
 
         if (btnFullscreen && videoTheater) {
             btnFullscreen.addEventListener("click", () => {
-                if (!document.fullscreenElement) {
-                    if (videoTheater.requestFullscreen) {
-                        videoTheater.requestFullscreen();
-                    } else if (videoTheater.webkitRequestFullscreen) {
-                        videoTheater.webkitRequestFullscreen();
-                    } else if (videoTheater.msRequestFullscreen) {
-                        videoTheater.msRequestFullscreen();
-                    }
+                if (activeChannel.serverType === 'direct' && window.tvArtInstance) {
+                    window.tvArtInstance.fullscreen.toggle();
                 } else {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
+                    if (!document.fullscreenElement) {
+                        if (videoTheater.requestFullscreen) videoTheater.requestFullscreen();
+                        else if (videoTheater.webkitRequestFullscreen) videoTheater.webkitRequestFullscreen();
+                    } else {
+                        if (document.exitFullscreen) document.exitFullscreen();
                     }
                 }
             });
         }
+
+        if (btnExternal) {
+            btnExternal.addEventListener("click", () => {
+                isAuthorizedUserAction = true;
+                let urlToOpen = "";
+                if (activeChannel.serverType === 'direct') {
+                    const src = activeChannel.data.sources[activeChannel.sourceIndex];
+                    urlToOpen = src ? src.url : "";
+                } else {
+                    urlToOpen = activeChannel.contingencyUrl || "";
+                }
+                if (urlToOpen && safeWindowOpen) {
+                    safeWindowOpen(urlToOpen, "_blank", "noopener,noreferrer");
+                }
+            });
+        }
+
+        // Initial Mount based on selected serverType
+        if (activeChannel.serverType === 'direct') {
+            mountTvDirectStream();
+        } else {
+            mountTvContingencyIframe();
+        }
     }
+
+    function updateServerButtonsActiveState() {
+        const directButtons = document.querySelectorAll("#direct-servers-grid .btn-server-option");
+        directButtons.forEach(btn => {
+            const idx = parseInt(btn.dataset.index, 10);
+            const isActive = activeChannel.serverType === 'direct' && activeChannel.sourceIndex === idx;
+            btn.classList.toggle("active", isActive);
+            const sourceName = activeChannel.data.sources[idx]?.name || "";
+            btn.innerHTML = `<span>${sourceName}</span>${isActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}`;
+        });
+
+        const contButtons = document.querySelectorAll("#contingency-servers-grid .btn-server-option");
+        contButtons.forEach(btn => {
+            const name = btn.dataset.name;
+            const isActive = activeChannel.serverType === 'contingency' && activeChannel.contingencyName === name;
+            btn.classList.toggle("active", isActive);
+            btn.innerHTML = `<span>${name}</span>${isActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}`;
+        });
+    }
+
+    function mountTvDirectStream() {
+        atomicTvPlayerReset();
+
+        const tvContainer = document.getElementById("tv-artplayer-container");
+        const iframe = document.getElementById("stream-iframe");
+        const loader = document.getElementById("video-loader");
+
+        if (iframe) {
+            iframe.src = "";
+            iframe.classList.add("hidden");
+        }
+        if (tvContainer) {
+            tvContainer.innerHTML = "";
+            tvContainer.classList.remove("hidden");
+        }
+        if (loader) {
+            loader.classList.remove("hidden");
+        }
+
+        const { data, sourceIndex, name } = activeChannel;
+        const sources = data.sources || [];
+        if (sources.length === 0 || sourceIndex >= sources.length) {
+            handleAllDirectSourcesFailed();
+            return;
+        }
+
+        const currentSource = sources[sourceIndex];
+        let isStreamWorking = false;
+        const remainingSources = sources.slice(sourceIndex + 1);
+
+        function triggerDirectCascade(reason) {
+            if (tvWatchdogTimer) {
+                clearTimeout(tvWatchdogTimer);
+                tvWatchdogTimer = null;
+            }
+            console.warn(`[TvPlayer] Falha na fonte direta (${reason}): ${currentSource.name}. Restantes: ${remainingSources.length}`);
+
+            if (remainingSources.length > 0) {
+                const nextSource = remainingSources[0];
+                const nextIdx = sources.indexOf(nextSource);
+                activeChannel.sourceIndex = nextIdx;
+                showToast(`Alternando servidor para ${nextSource.name}...`);
+                updateServerButtonsActiveState();
+                mountTvDirectStream();
+            } else {
+                handleAllDirectSourcesFailed();
+            }
+        }
+
+        // 7-second watchdog for initial buffer start
+        tvWatchdogTimer = setTimeout(() => {
+            if (!isStreamWorking) {
+                console.warn("[TvPlayer] Timeout de reprodução da transmissão direta (7s).");
+                triggerDirectCascade("Timeout de carregamento (7s)");
+            }
+        }, 7000);
+
+        try {
+            const art = new Artplayer({
+                container: tvContainer,
+                url: currentSource.url,
+                type: 'm3u8',
+                customType: {
+                    m3u8: function (video, url, artInstance) {
+                        if (window.Hls && Hls.isSupported()) {
+                            if (window.tvHlsInstance) {
+                                try { window.tvHlsInstance.destroy(); } catch (e) {}
+                            }
+                            const hls = new Hls({
+                                enableWorker: true,
+                                lowLatencyMode: true,
+                                backBufferLength: 30,
+                                liveSyncDurationCount: 3,
+                                liveMaxLatencyDurationCount: 6,
+                                maxLiveSyncPlaybackRate: 1.15
+                            });
+                            window.tvHlsInstance = hls;
+                            hls.loadSource(url);
+                            hls.attachMedia(video);
+
+                            artInstance.on('destroy', () => {
+                                try { hls.destroy(); } catch (e) {}
+                            });
+
+                            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                                if (loader) loader.classList.add("hidden");
+                                artInstance.play().catch(() => {});
+                            });
+
+                            hls.on(Hls.Events.ERROR, (event, errorData) => {
+                                if (errorData.fatal) {
+                                    console.warn("[TvHls] Erro fatal no stream:", errorData);
+                                    triggerDirectCascade("Erro fatal HLS: " + (errorData.details || errorData.type));
+                                }
+                            });
+                        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                            video.src = url;
+                            video.play().catch(() => {});
+                            if (loader) loader.classList.add("hidden");
+                        }
+                    }
+                },
+                title: `${name} • ${currentSource.name}`,
+                volume: 0.85,
+                isLive: true,
+                autoplay: true,
+                pip: true,
+                autoSize: false,
+                screenshot: true,
+                setting: true,
+                aspectRatio: true,
+                fullscreen: true,
+                fullscreenWeb: true,
+                miniProgressBar: false,
+                mutex: true,
+                playsInline: true,
+                airplay: true,
+                theme: '#22c55e',
+                icons: {
+                    loading: '<div class="spinner"></div>',
+                }
+            });
+
+            window.tvArtInstance = art;
+
+            // Register Settings items for TV Player
+            art.setting.add({
+                id: 'tv-quality-info',
+                name: 'Qualidade',
+                width: 240,
+                tooltip: 'HD (Original)',
+                selector: [
+                    { default: true, html: 'HD 720p/1080p (Transmissão Original)' }
+                ],
+                onSelect: function (item) {
+                    return item.html;
+                }
+            });
+
+            art.setting.add({
+                id: 'tv-sync-mode',
+                name: 'Modo Sincronia',
+                width: 240,
+                tooltip: 'Tempo Real',
+                selector: [
+                    { default: true, html: 'Tempo Real (Baixa Latência)' },
+                    { default: false, html: 'Estabilidade (Buffer Expandido)' }
+                ],
+                onSelect: function (item) {
+                    const hls = window.tvHlsInstance;
+                    if (hls && hls.config) {
+                        if (item.html.includes('Estabilidade')) {
+                            hls.config.maxLiveSyncPlaybackRate = 1.0;
+                            hls.config.liveSyncDurationCount = 5;
+                            showToast("Modo Estabilidade ativado (buffer expandido)");
+                        } else {
+                            hls.config.maxLiveSyncPlaybackRate = 1.15;
+                            hls.config.liveSyncDurationCount = 3;
+                            showToast("Modo Tempo Real ativado");
+                        }
+                    }
+                    return item.html;
+                }
+            });
+
+            art.setting.add({
+                id: 'tv-server-info',
+                name: 'Servidor Ativo',
+                width: 250,
+                tooltip: currentSource.name,
+                selector: [
+                    { default: true, html: `${currentSource.name} • ${currentSource.cdn || 'CDN 1'}` }
+                ],
+                onSelect: function (item) {
+                    return item.html;
+                }
+            });
+
+            // Live-Edge Sync Button on Controls
+            art.controls.add({
+                name: 'live-sync-button',
+                position: 'left',
+                html: '<button type="button" class="art-live-badge-btn is-live" title="Sincronizar com transmissão ao vivo (L)"><span class="art-live-dot"></span><span class="art-live-label">AO VIVO</span></button>',
+                click: function () {
+                    syncToLiveEdge(art);
+                }
+            });
+
+            function syncToLiveEdge(artPlayer) {
+                const vid = artPlayer.video;
+                if (!vid) return;
+                const hls = window.tvHlsInstance;
+                if (hls && typeof hls.liveSyncPosition === 'number' && hls.liveSyncPosition > 0) {
+                    vid.currentTime = hls.liveSyncPosition;
+                } else if (vid.seekable && vid.seekable.length > 0) {
+                    vid.currentTime = vid.seekable.end(vid.seekable.length - 1);
+                }
+                vid.play().catch(() => {});
+                updateLiveStatusBadge(true, 0);
+                showToast("Sincronizado com a transmissão ao vivo.");
+            }
+
+            function updateLiveStatusBadge(forceLive = false, customLag = 0) {
+                const liveBtn = tvContainer.querySelector(".art-live-badge-btn");
+                if (!liveBtn || !art.video) return;
+                const vid = art.video;
+                const hls = window.tvHlsInstance;
+
+                let isNearLive = forceLive;
+                let lagSeconds = customLag;
+
+                if (!forceLive) {
+                    const currentPos = Number.isFinite(vid.currentTime) ? vid.currentTime : 0;
+                    const syncPos = (hls && typeof hls.liveSyncPosition === 'number' && Number.isFinite(hls.liveSyncPosition) && hls.liveSyncPosition > 0)
+                        ? hls.liveSyncPosition
+                        : ((vid.seekable && vid.seekable.length > 0 && Number.isFinite(vid.seekable.end(vid.seekable.length - 1)))
+                            ? vid.seekable.end(vid.seekable.length - 1)
+                            : currentPos);
+
+                    const rawLatency = syncPos - currentPos;
+                    const safeLatency = (Number.isFinite(rawLatency) && rawLatency > 0) ? Math.floor(rawLatency) : 0;
+
+                    if (vid.paused) {
+                        isNearLive = false;
+                        lagSeconds = Math.max(1, safeLatency);
+                    } else if (hls && typeof hls.liveSyncPosition === 'number' && hls.liveSyncPosition > 0) {
+                        if (safeLatency <= 6) {
+                            isNearLive = true;
+                        } else {
+                            isNearLive = false;
+                            lagSeconds = Math.max(1, safeLatency);
+                        }
+                    } else if (vid.seekable && vid.seekable.length > 0) {
+                        const targetChunk = (hls && hls.targetDuration) ? hls.targetDuration : 12;
+                        if (safeLatency <= targetChunk * 1.6) {
+                            isNearLive = true;
+                        } else {
+                            isNearLive = false;
+                            lagSeconds = Math.max(1, Math.round(safeLatency - targetChunk));
+                        }
+                    } else {
+                        isNearLive = !vid.paused;
+                    }
+                }
+
+                if (!Number.isFinite(lagSeconds) || Number.isNaN(lagSeconds)) {
+                    lagSeconds = 0;
+                }
+
+                if (isNearLive) {
+                    liveBtn.classList.add("is-live");
+                    liveBtn.classList.remove("is-behind");
+                    liveBtn.innerHTML = '<span class="art-live-dot"></span><span class="art-live-label">AO VIVO</span>';
+                } else {
+                    liveBtn.classList.remove("is-live");
+                    liveBtn.classList.add("is-behind");
+                    liveBtn.innerHTML = `<span class="art-live-dot-gray"></span><span class="art-live-label">AO VIVO (-${lagSeconds}s)</span>`;
+                }
+            }
+
+            // Monitor live edge distance every second
+            tvLiveInterval = setInterval(() => {
+                updateLiveStatusBadge();
+            }, 1000);
+
+            art.on('ready', () => {
+                isStreamWorking = true;
+                if (tvWatchdogTimer) {
+                    clearTimeout(tvWatchdogTimer);
+                    tvWatchdogTimer = null;
+                }
+                updateLiveStatusBadge(true, 0);
+            });
+
+            art.on('video:playing', () => {
+                isStreamWorking = true;
+                if (tvWatchdogTimer) {
+                    clearTimeout(tvWatchdogTimer);
+                    tvWatchdogTimer = null;
+                }
+                if (loader) loader.classList.add("hidden");
+                setPlaybackActiveState(true);
+                updateLiveStatusBadge(true, 0);
+            });
+
+            art.on('video:pause', () => {
+                setPlaybackActiveState(false);
+                updateLiveStatusBadge();
+            });
+
+            art.on('error', (err) => {
+                console.warn("[TvArtplayer] Erro no vídeo:", err);
+                triggerDirectCascade("Erro no elemento de vídeo");
+            });
+
+            art.on('keydown', (event) => {
+                handleTvKeyboardShortcuts(event, art);
+            });
+
+        } catch (e) {
+            console.error("[TvPlayer] Exceção na montagem nativa:", e);
+            triggerDirectCascade("Exceção na montagem");
+        }
+    }
+
+    function handleAllDirectSourcesFailed() {
+        atomicTvPlayerReset();
+
+        const tvContainer = document.getElementById("tv-artplayer-container");
+        const loader = document.getElementById("video-loader");
+        const iframe = document.getElementById("stream-iframe");
+
+        if (loader) loader.classList.add("hidden");
+        if (iframe) {
+            iframe.src = "";
+            iframe.classList.add("hidden");
+        }
+
+        if (tvContainer) {
+            tvContainer.classList.remove("hidden");
+            tvContainer.innerHTML = `
+                <div class="channel-direct-error-overlay">
+                    <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:14px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
+                    <div class="error-overlay-title">Transmissão Direta Instável</div>
+                    <div class="error-overlay-desc">
+                        Os links diretos deste canal estão temporariamente indisponíveis na CDN.
+                        Você pode tentar reconectar ou selecionar manualmente uma opção de <strong>Contingência</strong> no seletor abaixo.
+                    </div>
+                    <div class="error-overlay-actions">
+                        <button id="btn-retry-direct-channel" class="btn-error-retry">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                            Tentar Reconectar
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const retryBtn = tvContainer.querySelector("#btn-retry-direct-channel");
+            if (retryBtn) {
+                retryBtn.addEventListener("click", () => {
+                    activeChannel.sourceIndex = 0;
+                    updateServerButtonsActiveState();
+                    mountTvDirectStream();
+                });
+            }
+        }
+
+        showToast("Transmissão direta indisponível. Alterne para a contingência abaixo se desejar.", 4500);
+    }
+
+    function mountTvContingencyIframe() {
+        atomicTvPlayerReset();
+
+        const tvContainer = document.getElementById("tv-artplayer-container");
+        const iframe = document.getElementById("stream-iframe");
+        const loader = document.getElementById("video-loader");
+
+        if (tvContainer) {
+            tvContainer.innerHTML = "";
+            tvContainer.classList.add("hidden");
+        }
+        if (loader) {
+            loader.classList.remove("hidden");
+        }
+        if (iframe) {
+            iframe.classList.remove("hidden");
+            iframe.src = activeChannel.contingencyUrl;
+            iframe.onload = () => {
+                if (loader) loader.classList.add("hidden");
+                setPlaybackActiveState(true);
+            };
+            setTimeout(() => {
+                if (loader) loader.classList.add("hidden");
+            }, 3000);
+        }
+    }
+
+    function handleTvKeyboardShortcuts(e, art) {
+        if (!art || !art.video) return;
+        const tag = (document.activeElement && document.activeElement.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+        const vid = art.video;
+        switch (e.key) {
+            case ' ':
+            case 'k':
+            case 'K':
+                e.preventDefault();
+                art.toggle();
+                break;
+            case 'm':
+            case 'M':
+                e.preventDefault();
+                art.muted = !art.muted;
+                showToast(art.muted ? "Mudo ativado" : "Som ativado");
+                break;
+            case 'f':
+            case 'F':
+                e.preventDefault();
+                art.fullscreen.toggle();
+                break;
+            case 'l':
+            case 'L':
+                e.preventDefault();
+                const hls = window.tvHlsInstance;
+                if (hls && typeof hls.liveSyncPosition === 'number' && hls.liveSyncPosition > 0) {
+                    vid.currentTime = hls.liveSyncPosition;
+                } else if (vid.seekable && vid.seekable.length > 0) {
+                    vid.currentTime = vid.seekable.end(vid.seekable.length - 1);
+                }
+                vid.play().catch(() => {});
+                showToast("Sincronizado com a transmissão ao vivo.");
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                if (vid.seekable && vid.seekable.length > 0) {
+                    const start = vid.seekable.start(0);
+                    vid.currentTime = Math.max(start, vid.currentTime - 10);
+                }
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                if (vid.seekable && vid.seekable.length > 0) {
+                    const end = vid.seekable.end(vid.seekable.length - 1);
+                    vid.currentTime = Math.min(end, vid.currentTime + 10);
+                }
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                art.volume = Math.min(1, art.volume + 0.05);
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                art.volume = Math.max(0, art.volume - 0.05);
+                break;
+        }
+    }
+
+    // Global keyboard listener for TV view shortcuts
+    document.addEventListener("keydown", (e) => {
+        if (currentAppView === 'tv' && activeChannel && activeChannel.serverType === 'direct' && window.tvArtInstance) {
+            const tag = (document.activeElement && document.activeElement.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+            const artEl = document.querySelector("#tv-artplayer-container .art-video-player");
+            if (artEl && !artEl.contains(document.activeElement)) {
+                if ([' ', 'k', 'K', 'm', 'M', 'f', 'F', 'l', 'L'].includes(e.key)) {
+                    handleTvKeyboardShortcuts(e, window.tvArtInstance);
+                }
+            }
+        }
+    });
 
     // --- 7. TV Remote & D-Pad Spatial Navigation Module ---
         // Global delegation for broadcast pills (ensures clicks always forward to channel)
@@ -2274,6 +4014,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Close channels mobile sidebar and handle wake lock release if leaving tv view
         if (viewName !== 'tv') {
             closeMobileMenu();
+            atomicTvPlayerReset();
             const isMovieModalActive = !document.getElementById("movie-modal")?.classList.contains("hidden");
             const isSeriesPlayerActive = !document.getElementById("series-player-view")?.classList.contains("hidden");
             if (!isMovieModalActive && !isSeriesPlayerActive) {
@@ -2527,8 +4268,13 @@ document.addEventListener("DOMContentLoaded", () => {
     window.hlsInstance = null;
     window.cascadeTimer = null;
     window.activeAniSkipData = null;
+    window.tvArtInstance = null;
+    window.tvHlsInstance = null;
+    window.tvWatchdogTimer = null;
+    window.tvLiveInterval = null;
 
     function atomicPlayerReset() {
+        atomicTvPlayerReset();
         setPlaybackActiveState(false);
         if (window.cascadeTimer) {
             clearTimeout(window.cascadeTimer);
