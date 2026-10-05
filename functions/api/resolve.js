@@ -228,9 +228,14 @@ export async function onRequestGet(context) {
     const mgebData = await resolveMgeb(mgebType, id, season, episode);
     if (mgebData && mgebData.sources && mgebData.sources.length > 0) {
       const parsedSources = mgebData.sources.map((s, idx) => {
-        const rawFile = s.file || "";
+        let rawFile = (s.file || "").trim();
+        // Normalize any relative path artifacts from MGEB embed
+        rawFile = rawFile.replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top");
+
         let referer = "https://embedplayer2.xyz/";
-        if (rawFile.includes("peliculaplay.com")) referer = "https://mgeb.top/";
+        if (rawFile.includes("peliculaplay.com") || rawFile.includes("cache/hls") || rawFile.includes("mgeb.top")) {
+          referer = "https://mgeb.top/";
+        }
         
         return {
           label: s.label || `Servidor ${idx + 1}`,
@@ -245,11 +250,14 @@ export async function onRequestGet(context) {
 
       function scoreSource(src) {
         const u = (src.raw_url || "").toLowerCase();
-        if (u.includes("playercdn.workers.dev") || u.includes("cache/hls")) return -100;
-        // Prioritize official MGEB master streams (calibrated Rec.709 8-bit SDR)
-        if (u.includes("fontedecanais")) return 100;
-        if (u.includes(".m3u8") || u.includes("peliculaplay.com") || u.includes("97bf1.com") || u.includes("playspelis.com")) return 85;
-        if (u.includes(".mp4")) return 80;
+        if (u.includes("playercdn.workers.dev")) return -100;
+        // Prioritize Datacenter & Cloudflare-compatible HLS adaptive streams
+        if (u.includes(".m3u8") || u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("97bf1.com")) {
+          return 95;
+        }
+        // Direct MP4 streams (great quality, preserved as mirror/fallback)
+        if (u.includes("fontedecanais")) return 80;
+        if (u.includes(".mp4")) return 70;
         return 20;
       }
 
