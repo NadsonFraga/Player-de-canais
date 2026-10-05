@@ -3,7 +3,8 @@
    ========================================================================== */
 
 .movie-artplayer-stage,
-.series-artplayer-stage {
+.series-artplayer-stage,
+.tv-artplayer-stage {
     width: 100%;
     height: 100%;
     position: absolute;
@@ -117,5 +118,230 @@
     border-color: #22c55e !important;
     box-shadow: 0 0 14px rgba(34, 197, 94, 0.45) !important;
     font-weight: 700 !important;
+}
+
+/* ==========================================================================
+   TV LIVE STREAMING ENGINE - NATIVE ARTPLAYER CONTROLS & SERVER PILLS
+   ========================================================================== */
+
+/* Custom "AO VIVO" Live-Edge Sync Button */
+.art-live-badge-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    margin-right: 6px;
+}
+
+.art-live-badge-btn.is-live {
+    background: rgba(220, 38, 38, 0.28) !important;
+    border-color: rgba(239, 68, 68, 0.8) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4) !important;
+}
+
+.art-live-badge-btn.is-live .art-live-label {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+}
+
+.art-live-badge-btn.is-behind {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #d4d4d8 !important;
+    box-shadow: none !important;
+}
+
+.art-live-badge-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+.art-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ef4444 !important;
+    box-shadow: 0 0 8px #ef4444, 0 0 16px rgba(239, 68, 68, 0.9) !important;
+    animation: livePulseAnim 1.6s infinite ease-in-out;
+}
+
+.art-live-dot-gray {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #a1a1aa !important;
+    box-shadow: none !important;
+}
+
+@keyframes livePulseAnim {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+    70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+}
+
+/* Ensure Artplayer Settings Panel is always visible and nicely styled */
+.art-video-player .art-settings,
+.art-video-player .art-setting-panel {
+    z-index: 150 !important;
+    background: rgba(15, 17, 23, 0.96) !important;
+    backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85) !important;
+}
+
+/* TV Direct Stream Error Overlay */
+.channel-direct-error-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    color: #a1a1aa;
+    padding: 32px 20px;
+    text-align: center;
+    background: radial-gradient(circle at center, rgba(30, 41, 59, 0.5) 0%, rgba(10, 12, 16, 0.98) 100%);
+    box-sizing: border-box;
+    z-index: 20;
+}
+
+.channel-direct-error-overlay .error-overlay-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.channel-direct-error-overlay .error-overlay-desc {
+    font-size: 13.5px;
+    max-width: 440px;
+    line-height: 1.55;
+    color: #d4d4d8;
+    margin-bottom: 18px;
+}
+
+.channel-direct-error-overlay .error-overlay-desc strong {
+    color: #facc15;
+}
+
+.btn-error-retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #22c55e;
+    color: #ffffff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn-error-retry:hover {
+    background: #16a34a;
+    transform: translateY(-1px);
+}
+
+/* TV Server Selector Sections */
+.server-group-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.servers-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin: 12px 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.server-group-block:first-of-type .servers-section-title {
+    margin-top: 0;
+}
+
+.badge-server-native {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.badge-server-contingency {
+    background: rgba(234, 179, 8, 0.12);
+    color: #fde047;
+    border: 1px solid rgba(234, 179, 8, 0.25);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.btn-server-option.native-server {
+    border-color: rgba(34, 197, 94, 0.2);
+}
+
+.btn-server-option.native-server:hover {
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.btn-server-option.native-server.active {
+    background: #16a34a !important;
+    border-color: #22c55e !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
+}
+
+.btn-server-option.contingency-server {
+    border-color: rgba(234, 179, 8, 0.2);
+}
+
+.btn-server-option.contingency-server:hover {
+    border-color: rgba(234, 179, 8, 0.4);
+}
+
+.btn-server-option.contingency-server.active {
+    background: #d97706 !important;
+    border-color: #f59e0b !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+}
+
+.player-shield-badge.native-badge {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.player-shield-badge.contingency-badge {
+    background: rgba(234, 179, 8, 0.1);
+    border: 1px solid rgba(234, 179, 8, 0.25);
 }
 

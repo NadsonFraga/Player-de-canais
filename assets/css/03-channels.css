@@ -481,7 +481,10 @@ button.hero-badge:hover,
 .video-theater-wrapper {
     position: relative;
     width: 100%;
+    min-height: 0;
+    min-width: 0;
     aspect-ratio: 16 / 9;
+    max-height: calc(100vh - 220px);
     background: #000000;
     border-radius: var(--radius-lg);
     overflow: hidden;
