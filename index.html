@@ -16,35 +16,135 @@
     <link rel="manifest" href="assets/logos/fav/site.webmanifest?v=2">
     <meta name="theme-color" content="#080808">
     
+    <!-- Anti-Popup & Anti-Hijack Guard (Synchronous Head Bootstrap) -->
+    <script>
+      (function() {
+        'use strict';
+        const _nativeOpen = window.open ? window.open.bind(window) : null;
+        let _contingencyActive = false;
+        let _userInteractingWithIframe = false;
+        let _touchTimer = null;
+
+        // 1. Canal seguro e imutável para ações intencionais (ex: "Abrir em Nova Aba")
+        Object.defineProperty(window, 'tvzinhaSafeOpen', {
+          value: function(url, target, features) {
+            if (_nativeOpen && url) {
+              return _nativeOpen(url, target || '_blank', features || 'noopener,noreferrer');
+            }
+            return null;
+          },
+          writable: false,
+          configurable: false
+        });
+
+        // 2. Interceptador de popups com bypass para Artplayer e bloqueio silencioso
+        window.open = function(url, target, features) {
+          try {
+            const stack = (new Error()).stack || '';
+            if (stack.includes('artplayer') || stack.includes('Artplayer')) {
+              return _nativeOpen ? _nativeOpen(url, target, features) : null;
+            }
+          } catch (e) {}
+          console.warn('[Tvzinha Shield] Popup externo bloqueado em background:', url);
+          return null;
+        };
+
+        // 3. Controle imutável do estado de contingência/iframes
+        Object.defineProperty(window, 'tvzinhaSetContingencyState', {
+          value: function(isActive) {
+            _contingencyActive = Boolean(isActive);
+            if (!isActive) {
+              _userInteractingWithIframe = false;
+              if (_touchTimer) {
+                clearTimeout(_touchTimer);
+                _touchTimer = null;
+              }
+            }
+          },
+          writable: false,
+          configurable: false
+        });
+
+        // 4. Guarda imutável e idempotente para iframes (Desktop + Mobile/Touch)
+        Object.defineProperty(window, 'tvzinhaArmIframeGuard', {
+          value: function(iframeEl) {
+            if (!iframeEl || iframeEl._tvzinhaGuarded) return;
+            iframeEl._tvzinhaGuarded = true;
+
+            // Desktop (Mouse Hover)
+            iframeEl.addEventListener('mouseenter', function() {
+              _userInteractingWithIframe = true;
+            });
+            iframeEl.addEventListener('mouseleave', function() {
+              _userInteractingWithIframe = false;
+            });
+
+            // Mobile / Touch / Smart TV
+            iframeEl.addEventListener('touchstart', function() {
+              _userInteractingWithIframe = true;
+              if (_touchTimer) clearTimeout(_touchTimer);
+            }, { passive: true });
+
+            iframeEl.addEventListener('touchend', function() {
+              if (_touchTimer) clearTimeout(_touchTimer);
+              _touchTimer = setTimeout(function() {
+                _userInteractingWithIframe = false;
+              }, 3000);
+            }, { passive: true });
+          },
+          writable: false,
+          configurable: false
+        });
+
+        // Reset imediato se o usuário clicar na interface nativa da Tvzinha
+        document.addEventListener('click', function() {
+          _userInteractingWithIframe = false;
+          if (_touchTimer) {
+            clearTimeout(_touchTimer);
+            _touchTimer = null;
+          }
+        }, true);
+
+        // Bloqueio estrito de sequestro: só desarma saída se estiver em contingência + interagindo com o iframe
+        window.addEventListener('beforeunload', function(e) {
+          if (_contingencyActive && _userInteractingWithIframe) {
+            e.preventDefault();
+            e.returnValue = '';
+            return '';
+          }
+        });
+      })();
+    </script>
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261005_v1">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261005_v1">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261005_v1">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261005_v1">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261005_v1">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261005_v1">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261005_v1">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261005_v1">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261005_v1">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261005_v1">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261005_v14">
 </head>
 
 <body>
     <!-- Floating Glass Nav Capsule (Top Central - Nuvio Style) -->
     <nav id="floating-nav-capsule" class="floating-nav-capsule" aria-label="Navegação Principal">
-        <button id="nav-tab-home" class="nav-capsule-item" data-view="home" aria-label="Aba Início">
+        <button id="nav-tab-home" class="nav-capsule-item active" data-view="home" aria-label="Aba Início">
             <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
             <span>Início</span>
         </button>
-        <button id="nav-tab-tv" class="nav-capsule-item active" data-view="tv" aria-label="Aba Canais de TV">
+        <button id="nav-tab-tv" class="nav-capsule-item" data-view="tv" aria-label="Aba Canais de TV">
             <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
                 <polyline points="17 2 12 7 7 2"></polyline>
@@ -90,7 +190,7 @@
     </nav>
 
     <!-- View 0: Home Hub Portal View -->
-    <main id="view-home" class="view-home hidden" aria-label="Central de Início">
+    <main id="view-home" class="view-home" aria-label="Central de Início">
         <div class="home-container">
             <!-- Hero Welcome Header -->
             <section class="home-hero-card">
@@ -260,7 +360,7 @@
     </main>
 
     <!-- View 1: TV Channels Application Layout -->
-    <div class="app-layout" id="view-tv">
+    <div class="app-layout hidden" id="view-tv">
         <!-- Mobile Top Navigation Bar (Channels Tab Only) -->
         <header class="mobile-header">
             <button id="btn-toggle-menu" class="btn-icon" aria-label="Abrir Menu">
@@ -284,7 +384,7 @@
         <!-- Sidebar Navigation -->
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
-                <div class="brand" id="brand-home" style="cursor: pointer;" title="Ir para o Início">
+                <div class="brand" id="brand-home" style="cursor: pointer;" title="Tela inicial dos canais">
                     <div class="brand-icon-wrapper">
                         <img src="assets/logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="brand-logo-img-header">
                     </div>
@@ -1399,7 +1499,7 @@
     </main>
 
     <!-- Team Selection Modal -->
-    <div id="team-select-modal" class="team-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="team-modal-title">
+    <div id="team-select-modal" class="team-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="team-modal-title">
         <div class="team-modal-card">
             <div class="team-modal-header">
                 <div class="team-modal-title-group">
@@ -1444,7 +1544,7 @@
     </div>
 
     <!-- Adblock & Private DNS Disclaimer Modal -->
-    <div id="adblock-modal" class="adblock-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="adblock-modal-title" style="display: none;">
+    <div id="adblock-modal" class="adblock-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="adblock-modal-title" style="display: none;">
         <div class="adblock-modal-card">
             <!-- Modal Header -->
             <div class="adblock-modal-header">
@@ -1828,8 +1928,8 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/artplayer@5.1.7/dist/artplayer.js"></script>
 
-    <!-- Application Script -->
-    <script src="script.js?v=20261005_v4"></script>
+    <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
+    <script type="module" src="assets/js/main.js?v=20261005_v14"></script>
 </body>
 
 </html>

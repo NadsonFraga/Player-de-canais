@@ -179,7 +179,20 @@ body.is-resizing {
 }
 
 .close-mobile {
-    display: none;
+    display: none !important;
+}
+
+@media (min-width: 769px) {
+    .close-mobile {
+        display: none !important;
+    }
+    .sidebar {
+        position: relative !important;
+        transform: none !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
 }
 
 /* Search Bar */

@@ -15,9 +15,25 @@
 }
 
 .matches-team-badge {
-    font-size: 1.5rem;
-    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    overflow: hidden;
     filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+}
+
+.matches-team-badge img,
+.team-header-crest,
+.matches-header-crest {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    object-fit: contain !important;
+    display: block;
 }
 
 .matches-heading-right {
@@ -656,10 +672,13 @@ textarea:focus-visible {
 }
 
 /* Active Club Emblem in Section Header */
-.team-header-crest {
-    width: 22px;
-    height: 22px;
-    object-fit: contain;
+.team-header-crest,
+.matches-header-crest {
+    width: 22px !important;
+    height: 22px !important;
+    max-width: 22px !important;
+    max-height: 22px !important;
+    object-fit: contain !important;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
     border-radius: var(--radius-full);
 }

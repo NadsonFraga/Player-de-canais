@@ -1533,6 +1533,9 @@ input[type="number"] {
     padding: 24px 20px;
     box-sizing: border-box;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     animation: fadeInModal 0.25s ease forwards;
 }
 

@@ -1453,31 +1453,6 @@ const FALLBACK_CHANNELS = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    // --- Pop-up & Anti-Hijack Protection Shield ---
-    // Preserves intentional "Nova Aba" opening while blocking rogue popups & parent window redirects
-    const safeWindowOpen = window.open ? window.open.bind(window) : null;
-    window.open = function(url, target, features) {
-        console.warn("Tvzinha Shield: Bloqueada tentativa não autorizada de abertura de janela:", url);
-        return null;
-    };
-
-    let isAuthorizedUserAction = false;
-    window.addEventListener("beforeunload", (e) => {
-        if (!isAuthorizedUserAction) {
-            // Prevent rogue iframe scripts from navigating away from the app
-            e.preventDefault();
-            e.returnValue = "";
-            return "";
-        }
-    });
-
-    document.addEventListener("click", () => {
-        isAuthorizedUserAction = true;
-        setTimeout(() => {
-            isAuthorizedUserAction = false;
-        }, 1200);
-    }, true);
-
     // --- State Management ---
     let channelsData = {};
     let activeFilter = "all";
@@ -3005,6 +2980,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let tvLiveInterval = null;
 
     function atomicTvPlayerReset() {
+        if (window.tvzinhaSetContingencyState) {
+            window.tvzinhaSetContingencyState(false);
+        }
         setPlaybackActiveState(false);
         if (tvWatchdogTimer) {
             clearTimeout(tvWatchdogTimer);
@@ -3308,7 +3286,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (btnExternal) {
             btnExternal.addEventListener("click", () => {
-                isAuthorizedUserAction = true;
                 let urlToOpen = "";
                 if (activeChannel.serverType === 'direct') {
                     const src = activeChannel.data.sources[activeChannel.sourceIndex];
@@ -3316,8 +3293,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     urlToOpen = activeChannel.contingencyUrl || "";
                 }
-                if (urlToOpen && safeWindowOpen) {
-                    safeWindowOpen(urlToOpen, "_blank", "noopener,noreferrer");
+                if (urlToOpen) {
+                    if (window.tvzinhaSafeOpen) {
+                        window.tvzinhaSafeOpen(urlToOpen, "_blank", "noopener,noreferrer");
+                    } else {
+                        window.open(urlToOpen, "_blank", "noopener,noreferrer");
+                    }
                 }
             });
         }
@@ -3719,6 +3700,12 @@ document.addEventListener("DOMContentLoaded", () => {
             loader.classList.remove("hidden");
         }
         if (iframe) {
+            if (window.tvzinhaArmIframeGuard) {
+                window.tvzinhaArmIframeGuard(iframe);
+            }
+            if (window.tvzinhaSetContingencyState) {
+                window.tvzinhaSetContingencyState(true);
+            }
             iframe.classList.remove("hidden");
             iframe.src = activeChannel.contingencyUrl;
             iframe.onload = () => {
@@ -5813,6 +5800,12 @@ document.addEventListener("DOMContentLoaded", () => {
         atomicPlayerReset();
         if (movieArt) movieArt.classList.add("hidden");
         if (iframe) {
+            if (window.tvzinhaArmIframeGuard) {
+                window.tvzinhaArmIframeGuard(iframe);
+            }
+            if (window.tvzinhaSetContingencyState) {
+                window.tvzinhaSetContingencyState(true);
+            }
             iframe.classList.remove("hidden");
             if (movieLoader) movieLoader.classList.remove("hidden");
             const embedUrl = server.buildUrl(currentSelectedMovie.id);
@@ -7852,6 +7845,12 @@ document.addEventListener("DOMContentLoaded", () => {
             atomicPlayerReset();
             if (seriesArt) seriesArt.classList.add("hidden");
             if (iframe) {
+                if (window.tvzinhaArmIframeGuard) {
+                    window.tvzinhaArmIframeGuard(iframe);
+                }
+                if (window.tvzinhaSetContingencyState) {
+                    window.tvzinhaSetContingencyState(true);
+                }
                 iframe.classList.remove("hidden");
                 if (seriesLoader) seriesLoader.classList.remove("hidden");
 
