@@ -220,7 +220,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         mal_id = params.get("mal_id", [""])[0]
         imdb_id = params.get("imdb_id", [""])[0]
 
-        cache_key = f"{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}"
+        host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
+        proxy_base = f"http://{host_header}/api/stream"
+
+        cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}"
         now = time.time()
         if cache_key in RESOLVE_CACHE:
             cached_time, cached_res = RESOLVE_CACHE[cache_key]
@@ -230,7 +233,6 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps(cached_res, ensure_ascii=False).encode("utf-8"))
                 return
 
-        proxy_base = f"http://127.0.0.1:{PORT}/api/stream"
         result = None
 
         # Route 1: Anime Subtitled via ZokoAnime
@@ -426,7 +428,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 if is_m3u8 and resp.status == 200:
                     raw_playlist = resp.read().decode("utf-8", errors="ignore")
                     base_url = target_url
-                    proxy_base = f"http://127.0.0.1:{PORT}/api/stream"
+                    host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
+                    proxy_base = f"http://{host_header}/api/stream"
 
                     rewritten_lines = []
                     for line in raw_playlist.splitlines():
@@ -487,10 +490,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
 
 def run():
-    server = ThreadedHTTPServer(("127.0.0.1", PORT), DevAPIHandler)
-    print(f"[Tvzinha Local Server] Running on http://127.0.0.1:{PORT}")
-    print(f" -> Resolve: http://127.0.0.1:{PORT}/api/resolve?id=603&type=movie")
-    print(f" -> Stream:  http://127.0.0.1:{PORT}/api/stream?url=...")
+    server = ThreadedHTTPServer(("0.0.0.0", PORT), DevAPIHandler)
+    print(f"[Tvzinha Local Server] Running on all interfaces (port {PORT}):")
+    print(f" -> Localhost: http://localhost:{PORT}")
+    print(f" -> Network (Wi-Fi/Mobile): http://192.168.0.104:{PORT}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

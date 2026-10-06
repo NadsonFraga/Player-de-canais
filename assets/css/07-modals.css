@@ -54,6 +54,11 @@
     transform: scale(1.08);
 }
 
+/* Hide modal X close button when player is actively playing so it does not overlap "Fechar Player" */
+.movie-modal-card.is-playing .btn-movie-modal-close {
+    display: none !important;
+}
+
 .movie-modal-media-area {
     width: 100%;
     position: relative;

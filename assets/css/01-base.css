@@ -67,16 +67,26 @@
     box-sizing: border-box;
 }
 
-html, body {
-    height: 100%;
+html {
+    min-height: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    min-height: 100%;
     width: 100%;
     overflow-x: hidden;
+    overflow-y: auto;
     background-color: var(--bg-base);
     color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 15px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+}
+
+body.view-tv-active {
+    overflow: hidden;
 }
 
 /* Scrollbar Customization */

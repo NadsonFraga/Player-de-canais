@@ -807,3 +807,24 @@ button.hero-badge:hover,
     }
 }
 
+/* Desktop Protection: Ensure sidebar is permanently visible and mobile drawer controls hidden on PC */
+@media (min-width: 769px) {
+    .sidebar {
+        position: relative !important;
+        transform: none !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    .close-mobile {
+        display: none !important;
+    }
+    .sidebar-backdrop {
+        display: none !important;
+    }
+    .mobile-header {
+        display: none !important;
+    }
+}
+
+
