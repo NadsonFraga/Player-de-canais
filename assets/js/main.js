@@ -7,8 +7,8 @@ import { store } from './core/state.js';
 import { showToast } from './core/toast.js';
 import { initChannelsCatalog, selectChannelByName, renderChannelGridCards } from './modules/channels.js';
 import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js';
-import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal } from './modules/movies.js';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching } from './modules/series.js';
+import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal } from './modules/movies.js?v=20261006_v21';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching } from './modules/series.js?v=20261006_v21';
 import { setupSpaNavigation, switchAppView, registerViewHook } from './navigation/router.js';
 import { setupTvRemoteNavigation } from './navigation/remote.js';
 

@@ -66,6 +66,17 @@ let activeSeriesPlaying = {
     server: 'native_direct'
 };
 
+export function pauseHeroCarousels() {
+    if (heroSeriesAutoRotateTimer) {
+        clearInterval(heroSeriesAutoRotateTimer);
+        heroSeriesAutoRotateTimer = null;
+    }
+    if (heroAnimesAutoRotateTimer) {
+        clearInterval(heroAnimesAutoRotateTimer);
+        heroAnimesAutoRotateTimer = null;
+    }
+}
+
 // --- Watch Progress / History Helpers ---
 export function getStoredWatchProgress() {
     try {
@@ -1458,6 +1469,59 @@ async function executeFilteredAnimesSearch(page = 1) {
 // 3. SERIES & ANIMES DETAILS MODAL
 // ==========================================
 
+const SERIES_SERVER_OPTIONS = [
+    { id: 'native_direct', name: 'Player Nativo - Sem Anúncios (BETA)', isNative: true },
+    { id: 'native_anime',  name: 'Player Nativo Animes - Sem Anúncios (BETA)', isNative: true, animeOnly: true },
+    { id: 'mgeb',          name: 'Servidor 1 (MGEB - Principal)' },
+    { id: 'superflix',     name: 'Servidor 2 (SuperFlix)' },
+    { id: 'myembed',       name: 'Servidor 3 (MyEmbed)' },
+    { id: 'warezcdn',      name: 'Servidor 4 (WarezCDN)' },
+    { id: 'vsembed',       name: 'Servidor 5 (VsEmbed)' }
+];
+
+function renderSeriesServerButtons(showItem) {
+    const serversGrid = document.getElementById("series-servers-grid");
+    if (!serversGrid) return;
+    serversGrid.innerHTML = "";
+
+    const isAnime = Boolean(
+        (showItem.genre_ids && showItem.genre_ids.includes(16)) ||
+        (showItem.original_language === 'ja') ||
+        (showItem.origin_country && (showItem.origin_country.includes('JP') || showItem.origin_country.includes('Japan')))
+    );
+
+    const availableServers = SERIES_SERVER_OPTIONS.filter(s => !s.animeOnly || isAnime);
+
+    availableServers.forEach(server => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const isCurrentActive = activeSeriesPlaying.server === server.id;
+        btn.className = `btn-movie-server ${server.isNative ? 'native-direct' : ''} ${isCurrentActive ? 'active' : ''}`;
+        btn.dataset.server = server.id;
+        btn.innerHTML = server.isNative
+            ? `<span>${server.name}</span>`
+            : `<span>${server.name}</span><span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.85;">Reproduzir</span>`;
+
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("#series-servers-grid .btn-movie-server").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeSeriesPlaying.server = server.id;
+
+            if (activeSeriesPlaying.show) {
+                playSeriesEpisode(
+                    activeSeriesPlaying.show,
+                    activeSeriesPlaying.seasonNumber,
+                    activeSeriesPlaying.episodeNumber,
+                    activeSeriesPlaying.episodeData,
+                    activeSeriesPlaying.absoluteEpisodeNumber
+                );
+            }
+        });
+
+        serversGrid.appendChild(btn);
+    });
+}
+
 export function setupSeriesModalHandlers() {
     if (isSeriesModalHandlersInitialized) return;
     isSeriesModalHandlersInitialized = true;
@@ -1497,10 +1561,21 @@ export function setupSeriesModalHandlers() {
     if (btnPrevEp) {
         btnPrevEp.addEventListener("click", () => {
             if (activeSeriesPlaying.episodeNumber > 1) {
+                const targetEp = activeSeriesPlaying.episodeNumber - 1;
+                const curSeason = activeSeriesPlaying.seasonNumber;
+                const cachedEpisodes = cachedSeasonsMap[`${activeSeriesPlaying.show.id}_${curSeason}`] || [];
+                const targetEpData = cachedEpisodes.find(ep => ep.episode_number === targetEp) || null;
+                const prevAbs = (activeSeriesPlaying.absoluteEpisodeNumber && activeSeriesPlaying.absoluteEpisodeNumber > 1)
+                    ? activeSeriesPlaying.absoluteEpisodeNumber - 1
+                    : null;
+
+                showToast(`Voltando para Episódio ${targetEp}...`, 1200);
                 playSeriesEpisode(
                     activeSeriesPlaying.show,
-                    activeSeriesPlaying.seasonNumber,
-                    activeSeriesPlaying.episodeNumber - 1
+                    curSeason,
+                    targetEp,
+                    targetEpData,
+                    prevAbs
                 );
             }
         });
@@ -1512,12 +1587,31 @@ export function setupSeriesModalHandlers() {
             const curSeason = activeSeriesPlaying.seasonNumber;
             const cachedEpisodes = cachedSeasonsMap[`${activeSeriesPlaying.show.id}_${curSeason}`] || [];
 
-            if (currentEp < cachedEpisodes.length) {
-                showToast(`Passando para Episódio ${currentEp + 1}...`, 1200);
-                playSeriesEpisode(activeSeriesPlaying.show, curSeason, currentEp + 1);
+            if (cachedEpisodes.length > 0 && currentEp < cachedEpisodes.length) {
+                const nextEp = currentEp + 1;
+                const nextEpData = cachedEpisodes.find(ep => Number(ep.episode_number) === nextEp) || cachedEpisodes[currentEp] || null;
+                const nextAbs = activeSeriesPlaying.absoluteEpisodeNumber
+                    ? activeSeriesPlaying.absoluteEpisodeNumber + 1
+                    : null;
+
+                showToast(`Passando para Episódio ${nextEp}...`, 1200);
+                playSeriesEpisode(activeSeriesPlaying.show, curSeason, nextEp, nextEpData, nextAbs);
+            } else if (cachedEpisodes.length === 0) {
+                const nextEp = currentEp + 1;
+                const nextAbs = activeSeriesPlaying.absoluteEpisodeNumber
+                    ? activeSeriesPlaying.absoluteEpisodeNumber + 1
+                    : null;
+                showToast(`Passando para Episódio ${nextEp}...`, 1200);
+                playSeriesEpisode(activeSeriesPlaying.show, curSeason, nextEp, null, nextAbs);
             } else if (currentSeriesDetails && curSeason < currentSeriesDetails.number_of_seasons) {
                 showToast(`Iniciando Temporada ${curSeason + 1}...`, 1200);
-                playSeriesEpisode(activeSeriesPlaying.show, curSeason + 1, 1);
+                const nextSeasonEpisodes = cachedSeasonsMap[`${activeSeriesPlaying.show.id}_${curSeason + 1}`] || [];
+                const nextEpData = nextSeasonEpisodes.find(ep => Number(ep.episode_number) === 1) || nextSeasonEpisodes[0] || null;
+                const nextAbs = activeSeriesPlaying.absoluteEpisodeNumber
+                    ? activeSeriesPlaying.absoluteEpisodeNumber + 1
+                    : null;
+
+                playSeriesEpisode(activeSeriesPlaying.show, curSeason + 1, 1, nextEpData, nextAbs);
             } else {
                 showToast("Você já está no último episódio disponível!");
             }
@@ -1541,22 +1635,12 @@ export function setupSeriesModalHandlers() {
         btnCloseDrawer.addEventListener("click", () => drawer.classList.add("hidden"));
     }
 
-    document.querySelectorAll("#series-server-pills .btn-series-server-pill").forEach(pill => {
-        pill.addEventListener("click", () => {
-            document.querySelectorAll("#series-server-pills .btn-series-server-pill").forEach(p => p.classList.remove("active"));
-            pill.classList.add("active");
-            activeSeriesPlaying.server = pill.dataset.server || 'native_direct';
-
-            if (activeSeriesPlaying.show) {
-                playSeriesEpisode(
-                    activeSeriesPlaying.show,
-                    activeSeriesPlaying.seasonNumber,
-                    activeSeriesPlaying.episodeNumber,
-                    activeSeriesPlaying.episodeData
-                );
-            }
+    const theaterView = document.getElementById("series-player-view");
+    if (theaterView) {
+        theaterView.addEventListener("click", (e) => {
+            if (e.target === theaterView) stopSeriesPlayer();
         });
-    });
+    }
 
     const directPlayBtn = document.getElementById("btn-series-modal-direct-play");
     if (directPlayBtn) {
@@ -1858,7 +1942,7 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
 // --- Continuous Mode Navigation ---
 function mapAbsoluteEpisodeToSeason(seasons, absoluteEp) {
     if (!seasons || !Array.isArray(seasons) || seasons.length === 0) {
-        return { season: 1, episode: absoluteEp };
+        return { season: 1, episode: absoluteEp, absoluteEpisode: absoluteEp };
     }
 
     const regularSeasons = seasons
@@ -1866,15 +1950,17 @@ function mapAbsoluteEpisodeToSeason(seasons, absoluteEp) {
         .sort((a, b) => a.season_number - b.season_number);
 
     if (regularSeasons.length === 0) {
-        return { season: 1, episode: absoluteEp };
+        return { season: 1, episode: absoluteEp, absoluteEpisode: absoluteEp };
     }
 
     let accumulated = 0;
     for (const s of regularSeasons) {
         if (accumulated + s.episode_count >= absoluteEp) {
+            const relEp = Math.max(1, absoluteEp - accumulated);
             return {
                 season: s.season_number,
-                episode: absoluteEp,
+                episode: relEp,
+                absoluteEpisode: absoluteEp,
                 seasonName: s.name || `Temporada ${s.season_number}`
             };
         }
@@ -1882,9 +1968,12 @@ function mapAbsoluteEpisodeToSeason(seasons, absoluteEp) {
     }
 
     const lastSeason = regularSeasons[regularSeasons.length - 1];
+    const prevAccumulated = accumulated - lastSeason.episode_count;
+    const lastRelEp = Math.max(1, absoluteEp - prevAccumulated);
     return {
         season: lastSeason.season_number,
-        episode: absoluteEp,
+        episode: lastRelEp,
+        absoluteEpisode: absoluteEp,
         seasonName: lastSeason.name || `Temporada ${lastSeason.season_number}`
     };
 }
@@ -1933,8 +2022,9 @@ function renderContinuousChunk(startEp, endEp) {
         const mapped = mapAbsoluteEpisodeToSeason(seasons, epNum);
 
         const isCurrentPlaying = (activeSeriesPlaying.show && activeSeriesPlaying.show.id === currentSelectedSeries.id &&
-                                  activeSeriesPlaying.seasonNumber === mapped.season &&
-                                  activeSeriesPlaying.episodeNumber === mapped.episode);
+                                  ((activeSeriesPlaying.absoluteEpisodeNumber && activeSeriesPlaying.absoluteEpisodeNumber === epNum) ||
+                                   (activeSeriesPlaying.seasonNumber === mapped.season &&
+                                    activeSeriesPlaying.episodeNumber === mapped.episode)));
         if (isCurrentPlaying) card.classList.add("is-active-playing");
 
         const stillUrl = currentSelectedSeries.backdrop_path
@@ -1965,7 +2055,7 @@ function renderContinuousChunk(startEp, endEp) {
         const currentEpNum = epNum;
         const playAction = () => {
             const targetMapped = mapAbsoluteEpisodeToSeason(seasons, currentEpNum);
-            playSeriesEpisode(currentSelectedSeries, targetMapped.season, currentEpNum, { name: `Episódio ${currentEpNum}` });
+            playSeriesEpisode(currentSelectedSeries, targetMapped.season, targetMapped.episode, { name: `Episódio ${currentEpNum}` }, currentEpNum);
         };
 
         card.addEventListener("click", playAction);
@@ -1986,20 +2076,21 @@ function goToEpisodeByAbsoluteNumber(epNumber) {
     if (!currentSelectedSeries) return;
     const seasons = (currentSeriesDetails && currentSeriesDetails.seasons) ? currentSeriesDetails.seasons : [];
     const mapped = mapAbsoluteEpisodeToSeason(seasons, epNumber);
-    playSeriesEpisode(currentSelectedSeries, mapped.season, epNumber, { name: `Episódio ${epNumber}` });
-    showToast(`Carregando Episódio ${epNumber} (T${mapped.season}:E${epNumber})...`);
+    playSeriesEpisode(currentSelectedSeries, mapped.season, mapped.episode, { name: `Episódio ${epNumber}` }, epNumber);
+    showToast(`Carregando Episódio ${epNumber} (T${mapped.season}:E${mapped.episode})...`);
 }
 
 // ==========================================
 // 4. SERIES & ANIMES THEATER PLAYER
 // ==========================================
 
-export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData = null) {
+export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData = null, absoluteEpNumber = null) {
     if (!showItem) return;
 
     activeSeriesPlaying.show = showItem;
     activeSeriesPlaying.seasonNumber = Number(seasonNumber);
     activeSeriesPlaying.episodeNumber = Number(episodeNumber);
+    activeSeriesPlaying.absoluteEpisodeNumber = absoluteEpNumber || (epData && epData.absoluteEpisode) || null;
     activeSeriesPlaying.episodeData = epData;
 
     const detailsModal = document.getElementById("series-modal");
@@ -2011,9 +2102,51 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
     if (detailsModal) detailsModal.classList.add("hidden");
     if (theaterView) theaterView.classList.remove("hidden");
     document.body.style.overflow = "hidden";
+    pauseHeroCarousels();
 
     const showName = showItem.name || showItem.title || 'Série';
-    const epName = (epData && epData.name) ? ` – ${epData.name}` : '';
+    let epName = (epData && epData.name) ? ` – ${epData.name}` : '';
+
+    // If episode name is not available or is generic, resolve from cache or asynchronously from TMDB
+    const cacheKey = `${showItem.id}_${seasonNumber}`;
+    if (!epName || epName === ` – Episódio ${episodeNumber}`) {
+        const cached = cachedSeasonsMap[cacheKey];
+        if (cached && Array.isArray(cached) && cached.length > 0) {
+            const found = cached.find(ep => Number(ep.episode_number) === Number(episodeNumber));
+            if (found && found.name) {
+                epName = ` – ${found.name}`;
+                epData = { ...found, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
+                activeSeriesPlaying.episodeData = epData;
+            }
+        }
+    }
+
+    if (!epName || epName === ` – Episódio ${episodeNumber}`) {
+        fetchSeriesEndpoint(`tv/${showItem.id}/season/${seasonNumber}`).then(data => {
+            const epList = data.episodes || data.results || [];
+            if (epList.length > 0) {
+                cachedSeasonsMap[cacheKey] = epList;
+                const match = epList.find(ep => Number(ep.episode_number) === Number(episodeNumber));
+                if (match && match.name) {
+                    activeSeriesPlaying.episodeData = { ...match, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
+                    const currentTitleEl = document.getElementById("series-player-current-ep");
+                    const currentOverviewEl = document.getElementById("series-player-overview");
+                    if (currentTitleEl &&
+                        activeSeriesPlaying.show && String(activeSeriesPlaying.show.id) === String(showItem.id) &&
+                        Number(activeSeriesPlaying.seasonNumber) === Number(seasonNumber) &&
+                        Number(activeSeriesPlaying.episodeNumber) === Number(episodeNumber)) {
+                        currentTitleEl.textContent = `${showName} • T${seasonNumber}:E${episodeNumber} – ${match.name}`;
+                        if (currentOverviewEl && match.overview) {
+                            currentOverviewEl.textContent = match.overview;
+                        }
+                    }
+                }
+            }
+        }).catch(err => {
+            console.warn("[Series] Não foi possível obter o nome do episódio do TMDB:", err);
+        });
+    }
+
     if (currentEpTitle) {
         currentEpTitle.textContent = `${showName} • T${seasonNumber}:E${episodeNumber}${epName}`;
     }
@@ -2024,21 +2157,37 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
         (showItem.origin_country && (showItem.origin_country.includes('JP') || showItem.origin_country.includes('Japan')))
     );
 
-    const animePill = document.querySelector('#series-server-pills [data-server="native_anime"]');
-    if (animePill) {
-        if (isAnime) {
-            animePill.style.display = '';
-        } else {
-            animePill.style.display = 'none';
-            if (activeSeriesPlaying.server === 'native_anime') {
-                activeSeriesPlaying.server = 'native_direct';
-            }
-        }
+    if (!isAnime && activeSeriesPlaying.server === 'native_anime') {
+        activeSeriesPlaying.server = 'native_direct';
     }
 
-    document.querySelectorAll("#series-server-pills .btn-series-server-pill").forEach(p => {
-        p.classList.toggle("active", p.dataset.server === activeSeriesPlaying.server);
-    });
+    renderSeriesServerButtons(showItem);
+
+    // Populate show details below server grid
+    const showTitleEl = document.getElementById("series-player-show-title");
+    const metaBadgeEl = document.getElementById("series-player-meta-badge");
+    const ratingBadgeEl = document.getElementById("series-player-rating-badge");
+    const genresEl = document.getElementById("series-player-genres");
+    const overviewEl = document.getElementById("series-player-overview");
+
+    if (showTitleEl) showTitleEl.textContent = showName;
+    if (metaBadgeEl) {
+        const year = (showItem.first_air_date || showItem.release_date || '').substring(0, 4) || 'Série';
+        metaBadgeEl.textContent = `${year} • T${seasonNumber}:E${episodeNumber}`;
+    }
+    if (ratingBadgeEl) {
+        const vote = showItem.vote_average ? showItem.vote_average.toFixed(1) : '8.0';
+        ratingBadgeEl.textContent = `★ ${vote}`;
+    }
+    if (genresEl) {
+        genresEl.innerHTML = (showItem.genre_ids || []).slice(0, 3).map(id => {
+            const name = TMDB_GENRES[id];
+            return name ? `<span class="movie-modal-badge">${name}</span>` : '';
+        }).join('');
+    }
+    if (overviewEl) {
+        overviewEl.textContent = epData?.overview || showItem.overview || "Sinopse não disponível em português.";
+    }
 
     const seriesArt = document.getElementById("series-artplayer-container");
     const seriesLoader = document.getElementById("series-theater-loader");
@@ -2060,12 +2209,16 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
         const isAnimeMode = serverKey === 'native_anime';
         const mediaType = isAnimeMode ? "anime" : "serie";
         const lang = isAnimeMode ? "sub" : "dub";
+        // For native_anime (ZokoAnime), provide absolute episode if available; for native_direct (MGEB), provide season-relative episode
+        const resolvedEp = (isAnimeMode && (activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode))
+            ? (activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode)
+            : episodeNumber;
 
         resolveDirectStream({
             id: showItem.id,
             type: mediaType,
             season: seasonNumber,
-            episode: episodeNumber,
+            episode: resolvedEp,
             lang: lang,
             title: showName
         }).then(data => {

@@ -22,6 +22,40 @@ if (typeof window !== 'undefined') {
 }
 
 /**
+ * Automatically locks mobile device orientation to landscape upon entering True Fullscreen,
+ * and restores default orientation upon exit (Android / Chromium Screen Orientation API).
+ */
+export function setupMobileOrientationLock(art) {
+    if (!art) return;
+    art.on('fullscreen', (isFullscreen) => {
+        if (isFullscreen) {
+            if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(() => {
+                    // Gracefully ignored on platforms without orientation lock support (e.g. iOS WebKit)
+                });
+            }
+        } else {
+            if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.unlock) {
+                try {
+                    screen.orientation.unlock();
+                } catch (e) {}
+            }
+        }
+    });
+}
+
+// Fallback document listener to guarantee orientation unlocks upon back gesture or system exit
+if (typeof document !== 'undefined') {
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && typeof screen !== 'undefined' && screen.orientation && screen.orientation.unlock) {
+            try {
+                screen.orientation.unlock();
+            } catch (e) {}
+        }
+    });
+}
+
+/**
  * Resets the TV player instances, timers, and containers cleanly
  */
 export function atomicTvPlayerReset() {
@@ -304,7 +338,7 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
             volume: 0.9,
             muted: false,
             fullscreen: true,
-            fullscreenWeb: true,
+            fullscreenWeb: false,
             pip: true,
             setting: true,
             loop: false,
@@ -441,6 +475,9 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
                 syncToLiveEdge(art, window.tvHlsInstance, tvContainer);
             }
         });
+
+        window.tvArtInstance = art;
+        setupMobileOrientationLock(art);
 
         // Artplayer Life-Cycle Events
         art.on('ready', () => {
@@ -616,7 +653,7 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
             autoMini: true,
             theme: '#22c55e',
             fullscreen: true,
-            fullscreenWeb: true,
+            fullscreenWeb: false,
             pip: true,
             setting: true,
             flip: true,
@@ -624,6 +661,18 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
             aspectRatio: true,
             hotkey: true,
             airplay: true,
+            subtitle: (subtitles && Array.isArray(subtitles) && subtitles.length > 0) ? {
+                url: subtitles[0].url || subtitles[0].file,
+                type: 'vtt',
+                escape: false,
+                style: {
+                    color: '#ffffff',
+                    fontSize: '20px',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.9)',
+                    fontWeight: '600'
+                },
+                encoding: 'utf-8',
+            } : {},
             customType: {
                 m3u8: function (video, url, artInstance) {
                     if (window.Hls && window.Hls.isSupported()) {
@@ -632,13 +681,39 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
                         }
                         const hls = new window.Hls({
                             enableWorker: true,
-                            backBufferLength: 90
+                            backBufferLength: 60,
+                            maxBufferLength: 30,
+                            maxMaxBufferLength: 60
                         });
                         hls.loadSource(url);
                         hls.attachMedia(video);
                         window.hlsInstance = hls;
 
+                        let audioSettingsRegistered = false;
+                        const registerAudioTracks = () => {
+                            if (audioSettingsRegistered || !hls.audioTracks || hls.audioTracks.length <= 1) return;
+                            audioSettingsRegistered = true;
+                            const audioOptions = hls.audioTracks.map((trk, idx) => ({
+                                default: idx === hls.audioTrack,
+                                html: trk.name || trk.lang || `Áudio ${idx + 1}`,
+                                trackIndex: idx
+                            }));
+
+                            artInstance.setting.add({
+                                id: 'audio-selector',
+                                name: 'Áudio',
+                                width: 150,
+                                tooltip: hls.audioTracks[hls.audioTrack]?.name || 'Padrão',
+                                selector: audioOptions,
+                                onSelect: function (item) {
+                                    hls.audioTrack = item.trackIndex;
+                                    return item.html;
+                                }
+                            });
+                        };
+
                         hls.on(window.Hls.Events.MANIFEST_PARSED, (event, data) => {
+                            markStreamSuccess();
                             if (data.levels && data.levels.length > 1) {
                                 const qualities = data.levels.map((lvl, idx) => ({
                                     default: idx === hls.currentLevel,
@@ -659,6 +734,11 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
                                     }
                                 });
                             }
+                            registerAudioTracks();
+                        });
+
+                        hls.on(window.Hls.Events.AUDIO_TRACKS_UPDATED, () => {
+                            registerAudioTracks();
                         });
 
                         hls.on(window.Hls.Events.ERROR, (event, data) => {
@@ -678,19 +758,67 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
                         });
                     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                         video.src = url;
+                        video.addEventListener('loadedmetadata', () => {
+                            markStreamSuccess();
+                        }, { once: true });
                     }
                 }
             }
         });
 
         window.artInstance = art;
+        setupMobileOrientationLock(art);
 
-        // Restore start time (watch history)
-        if (startTime > 0) {
-            art.on('ready', () => {
+        // Artplayer Life-Cycle Events & Mobile Autoplay Policy Safe Handling
+        art.on('ready', () => {
+            if (startTime > 0) {
                 art.currentTime = startTime;
-            });
-        }
+            }
+
+            if (subtitles && Array.isArray(subtitles) && subtitles.length > 0) {
+                const subOptions = subtitles.map((sub, idx) => ({
+                    default: idx === 0,
+                    html: sub.label || sub.name || `Legenda ${idx + 1}`,
+                    url: sub.url || sub.file
+                }));
+                subOptions.unshift({ default: false, html: 'Desativada', url: '' });
+
+                art.setting.add({
+                    id: 'subtitle-selector',
+                    name: 'Legendas',
+                    width: 160,
+                    tooltip: subOptions[1]?.html || 'Ativada',
+                    selector: subOptions,
+                    onSelect: function (item) {
+                        if (!item.url) {
+                            art.subtitle.show = false;
+                        } else {
+                            art.subtitle.switch(item.url, { name: item.html });
+                            art.subtitle.show = true;
+                        }
+                        return item.html;
+                    }
+                });
+            }
+
+            const playPromise = art.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(err => {
+                    if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
+                        console.log("[PlayerEngine] Autoplay travado pela política móvel. Vídeo pronto para toque.");
+                        markStreamSuccess();
+                    }
+                });
+            }
+        });
+
+        art.on('video:loadedmetadata', () => {
+            markStreamSuccess();
+        });
+
+        art.on('video:canplay', () => {
+            markStreamSuccess();
+        });
 
         art.on('video:playing', () => {
             markStreamSuccess();

@@ -12,7 +12,8 @@ for root, dirs, files in os.walk('assets/js'):
             imports = re.findall(r'from\s+[\'"]([^\'"]+)[\'"]', content)
             for imp in imports:
                 rel_dir = os.path.dirname(p)
-                target = os.path.normpath(os.path.join(rel_dir, imp))
+                imp_clean = imp.split('?')[0]
+                target = os.path.normpath(os.path.join(rel_dir, imp_clean))
                 if not os.path.exists(target):
                     print(f"MISSING IMPORT in {p}: {imp} -> {target}")
                     errors += 1
