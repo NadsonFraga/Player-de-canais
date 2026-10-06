@@ -3,8 +3,18 @@ import os
 import sys
 
 def main():
-    transcript_path = r"C:\Users\ratew\.gemini\antigravity-ide\brain\bdf3e244-9820-4c3b-b692-f58edde26c4e\.system_generated\logs\transcript_full.jsonl"
-    output_dir = r"c:\Users\ratew\OneDrive\Área de Trabalho\PESSOAL\CODE\ANTIGRAVITY\PROJETO1 - TV\docs"
+    default_conv_id = "0746a65b-b4b5-4090-a934-5a5449e9197c"
+    conv_id = sys.argv[1] if len(sys.argv) > 1 else default_conv_id
+
+    user_home = os.path.expanduser("~")
+    base_brain = os.path.join(user_home, ".gemini", "antigravity-ide", "brain", conv_id, ".system_generated", "logs")
+    transcript_path = os.path.join(base_brain, "transcript_full.jsonl")
+    if not os.path.exists(transcript_path):
+        transcript_path = os.path.join(base_brain, "transcript.jsonl")
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
+    output_dir = os.path.join(project_root, "docs")
     os.makedirs(output_dir, exist_ok=True)
     
     md_output_path = os.path.join(output_dir, "CHAT_HISTORY.md")
@@ -27,8 +37,8 @@ def main():
         "# Complete Chat History / Transcript",
         "",
         "> **Project**: Tvzinha Web App",
-        f"> **Conversation ID**: `bdf3e244-9820-4c3b-b692-f58edde26c4e`",
-        "> **Export Date**: 2026-10-05",
+        f"> **Conversation ID**: `{conv_id}`",
+        "> **Export Date**: 2026-10-06",
         "",
         "---",
         ""
@@ -41,7 +51,7 @@ def main():
                 continue
             try:
                 entry = json.loads(line)
-            except Exception as e:
+            except Exception:
                 continue
 
             entry_type = entry.get("type", "")
@@ -72,7 +82,6 @@ def main():
                     md_lines.append("---")
                     md_lines.append("")
                 elif tool_calls:
-                    # Summarize tool calls cleanly if there's no direct message
                     tool_names = [tc.get("toolAction") or tc.get("toolSummary") or tc.get("name", "tool") for tc in tool_calls]
                     if tool_names:
                         md_lines.append(f"*Action ({step_index}): {', '.join(filter(None, tool_names))}*")

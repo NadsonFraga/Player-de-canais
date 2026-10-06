@@ -157,6 +157,12 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         if content_type:
             self.send_header("Content-Type", content_type)
 
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
     def do_OPTIONS(self):
         self.send_cors_headers(204, content_type=None)
         self.send_header("Access-Control-Max-Age", "86400")
@@ -453,6 +459,19 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
                     body = "\n".join(rewritten_lines).encode("utf-8")
                     self.send_cors_headers(resp.status, "application/vnd.apple.mpegurl; charset=utf-8")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    if not is_head:
+                        self.wfile.write(body)
+                    return
+
+                is_vtt = ".vtt" in target_url or "text/vtt" in content_type.lower()
+                if is_vtt and resp.status == 200:
+                    raw_vtt = resp.read().decode("utf-8", errors="ignore")
+                    # Clean raw formatting tags like <i>, </i>, <b>, </b> from VTT cues
+                    cleaned_vtt = re.sub(r'</?[a-zA-Z][^>]*>', '', raw_vtt)
+                    body = cleaned_vtt.encode("utf-8")
+                    self.send_cors_headers(resp.status, "text/vtt; charset=utf-8")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
                     if not is_head:

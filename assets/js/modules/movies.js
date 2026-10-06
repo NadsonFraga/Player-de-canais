@@ -1177,7 +1177,10 @@ export function selectMovieServer(server, buttonElement = null) {
     const modalCard = document.querySelector(".movie-modal-card");
     const movieLoader = document.getElementById("movie-player-loader");
 
-    if (serverTitle) serverTitle.textContent = server.name;
+    if (serverTitle) {
+        serverTitle.textContent = currentSelectedMovie.title || server.name;
+        serverTitle.title = currentSelectedMovie.title || server.name;
+    }
     if (backdropBox) backdropBox.classList.add("hidden");
     if (playerContainer) playerContainer.classList.remove("hidden");
     if (modalCard) modalCard.classList.add("is-playing");

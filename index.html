@@ -122,16 +122,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261005_v14">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261005_v14">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261005_v14">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261005_v14">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261005_v14">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261005_v14">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261005_v14">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261005_v14">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261005_v14">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261005_v14">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261005_v20">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261005_v20">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261005_v20">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261005_v20">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261005_v20">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261005_v20">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261005_v20">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261005_v20">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261005_v20">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261005_v20">
 </head>
 
 <body>
@@ -1685,12 +1685,14 @@
                             </button>
                         </div>
                     </div>
-                    <div id="movie-player-loader" class="video-loader-overlay hidden">
-                        <div class="spinner"></div>
-                        <span>Carregando filme...</span>
+                    <div class="movie-player-stage">
+                        <div id="movie-player-loader" class="video-loader-overlay hidden">
+                            <div class="spinner"></div>
+                            <span>Carregando filme...</span>
+                        </div>
+                        <div id="movie-artplayer-container" class="movie-artplayer-stage hidden"></div>
+                        <iframe id="movie-modal-iframe" class="movie-modal-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
                     </div>
-                    <div id="movie-artplayer-container" class="movie-artplayer-stage hidden"></div>
-                    <iframe id="movie-modal-iframe" class="movie-modal-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
                 </div>
             </div>
 
@@ -1827,57 +1829,56 @@
         </div>
     </div>
 
-    <!-- Dedicated Fullscreen Theater View for Series and Animes Episodes -->
-    <div id="series-player-view" class="series-theater-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="series-player-current-ep">
-        <div class="series-theater-container">
-            <!-- Theater Top Bar -->
-            <div class="series-theater-top-bar">
-                <div class="series-theater-title-group">
-                    <span class="pulse-dot theater-dot"></span>
-                    <h2 id="series-player-current-ep" class="series-theater-title">Carregando episódio...</h2>
-                </div>
-                <div class="series-theater-actions">
-                    <button id="btn-reload-series-player" class="btn-player-action-mini" title="Recarregar player">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <polyline points="1 20 1 14 7 14"></polyline>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                        </svg>
-                        <span>Recarregar</span>
-                    </button>
-                    <button id="btn-close-series-player" class="btn-player-action-mini danger" title="Fechar player e voltar aos episódios">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                        <span>Voltar aos Episódios</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Central Theater Stage (Generous 16:9 Big Size) -->
-            <div class="series-theater-stage">
-                <div id="series-theater-loader" class="video-loader-overlay hidden">
-                    <div class="spinner"></div>
-                    <span>Carregando reprodução...</span>
-                </div>
-                <div id="series-artplayer-container" class="series-artplayer-stage hidden"></div>
-                <iframe id="series-modal-iframe" class="series-theater-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
-                
-                <!-- Floating Episode Quick Drawer on top of player -->
-                <div id="series-player-drawer" class="series-player-drawer hidden">
-                    <div class="series-drawer-header">
-                        <span>Episódios da Temporada</span>
-                        <button id="btn-close-series-drawer" class="btn-close-drawer">&times;</button>
+    <!-- Dedicated Unified Modal Player View for Series and Animes Episodes -->
+    <div id="series-player-view" class="movie-modal-backdrop series-player-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="series-player-current-ep">
+        <div class="movie-modal-card series-player-modal-card is-playing">
+            <!-- Media / Player Area -->
+            <div class="movie-modal-media-area series-modal-media-area">
+                <div class="movie-player-top-bar series-player-top-bar">
+                    <span id="series-player-current-ep" class="movie-player-server-title series-player-header-title">Carregando episódio...</span>
+                    <div class="movie-player-actions series-player-actions">
+                        <button id="btn-reload-series-player" class="btn-player-action-mini" title="Recarregar player">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Recarregar</span>
+                        </button>
+                        <button id="btn-close-series-player" class="btn-player-action-mini danger" title="Fechar player e voltar aos episódios">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span>Voltar aos Episódios</span>
+                        </button>
                     </div>
-                    <div id="series-drawer-list" class="series-drawer-list">
-                        <!-- Dynamic drawer items -->
+                </div>
+
+                <div class="movie-player-stage series-theater-stage">
+                    <div id="series-theater-loader" class="video-loader-overlay hidden">
+                        <div class="spinner"></div>
+                        <span>Carregando reprodução...</span>
+                    </div>
+                    <div id="series-artplayer-container" class="series-artplayer-stage hidden"></div>
+                    <iframe id="series-modal-iframe" class="movie-modal-iframe series-theater-iframe" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
+                    
+                    <!-- Floating Episode Quick Drawer on top of player -->
+                    <div id="series-player-drawer" class="series-player-drawer hidden">
+                        <div class="series-drawer-header">
+                            <span>Episódios da Temporada</span>
+                            <button id="btn-close-series-drawer" class="btn-close-drawer">&times;</button>
+                        </div>
+                        <div id="series-drawer-list" class="series-drawer-list">
+                            <!-- Dynamic drawer items -->
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Attached Controls Toolbar (Always Visible) -->
-            <div class="series-player-bottom-bar">
+            <!-- Series Modal Body (Controls, Servers, Details) -->
+            <div class="movie-modal-body series-player-body">
+                <!-- Episode Navigation Buttons -->
                 <div class="series-ep-nav-buttons">
                     <button id="btn-series-prev-ep" class="btn-player-control" title="Episódio Anterior" disabled>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -1905,17 +1906,29 @@
                         </svg>
                     </button>
                 </div>
-                <div class="series-servers-selector" id="series-servers-selector">
-                    <span class="server-label">Servidor:</span>
-                    <div class="series-server-pills" id="series-server-pills">
-                        <button class="btn-series-server-pill active" data-server="native_direct" type="button" title="Player Nativo Direto sem anúncios (BETA)">Player Nativo - Sem Anúncios (BETA)</button>
-                        <button class="btn-series-server-pill" data-server="native_anime" type="button" title="Player Nativo Especializado em Animes (BETA)">Player Nativo Animes - Sem Anúncios (BETA)</button>
-                        <button class="btn-series-server-pill" data-server="mgeb" type="button">MGEB</button>
-                        <button class="btn-series-server-pill" data-server="superflix" type="button">Superflix</button>
-                        <button class="btn-series-server-pill" data-server="myembed" type="button">MyEmbed</button>
-                        <button class="btn-series-server-pill" data-server="warezcdn" type="button">Warez</button>
-                        <button class="btn-series-server-pill" data-server="vsembed" type="button">VsEmbed</button>
+
+                <!-- Servers Grid matching Movies -->
+                <div class="movie-servers-section series-servers-section">
+                    <div class="movie-servers-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <span>Selecione um Servidor para Reproduzir:</span>
                     </div>
+                    <div id="series-servers-grid" class="movie-servers-grid">
+                        <!-- Populated dynamically matching movie cards -->
+                    </div>
+                </div>
+
+                <!-- Series and Episode Details Section -->
+                <div class="movie-modal-header-info series-player-info">
+                    <h2 id="series-player-show-title" class="movie-modal-title"></h2>
+                    <div class="movie-modal-meta-row">
+                        <span id="series-player-meta-badge" class="movie-modal-badge"></span>
+                        <span id="series-player-rating-badge" class="movie-modal-badge rating"></span>
+                        <div id="series-player-genres" class="movie-modal-genres"></div>
+                    </div>
+                    <p id="series-player-overview" class="movie-modal-overview"></p>
                 </div>
             </div>
         </div>
@@ -1929,7 +1942,7 @@
     <script src="https://cdn.jsdelivr.net/npm/artplayer@5.1.7/dist/artplayer.js"></script>
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261005_v14"></script>
+    <script type="module" src="assets/js/main.js?v=20261006_v21"></script>
 </body>
 
 </html>

@@ -685,24 +685,6 @@ export function renderPlayerView(activeChannel) {
     const isFav = store.isFavorite(name, category);
     const isDirect = serverType === 'direct';
 
-    const statusBadgeHtml = isDirect ? `
-        <div class="player-shield-badge native-badge" title="Transmissão direta HLS ativa sem anúncios">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                <polyline points="9 12 11 14 15 10"></polyline>
-            </svg>
-            <span style="color:#4ade80;">HLS Direto Nativo</span>
-        </div>
-    ` : `
-        <div class="player-shield-badge contingency-badge" title="Contingência Web via Iframe com Proteção Ativa">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                <polyline points="9 12 11 14 15 10"></polyline>
-            </svg>
-            <span style="color:#fbbf24;">Contingência Web</span>
-        </div>
-    `;
-
     contentDisplay.innerHTML = `
         <div class="player-view-container">
             <!-- Player Header Toolbar -->
@@ -722,7 +704,6 @@ export function renderPlayerView(activeChannel) {
                     </div>
                 </div>
                 <div class="player-toolbar">
-                    ${statusBadgeHtml}
                     <button id="btn-reload-player" class="btn-player-action" title="Recarregar Transmissão">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="23 4 23 10 17 10"></polyline>
