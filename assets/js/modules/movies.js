@@ -42,7 +42,34 @@ if (typeof window !== 'undefined') {
             clearTimeout(pendingMovieIframeTimer);
             pendingMovieIframeTimer = null;
         }
+        removeMovieIframe();
     });
+}
+
+function getOrCreateMovieIframe() {
+    let iframe = document.getElementById("movie-modal-iframe");
+    if (!iframe) {
+        const stage = document.querySelector(".movie-player-stage");
+        if (!stage) return null;
+        iframe = document.createElement("iframe");
+        iframe.id = "movie-modal-iframe";
+        iframe.className = "movie-modal-iframe";
+        iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+        iframe.setAttribute("allowfullscreen", "");
+        iframe.setAttribute("webkitallowfullscreen", "");
+        iframe.setAttribute("mozallowfullscreen", "");
+        iframe.setAttribute("referrerpolicy", "no-referrer");
+        stage.appendChild(iframe);
+    }
+    return iframe;
+}
+
+function removeMovieIframe() {
+    const iframe = document.getElementById("movie-modal-iframe");
+    if (iframe) {
+        iframe.src = "";
+        iframe.remove();
+    }
 }
 
 let activeFilterGenre = '';
@@ -1125,10 +1152,9 @@ export function setupMovieModal() {
             const wasPlaying = (modalCard && modalCard.classList.contains("is-playing")) || (playerContainer && !playerContainer.classList.contains("hidden"));
 
             atomicPlayerReset();
+            removeMovieIframe();
             const backdropBox = document.getElementById("movie-modal-backdrop-box");
-            const iframe = document.getElementById("movie-modal-iframe");
 
-            if (iframe) iframe.src = "";
             if (playerContainer) playerContainer.classList.add("hidden");
             if (backdropBox) backdropBox.classList.remove("hidden");
             if (modalCard) modalCard.classList.remove("is-playing");
@@ -1147,11 +1173,10 @@ export function openMovieDetailsModal(movie, autoplayFirstServer = false) {
     const modal = document.getElementById("movie-modal");
     if (!modal) return;
 
+    removeMovieIframe();
     const playerContainer = document.getElementById("movie-modal-player-container");
     const backdropBox = document.getElementById("movie-modal-backdrop-box");
-    const iframe = document.getElementById("movie-modal-iframe");
     const modalCard = document.querySelector(".movie-modal-card");
-    if (iframe) iframe.src = "";
     if (playerContainer) playerContainer.classList.add("hidden");
     if (backdropBox) backdropBox.classList.remove("hidden");
     if (modalCard) modalCard.classList.remove("is-playing");
@@ -1251,7 +1276,6 @@ export function selectMovieServer(server, buttonElement = null) {
     const playerContainer = document.getElementById("movie-modal-player-container");
     const backdropBox = document.getElementById("movie-modal-backdrop-box");
     const serverTitle = document.getElementById("movie-player-server-title");
-    const iframe = document.getElementById("movie-modal-iframe");
     const movieArt = document.getElementById("movie-artplayer-container");
     const modalCard = document.querySelector(".movie-modal-card");
     const movieLoader = document.getElementById("movie-player-loader");
@@ -1269,10 +1293,7 @@ export function selectMovieServer(server, buttonElement = null) {
     }
 
     if (server.isNative) {
-        if (iframe) {
-            iframe.src = "about:blank";
-            iframe.classList.add("hidden");
-        }
+        removeMovieIframe();
         if (movieLoader) movieLoader.classList.remove("hidden");
 
         resolveDirectStream({
@@ -1338,6 +1359,7 @@ export function selectMovieServer(server, buttonElement = null) {
         movieArt.innerHTML = "";
         movieArt.classList.add("hidden");
     }
+    const iframe = getOrCreateMovieIframe();
     if (iframe) {
         if (window.tvzinhaArmIframeGuard) window.tvzinhaArmIframeGuard(iframe);
         if (window.tvzinhaSetContingencyState) window.tvzinhaSetContingencyState(true);
@@ -1345,7 +1367,6 @@ export function selectMovieServer(server, buttonElement = null) {
         if (movieLoader) movieLoader.classList.remove("hidden");
 
         const embedUrl = server.buildUrl(currentSelectedMovie.id);
-        iframe.src = "about:blank";
         pendingMovieIframeTimer = setTimeout(() => {
             const currentModal = document.getElementById("movie-modal");
             if (currentSessionId !== moviePlaybackSessionId || !currentModal || currentModal.classList.contains("hidden")) {
@@ -1353,13 +1374,11 @@ export function selectMovieServer(server, buttonElement = null) {
                 return;
             }
             iframe.src = embedUrl;
-        }, 60);
+        }, 30);
 
         iframe.onload = () => {
-            if (iframe.src && !iframe.src.endsWith("about:blank")) {
-                if (movieLoader) movieLoader.classList.add("hidden");
-                setPlaybackActiveState(true);
-            }
+            if (movieLoader) movieLoader.classList.add("hidden");
+            setPlaybackActiveState(true);
         };
         setTimeout(() => {
             if (movieLoader) movieLoader.classList.add("hidden");

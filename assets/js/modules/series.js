@@ -82,7 +82,34 @@ if (typeof window !== 'undefined') {
             clearTimeout(pendingSeriesIframeTimer);
             pendingSeriesIframeTimer = null;
         }
+        removeSeriesIframe();
     });
+}
+
+function getOrCreateSeriesIframe() {
+    let iframe = document.getElementById("series-modal-iframe");
+    if (!iframe) {
+        const stage = document.querySelector(".series-theater-stage");
+        if (!stage) return null;
+        iframe = document.createElement("iframe");
+        iframe.id = "series-modal-iframe";
+        iframe.className = "movie-modal-iframe series-theater-iframe";
+        iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+        iframe.setAttribute("allowfullscreen", "");
+        iframe.setAttribute("webkitallowfullscreen", "");
+        iframe.setAttribute("mozallowfullscreen", "");
+        iframe.setAttribute("referrerpolicy", "no-referrer");
+        stage.appendChild(iframe);
+    }
+    return iframe;
+}
+
+function removeSeriesIframe() {
+    const iframe = document.getElementById("series-modal-iframe");
+    if (iframe) {
+        iframe.src = "";
+        iframe.remove();
+    }
 }
 
 export function pauseHeroCarousels() {
@@ -1856,15 +1883,14 @@ export function closeSeriesModal() {
     }
     setPlaybackActiveState(false);
     atomicPlayerReset();
+    removeSeriesIframe();
 
     const modal = document.getElementById("series-modal");
     const theaterView = document.getElementById("series-player-view");
-    const iframe = document.getElementById("series-modal-iframe");
     const seriesLoader = document.getElementById("series-theater-loader");
     const drawer = document.getElementById("series-player-drawer");
 
     const wasOpen = modal && !modal.classList.contains("hidden");
-    if (iframe) iframe.src = "about:blank";
     if (seriesLoader) seriesLoader.classList.add("hidden");
     if (theaterView) theaterView.classList.add("hidden");
     if (drawer) drawer.classList.add("hidden");
@@ -2183,7 +2209,6 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
     const detailsModal = document.getElementById("series-modal");
     const theaterView = document.getElementById("series-player-view");
     const currentEpTitle = document.getElementById("series-player-current-ep");
-    const iframe = document.getElementById("series-modal-iframe");
     const btnPrev = document.getElementById("btn-series-prev-ep");
 
     if (detailsModal) detailsModal.classList.add("hidden");
@@ -2290,13 +2315,10 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
     // Route A: Native Direct Player
     if (serverKey === 'native_direct' || serverKey === 'native_anime') {
         atomicPlayerReset();
+        removeSeriesIframe();
         if (seriesArt) {
             seriesArt.innerHTML = "";
             seriesArt.classList.add("hidden");
-        }
-        if (iframe) {
-            iframe.src = "about:blank";
-            iframe.classList.add("hidden");
         }
         if (seriesLoader) seriesLoader.classList.remove("hidden");
 
@@ -2376,6 +2398,7 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
         // Route B: Iframe Alternative Servers
         atomicPlayerReset();
         if (seriesArt) seriesArt.classList.add("hidden");
+        const iframe = getOrCreateSeriesIframe();
         if (iframe) {
             if (window.tvzinhaArmIframeGuard) {
                 window.tvzinhaArmIframeGuard(iframe);
@@ -2389,20 +2412,17 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
             const serverDef = SERIES_SERVERS[serverKey] || SERIES_SERVERS.mgeb;
             const embedUrl = serverDef.buildUrl(showItem.id, seasonNumber, episodeNumber);
 
-            iframe.src = "about:blank";
             pendingSeriesIframeTimer = setTimeout(() => {
                 if (currentSessionId !== seriesPlaybackSessionId || !theaterView || theaterView.classList.contains("hidden")) {
                     console.warn("[Series] Abortando carregamento de iframe: janela fechada antes de montar.");
                     return;
                 }
                 iframe.src = embedUrl;
-            }, 60);
+            }, 30);
 
             iframe.onload = () => {
-                if (iframe.src && !iframe.src.endsWith("about:blank")) {
-                    if (seriesLoader) seriesLoader.classList.add("hidden");
-                    setPlaybackActiveState(true);
-                }
+                if (seriesLoader) seriesLoader.classList.add("hidden");
+                setPlaybackActiveState(true);
             };
             setTimeout(() => {
                 if (seriesLoader) seriesLoader.classList.add("hidden");
@@ -2465,13 +2485,12 @@ export function stopSeriesPlayer() {
     }
     setPlaybackActiveState(false);
     atomicPlayerReset();
+    removeSeriesIframe();
     const theaterView = document.getElementById("series-player-view");
-    const iframe = document.getElementById("series-modal-iframe");
     const seriesLoader = document.getElementById("series-theater-loader");
     const drawer = document.getElementById("series-player-drawer");
 
     const wasTheaterOpen = theaterView && !theaterView.classList.contains("hidden");
-    if (iframe) iframe.src = "";
     if (seriesLoader) seriesLoader.classList.add("hidden");
     if (theaterView) theaterView.classList.add("hidden");
     if (drawer) drawer.classList.add("hidden");
