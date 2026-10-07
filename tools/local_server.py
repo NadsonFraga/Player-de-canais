@@ -97,35 +97,122 @@ def fetch_zoko(mal_id: str, episode: int = 1):
         print(f"[LocalServer] Error fetching ZokoAnime: {e}", file=sys.stderr)
         return None
 
-def fetch_mal_id_from_title(title: str):
-    # Method 1: Fast official MyAnimeList prefix search
-    try:
-        clean_title = re.sub(r'\(.*?\)|\[.*?\]', '', title).strip()
-        encoded = urllib.parse.quote(clean_title)
-        url = f"https://myanimelist.net/search/prefix.json?type=anime&keyword={encoded}"
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-        with urllib.request.urlopen(req, timeout=5) as res:
-            data = json.loads(res.read().decode("utf-8"))
-        categories = data.get("categories", [])
-        if categories and categories[0].get("items"):
-            mal_id = categories[0]["items"][0].get("id")
-            if mal_id:
-                return mal_id
-    except Exception as e:
-        print(f"[LocalServer] MAL prefix search error: {e}", file=sys.stderr)
+MAL_PREFIX_CACHE = {}
 
-    # Method 2: Jikan API fallback
+def search_mal_prefix(keyword: str):
+    clean_kw = keyword.strip()
+    if clean_kw in MAL_PREFIX_CACHE:
+        return MAL_PREFIX_CACHE[clean_kw]
     try:
-        encoded = urllib.parse.quote(title)
-        url = f"https://api.jikan.moe/v4/anime?q={encoded}&limit=1"
+        encoded = urllib.parse.quote(clean_kw)
+        url = f"https://myanimelist.net/search/prefix.json?type=anime&keyword={encoded}"
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
         with urllib.request.urlopen(req, timeout=5) as res:
             data = json.loads(res.read().decode("utf-8"))
-        if data.get("data") and len(data["data"]) > 0:
-            return data["data"][0].get("mal_id")
+        items = []
+        for cat in data.get("categories", []):
+            if cat.get("type") == "anime":
+                items.extend(cat.get("items", []))
+        MAL_PREFIX_CACHE[clean_kw] = items
+        return items
     except Exception as e:
-        print(f"[LocalServer] MAL ID search error: {e}", file=sys.stderr)
-    return None
+        print(f"[LocalServer] MAL prefix search error for '{keyword}': {e}", file=sys.stderr)
+        return []
+
+def fetch_mal_id_from_title(title: str, season: int = 1, season_name: str = ""):
+    clean_title = re.sub(r'\(.*?\)|\[.*?\]', '', title).strip()
+    
+    clean_sname = ""
+    if season_name:
+        sname_cand = re.sub(r'^(Temporada|Season)\s*\d+[:\-]?\s*', '', season_name, flags=re.I).strip()
+        if sname_cand.lower() not in ["especiais", "specials", "temporada", "season", ""] and len(sname_cand) > 2:
+            clean_sname = sname_cand
+
+    # Build prioritized query list
+    queries = []
+    if clean_sname:
+        queries.append((f"{clean_title} {clean_sname}", 50))
+        queries.append((clean_sname, 40))
+    
+    if season > 1:
+        queries.append((f"{clean_title} Season {season}", 35))
+        queries.append((f"{clean_title} Part {season}", 35))
+        suffix = "nd" if season == 2 else "rd" if season == 3 else "th"
+        queries.append((f"{clean_title} {season}{suffix} Season", 30))
+
+    queries.append((clean_title, 10))
+
+    candidates = []
+    seen = set()
+
+    for q_text, q_priority in queries:
+        items = search_mal_prefix(q_text)
+        for idx, it in enumerate(items[:6]):
+            iid = it.get("id")
+            if iid and iid not in seen:
+                seen.add(iid)
+                rank_bonus = max(0, 15 - idx * 3)
+                candidates.append((it, q_priority + rank_bonus))
+        if len(candidates) >= 12:
+            break
+
+    if not candidates:
+        # Fallback to Jikan API search
+        try:
+            encoded = urllib.parse.quote(f"{clean_title} {clean_sname}".strip())
+            url = f"https://api.jikan.moe/v4/anime?q={encoded}&limit=1"
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=5) as res:
+                data = json.loads(res.read().decode("utf-8"))
+            if data.get("data") and len(data["data"]) > 0:
+                return data["data"][0].get("mal_id")
+        except Exception as e:
+            print(f"[LocalServer] Jikan fallback error: {e}", file=sys.stderr)
+        return None
+
+    if season == 1 and not clean_sname:
+        return candidates[0][0].get("id")
+
+    def score_item(cand_tuple):
+        cand, base_score = cand_tuple
+        c_name = cand.get("name", "").lower()
+        payload = cand.get("payload") or {}
+        mtype = str(payload.get("media_type", "")).upper()
+        pts = base_score
+
+        if mtype in ["TV", "ONA"]:
+            pts += 40
+        elif mtype in ["SPECIAL", "TV SPECIAL", "OVA", "MOVIE"]:
+            pts -= 35
+
+        # Heavy penalty for recaps, summaries, PVs, pilots
+        if any(bad in c_name for bad in ["pilot", "kanketsu-hen", "recap", "summary", "preview", "remix", "music", "special"]):
+            pts -= 60
+
+        if clean_sname:
+            s_words = [w.lower() for w in re.findall(r'\b[a-zA-Z]{3,}\b', clean_sname)]
+            matches = sum(1 for w in s_words if w in c_name)
+            if matches:
+                pts += (matches * 25)
+
+        season_patterns = [
+            rf'\bpart\s*{season}\b',
+            rf'\bseason\s*{season}\b',
+            rf'\b{season}(?:st|nd|rd|th)\s*season\b',
+            rf'\b{season}\b',
+        ]
+        for pat in season_patterns:
+            if re.search(pat, c_name):
+                pts += 25
+                break
+
+        return pts
+
+    candidates.sort(key=score_item, reverse=True)
+    best_id = candidates[0][0].get("id")
+    best_name = candidates[0][0].get("name")
+    print(f"[LocalServer] Resolved Anime MAL ID: {best_id} ('{best_name}') for '{title}' (T{season} '{season_name}')", file=sys.stderr)
+    return best_id
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
@@ -223,13 +310,14 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         episode = int(params.get("episode", ["1"])[0])
         lang = params.get("lang", ["sub" if media_type == "anime" else "dub"])[0]
         title_param = params.get("title", [""])[0]
+        season_name_param = params.get("season_name", [""])[0]
         mal_id = params.get("mal_id", [""])[0]
         imdb_id = params.get("imdb_id", [""])[0]
 
         host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
         proxy_base = f"http://{host_header}/api/stream"
 
-        cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}"
+        cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}_{season_name_param}"
         now = time.time()
         if cache_key in RESOLVE_CACHE:
             cached_time, cached_res = RESOLVE_CACHE[cache_key]
@@ -244,7 +332,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         # Route 1: Anime Subtitled via ZokoAnime
         if media_type == "anime" and lang == "sub":
             if not mal_id and title_param:
-                mal_id = fetch_mal_id_from_title(title_param)
+                mal_id = fetch_mal_id_from_title(title_param, season, season_name_param)
             elif not mal_id and media_id:
                 mal_id = media_id
 
@@ -508,11 +596,23 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             if not is_head:
                 self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
 
+def get_local_ip():
+    try:
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
 def run():
     server = ThreadedHTTPServer(("0.0.0.0", PORT), DevAPIHandler)
+    local_ip = get_local_ip()
     print(f"[Tvzinha Local Server] Running on all interfaces (port {PORT}):")
     print(f" -> Localhost: http://localhost:{PORT}")
-    print(f" -> Network (Wi-Fi/Mobile): http://192.168.0.104:{PORT}")
+    print(f" -> Network (Wi-Fi/Mobile): http://{local_ip}:{PORT}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

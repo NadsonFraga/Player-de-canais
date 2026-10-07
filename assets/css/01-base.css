@@ -89,6 +89,12 @@ body.view-tv-active {
     overflow: hidden;
 }
 
+html.modal-open,
+body.modal-open {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+}
+
 /* Scrollbar Customization */
 ::-webkit-scrollbar {
     width: 6px;

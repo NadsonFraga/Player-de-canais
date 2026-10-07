@@ -7,6 +7,7 @@ import { store } from '../core/state.js';
 import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
 import { showToast } from '../core/toast.js';
+import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome } from './historyManager.js';
 
 let viewHooks = {
     onHome: null,
@@ -35,13 +36,22 @@ export function teardownAllMedia() {
     if (seriesModal) seriesModal.classList.add("hidden");
     const seriesTheater = document.getElementById("series-player-view");
     if (seriesTheater) seriesTheater.classList.add("hidden");
-    document.body.style.overflow = "";
     document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.documentElement.classList.remove("modal-open");
+    document.body.classList.remove("modal-open");
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('tvzinha:teardownMedia'));
+    }
 }
 
 export function openMobileMenu() {
     const sidebar = document.getElementById("sidebar");
     const backdrop = document.getElementById("sidebar-backdrop");
+    const wasOpen = (sidebar && sidebar.classList.contains("open")) || document.body.classList.contains("sidebar-open");
+    if (!wasOpen) {
+        pushNavLayer('drawer');
+    }
     if (sidebar) sidebar.classList.add("open");
     if (backdrop) backdrop.classList.add("active");
     document.body.classList.add("sidebar-open");
@@ -51,10 +61,14 @@ export function openMobileMenu() {
 export function closeMobileMenu() {
     const sidebar = document.getElementById("sidebar");
     const backdrop = document.getElementById("sidebar-backdrop");
+    const wasOpen = (sidebar && sidebar.classList.contains("open")) || document.body.classList.contains("sidebar-open");
     if (sidebar) sidebar.classList.remove("open");
     if (backdrop) backdrop.classList.remove("active");
     document.body.classList.remove("sidebar-open");
     document.body.style.overflow = "";
+    if (wasOpen) {
+        popNavLayer();
+    }
 }
 
 export function switchAppView(viewName) {
@@ -63,6 +77,19 @@ export function switchAppView(viewName) {
     if (viewName === 'sports') {
         showToast("Hub Esportivo em breve! Acompanhe as partidas na aba Canais.");
         return;
+    }
+
+    const previousView = store.currentView;
+
+    // Synchronize History Stack
+    if (viewName === 'home') {
+        resetNavToHome();
+    } else {
+        if (!previousView || previousView === 'home') {
+            pushNavLayer('tab', { view: viewName });
+        } else if (previousView !== viewName) {
+            replaceNavLayer('tab', { view: viewName });
+        }
     }
 
     document.body.classList.toggle('view-tv-active', viewName === 'tv');
@@ -100,6 +127,10 @@ export function switchAppView(viewName) {
         }
     }
 
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('tvzinha:teardownMedia'));
+    }
+
     if (viewName === 'home') {
         teardownAllMedia();
     } else {
@@ -107,8 +138,10 @@ export function switchAppView(viewName) {
         const isSeriesPlayerActive = !document.getElementById("series-player-view")?.classList.contains("hidden");
         if (!isMovieModalActive && !isSeriesPlayerActive) {
             setPlaybackActiveState(false);
-            document.body.style.overflow = "";
             document.documentElement.style.overflow = "";
+            document.body.style.overflow = "";
+            document.documentElement.classList.remove("modal-open");
+            document.body.classList.remove("modal-open");
         }
     }
 

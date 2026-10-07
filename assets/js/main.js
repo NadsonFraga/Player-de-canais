@@ -7,10 +7,11 @@ import { store } from './core/state.js';
 import { showToast } from './core/toast.js';
 import { initChannelsCatalog, selectChannelByName, renderChannelGridCards } from './modules/channels.js';
 import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js';
-import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal } from './modules/movies.js?v=20261006_v21';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching } from './modules/series.js?v=20261006_v21';
-import { setupSpaNavigation, switchAppView, registerViewHook } from './navigation/router.js';
+import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal } from './modules/movies.js?v=20261006_v24';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching } from './modules/series.js?v=20261006_v24';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js';
 import { setupTvRemoteNavigation } from './navigation/remote.js';
+import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
@@ -19,20 +20,28 @@ const ADBLOCK_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 export function openAdblockModal() {
     const modal = document.getElementById("adblock-modal");
     if (modal) {
+        const wasHidden = modal.classList.contains("hidden") || modal.style.display === "none";
         modal.classList.remove("hidden");
         modal.style.display = "flex";
         document.body.style.overflow = "hidden";
         const btnAck = document.getElementById("btn-adblock-ack");
         if (btnAck) btnAck.focus();
+        if (wasHidden) {
+            pushNavLayer('modal-adblock');
+        }
     }
 }
 
 export function closeAdblockModal() {
     const modal = document.getElementById("adblock-modal");
     if (modal) {
+        const wasOpen = !modal.classList.contains("hidden") && modal.style.display !== "none";
         modal.classList.add("hidden");
         modal.style.display = "none";
         document.body.style.overflow = "";
+        if (wasOpen) {
+            popNavLayer();
+        }
     }
     try {
         localStorage.setItem(ADBLOCK_STORAGE_KEY, Date.now().toString());
@@ -105,6 +114,7 @@ Object.defineProperty(window, 'TvzinhaActions', {
         closeTeamModal: closeTeamSelectModal,
         openAdblockModal: openAdblockModal,
         closeAdblockModal: closeAdblockModal,
+        handleBack: handleBackButton,
         toast: showToast,
         store: store
     }),
@@ -117,6 +127,9 @@ Object.defineProperty(window, 'TvzinhaActions', {
  */
 async function bootstrapApp() {
     console.log("[Tvzinha] Bootstrapping modern ES module architecture...");
+
+    // Initialize tiered history & mobile hardware back button manager
+    initHistoryManager({ switchAppView, closeMobileMenu });
 
     // Register router view hooks for lazy/on-demand section initialization
     registerViewHook('home', () => {

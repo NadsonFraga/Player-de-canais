@@ -19,12 +19,31 @@ import { showToast } from '../core/toast.js';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
 import { getUiSvg } from '../core/icons.js';
 import { mountNativePlayer, resolveDirectStream, atomicPlayerReset } from '../player/engine.js';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
 let currentSelectedMovie = null;
 let activeMovieServer = null;
 let movieSearchDebounceTimer = null;
+
+let moviePlaybackSessionId = 0;
+let pendingMovieIframeTimer = null;
+let pendingMovieAutoplayTimer = null;
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('tvzinha:teardownMedia', () => {
+        moviePlaybackSessionId++;
+        if (pendingMovieAutoplayTimer) {
+            clearTimeout(pendingMovieAutoplayTimer);
+            pendingMovieAutoplayTimer = null;
+        }
+        if (pendingMovieIframeTimer) {
+            clearTimeout(pendingMovieIframeTimer);
+            pendingMovieIframeTimer = null;
+        }
+    });
+}
 
 let activeFilterGenre = '';
 let activeFilterYearRange = '';
@@ -586,9 +605,13 @@ export function openExploreView(autoFocus = false) {
 
     if (!moviesExploreView) return;
 
+    const wasHidden = moviesExploreView.classList.contains("hidden");
     moviesExploreView.classList.remove("hidden");
     if (discoveryFeed) discoveryFeed.classList.add("hidden");
     if (collectionSection) collectionSection.classList.add("hidden");
+    if (wasHidden) {
+        pushNavLayer('explore-movies');
+    }
 
     // Sync input values
     const initialQuery = moviesSearchInput ? moviesSearchInput.value.trim() : '';
@@ -620,8 +643,12 @@ export function closeExploreView() {
     const btnExploreSortDropdown = document.getElementById("btn-explore-sort-dropdown");
     const categoryPills = document.getElementById("movies-category-pills");
 
+    const wasOpen = moviesExploreView && !moviesExploreView.classList.contains("hidden");
     if (moviesExploreView) moviesExploreView.classList.add("hidden");
     if (discoveryFeed) discoveryFeed.classList.remove("hidden");
+    if (wasOpen) {
+        popNavLayer();
+    }
 
     if (exploreSearchInput) exploreSearchInput.value = "";
     if (moviesSearchInput) moviesSearchInput.value = "";
@@ -962,7 +989,11 @@ export async function openCollectionView(type, item, page = 1) {
 
     if (exploreView) exploreView.classList.add("hidden");
     if (discoveryFeed) discoveryFeed.classList.add("hidden");
+    const wasCollectionHidden = collectionSection.classList.contains("hidden");
     collectionSection.classList.remove("hidden");
+    if (page === 1 && wasCollectionHidden) {
+        pushNavLayer('collection-movies');
+    }
 
     if (page === 1) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1049,6 +1080,7 @@ export function closeCollectionView() {
     const collectionSection = document.getElementById("movies-collection-section");
     const discoveryFeed = document.getElementById("movies-discovery-feed");
     const moviesExploreView = document.getElementById("movies-explore-view");
+    const wasOpen = collectionSection && !collectionSection.classList.contains("hidden");
     if (collectionSection) collectionSection.classList.add("hidden");
     if (moviesExploreView && !moviesExploreView.classList.contains("hidden")) {
         // Stay in explore
@@ -1057,6 +1089,9 @@ export function closeCollectionView() {
     }
     renderPaginationControls("movies-collection-pagination", 1, 0, 0, () => {});
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (wasOpen) {
+        popNavLayer();
+    }
 }
 
 export function setupMovieModal() {
@@ -1085,11 +1120,13 @@ export function setupMovieModal() {
 
     if (btnClosePlayer) {
         btnClosePlayer.addEventListener("click", () => {
-            atomicPlayerReset();
+            const modalCard = document.querySelector(".movie-modal-card");
             const playerContainer = document.getElementById("movie-modal-player-container");
+            const wasPlaying = (modalCard && modalCard.classList.contains("is-playing")) || (playerContainer && !playerContainer.classList.contains("hidden"));
+
+            atomicPlayerReset();
             const backdropBox = document.getElementById("movie-modal-backdrop-box");
             const iframe = document.getElementById("movie-modal-iframe");
-            const modalCard = document.querySelector(".movie-modal-card");
 
             if (iframe) iframe.src = "";
             if (playerContainer) playerContainer.classList.add("hidden");
@@ -1097,6 +1134,10 @@ export function setupMovieModal() {
             if (modalCard) modalCard.classList.remove("is-playing");
             document.querySelectorAll(".btn-movie-server").forEach(btn => btn.classList.remove("active"));
             activeMovieServer = null;
+
+            if (wasPlaying) {
+                popNavLayer();
+            }
         });
     }
 }
@@ -1144,24 +1185,62 @@ export function openMovieDetailsModal(movie, autoplayFirstServer = false) {
             serversGrid.appendChild(btn);
 
             if (autoplayFirstServer && idx === 0) {
-                setTimeout(() => selectMovieServer(server, btn), 150);
+                if (pendingMovieAutoplayTimer) clearTimeout(pendingMovieAutoplayTimer);
+                pendingMovieAutoplayTimer = setTimeout(() => {
+                    const currentModal = document.getElementById("movie-modal");
+                    if (currentModal && !currentModal.classList.contains("hidden")) {
+                        selectMovieServer(server, btn);
+                    }
+                }, 150);
             }
         });
     }
 
+    const wasHidden = modal.classList.contains("hidden");
     modal.classList.remove("hidden");
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    document.documentElement.classList.add("modal-open");
+    document.body.classList.add("modal-open");
+    if (wasHidden) {
+        pushNavLayer('modal-movie', { id: movie.id });
+    }
 }
 
 export function closeMovieDetailsModal() {
+    moviePlaybackSessionId++;
+    if (pendingMovieAutoplayTimer) {
+        clearTimeout(pendingMovieAutoplayTimer);
+        pendingMovieAutoplayTimer = null;
+    }
+    if (pendingMovieIframeTimer) {
+        clearTimeout(pendingMovieIframeTimer);
+        pendingMovieIframeTimer = null;
+    }
     atomicPlayerReset();
     const modal = document.getElementById("movie-modal");
+    const wasOpen = modal && !modal.classList.contains("hidden");
     if (modal) modal.classList.add("hidden");
+    document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
+    document.documentElement.classList.remove("modal-open");
+    document.body.classList.remove("modal-open");
+    if (wasOpen) {
+        popNavLayer();
+    }
 }
 
 export function selectMovieServer(server, buttonElement = null) {
     if (!currentSelectedMovie) return;
+    const currentSessionId = ++moviePlaybackSessionId;
+    if (pendingMovieIframeTimer) {
+        clearTimeout(pendingMovieIframeTimer);
+        pendingMovieIframeTimer = null;
+    }
+    if (pendingMovieAutoplayTimer) {
+        clearTimeout(pendingMovieAutoplayTimer);
+        pendingMovieAutoplayTimer = null;
+    }
     activeMovieServer = server;
 
     document.querySelectorAll(".btn-movie-server").forEach(b => b.classList.remove("active"));
@@ -1176,6 +1255,7 @@ export function selectMovieServer(server, buttonElement = null) {
     const movieArt = document.getElementById("movie-artplayer-container");
     const modalCard = document.querySelector(".movie-modal-card");
     const movieLoader = document.getElementById("movie-player-loader");
+    const wasPlaying = (modalCard && modalCard.classList.contains("is-playing")) || (playerContainer && !playerContainer.classList.contains("hidden"));
 
     if (serverTitle) {
         serverTitle.textContent = currentSelectedMovie.title || server.name;
@@ -1184,6 +1264,9 @@ export function selectMovieServer(server, buttonElement = null) {
     if (backdropBox) backdropBox.classList.add("hidden");
     if (playerContainer) playerContainer.classList.remove("hidden");
     if (modalCard) modalCard.classList.add("is-playing");
+    if (!wasPlaying) {
+        pushNavLayer('player-movie');
+    }
 
     if (server.isNative) {
         if (iframe) {
@@ -1198,6 +1281,11 @@ export function selectMovieServer(server, buttonElement = null) {
             title: currentSelectedMovie.title,
             imdb_id: currentSelectedMovie.imdb_id || null
         }).then(data => {
+            const currentModal = document.getElementById("movie-modal");
+            if (currentSessionId !== moviePlaybackSessionId || !currentModal || currentModal.classList.contains("hidden")) {
+                console.warn("[Movies] Abortando montagem nativa: reprodução cancelada ou modal fechado.");
+                return;
+            }
             if (movieLoader) movieLoader.classList.add("hidden");
             if (!data || !data.primary_source) {
                 showToast("Fontes diretas indisponíveis para este filme. Selecione outro servidor abaixo se desejar.");
@@ -1258,7 +1346,12 @@ export function selectMovieServer(server, buttonElement = null) {
 
         const embedUrl = server.buildUrl(currentSelectedMovie.id);
         iframe.src = "about:blank";
-        setTimeout(() => {
+        pendingMovieIframeTimer = setTimeout(() => {
+            const currentModal = document.getElementById("movie-modal");
+            if (currentSessionId !== moviePlaybackSessionId || !currentModal || currentModal.classList.contains("hidden")) {
+                console.warn("[Movies] Abortando carregamento de iframe: modal fechado antes de montar.");
+                return;
+            }
             iframe.src = embedUrl;
         }, 60);
 
