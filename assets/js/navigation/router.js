@@ -27,9 +27,9 @@ export function teardownAllMedia() {
     atomicPlayerReset();
     setPlaybackActiveState(false);
     const movieIframe = document.getElementById("movie-modal-iframe");
-    if (movieIframe) movieIframe.src = "about:blank";
+    if (movieIframe) movieIframe.remove();
     const seriesIframe = document.getElementById("series-modal-iframe");
-    if (seriesIframe) seriesIframe.src = "about:blank";
+    if (seriesIframe) seriesIframe.remove();
     const movieModal = document.getElementById("movie-modal");
     if (movieModal) movieModal.classList.add("hidden");
     const seriesModal = document.getElementById("series-modal");
@@ -103,7 +103,7 @@ export function switchAppView(viewName) {
 
     if (viewName !== 'movies') {
         const movieIframe = document.getElementById("movie-modal-iframe");
-        if (movieIframe) movieIframe.src = "about:blank";
+        if (movieIframe) movieIframe.remove();
         const movieModal = document.getElementById("movie-modal");
         if (movieModal) movieModal.classList.add("hidden");
         const movieArt = document.getElementById("movie-artplayer-container");
@@ -115,7 +115,7 @@ export function switchAppView(viewName) {
 
     if (viewName !== 'series' && viewName !== 'animes') {
         const seriesIframe = document.getElementById("series-modal-iframe");
-        if (seriesIframe) seriesIframe.src = "about:blank";
+        if (seriesIframe) seriesIframe.remove();
         const seriesModal = document.getElementById("series-modal");
         if (seriesModal) seriesModal.classList.add("hidden");
         const seriesTheater = document.getElementById("series-player-view");
