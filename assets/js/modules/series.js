@@ -18,6 +18,7 @@ import {
 import { showToast } from '../core/toast.js';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
 import { mountNativePlayer, resolveDirectStream, atomicPlayerReset } from '../player/engine.js';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -65,6 +66,24 @@ let activeSeriesPlaying = {
     episodeData: null,
     server: 'native_direct'
 };
+
+let seriesPlaybackSessionId = 0;
+let pendingSeriesIframeTimer = null;
+let pendingSeriesAutoplayTimer = null;
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('tvzinha:teardownMedia', () => {
+        seriesPlaybackSessionId++;
+        if (pendingSeriesAutoplayTimer) {
+            clearTimeout(pendingSeriesAutoplayTimer);
+            pendingSeriesAutoplayTimer = null;
+        }
+        if (pendingSeriesIframeTimer) {
+            clearTimeout(pendingSeriesIframeTimer);
+            pendingSeriesIframeTimer = null;
+        }
+    });
+}
 
 export function pauseHeroCarousels() {
     if (heroSeriesAutoRotateTimer) {
@@ -565,7 +584,11 @@ function openSeriesExploreView(autoFocus = false) {
     const btnClear = document.getElementById("btn-clear-series-explore-search");
 
     if (seriesDiscoveryFeed) seriesDiscoveryFeed.classList.add("hidden");
+    const wasHidden = seriesExploreView && seriesExploreView.classList.contains("hidden");
     if (seriesExploreView) seriesExploreView.classList.remove("hidden");
+    if (wasHidden) {
+        pushNavLayer('explore-series');
+    }
 
     const initialQuery = seriesSearchInput ? seriesSearchInput.value.trim() : '';
     if (exploreSearchInput) {
@@ -599,8 +622,12 @@ export function resetSeriesViewState() {
     const sortMenu = document.getElementById("series-explore-sort-dropdown-menu");
     const btnSort = document.getElementById("btn-series-explore-sort-dropdown");
 
+    const wasOpen = seriesExploreView && !seriesExploreView.classList.contains("hidden");
     if (seriesExploreView) seriesExploreView.classList.add("hidden");
     if (seriesDiscoveryFeed) seriesDiscoveryFeed.classList.remove("hidden");
+    if (wasOpen) {
+        popNavLayer();
+    }
 
     if (seriesSearchInput) seriesSearchInput.value = "";
     if (exploreSearchInput) exploreSearchInput.value = "";
@@ -861,12 +888,18 @@ async function executeFilteredSeriesSearch(page = 1) {
         }
 
         const data = await fetchSeriesEndpoint(endpoint);
-        const results = data.results || [];
+        let results = data.results || [];
+
+        // Exclude animation (genre 16) from series search when text query is used
+        if (query) {
+            results = results.filter(item => !(item.genre_ids && item.genre_ids.includes(16)));
+        }
+
         posterGrid.innerHTML = "";
 
         if (resultsCount) {
-            const total = data.total_results || 0;
-            resultsCount.textContent = `${total.toLocaleString('pt-BR')} ${total === 1 ? 'série encontrada' : 'séries encontradas'}`;
+            const count = query ? results.length : (data.total_results || 0);
+            resultsCount.textContent = `${count.toLocaleString('pt-BR')} ${count === 1 ? 'série encontrada' : 'séries encontradas'}`;
         }
 
         if (results.length === 0) {
@@ -1132,7 +1165,11 @@ function openAnimesExploreView(autoFocus = false) {
     const btnClear = document.getElementById("btn-clear-animes-explore-search");
 
     if (animesDiscoveryFeed) animesDiscoveryFeed.classList.add("hidden");
+    const wasHidden = animesExploreView && animesExploreView.classList.contains("hidden");
     if (animesExploreView) animesExploreView.classList.remove("hidden");
+    if (wasHidden) {
+        pushNavLayer('explore-animes');
+    }
 
     const initialQuery = animesSearchInput ? animesSearchInput.value.trim() : '';
     if (exploreSearchInput) {
@@ -1166,8 +1203,12 @@ export function resetAnimesViewState() {
     const sortMenu = document.getElementById("animes-explore-sort-dropdown-menu");
     const btnSort = document.getElementById("btn-animes-explore-sort-dropdown");
 
+    const wasOpen = animesExploreView && !animesExploreView.classList.contains("hidden");
     if (animesExploreView) animesExploreView.classList.add("hidden");
     if (animesDiscoveryFeed) animesDiscoveryFeed.classList.remove("hidden");
+    if (wasOpen) {
+        popNavLayer();
+    }
 
     if (animesSearchInput) animesSearchInput.value = "";
     if (exploreSearchInput) exploreSearchInput.value = "";
@@ -1411,14 +1452,14 @@ async function executeFilteredAnimesSearch(page = 1) {
             endpoint = `search/tv?query=${encodeURIComponent(query)}&page=${page}`;
             if (sectionTitle) sectionTitle.textContent = `Resultados para "${query}"`;
         } else {
+            const genresParam = activeAnimesFilterGenre ? `16,${activeAnimesFilterGenre}` : '16';
             let params = [
                 `page=${page}`,
                 `sort_by=${activeAnimesFilterSort}`,
-                'with_genres=16',
+                `with_genres=${genresParam}`,
                 'with_original_language=ja',
                 'without_keywords=256466,157145'
             ];
-            if (activeAnimesFilterGenre) params.push(`with_genres=16,${activeAnimesFilterGenre}`);
             if (activeAnimesFilterYearRange) {
                 const parts = activeAnimesFilterYearRange.split('-');
                 if (parts.length === 2) {
@@ -1431,12 +1472,22 @@ async function executeFilteredAnimesSearch(page = 1) {
         }
 
         const data = await fetchSeriesEndpoint(endpoint);
-        const results = data.results || [];
+        let results = data.results || [];
+
+        // Filter to only genuine Anime (Animation genre 16 + Japanese or Asian anime origin) when a text query is used
+        if (query) {
+            results = results.filter(item => {
+                if (!item.genre_ids || !item.genre_ids.includes(16)) return false;
+                const lang = item.original_language || '';
+                const countries = item.origin_country || [];
+                return lang === 'ja' || countries.includes('JP') || lang === 'ko' || lang === 'zh';
+            });
+        }
         posterGrid.innerHTML = "";
 
         if (resultsCount) {
-            const total = data.total_results || 0;
-            resultsCount.textContent = `${total.toLocaleString('pt-BR')} ${total === 1 ? 'anime encontrado' : 'animes encontrados'}`;
+            const count = query ? results.length : (data.total_results || 0);
+            resultsCount.textContent = `${count.toLocaleString('pt-BR')} ${count === 1 ? 'anime encontrado' : 'animes encontrados'}`;
         }
 
         if (results.length === 0) {
@@ -1736,8 +1787,15 @@ export async function openSeriesModal(seriesItem, mediaType = 'tv', options = {}
         }
     }
 
+    const wasHidden = modal.classList.contains("hidden");
     modal.classList.remove("hidden");
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    document.documentElement.classList.add("modal-open");
+    document.body.classList.add("modal-open");
+    if (wasHidden) {
+        pushNavLayer('modal-series', { id: seriesItem.id });
+    }
 
     const btnModeArcs = document.getElementById("btn-mode-arcs");
     const btnModeContinuous = document.getElementById("btn-mode-continuous");
@@ -1773,8 +1831,12 @@ export async function openSeriesModal(seriesItem, mediaType = 'tv', options = {}
         populateSeasonsSelect(details);
 
         if (options.autoPlaySeason && options.autoPlayEpisode) {
-            setTimeout(() => {
-                playSeriesEpisode(seriesItem, options.autoPlaySeason, options.autoPlayEpisode);
+            if (pendingSeriesAutoplayTimer) clearTimeout(pendingSeriesAutoplayTimer);
+            pendingSeriesAutoplayTimer = setTimeout(() => {
+                const modal = document.getElementById("series-modal");
+                if (modal && !modal.classList.contains("hidden")) {
+                    playSeriesEpisode(seriesItem, options.autoPlaySeason, options.autoPlayEpisode);
+                }
             }, 300);
         }
     } catch (err) {
@@ -1783,6 +1845,15 @@ export async function openSeriesModal(seriesItem, mediaType = 'tv', options = {}
 }
 
 export function closeSeriesModal() {
+    seriesPlaybackSessionId++;
+    if (pendingSeriesIframeTimer) {
+        clearTimeout(pendingSeriesIframeTimer);
+        pendingSeriesIframeTimer = null;
+    }
+    if (pendingSeriesAutoplayTimer) {
+        clearTimeout(pendingSeriesAutoplayTimer);
+        pendingSeriesAutoplayTimer = null;
+    }
     setPlaybackActiveState(false);
     atomicPlayerReset();
 
@@ -1792,14 +1863,20 @@ export function closeSeriesModal() {
     const seriesLoader = document.getElementById("series-theater-loader");
     const drawer = document.getElementById("series-player-drawer");
 
+    const wasOpen = modal && !modal.classList.contains("hidden");
     if (iframe) iframe.src = "about:blank";
     if (seriesLoader) seriesLoader.classList.add("hidden");
     if (theaterView) theaterView.classList.add("hidden");
     if (drawer) drawer.classList.add("hidden");
     if (modal) modal.classList.add("hidden");
+    if (wasOpen) {
+        popNavLayer();
+    }
 
-    document.body.style.overflow = "";
     document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.documentElement.classList.remove("modal-open");
+    document.body.classList.remove("modal-open");
     const quickSearchInput = document.getElementById("series-quick-ep-search");
     if (quickSearchInput) quickSearchInput.value = "";
     currentSelectedSeries = null;
@@ -2087,6 +2164,16 @@ function goToEpisodeByAbsoluteNumber(epNumber) {
 export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData = null, absoluteEpNumber = null) {
     if (!showItem) return;
 
+    const currentSessionId = ++seriesPlaybackSessionId;
+    if (pendingSeriesIframeTimer) {
+        clearTimeout(pendingSeriesIframeTimer);
+        pendingSeriesIframeTimer = null;
+    }
+    if (pendingSeriesAutoplayTimer) {
+        clearTimeout(pendingSeriesAutoplayTimer);
+        pendingSeriesAutoplayTimer = null;
+    }
+
     activeSeriesPlaying.show = showItem;
     activeSeriesPlaying.seasonNumber = Number(seasonNumber);
     activeSeriesPlaying.episodeNumber = Number(episodeNumber);
@@ -2100,8 +2187,15 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
     const btnPrev = document.getElementById("btn-series-prev-ep");
 
     if (detailsModal) detailsModal.classList.add("hidden");
+    const wasTheaterHidden = theaterView && theaterView.classList.contains("hidden");
     if (theaterView) theaterView.classList.remove("hidden");
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    document.documentElement.classList.add("modal-open");
+    document.body.classList.add("modal-open");
+    if (wasTheaterHidden) {
+        pushNavLayer('player-series');
+    }
     pauseHeroCarousels();
 
     const showName = showItem.name || showItem.title || 'Série';
@@ -2214,14 +2308,27 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
             ? (activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode)
             : episodeNumber;
 
+        let currentSeasonName = "";
+        if (currentSeriesDetails && currentSeriesDetails.seasons) {
+            const matchedSeason = currentSeriesDetails.seasons.find(s => Number(s.season_number) === Number(seasonNumber));
+            if (matchedSeason && matchedSeason.name) {
+                currentSeasonName = matchedSeason.name;
+            }
+        }
+
         resolveDirectStream({
             id: showItem.id,
             type: mediaType,
             season: seasonNumber,
             episode: resolvedEp,
             lang: lang,
-            title: showName
+            title: showName,
+            season_name: currentSeasonName
         }).then(data => {
+            if (currentSessionId !== seriesPlaybackSessionId || !theaterView || theaterView.classList.contains("hidden")) {
+                console.warn("[Series] Abortando montagem nativa: reprodução cancelada ou janela fechada.");
+                return;
+            }
             if (seriesLoader) seriesLoader.classList.add("hidden");
             if (!data || !data.primary_source) {
                 showToast("Fontes diretas indisponíveis para este episódio. Selecione outro servidor abaixo se desejar.");
@@ -2283,7 +2390,11 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
             const embedUrl = serverDef.buildUrl(showItem.id, seasonNumber, episodeNumber);
 
             iframe.src = "about:blank";
-            setTimeout(() => {
+            pendingSeriesIframeTimer = setTimeout(() => {
+                if (currentSessionId !== seriesPlaybackSessionId || !theaterView || theaterView.classList.contains("hidden")) {
+                    console.warn("[Series] Abortando carregamento de iframe: janela fechada antes de montar.");
+                    return;
+                }
                 iframe.src = embedUrl;
             }, 60);
 
@@ -2343,6 +2454,15 @@ function populateSeriesDrawer() {
 }
 
 export function stopSeriesPlayer() {
+    seriesPlaybackSessionId++;
+    if (pendingSeriesIframeTimer) {
+        clearTimeout(pendingSeriesIframeTimer);
+        pendingSeriesIframeTimer = null;
+    }
+    if (pendingSeriesAutoplayTimer) {
+        clearTimeout(pendingSeriesAutoplayTimer);
+        pendingSeriesAutoplayTimer = null;
+    }
     setPlaybackActiveState(false);
     atomicPlayerReset();
     const theaterView = document.getElementById("series-player-view");
@@ -2350,16 +2470,26 @@ export function stopSeriesPlayer() {
     const seriesLoader = document.getElementById("series-theater-loader");
     const drawer = document.getElementById("series-player-drawer");
 
+    const wasTheaterOpen = theaterView && !theaterView.classList.contains("hidden");
     if (iframe) iframe.src = "";
     if (seriesLoader) seriesLoader.classList.add("hidden");
     if (theaterView) theaterView.classList.add("hidden");
     if (drawer) drawer.classList.add("hidden");
+    if (wasTheaterOpen) {
+        popNavLayer();
+    }
 
     const detailsModal = document.getElementById("series-modal");
     if (detailsModal && currentSelectedSeries) {
         detailsModal.classList.remove("hidden");
+        document.documentElement.style.overflow = "hidden";
         document.body.style.overflow = "hidden";
+        document.documentElement.classList.add("modal-open");
+        document.body.classList.add("modal-open");
     } else {
+        document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
+        document.documentElement.classList.remove("modal-open");
+        document.body.classList.remove("modal-open");
     }
 }

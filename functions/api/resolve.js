@@ -133,42 +133,130 @@ async function resolveZoko(malId, episode = 1) {
 }
 
 /**
- * Fetches MyAnimeList ID from title via fast prefix search or public Jikan API
+ * Fetches MyAnimeList ID from title via fast prefix search or public Jikan API with season and arc awareness
  */
-async function getMalIdFromTitle(title) {
-  // Method 1: Official MyAnimeList quick prefix search (fast & reliable)
-  try {
-    const cleanTitle = title.replace(/\(.*?\)|\[.*?\]/g, '').trim();
-    const searchUrl = `https://myanimelist.net/search/prefix.json?type=anime&keyword=${encodeURIComponent(cleanTitle)}`;
-    const res = await fetch(searchUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.categories && data.categories.length > 0 && data.categories[0].items && data.categories[0].items.length > 0) {
-        return data.categories[0].items[0].id;
-      }
+async function getMalIdFromTitle(title, season = 1, seasonName = "") {
+  const cleanTitle = title.replace(/\(.*?\)|\[.*?\]/g, '').trim();
+
+  let cleanSname = "";
+  if (seasonName) {
+    const snameCand = seasonName.replace(/^(Temporada|Season)\s*\d+[:\-]?\s*/i, '').trim();
+    if (!["especiais", "specials", "temporada", "season", ""].includes(snameCand.toLowerCase()) && snameCand.length > 2) {
+      cleanSname = snameCand;
     }
-  } catch (e) {
-    // Fallback to Jikan
   }
 
-  // Method 2: Public Jikan API
-  try {
-    const searchUrl = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`;
-    const res = await fetch(searchUrl, {
-      headers: { "User-Agent": USER_AGENT },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.data && data.data.length > 0) {
-        return data.data[0].mal_id;
-      }
-    }
-  } catch (e) {
-    // Graceful fallback on API miss
+  const queries = [];
+  if (cleanSname) {
+    queries.push({ q: `${cleanTitle} ${cleanSname}`, priority: 50 });
+    queries.push({ q: cleanSname, priority: 40 });
   }
-  return null;
+
+  if (season > 1) {
+    queries.push({ q: `${cleanTitle} Season ${season}`, priority: 35 });
+    queries.push({ q: `${cleanTitle} Part ${season}`, priority: 35 });
+    const suffix = season === 2 ? "nd" : season === 3 ? "rd" : "th";
+    queries.push({ q: `${cleanTitle} ${season}${suffix} Season`, priority: 30 });
+  }
+
+  queries.push({ q: cleanTitle, priority: 10 });
+
+  const candidates = [];
+  const seen = new Set();
+
+  for (const { q, priority } of queries) {
+    try {
+      const searchUrl = `https://myanimelist.net/search/prefix.json?type=anime&keyword=${encodeURIComponent(q.trim())}`;
+      const res = await fetch(searchUrl, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const items = (data.categories || []).flatMap(c => c.type === 'anime' ? (c.items || []) : []);
+        for (let idx = 0; idx < Math.min(items.length, 6); idx++) {
+          const it = items[idx];
+          if (it.id && !seen.has(it.id)) {
+            seen.add(it.id);
+            const rankBonus = Math.max(0, 15 - idx * 3);
+            candidates.push({ item: it, baseScore: priority + rankBonus });
+          }
+        }
+      }
+    } catch (e) {}
+
+    if (candidates.length >= 12) break;
+  }
+
+  if (candidates.length === 0) {
+    // Fallback to Public Jikan API
+    try {
+      const jikanQuery = `${cleanTitle} ${cleanSname}`.trim();
+      const searchUrl = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(jikanQuery)}&limit=1`;
+      const res = await fetch(searchUrl, {
+        headers: { "User-Agent": USER_AGENT },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          return data.data[0].mal_id;
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  if (season === 1 && !cleanSname) {
+    return candidates[0].item.id;
+  }
+
+  candidates.sort((a, b) => {
+    const scoreA = calculateItemScore(a.item, a.baseScore, cleanSname, season);
+    const scoreB = calculateItemScore(b.item, b.baseScore, cleanSname, season);
+    return scoreB - scoreA;
+  });
+
+  return candidates[0].item.id;
+}
+
+function calculateItemScore(cand, baseScore, cleanSname, season) {
+  const cName = (cand.name || "").toLowerCase();
+  const payload = cand.payload || {};
+  const mtype = String(payload.media_type || "").toUpperCase();
+  let pts = baseScore;
+
+  if (["TV", "ONA"].includes(mtype)) {
+    pts += 40;
+  } else if (["SPECIAL", "TV SPECIAL", "OVA", "MOVIE"].includes(mtype)) {
+    pts -= 35;
+  }
+
+  // Heavy penalty for recaps, summaries, PVs, pilots
+  if (["pilot", "kanketsu-hen", "recap", "summary", "preview", "remix", "music", "special"].some(bad => cName.includes(bad))) {
+    pts -= 60;
+  }
+
+  if (cleanSname) {
+    const sWords = cleanSname.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+    const matches = sWords.filter(w => cName.includes(w)).length;
+    if (matches > 0) {
+      pts += (matches * 25);
+    }
+  }
+
+  const seasonPatterns = [
+    new RegExp(`\\bpart\\s*${season}\\b`, 'i'),
+    new RegExp(`\\bseason\\s*${season}\\b`, 'i'),
+    new RegExp(`\\b${season}(?:st|nd|rd|th)\\s*season\\b`, 'i'),
+    new RegExp(`\\b${season}\\b`, 'i'),
+  ];
+  for (const pat of seasonPatterns) {
+    if (pat.test(cName)) {
+      pts += 25;
+      break;
+    }
+  }
+
+  return pts;
 }
 
 export async function onRequestGet(context) {
@@ -181,6 +269,7 @@ export async function onRequestGet(context) {
   const episode = parseInt(urlObj.searchParams.get("episode") || "1", 10);
   const lang = urlObj.searchParams.get("lang") || (type === "anime" ? "sub" : "dub");
   const titleParam = urlObj.searchParams.get("title") || "";
+  const seasonNameParam = urlObj.searchParams.get("season_name") || "";
   let malId = urlObj.searchParams.get("mal_id");
 
   if (!id && !malId && !titleParam) {
@@ -196,7 +285,7 @@ export async function onRequestGet(context) {
   // ROTA 1: Anime Legendado (ZokoAnime)
   if (type === "anime" && lang === "sub") {
     if (!malId && titleParam) {
-      malId = await getMalIdFromTitle(titleParam);
+      malId = await getMalIdFromTitle(titleParam, season, seasonNameParam);
     } else if (!malId && id) {
       // If numeric ID is passed for anime, test as MAL ID or title
       malId = id;

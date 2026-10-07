@@ -7,6 +7,7 @@ import { store } from '../core/state.js';
 import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js';
 import { getUiSvg } from '../core/icons.js';
 import { showToast } from '../core/toast.js';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js';
 
 let matchesRefreshTimer = null;
 let isTeamModalInitialized = false;
@@ -239,10 +240,14 @@ export async function openTeamSelectModal() {
         if (emptyMsg) emptyMsg.style.display = "none";
     }
 
+    const wasHidden = modal.classList.contains("hidden");
     modal.classList.add("active");
     modal.classList.remove("hidden");
     modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+    if (wasHidden) {
+        pushNavLayer('modal-team');
+    }
 
     setTimeout(() => {
         if (searchInput) searchInput.focus();
@@ -252,10 +257,14 @@ export async function openTeamSelectModal() {
 export function closeTeamSelectModal() {
     const modal = document.getElementById("team-select-modal");
     if (!modal) return;
+    const wasOpen = !modal.classList.contains("hidden");
     modal.classList.remove("active");
     modal.classList.add("hidden");
     modal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
+    if (wasOpen) {
+        popNavLayer();
+    }
 }
 
 export function formatMatchDateTime(dateStr, hourStr) {

@@ -145,6 +145,22 @@ export function atomicPlayerReset() {
         seriesContainer.innerHTML = "";
         seriesContainer.classList.add("hidden");
     }
+
+    // Comprehensive DOM media sweep: force silence and detonate any orphan media elements
+    const mediaElements = document.querySelectorAll("#movie-modal video, #movie-modal audio, #movie-modal iframe, #series-player-view video, #series-player-view audio, #series-player-view iframe, #series-modal iframe, #movie-artplayer-container video, #series-artplayer-container video");
+    mediaElements.forEach(el => {
+        try {
+            if (el.tagName === "VIDEO" || el.tagName === "AUDIO") {
+                el.pause();
+                el.removeAttribute("src");
+                el.load();
+            } else if (el.tagName === "IFRAME") {
+                el.src = "about:blank";
+            }
+        } catch (e) {
+            console.warn("[PlayerEngine] Error during media element purge:", e);
+        }
+    });
 }
 
 /**
@@ -561,7 +577,7 @@ export function mountTvContingencyIframe(contingencyUrl) {
 /**
  * Resolves direct media stream via local or remote proxy API
  */
-export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', mal_id = null, imdb_id = null }) {
+export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', season_name = '', mal_id = null, imdb_id = null }) {
     const params = new URLSearchParams();
     if (id) params.set("id", id);
     if (type) params.set("type", type);
@@ -569,6 +585,7 @@ export async function resolveDirectStream({ id, type, season = 1, episode = 1, l
     params.set("episode", episode);
     params.set("lang", lang);
     if (title) params.set("title", title);
+    if (season_name) params.set("season_name", season_name);
     if (mal_id) params.set("mal_id", mal_id);
     if (imdb_id) params.set("imdb_id", imdb_id);
 
@@ -592,6 +609,22 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
 
     const container = document.getElementById(containerId);
     if (!container) return null;
+
+    // Strict Modal Visibility Check: Abort instantly if user closed the modal before resolution completed
+    if (containerId === "movie-artplayer-container") {
+        const movieModal = document.getElementById("movie-modal");
+        if (!movieModal || movieModal.classList.contains("hidden")) {
+            console.warn("[PlayerEngine] Aborting mountNativePlayer: movie modal is closed/hidden.");
+            return null;
+        }
+    } else if (containerId === "series-artplayer-container") {
+        const seriesView = document.getElementById("series-player-view");
+        if (!seriesView || seriesView.classList.contains("hidden")) {
+            console.warn("[PlayerEngine] Aborting mountNativePlayer: series player view is closed/hidden.");
+            return null;
+        }
+    }
+
     container.innerHTML = "";
     container.classList.remove("hidden");
 
