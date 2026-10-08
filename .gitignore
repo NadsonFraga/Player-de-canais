@@ -5,6 +5,5 @@ Thumbs.db
 __pycache__/
 *.pyc
 scratch/
-.archives/
 .env
 *.env

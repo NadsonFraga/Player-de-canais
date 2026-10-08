@@ -17,7 +17,7 @@ import {
 } from '../core/constants.js';
 import { showToast } from '../core/toast.js';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset } from '../player/engine.js?v=20261008_q3';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261008_q7';
 import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js';
 
 // --- TMDB Genres Dictionary ---
@@ -1661,38 +1661,13 @@ export function setupSeriesModalHandlers() {
 
     if (btnNextEp) {
         btnNextEp.addEventListener("click", () => {
-            const currentEp = activeSeriesPlaying.episodeNumber;
-            const curSeason = activeSeriesPlaying.seasonNumber;
-            const cachedEpisodes = cachedSeasonsMap[`${activeSeriesPlaying.show.id}_${curSeason}`] || [];
-
-            if (cachedEpisodes.length > 0 && currentEp < cachedEpisodes.length) {
-                const nextEp = currentEp + 1;
-                const nextEpData = cachedEpisodes.find(ep => Number(ep.episode_number) === nextEp) || cachedEpisodes[currentEp] || null;
-                const nextAbs = activeSeriesPlaying.absoluteEpisodeNumber
-                    ? activeSeriesPlaying.absoluteEpisodeNumber + 1
-                    : null;
-
-                showToast(`Passando para Episódio ${nextEp}...`, 1200);
-                playSeriesEpisode(activeSeriesPlaying.show, curSeason, nextEp, nextEpData, nextAbs);
-            } else if (cachedEpisodes.length === 0) {
-                const nextEp = currentEp + 1;
-                const nextAbs = activeSeriesPlaying.absoluteEpisodeNumber
-                    ? activeSeriesPlaying.absoluteEpisodeNumber + 1
-                    : null;
-                showToast(`Passando para Episódio ${nextEp}...`, 1200);
-                playSeriesEpisode(activeSeriesPlaying.show, curSeason, nextEp, null, nextAbs);
-            } else if (currentSeriesDetails && curSeason < currentSeriesDetails.number_of_seasons) {
-                showToast(`Iniciando Temporada ${curSeason + 1}...`, 1200);
-                const nextSeasonEpisodes = cachedSeasonsMap[`${activeSeriesPlaying.show.id}_${curSeason + 1}`] || [];
-                const nextEpData = nextSeasonEpisodes.find(ep => Number(ep.episode_number) === 1) || nextSeasonEpisodes[0] || null;
-                const nextAbs = activeSeriesPlaying.absoluteEpisodeNumber
-                    ? activeSeriesPlaying.absoluteEpisodeNumber + 1
-                    : null;
-
-                playSeriesEpisode(activeSeriesPlaying.show, curSeason + 1, 1, nextEpData, nextAbs);
-            } else {
+            const next = getNextEpisodeTarget();
+            if (!next) {
                 showToast("Você já está no último episódio disponível!");
+                return;
             }
+            showToast(next.newSeason ? `Iniciando Temporada ${next.season}...` : `Passando para Episódio ${next.episode}...`, 1200);
+            playSeriesEpisode(activeSeriesPlaying.show, next.season, next.episode, next.epData, next.abs);
         });
     }
 
@@ -2187,6 +2162,51 @@ function goToEpisodeByAbsoluteNumber(epNumber) {
 // 4. SERIES & ANIMES THEATER PLAYER
 // ==========================================
 
+/**
+ * Next episode after the one playing (same rules as the "Próximo" button):
+ * next in the season, or episode 1 of the next season; null on the last one.
+ */
+function getNextEpisodeTarget() {
+    const currentEp = activeSeriesPlaying.episodeNumber;
+    const curSeason = activeSeriesPlaying.seasonNumber;
+    const cachedEpisodes = cachedSeasonsMap[`${activeSeriesPlaying.show.id}_${curSeason}`] || [];
+    const abs = activeSeriesPlaying.absoluteEpisodeNumber ? activeSeriesPlaying.absoluteEpisodeNumber + 1 : null;
+
+    if (cachedEpisodes.length === 0 || currentEp < cachedEpisodes.length) {
+        const nextEp = currentEp + 1;
+        const epData = cachedEpisodes.find(ep => Number(ep.episode_number) === nextEp) || cachedEpisodes[currentEp] || null;
+        return { season: curSeason, episode: nextEp, epData, abs, newSeason: false };
+    }
+    if (currentSeriesDetails && curSeason < currentSeriesDetails.number_of_seasons) {
+        const nextSeasonEpisodes = cachedSeasonsMap[`${activeSeriesPlaying.show.id}_${curSeason + 1}`] || [];
+        const epData = nextSeasonEpisodes.find(ep => Number(ep.episode_number) === 1) || nextSeasonEpisodes[0] || null;
+        return { season: curSeason + 1, episode: 1, epData, abs, newSeason: true };
+    }
+    return null;
+}
+
+/**
+ * /api/resolve parameters for the native players. native_anime (ZokoAnime) uses the
+ * absolute episode when known; native_direct (MGEB) uses the season-relative one.
+ */
+function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNumber, absoluteEpisode) {
+    const isAnimeMode = serverKey === 'native_anime';
+    let seasonName = "";
+    if (currentSeriesDetails && currentSeriesDetails.seasons) {
+        const matchedSeason = currentSeriesDetails.seasons.find(s => Number(s.season_number) === Number(seasonNumber));
+        if (matchedSeason && matchedSeason.name) seasonName = matchedSeason.name;
+    }
+    return {
+        id: showItem.id,
+        type: isAnimeMode ? "anime" : "serie",
+        season: seasonNumber,
+        episode: isAnimeMode && absoluteEpisode ? absoluteEpisode : episodeNumber,
+        lang: isAnimeMode ? "sub" : "dub",
+        title: showItem.name || showItem.title || 'Série',
+        season_name: seasonName
+    };
+}
+
 export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData = null, absoluteEpNumber = null) {
     if (!showItem) return;
 
@@ -2320,33 +2340,12 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
             seriesArt.innerHTML = "";
             seriesArt.classList.add("hidden");
         }
+        setLoaderText(seriesLoader, "Buscando fontes...");
         if (seriesLoader) seriesLoader.classList.remove("hidden");
 
-        const isAnimeMode = serverKey === 'native_anime';
-        const mediaType = isAnimeMode ? "anime" : "serie";
-        const lang = isAnimeMode ? "sub" : "dub";
-        // For native_anime (ZokoAnime), provide absolute episode if available; for native_direct (MGEB), provide season-relative episode
-        const resolvedEp = (isAnimeMode && (activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode))
-            ? (activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode)
-            : episodeNumber;
-
-        let currentSeasonName = "";
-        if (currentSeriesDetails && currentSeriesDetails.seasons) {
-            const matchedSeason = currentSeriesDetails.seasons.find(s => Number(s.season_number) === Number(seasonNumber));
-            if (matchedSeason && matchedSeason.name) {
-                currentSeasonName = matchedSeason.name;
-            }
-        }
-
-        resolveDirectStream({
-            id: showItem.id,
-            type: mediaType,
-            season: seasonNumber,
-            episode: resolvedEp,
-            lang: lang,
-            title: showName,
-            season_name: currentSeasonName
-        }).then(data => {
+        resolveDirectStream(
+            buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNumber, activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode)
+        ).then(data => {
             if (currentSessionId !== seriesPlaybackSessionId || !theaterView || theaterView.classList.contains("hidden")) {
                 console.warn("[Series] Abortando montagem nativa: reprodução cancelada ou janela fechada.");
                 return;
@@ -2376,6 +2375,21 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
                 title: `${showName} • T${seasonNumber}:E${episodeNumber}`,
                 poster: backdropUrl,
                 subtitles: data.subtitles || [],
+                // Near the end, resolve the next episode so "Próximo" starts without the search wait
+                onNearEnd: () => {
+                    if (currentSessionId !== seriesPlaybackSessionId) return;
+                    const next = getNextEpisodeTarget();
+                    if (next) prefetchDirectStream(buildNativeResolveRequest(showItem, serverKey, next.season, next.episode, next.abs || next.epData?.absoluteEpisode));
+                },
+                getNextUp: () => {
+                    if (currentSessionId !== seriesPlaybackSessionId) return null;
+                    const next = getNextEpisodeTarget();
+                    if (!next) return null;
+                    return {
+                        title: `T${next.season}:E${next.episode}${next.epData?.name ? ` – ${next.epData.name}` : ''}`,
+                        play: () => playSeriesEpisode(activeSeriesPlaying.show, next.season, next.episode, next.epData, next.abs)
+                    };
+                },
                 onAllFailed: () => {
                     showToast("Todas as fontes diretas deste episódio falharam. Selecione outro servidor abaixo se desejar.");
                     if (seriesArt) {
@@ -2406,6 +2420,7 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
                 window.tvzinhaSetContingencyState(true);
             }
             iframe.classList.remove("hidden");
+            setLoaderText(seriesLoader, "Carregando reprodução...");
             if (seriesLoader) seriesLoader.classList.remove("hidden");
 
             const serverDef = SERIES_SERVERS[serverKey] || SERIES_SERVERS.mgeb;

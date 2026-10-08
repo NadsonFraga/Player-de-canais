@@ -18,7 +18,7 @@ import {
 import { showToast } from '../core/toast.js';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
 import { getUiSvg } from '../core/icons.js';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset } from '../player/engine.js?v=20261008_q3';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261008_q7';
 import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js';
 
 let isMoviesInitialized = false;
@@ -1294,6 +1294,7 @@ export function selectMovieServer(server, buttonElement = null) {
 
     if (server.isNative) {
         removeMovieIframe();
+        setLoaderText(movieLoader, "Buscando fontes...");
         if (movieLoader) movieLoader.classList.remove("hidden");
 
         resolveDirectStream({
@@ -1363,6 +1364,7 @@ export function selectMovieServer(server, buttonElement = null) {
         if (window.tvzinhaArmIframeGuard) window.tvzinhaArmIframeGuard(iframe);
         if (window.tvzinhaSetContingencyState) window.tvzinhaSetContingencyState(true);
         iframe.classList.remove("hidden");
+        setLoaderText(movieLoader, "Carregando filme...");
         if (movieLoader) movieLoader.classList.remove("hidden");
 
         const embedUrl = server.buildUrl(currentSelectedMovie.id);

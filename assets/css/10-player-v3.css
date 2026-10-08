@@ -281,6 +281,69 @@
     font-weight: 500;
 }
 
+/* Source status under the loading spinner */
+.art-video-player .tvz-source-status {
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    max-width: 90%;
+}
+
+/* "Próximo episódio" countdown card */
+.art-video-player .tvz-upnext {
+    min-width: 230px;
+    max-width: 320px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(20, 20, 22, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    color: #fff;
+}
+
+.art-video-player .tvz-upnext-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 4px;
+}
+
+.art-video-player .tvz-upnext-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.art-video-player .tvz-upnext-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.art-video-player .tvz-upnext-actions button {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.art-video-player .tvz-upnext-actions .tvz-upnext-play {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: #04130a;
+}
+
 /* HD badge on the gear button while playing 720p or higher */
 .art-video-player.tvz-playing-hd .art-control-setting {
     position: relative;
