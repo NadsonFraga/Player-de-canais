@@ -56,6 +56,22 @@ if (typeof document !== 'undefined') {
 }
 
 /**
+ * Stops a <video> download for good. Artplayer.destroy() only detaches the element,
+ * which keeps an MP4 transfer open; hosts that cap connections per account
+ * (fontedecanais allows ~3) then stall every next title.
+ */
+function releaseVideoElement(video) {
+    if (!video) return;
+    try {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+    } catch (e) {
+        // Element already gone
+    }
+}
+
+/**
  * Resets the TV player instances, timers, and containers cleanly
  */
 export function atomicTvPlayerReset() {
@@ -76,6 +92,7 @@ export function atomicTvPlayerReset() {
     if (window.tvArtInstance) {
         try {
             window.tvArtInstance.pause();
+            releaseVideoElement(window.tvArtInstance.video);
             window.tvArtInstance.destroy(true);
         } catch (e) {
             console.warn("[TvArtplayer] Notice during instance destruction:", e);
@@ -105,6 +122,8 @@ export function atomicTvPlayerReset() {
  * Resets all active players (TV, Movies, Series, Anime) across the application
  */
 export function atomicPlayerReset() {
+    // Detach the native session first so events from the instances being destroyed are ignored
+    activeNativeSession = null;
     atomicTvPlayerReset();
     setPlaybackActiveState(false);
 
@@ -116,6 +135,7 @@ export function atomicPlayerReset() {
     if (window.artInstance) {
         try {
             window.artInstance.pause();
+            releaseVideoElement(window.artInstance.video);
             window.artInstance.destroy(true);
         } catch (e) {
             console.warn("[Artplayer] Notice during instance destruction:", e);
@@ -601,26 +621,235 @@ export async function resolveDirectStream({ id, type, season = 1, episode = 1, l
     }
 }
 
-/**
- * Mounts native Artplayer for Movies, Series and Anime with subtitles and AniSkip support
- */
-export function mountNativePlayer({ containerId, streamUrl, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null }) {
-    atomicPlayerReset();
+/* ============================================================
+ * NATIVE PLAYER (Movies, Series, Anime)
+ * Sources arrive ranked best-first from /api/resolve (quality, qualities, kind).
+ * One session holds every source so the "Qualidade" menu can list all
+ * resolutions and switch between sources while keeping the position.
+ * ============================================================ */
 
-    const container = document.getElementById(containerId);
+const NATIVE_WATCHDOG_MS = 10000;
+const NATIVE_WATCHDOG_MAX_MS = 30000;
+// MP4 reports no progress until its moov box (often 4-6 MB) is downloaded, so it gets a longer first wait
+const NATIVE_WATCHDOG_MP4_MS = 25000;
+// The last remaining source is given up to this long before the error screen
+const NATIVE_WATCHDOG_LAST_SOURCE_MS = 90000;
+const NATIVE_SETTING_WIDTH = 230;
+const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate', 'aspect-ratio', 'flip'];
+
+const NATIVE_ICONS = {
+    quality: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.2" fill="#000"/><circle cx="15" cy="12" r="2.2" fill="#000"/><circle cx="7" cy="17" r="2.2" fill="#000"/></svg>',
+    audio: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+    subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10.5 10.2a2.2 2.2 0 1 0 0 3.6M16.5 10.2a2.2 2.2 0 1 0 0 3.6" stroke-linecap="round"/></svg>'
+};
+
+const NATIVE_I18N = {
+    'pt-br': {
+        'Play': 'Reproduzir',
+        'Pause': 'Pausar',
+        'Volume': 'Volume',
+        'Fullscreen': 'Tela cheia',
+        'Exit Fullscreen': 'Sair da tela cheia',
+        'Web Fullscreen': 'Tela cheia na janela',
+        'Exit Web Fullscreen': 'Sair da tela cheia na janela',
+        'PIP Mode': 'Picture-in-picture',
+        'Exit PIP Mode': 'Sair do picture-in-picture',
+        'PIP Not Supported': 'Picture-in-picture não suportado',
+        'Fullscreen Not Supported': 'Tela cheia não suportada',
+        'Show Setting': 'Configurações',
+        'Hide Setting': 'Fechar configurações',
+        'Play Speed': 'Velocidade',
+        'Normal': 'Normal',
+        'Aspect Ratio': 'Proporção',
+        'Default': 'Padrão',
+        'Video Flip': 'Espelhar',
+        'Horizontal': 'Horizontal',
+        'Vertical': 'Vertical',
+        'Screenshot': 'Captura de tela',
+        'Close': 'Fechar',
+        'Reconnect': 'Reconectando',
+        'Video Load Failed': 'Falha ao carregar o vídeo',
+        'Switch Video': 'Trocar vídeo',
+        'Switch Subtitle': 'Trocar legenda',
+        'Subtitle Offset': 'Atraso da legenda',
+        'AirPlay': 'AirPlay',
+        'AirPlay Not Available': 'AirPlay indisponível',
+        'Video Info': 'Informações do vídeo'
+    }
+};
+
+// Only the most recent native session may react to player events
+let activeNativeSession = null;
+let nativeSessionCounter = 0;
+
+/**
+ * Maps a frame size to a standard quality class (2160, 1440, 1080, 720, 480, 360, 240).
+ * Mirrors qualityClass() in functions/api/resolve.js.
+ */
+export function qualityClass(width, height) {
+    const w = Number(width) || 0;
+    const h = Number(height) || 0;
+    const byW = w >= 3800 ? 2160 : w >= 2500 ? 1440 : w >= 1900 ? 1080 : w >= 1260 ? 720 : w >= 840 ? 480 : w >= 620 ? 360 : w > 0 ? 240 : 0;
+    const byH = h >= 2000 ? 2160 : h >= 1400 ? 1440 : h >= 1000 ? 1080 : h >= 700 ? 720 : h >= 460 ? 480 : h >= 340 ? 360 : h > 0 ? 240 : 0;
+    return Math.max(byW, byH) || null;
+}
+
+function qualityLabel(quality) {
+    if (!quality) return 'Original';
+    return quality >= 720 ? `${quality}p <sup class="tvz-quality-hd">HD</sup>` : `${quality}p`;
+}
+
+function qualityText(quality) {
+    return quality ? `${quality}p` : '';
+}
+
+/**
+ * Normalizes the sources accepted by mountNativePlayer: the new `sources` list,
+ * or the legacy `streamUrl` + `fallbackSources` pair (objects or plain URLs).
+ */
+function normalizeNativeSources({ sources, streamUrl, fallbackSources = [] }) {
+    const list = Array.isArray(sources) && sources.length
+        ? sources
+        : [streamUrl, ...(Array.isArray(fallbackSources) ? fallbackSources : [])];
+    return list
+        .filter(Boolean)
+        .map(src => {
+            const obj = typeof src === 'string' ? { stream_url: src } : src;
+            const url = obj.stream_url || obj.url || '';
+            const qualities = Array.isArray(obj.qualities) && obj.qualities.length
+                ? [...obj.qualities].sort((a, b) => b - a)
+                : (obj.quality ? [obj.quality] : []);
+            return {
+                url,
+                type: obj.type || '',
+                kind: obj.kind || 'unknown',
+                label: obj.label || '',
+                quality: qualities[0] || null,
+                qualities,
+                alive: obj.alive !== false
+            };
+        })
+        .filter(src => src.url);
+}
+
+function isHlsSource(src) {
+    if (src.type === 'hls') return true;
+    if (src.type === 'mp4') return false;
+    let decoded = src.url;
+    try { decoded = decodeURIComponent(src.url); } catch (e) { /* keep raw URL */ }
+    if (decoded.includes('.m3u8')) return true;
+    if (decoded.includes('.mp4')) return false;
+    return true;
+}
+
+/**
+ * Mounts native Artplayer for Movies, Series and Anime.
+ * Accepts `sources` (ranked list from /api/resolve) or the legacy `streamUrl` + `fallbackSources`.
+ */
+export function mountNativePlayer({ containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null }) {
+    const normalized = normalizeNativeSources({ sources, streamUrl, fallbackSources });
+    if (normalized.length === 0) {
+        atomicPlayerReset();
+        if (typeof onAllFailed === 'function') onAllFailed();
+        return null;
+    }
+
+    const session = {
+        id: ++nativeSessionCounter,
+        containerId,
+        title,
+        poster,
+        subtitles: Array.isArray(subtitles) ? subtitles : [],
+        onAllFailed,
+        sources: normalized,
+        failed: new Set(),
+        currentIndex: 0,
+        autoMode: true,
+        lockedQuality: null,
+        art: null,
+        hls: null,
+        mountToken: 0
+    };
+    return mountNativeSource(session, 0, { startTime });
+}
+
+function isSessionLive(session, token) {
+    return activeNativeSession === session && (token === undefined || session.mountToken === token);
+}
+
+function nextPlayableIndex(session, preferQuality = null) {
+    const candidates = session.sources
+        .map((src, idx) => ({ src, idx }))
+        .filter(({ src, idx }) => !session.failed.has(idx) && src.alive);
+    if (preferQuality) {
+        const match = candidates.find(({ src }) => src.qualities.includes(preferQuality));
+        if (match) return match.idx;
+    }
+    if (candidates.length) return candidates[0].idx;
+    // Sources the server flagged as unreachable are only tried as a last resort
+    const lastResort = session.sources.findIndex((src, idx) => !session.failed.has(idx));
+    return lastResort;
+}
+
+function currentPlaybackTime(session) {
+    try {
+        const t = session.art ? session.art.currentTime : 0;
+        return Number.isFinite(t) && t > 1 ? t : 0;
+    } catch (e) {
+        return 0;
+    }
+}
+
+/**
+ * Marks the current source as failed and mounts the next best one,
+ * resuming from the current position.
+ */
+function failoverNativeSource(session, reason) {
+    if (!isSessionLive(session)) return;
+    const resumeAt = currentPlaybackTime(session) || session.resumeAt || 0;
+    session.failed.add(session.currentIndex);
+    const nextIdx = nextPlayableIndex(session, session.autoMode ? null : session.lockedQuality);
+    if (nextIdx < 0) {
+        console.warn("[PlayerEngine] Todas as fontes diretas falharam.", reason || '');
+        activeNativeSession = null;
+        if (typeof session.onAllFailed === 'function') session.onAllFailed();
+        return;
+    }
+    console.warn(`[PlayerEngine] Fonte ${session.currentIndex + 1} falhou (${reason}). Alternando para fonte ${nextIdx + 1}.`);
+    showToast("Alternando para link alternativo de streaming...", 2500);
+    mountNativeSource(session, nextIdx, { startTime: resumeAt });
+}
+
+/**
+ * Mounts one source of a session. Recreates Artplayer/Hls but keeps the session state.
+ */
+function mountNativeSource(session, index, { startTime = 0 } = {}) {
+    atomicPlayerReset();
+    activeNativeSession = session;
+    session.currentIndex = index;
+    session.mountToken += 1;
+    session.resumeAt = startTime;
+    session.hls = null;
+    session.art = null;
+    const token = session.mountToken;
+    const source = session.sources[index];
+
+    const container = document.getElementById(session.containerId);
     if (!container) return null;
 
     // Strict Modal Visibility Check: Abort instantly if user closed the modal before resolution completed
-    if (containerId === "movie-artplayer-container") {
+    if (session.containerId === "movie-artplayer-container") {
         const movieModal = document.getElementById("movie-modal");
         if (!movieModal || movieModal.classList.contains("hidden")) {
             console.warn("[PlayerEngine] Aborting mountNativePlayer: movie modal is closed/hidden.");
+            activeNativeSession = null;
             return null;
         }
-    } else if (containerId === "series-artplayer-container") {
+    } else if (session.containerId === "series-artplayer-container") {
         const seriesView = document.getElementById("series-player-view");
         if (!seriesView || seriesView.classList.contains("hidden")) {
             console.warn("[PlayerEngine] Aborting mountNativePlayer: series player view is closed/hidden.");
+            activeNativeSession = null;
             return null;
         }
     }
@@ -628,63 +857,64 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
     container.innerHTML = "";
     container.classList.remove("hidden");
 
-    const isHls = streamUrl.includes(".m3u8") || streamUrl.includes("type=hls") || !streamUrl.includes(".mp4");
-    let activeSourcesQueue = [...fallbackSources];
-    let hasMountedSuccessfully = false;
+    const isHls = isHlsSource(source);
+    let hasStarted = false;
+    let lastProgressAt = Date.now();
+    const mountedAt = Date.now();
+
+    const markProgress = () => { lastProgressAt = Date.now(); };
 
     function markStreamSuccess() {
-        if (!hasMountedSuccessfully) {
-            hasMountedSuccessfully = true;
-            if (window.cascadeTimer) {
-                clearTimeout(window.cascadeTimer);
-                window.cascadeTimer = null;
-            }
-            setPlaybackActiveState(true);
+        if (hasStarted || !isSessionLive(session, token)) return;
+        hasStarted = true;
+        if (window.cascadeTimer) {
+            clearTimeout(window.cascadeTimer);
+            window.cascadeTimer = null;
         }
+        setPlaybackActiveState(true);
     }
 
-    window.cascadeTimer = setTimeout(() => {
-        if (!hasMountedSuccessfully) {
-            console.warn("[PlayerEngine] Watchdog disparado (10s sem playback). Tentando fallback...");
-            tryFallback();
-        }
-    }, 10000);
-
-    function tryFallback() {
-        if (hasMountedSuccessfully) return;
-        if (activeSourcesQueue.length > 0) {
-            const nextSrc = activeSourcesQueue.shift();
-            console.log("[PlayerEngine] Alternando para fonte reserva:", nextSrc);
-            showToast("Alternando para link alternativo de streaming...", 2500);
-            mountNativePlayer({
-                containerId,
-                streamUrl: nextSrc.url || nextSrc,
-                title,
-                poster,
-                subtitles,
-                fallbackSources: activeSourcesQueue,
-                startTime: 0,
-                onAllFailed
-            });
-        } else {
-            console.warn("[PlayerEngine] Todas as fontes diretas falharam.");
-            if (typeof onAllFailed === 'function') {
-                onAllFailed();
+    // Watchdog: fail over only when nothing is loading; a slow but progressing load gets more time
+    function armWatchdog(delay) {
+        window.cascadeTimer = setTimeout(() => {
+            if (hasStarted || !isSessionLive(session, token)) return;
+            const elapsed = Date.now() - mountedAt;
+            const stillLoading = Date.now() - lastProgressAt < NATIVE_WATCHDOG_MS;
+            if (stillLoading && elapsed < Math.max(NATIVE_WATCHDOG_MAX_MS, initialWatchdog + NATIVE_WATCHDOG_MS)) {
+                armWatchdog(NATIVE_WATCHDOG_MS / 2);
+                return;
             }
-        }
+            // With no other source left, a slow host is better than an error screen
+            const hasAlternative = session.sources.some((src, idx) => idx !== session.currentIndex && !session.failed.has(idx));
+            if (!hasAlternative && elapsed < NATIVE_WATCHDOG_LAST_SOURCE_MS) {
+                armWatchdog(NATIVE_WATCHDOG_MS);
+                return;
+            }
+            console.warn(`[PlayerEngine] Watchdog disparado (${Math.round(elapsed / 1000)}s sem playback).`);
+            failoverNativeSource(session, 'watchdog');
+        }, delay);
     }
+    const initialWatchdog = isHls ? NATIVE_WATCHDOG_MS : NATIVE_WATCHDOG_MP4_MS;
+    armWatchdog(initialWatchdog);
+
+    const subtitles = session.subtitles;
+    // Taller rows and a wider main panel for the YouTube-like settings (Artplayer sizes panels from these constants)
+    window.Artplayer.SETTING_ITEM_HEIGHT = 40;
+    window.Artplayer.SETTING_WIDTH = 290;
 
     try {
         const art = new window.Artplayer({
-            container: `#${containerId}`,
-            url: streamUrl,
+            container: `#${session.containerId}`,
+            url: source.url,
             type: isHls ? 'm3u8' : 'mp4',
-            title: title || 'Tvzinha Cinema',
-            poster: poster || '',
+            title: session.title || 'Tvzinha Cinema',
+            poster: session.poster || '',
             volume: 0.9,
             autoplay: true,
             autoMini: true,
             theme: '#22c55e',
+            lang: 'pt-br',
+            i18n: NATIVE_I18N,
             fullscreen: true,
             fullscreenWeb: false,
             pip: true,
@@ -694,7 +924,7 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
             aspectRatio: true,
             hotkey: true,
             airplay: true,
-            subtitle: (subtitles && Array.isArray(subtitles) && subtitles.length > 0) ? {
+            subtitle: subtitles.length > 0 ? {
                 url: subtitles[0].url || subtitles[0].file,
                 type: 'vtt',
                 escape: false,
@@ -721,118 +951,65 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
                         hls.loadSource(url);
                         hls.attachMedia(video);
                         window.hlsInstance = hls;
+                        session.hls = hls;
 
-                        let audioSettingsRegistered = false;
-                        const registerAudioTracks = () => {
-                            if (audioSettingsRegistered || !hls.audioTracks || hls.audioTracks.length <= 1) return;
-                            audioSettingsRegistered = true;
-                            const audioOptions = hls.audioTracks.map((trk, idx) => ({
-                                default: idx === hls.audioTrack,
-                                html: trk.name || trk.lang || `Áudio ${idx + 1}`,
-                                trackIndex: idx
-                            }));
+                        hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                            if (!isSessionLive(session, token)) return;
+                            markProgress();
+                            applyLockedLevel(session);
+                            refreshQualityMenu(session);
+                            refreshAudioMenu(session);
+                        });
 
-                            artInstance.setting.add({
-                                id: 'audio-selector',
-                                name: 'Áudio',
-                                width: 150,
-                                tooltip: hls.audioTracks[hls.audioTrack]?.name || 'Padrão',
-                                selector: audioOptions,
-                                onSelect: function (item) {
-                                    hls.audioTrack = item.trackIndex;
-                                    return item.html;
-                                }
-                            });
-                        };
+                        hls.on(window.Hls.Events.FRAG_LOADED, markProgress);
+                        hls.on(window.Hls.Events.LEVEL_LOADED, markProgress);
 
-                        hls.on(window.Hls.Events.MANIFEST_PARSED, (event, data) => {
-                            markStreamSuccess();
-                            if (data.levels && data.levels.length > 1) {
-                                const qualities = data.levels.map((lvl, idx) => ({
-                                    default: idx === hls.currentLevel,
-                                    html: `${lvl.height ? lvl.height + 'p' : 'Auto'} (${Math.round(lvl.bitrate / 1000)}k)`,
-                                    levelIndex: idx
-                                }));
-                                qualities.unshift({ default: true, html: 'Automático', levelIndex: -1 });
-
-                                artInstance.setting.add({
-                                    id: 'quality-selector',
-                                    name: 'Qualidade',
-                                    width: 150,
-                                    tooltip: 'Auto',
-                                    selector: qualities,
-                                    onSelect: function (item) {
-                                        hls.currentLevel = item.levelIndex;
-                                        return item.html;
-                                    }
-                                });
-                            }
-                            registerAudioTracks();
+                        hls.on(window.Hls.Events.LEVEL_SWITCHED, () => {
+                            if (isSessionLive(session, token)) updateQualityIndicators(session);
                         });
 
                         hls.on(window.Hls.Events.AUDIO_TRACKS_UPDATED, () => {
-                            registerAudioTracks();
+                            if (isSessionLive(session, token)) refreshAudioMenu(session);
                         });
 
                         hls.on(window.Hls.Events.ERROR, (event, data) => {
-                            if (data.fatal) {
-                                switch (data.type) {
-                                    case window.Hls.ErrorTypes.NETWORK_ERROR:
+                            if (!data.fatal || !isSessionLive(session, token)) return;
+                            switch (data.type) {
+                                case window.Hls.ErrorTypes.NETWORK_ERROR:
+                                    // Manifest errors mean the source is unusable; fragment errors get one retry
+                                    if (data.details && /manifest|level/i.test(data.details) && !hasStarted) {
+                                        failoverNativeSource(session, data.details);
+                                    } else {
                                         hls.startLoad();
-                                        break;
-                                    case window.Hls.ErrorTypes.MEDIA_ERROR:
-                                        hls.recoverMediaError();
-                                        break;
-                                    default:
-                                        tryFallback();
-                                        break;
-                                }
+                                    }
+                                    break;
+                                case window.Hls.ErrorTypes.MEDIA_ERROR:
+                                    hls.recoverMediaError();
+                                    break;
+                                default:
+                                    failoverNativeSource(session, data.details || 'hls');
+                                    break;
                             }
                         });
                     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                         video.src = url;
-                        video.addEventListener('loadedmetadata', () => {
-                            markStreamSuccess();
-                        }, { once: true });
                     }
                 }
             }
         });
 
+        session.art = art;
         window.artInstance = art;
         setupMobileOrientationLock(art);
 
-        // Artplayer Life-Cycle Events & Mobile Autoplay Policy Safe Handling
         art.on('ready', () => {
+            if (!isSessionLive(session, token)) return;
             if (startTime > 0) {
                 art.currentTime = startTime;
             }
 
-            if (subtitles && Array.isArray(subtitles) && subtitles.length > 0) {
-                const subOptions = subtitles.map((sub, idx) => ({
-                    default: idx === 0,
-                    html: sub.label || sub.name || `Legenda ${idx + 1}`,
-                    url: sub.url || sub.file
-                }));
-                subOptions.unshift({ default: false, html: 'Desativada', url: '' });
-
-                art.setting.add({
-                    id: 'subtitle-selector',
-                    name: 'Legendas',
-                    width: 160,
-                    tooltip: subOptions[1]?.html || 'Ativada',
-                    selector: subOptions,
-                    onSelect: function (item) {
-                        if (!item.url) {
-                            art.subtitle.show = false;
-                        } else {
-                            art.subtitle.switch(item.url, { name: item.html });
-                            art.subtitle.show = true;
-                        }
-                        return item.html;
-                    }
-                });
-            }
+            refreshQualityMenu(session);
+            refreshSubtitleMenu(session);
 
             const playPromise = art.play();
             if (playPromise && typeof playPromise.catch === 'function') {
@@ -845,31 +1022,299 @@ export function mountNativePlayer({ containerId, streamUrl, title, poster, subti
             }
         });
 
+        art.on('video:progress', markProgress);
+
         art.on('video:loadedmetadata', () => {
-            markStreamSuccess();
+            if (!isSessionLive(session, token)) return;
+            markProgress();
+            measureCurrentQuality(session);
         });
 
-        art.on('video:canplay', () => {
-            markStreamSuccess();
-        });
-
-        art.on('video:playing', () => {
-            markStreamSuccess();
-        });
+        art.on('video:canplay', markStreamSuccess);
+        art.on('video:playing', markStreamSuccess);
 
         art.on('video:pause', () => {
             setPlaybackActiveState(false);
         });
 
         art.on('error', (err) => {
+            if (!isSessionLive(session, token)) return;
             console.warn("[PlayerEngine] Artplayer erro no stream:", err);
-            tryFallback();
+            // Artplayer retries the same URL on its own; switch source on the first error instead
+            failoverNativeSource(session, 'video-error');
         });
 
         return art;
     } catch (err) {
         console.error("[PlayerEngine] Erro ao instanciar Artplayer:", err);
-        tryFallback();
+        failoverNativeSource(session, 'init');
         return null;
     }
+}
+
+/* ---------- Settings panel helpers (idempotent: one entry per name) ---------- */
+
+/**
+ * Adds or replaces a setting by name, then keeps the panel in a fixed order.
+ * Artplayer's setting.add() always appends, which is what duplicated the
+ * quality rows before; update() replaces the entry with the same name.
+ */
+function upsertSetting(art, option) {
+    if (!art || !art.setting) return;
+    try {
+        art.setting.update(option);
+        const list = art.setting.option;
+        if (Array.isArray(list)) {
+            const rank = name => {
+                const i = NATIVE_SETTING_ORDER.indexOf(name);
+                return i === -1 ? NATIVE_SETTING_ORDER.length : i;
+            };
+            const sorted = [...list].sort((a, b) => rank(a.name) - rank(b.name));
+            if (sorted.some((item, i) => item !== list[i])) {
+                list.splice(0, list.length, ...sorted);
+                art.setting.destroy();
+                art.setting.render(list);
+            }
+        }
+    } catch (e) {
+        console.warn("[PlayerEngine] Falha ao atualizar configurações:", e);
+    }
+}
+
+function hlsLevelQuality(level) {
+    return level ? qualityClass(level.width, level.height) : null;
+}
+
+/**
+ * Builds the unified quality map: resolutions of the playing source first
+ * (switching inside it needs no remount), then resolutions only offered by
+ * other sources, in ranked order.
+ */
+function buildQualityEntries(session) {
+    const entries = new Map();
+    const current = session.sources[session.currentIndex];
+    const hls = session.hls;
+
+    if (hls && Array.isArray(hls.levels) && hls.levels.length) {
+        const levels = hls.levels
+            .map((lvl, levelIndex) => ({ quality: hlsLevelQuality(lvl) || (hls.levels.length === 1 ? current.quality : null), bitrate: lvl.bitrate || 0, levelIndex }))
+            .filter(l => l.quality)
+            .sort((a, b) => b.bitrate - a.bitrate);
+        for (const l of levels) {
+            if (!entries.has(l.quality)) entries.set(l.quality, { sourceIndex: session.currentIndex, levelIndex: l.levelIndex });
+        }
+    } else if (current.quality) {
+        entries.set(current.quality, { sourceIndex: session.currentIndex, levelIndex: -1 });
+    }
+
+    session.sources.forEach((src, idx) => {
+        if (idx === session.currentIndex || session.failed.has(idx) || !src.alive) return;
+        for (const q of src.qualities) {
+            if (!entries.has(q)) entries.set(q, { sourceIndex: idx, levelIndex: null });
+        }
+    });
+
+    return new Map([...entries.entries()].sort((a, b) => b[0] - a[0]));
+}
+
+/** Quality class currently on screen (active HLS level, or the measured frame). */
+function activeQuality(session) {
+    const hls = session.hls;
+    if (hls && Array.isArray(hls.levels) && hls.currentLevel >= 0) {
+        const q = hlsLevelQuality(hls.levels[hls.currentLevel]);
+        if (q) return q;
+    }
+    const video = session.art && session.art.video;
+    if (video && video.videoHeight) {
+        const q = qualityClass(video.videoWidth, video.videoHeight);
+        if (q) return q;
+    }
+    return session.sources[session.currentIndex].quality;
+}
+
+function autoLabel(session) {
+    const q = activeQuality(session);
+    return q ? `Automático <span class="tvz-quality-auto-current">(${qualityText(q)})</span>` : 'Automático';
+}
+
+function refreshQualityMenu(session) {
+    const art = session.art;
+    if (!art) return;
+    const entries = buildQualityEntries(session);
+    session.qualityEntries = entries;
+
+    const selector = [{
+        html: autoLabel(session),
+        value: 'auto',
+        default: session.autoMode
+    }];
+    for (const quality of entries.keys()) {
+        selector.push({
+            html: qualityLabel(quality),
+            value: quality,
+            default: !session.autoMode && session.lockedQuality === quality
+        });
+    }
+
+    upsertSetting(art, {
+        name: 'quality',
+        html: 'Qualidade',
+        icon: NATIVE_ICONS.quality,
+        width: NATIVE_SETTING_WIDTH,
+        tooltip: qualityTooltip(session),
+        selector,
+        onSelect: (item) => selectNativeQuality(session, item.value)
+    });
+    updateQualityIndicators(session);
+}
+
+function qualityTooltip(session) {
+    if (session.autoMode) return autoLabel(session);
+    return qualityText(session.lockedQuality) || 'Automático';
+}
+
+/** Updates the tooltip, the Auto item text and the HD badge without re-rendering the panel. */
+function updateQualityIndicators(session) {
+    const art = session.art;
+    if (!art) return;
+    try {
+        const option = art.setting && art.setting.find('quality');
+        if (option) {
+            option.tooltip = qualityTooltip(session);
+            const autoItem = (option.selector || []).find(item => item.value === 'auto');
+            if (autoItem) autoItem.html = autoLabel(session);
+        }
+        const q = activeQuality(session);
+        art.template.$player.classList.toggle('tvz-playing-hd', Boolean(q && q >= 720));
+        // A real element: the gear's ::before/::after are taken by its hover tooltip
+        const gear = art.template.$player.querySelector('.art-control-setting');
+        if (gear && !gear.querySelector('.tvz-hd-badge')) {
+            gear.insertAdjacentHTML('beforeend', '<span class="tvz-hd-badge">HD</span>');
+        }
+    } catch (e) {
+        // Panel not rendered yet
+    }
+}
+
+function applyLockedLevel(session) {
+    const hls = session.hls;
+    if (!hls || session.autoMode || !session.lockedQuality) return;
+    const levelIndex = hls.levels.findIndex(lvl => hlsLevelQuality(lvl) === session.lockedQuality);
+    if (levelIndex >= 0) hls.currentLevel = levelIndex;
+}
+
+/**
+ * Handles a pick in the quality menu. Returns the tooltip text for Artplayer.
+ */
+function selectNativeQuality(session, value) {
+    if (!isSessionLive(session)) return '';
+
+    if (value === 'auto') {
+        session.autoMode = true;
+        session.lockedQuality = null;
+        const bestIdx = nextPlayableIndex(session);
+        if (bestIdx >= 0 && bestIdx !== session.currentIndex) {
+            remountFromMenu(session, bestIdx);
+            return 'Automático';
+        }
+        if (session.hls) session.hls.currentLevel = -1;
+        updateQualityIndicators(session);
+        return qualityTooltip(session);
+    }
+
+    const quality = Number(value);
+    const entry = session.qualityEntries && session.qualityEntries.get(quality);
+    if (!entry) return qualityTooltip(session);
+    session.autoMode = false;
+    session.lockedQuality = quality;
+
+    if (entry.sourceIndex === session.currentIndex) {
+        if (session.hls && entry.levelIndex >= 0) session.hls.currentLevel = entry.levelIndex;
+        updateQualityIndicators(session);
+        return qualityText(quality);
+    }
+
+    showToast(`Alterando para ${qualityText(quality)}...`, 2000);
+    remountFromMenu(session, entry.sourceIndex);
+    return qualityText(quality);
+}
+
+/** Switches source after the click handler returns, so Artplayer is not destroyed mid-event. */
+function remountFromMenu(session, sourceIndex) {
+    const resumeAt = currentPlaybackTime(session);
+    const token = session.mountToken;
+    setTimeout(() => {
+        if (isSessionLive(session, token)) mountNativeSource(session, sourceIndex, { startTime: resumeAt });
+    }, 0);
+}
+
+/**
+ * Records the real frame size of single-quality sources once the video reports it,
+ * so the menu shows the true resolution even when the server could not probe it.
+ */
+function measureCurrentQuality(session) {
+    const video = session.art && session.art.video;
+    if (!video || !video.videoHeight) return;
+    const measured = qualityClass(video.videoWidth, video.videoHeight);
+    const src = session.sources[session.currentIndex];
+    const isMultiLevel = session.hls && session.hls.levels && session.hls.levels.length > 1;
+    if (measured && !isMultiLevel && src.quality !== measured) {
+        src.quality = measured;
+        src.qualities = [measured];
+        refreshQualityMenu(session);
+        return;
+    }
+    updateQualityIndicators(session);
+}
+
+function refreshAudioMenu(session) {
+    const hls = session.hls;
+    if (!session.art || !hls || !hls.audioTracks || hls.audioTracks.length <= 1) return;
+    const selector = hls.audioTracks.map((trk, idx) => ({
+        default: idx === hls.audioTrack,
+        html: trk.name || trk.lang || `Áudio ${idx + 1}`,
+        trackIndex: idx
+    }));
+    upsertSetting(session.art, {
+        name: 'audio',
+        html: 'Áudio',
+        icon: NATIVE_ICONS.audio,
+        width: NATIVE_SETTING_WIDTH,
+        tooltip: hls.audioTracks[hls.audioTrack]?.name || 'Padrão',
+        selector,
+        onSelect: (item) => {
+            hls.audioTrack = item.trackIndex;
+            return item.html;
+        }
+    });
+}
+
+function refreshSubtitleMenu(session) {
+    const art = session.art;
+    const subtitles = session.subtitles;
+    if (!art || !subtitles.length) return;
+    const selector = subtitles.map((sub, idx) => ({
+        default: idx === 0,
+        html: sub.label || sub.name || `Legenda ${idx + 1}`,
+        url: sub.url || sub.file
+    }));
+    selector.unshift({ default: false, html: 'Desativada', url: '' });
+
+    upsertSetting(art, {
+        name: 'subtitle',
+        html: 'Legendas',
+        icon: NATIVE_ICONS.subtitle,
+        width: NATIVE_SETTING_WIDTH,
+        tooltip: selector[1]?.html || 'Ativada',
+        selector,
+        onSelect: (item) => {
+            if (!item.url) {
+                art.subtitle.show = false;
+            } else {
+                art.subtitle.switch(item.url, { name: item.html });
+                art.subtitle.show = true;
+            }
+            return item.html;
+        }
+    });
 }
