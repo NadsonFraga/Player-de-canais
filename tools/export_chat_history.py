@@ -14,7 +14,7 @@ def main():
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
-    output_dir = os.path.join(project_root, "docs")
+    output_dir = os.path.join(project_root, ".archives", "history")
     os.makedirs(output_dir, exist_ok=True)
     
     md_output_path = os.path.join(output_dir, "CHAT_HISTORY.md")
