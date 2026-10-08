@@ -15,5 +15,5 @@
 
 - Static ESM SPA (no build step) on Cloudflare Pages; edge functions in `functions/api/` (`resolve.js`, `stream.js`), mirrored for local development by `tools/local_server.py` (keep both identical).
 - Local server: `python tools/local_server.py` -> http://localhost:8787 (LAN IP for phones).
-- Planning docs, summaries and handovers live in `.archives/` (`plans/`, `summaries/`). Start with the newest file in `.archives/summaries/` when resuming work.
+- All project documentation lives in `.archives/` (there is no `docs/` folder): `plans/`, `summaries/` (including handovers), `scopes/` (long-lived specs), `history/` (chat exports), `reference/`, `old/`. Start with the newest file in `.archives/summaries/` when resuming work.
 - Cache busting: when a frontend module changes, bump the `?v=` version used by `index.html`, `assets/js/main.js` and every importer of `assets/js/player/engine.js` (all importers must use the same string).

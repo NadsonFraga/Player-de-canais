@@ -1,3 +1,10 @@
-# Tvzinha — Private Archives & Agent Memory
+# Tvzinha â€” Archives & Documentation
 
-Repositório privado para documentação de arquitetura, blueprints, relatórios e memórias do agente.
+Project documentation folder (replaces the former `docs/`).
+
+- `plans/` â€” task plans (`<task>.md`)
+- `summaries/` â€” completion summaries (`<task>-summary.md`) and handovers; start with the newest one
+- `scopes/` â€” long-lived specs: architecture, design system, sources, streaming engine
+- `history/` â€” chat history exports (`tools/export_chat_history.py`)
+- `reference/` â€” reference dumps
+- `old/` â€” legacy assets
