@@ -97,6 +97,402 @@ def fetch_zoko(mal_id: str, episode: int = 1):
         print(f"[LocalServer] Error fetching ZokoAnime: {e}", file=sys.stderr)
         return None
 
+# ============================================================
+# QUALITY PROBING (mirror of functions/api/resolve.js)
+# Discovers the real resolution of each source so the player can rank
+# them by quality and offer a unified "Qualidade" menu.
+# ============================================================
+
+PROBE_TIMEOUT_S = 3.5
+PROBE_MAX_SOURCES = 6
+KIND_RANK = {"hls-multi": 0, "hls-single": 1, "mp4-range": 2, "mp4": 3, "unknown": 4}
+H264_HIGH_PROFILES = {100, 110, 122, 244, 44, 83, 86, 118, 128, 138, 139, 134, 135}
+
+
+def quality_class(width, height):
+    """Maps a frame size to a standard quality class; width counts so 1920x800 is still 1080p."""
+    w = int(width or 0)
+    h = int(height or 0)
+    by_w = 2160 if w >= 3800 else 1440 if w >= 2500 else 1080 if w >= 1900 else 720 if w >= 1260 else 480 if w >= 840 else 360 if w >= 620 else 240 if w > 0 else 0
+    by_h = 2160 if h >= 2000 else 1440 if h >= 1400 else 1080 if h >= 1000 else 720 if h >= 700 else 480 if h >= 460 else 360 if h >= 340 else 240 if h > 0 else 0
+    return max(by_w, by_h) or None
+
+
+class ProbeHttpError(Exception):
+    pass
+
+
+def probe_fetch(url, referer, rng=None, max_bytes=2 * 1024 * 1024):
+    """Returns (status, body, content_range); reads at most max_bytes since some hosts ignore Range."""
+    headers = {"User-Agent": USER_AGENT}
+    if referer:
+        headers["Referer"] = referer
+        if "zokoanime" in referer:
+            headers["Origin"] = "https://zokoanime.video"
+    if rng:
+        headers["Range"] = rng
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=PROBE_TIMEOUT_S) as res:
+            body = res.read(max_bytes) if max_bytes > 0 else b""
+            return res.status, body, res.headers.get("Content-Range", "")
+    except urllib.error.HTTPError as e:
+        return e.code, b"", ""
+
+
+def parse_h264_sps(nal):
+    """Reads an H.264 SPS NAL unit (header byte excluded) and returns (width, height)."""
+    data = bytearray()
+    for i, b in enumerate(nal):
+        # Strip emulation prevention bytes (00 00 03)
+        if i >= 2 and b == 3 and nal[i - 1] == 0 and nal[i - 2] == 0:
+            continue
+        data.append(b)
+    state = {"pos": 0}
+
+    def u(n):
+        v = 0
+        for _ in range(n):
+            pos = state["pos"]
+            if (pos >> 3) >= len(data):
+                raise ValueError("SPS overflow")
+            v = (v << 1) | ((data[pos >> 3] >> (7 - (pos & 7))) & 1)
+            state["pos"] = pos + 1
+        return v
+
+    def ue():
+        zeros = 0
+        while u(1) == 0:
+            zeros += 1
+            if zeros > 31:
+                raise ValueError("SPS ue overflow")
+        return ((1 << zeros) - 1) + u(zeros) if zeros else 0
+
+    def se():
+        k = ue()
+        return (k + 1) // 2 if k & 1 else -(k // 2)
+
+    profile = u(8)
+    u(16)
+    ue()
+    if profile in H264_HIGH_PROFILES:
+        chroma = ue()
+        if chroma == 3:
+            u(1)
+        ue()
+        ue()
+        u(1)
+        if u(1):
+            for i in range(8 if chroma != 3 else 12):
+                if not u(1):
+                    continue
+                size = 16 if i < 6 else 64
+                last = nxt = 8
+                for _ in range(size):
+                    if nxt != 0:
+                        nxt = (last + se() + 256) % 256
+                    last = last if nxt == 0 else nxt
+    ue()
+    poc_type = ue()
+    if poc_type == 0:
+        ue()
+    elif poc_type == 1:
+        u(1)
+        se()
+        se()
+        for _ in range(ue()):
+            se()
+    ue()
+    u(1)
+    width_mbs = ue() + 1
+    height_map_units = ue() + 1
+    frame_mbs_only = u(1)
+    if not frame_mbs_only:
+        u(1)
+    u(1)
+    crop_l = crop_r = crop_t = crop_b = 0
+    if u(1):
+        crop_l, crop_r, crop_t, crop_b = ue(), ue(), ue(), ue()
+    width = width_mbs * 16 - (crop_l + crop_r) * 2
+    height = (2 - frame_mbs_only) * height_map_units * 16 - (crop_t + crop_b) * 2 * (2 - frame_mbs_only)
+    return width, height
+
+
+def parse_ts_resolution(buf):
+    """Extracts the video frame size from the first bytes of an MPEG-TS segment."""
+    start = -1
+    for i in range(min(len(buf) - 376, 8192)):
+        if buf[i] == 0x47 and buf[i + 188] == 0x47 and buf[i + 376] == 0x47:
+            start = i
+            break
+    if start < 0:
+        return None
+
+    pmt_pid = video_pid = -1
+    video_type = 0
+    es = bytearray()
+    p = start
+    while p + 188 <= len(buf):
+        if buf[p] != 0x47:
+            break
+        pusi = (buf[p + 1] & 0x40) != 0
+        pid = ((buf[p + 1] & 0x1F) << 8) | buf[p + 2]
+        afc = (buf[p + 3] >> 4) & 3
+        off = p + 4
+        if afc in (0, 2):
+            p += 188
+            continue
+        if afc == 3:
+            off += 1 + buf[off]
+        if off >= p + 188:
+            p += 188
+            continue
+
+        if pid == 0 and pmt_pid < 0:
+            if pusi:
+                off += 1 + buf[off]
+            sec_len = ((buf[off + 1] & 0x0F) << 8) | buf[off + 2]
+            end = min(off + 3 + sec_len - 4, p + 188)
+            e = off + 8
+            while e + 4 <= end:
+                program = (buf[e] << 8) | buf[e + 1]
+                if program != 0:
+                    pmt_pid = ((buf[e + 2] & 0x1F) << 8) | buf[e + 3]
+                    break
+                e += 4
+        elif pid == pmt_pid and video_pid < 0:
+            if pusi:
+                off += 1 + buf[off]
+            sec_len = ((buf[off + 1] & 0x0F) << 8) | buf[off + 2]
+            end = min(off + 3 + sec_len - 4, p + 188)
+            prog_info_len = ((buf[off + 10] & 0x0F) << 8) | buf[off + 11]
+            e = off + 12 + prog_info_len
+            while e + 5 <= end:
+                stream_type = buf[e]
+                es_pid = ((buf[e + 1] & 0x1F) << 8) | buf[e + 2]
+                es_info_len = ((buf[e + 3] & 0x0F) << 8) | buf[e + 4]
+                if stream_type in (0x1B, 0x24):
+                    video_pid, video_type = es_pid, stream_type
+                    break
+                e += 5 + es_info_len
+        elif pid == video_pid:
+            if pusi and buf[off] == 0 and buf[off + 1] == 0 and buf[off + 2] == 1:
+                off += 9 + buf[off + 8]
+            if off < p + 188:
+                es.extend(buf[off:p + 188])
+        p += 188
+
+    # HEVC SPS parsing is not supported: resolution stays unknown
+    if video_type != 0x1B or not es:
+        return None
+    for i in range(len(es) - 4):
+        if es[i] == 0 and es[i + 1] == 0 and es[i + 2] == 1 and (es[i + 3] & 0x1F) == 7:
+            end = len(es)
+            for j in range(i + 4, len(es) - 2):
+                if es[j] == 0 and es[j + 1] == 0 and es[j + 2] in (0, 1):
+                    end = j
+                    break
+            try:
+                return parse_h264_sps(bytes(es[i + 4:end]))
+            except (ValueError, IndexError):
+                return None
+    return None
+
+
+def read_box_header(buf, off):
+    if off + 8 > len(buf):
+        return None
+    size = int.from_bytes(buf[off:off + 4], "big")
+    box_type = buf[off + 4:off + 8].decode("latin1")
+    header = 8
+    if size == 1:
+        if off + 16 > len(buf):
+            return None
+        size = int.from_bytes(buf[off + 8:off + 16], "big")
+        header = 16
+    return size, box_type, header
+
+
+def parse_moov_resolution(buf, moov_start):
+    """Finds the largest track size declared in tkhd boxes inside a moov buffer."""
+    best = None
+
+    def walk(start, end, depth):
+        nonlocal best
+        off = start
+        while off + 8 <= end:
+            box = read_box_header(buf, off)
+            if not box or box[0] < 8:
+                return
+            size, box_type, header = box
+            box_end = min(off + size, end)
+            if box_type == "trak" and depth == 0:
+                walk(off + header, box_end, 1)
+            elif box_type == "tkhd" and depth == 1:
+                version = buf[off + 8]
+                w_off = off + (96 if version == 1 else 84)
+                if w_off + 8 <= len(buf):
+                    width = int.from_bytes(buf[w_off:w_off + 4], "big") / 65536
+                    height = int.from_bytes(buf[w_off + 4:w_off + 8], "big") / 65536
+                    if width > 0 and height > 0 and (not best or width * height > best[0] * best[1]):
+                        best = (round(width), round(height))
+            off += size
+
+    moov = read_box_header(buf, moov_start)
+    if not moov:
+        return None
+    walk(moov_start + moov[2], min(moov_start + moov[0], len(buf)), 0)
+    return best
+
+
+def probe_mp4(url, referer):
+    """Reads the MP4 box layout with Range requests. Returns dict(res, ranged) or dict(dead)."""
+    status, buf, _ = probe_fetch(url, referer, "bytes=0-131071", 131072)
+    if status >= 400:
+        return {"dead": True}
+    ranged = status == 206
+    base = 0
+    for _ in range(4):
+        off = 0
+        moov_at = next_abs = -1
+        while off + 8 <= len(buf):
+            box = read_box_header(buf, off)
+            if not box or box[0] < 8:
+                break
+            if box[1] == "moov":
+                moov_at = off
+                break
+            if off + box[0] > len(buf):
+                next_abs = base + off + box[0]
+                break
+            off += box[0]
+        if moov_at >= 0:
+            return {"res": parse_moov_resolution(buf, moov_at), "ranged": ranged}
+        if next_abs < 0 or not ranged:
+            break
+        status, buf, _ = probe_fetch(url, referer, f"bytes={next_abs}-{next_abs + 131071}", 131072)
+        if status != 206:
+            break
+        base = next_abs
+    return {"res": None, "ranged": ranged}
+
+
+def segment_starts_mid_file(status, content_range):
+    """A segment is broken when a request for its start is answered with bytes from the middle of the file."""
+    if status != 206:
+        return False
+    m = re.match(r"bytes\s+(\d+)-", content_range or "", re.I)
+    return bool(m and int(m.group(1)) != 0)
+
+
+def probe_first_segment(playlist_url, text, referer, read_resolution):
+    """Checks the first TS segment of a media playlist and reads its frame size when asked."""
+    if "#EXT-X-MAP" in text:
+        return {"broken": False, "res": None}
+    seg_line = next((l.strip() for l in text.splitlines() if l.strip() and not l.startswith("#")), None)
+    if not seg_line:
+        return {"broken": False, "res": None}
+    seg_url = urllib.parse.urljoin(playlist_url, seg_line)
+    if read_resolution:
+        status, seg, content_range = probe_fetch(seg_url, referer, "bytes=0-131071", 131072)
+    else:
+        status, seg, content_range = probe_fetch(seg_url, referer, "bytes=0-1023", 0)
+    if status >= 400:
+        return {"broken": True, "res": None}
+    return {
+        "broken": segment_starts_mid_file(status, content_range),
+        "res": parse_ts_resolution(seg) if read_resolution else None,
+    }
+
+
+def probe_hls(url, referer):
+    """Probes an HLS playlist: variants of a master (plus a first-segment sanity check),
+    or the first TS segment of a media playlist for its frame size."""
+    status, body, _ = probe_fetch(url, referer)
+    if status >= 400:
+        return {"dead": True}
+    text = body.decode("utf-8", errors="ignore")
+    if not text.lstrip().startswith("#EXTM3U"):
+        return {"qualities": []}
+
+    if "#EXT-X-STREAM-INF" in text:
+        qualities = []
+        for attrs in re.findall(r"#EXT-X-STREAM-INF:([^\n\r]*)", text):
+            m = re.search(r"RESOLUTION=(\d+)x(\d+)", attrs, re.I)
+            q = quality_class(m.group(1), m.group(2)) if m else None
+            if q and q not in qualities:
+                qualities.append(q)
+        broken = False
+        try:
+            variant_line = next((l.strip() for l in text.splitlines() if l.strip() and not l.startswith("#")), None)
+            if variant_line:
+                variant_url = urllib.parse.urljoin(url, variant_line)
+                v_status, v_body, _ = probe_fetch(variant_url, referer)
+                if v_status < 400:
+                    broken = probe_first_segment(variant_url, v_body.decode("utf-8", errors="ignore"), referer, False)["broken"]
+        except Exception:
+            pass  # The variant check is best effort
+        return {"qualities": qualities, "multi": text.count("#EXT-X-STREAM-INF") > 1, "broken": broken}
+
+    # Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
+    seg = probe_first_segment(url, text, referer, True)
+    q = quality_class(*seg["res"]) if seg["res"] else None
+    return {"qualities": [q] if q else [], "broken": seg["broken"]}
+
+
+def probe_source(src):
+    """Adds quality, qualities, kind and alive to a source dict (returns a new dict)."""
+    raw = src.get("raw_url", "")
+    is_hls = src.get("type") == "hls" or ".m3u8" in raw
+    referer = (src.get("headers") or {}).get("Referer", "")
+    is_proxied = "/api/stream" in src.get("stream_url", "")
+    qualities, kind, alive = [], "unknown", True
+    try:
+        r = probe_hls(raw, referer) if is_hls else probe_mp4(raw, referer)
+        if r.get("dead"):
+            alive = not is_proxied
+        elif is_hls:
+            qualities = r["qualities"]
+            kind = "hls-multi" if r.get("multi") else "hls-single"
+            # A broken first segment stalls playback: keep it only as a last resort
+            if r.get("broken"):
+                alive = False
+        else:
+            q = quality_class(*r["res"]) if r.get("res") else None
+            qualities = [q] if q else []
+            kind = "mp4-range" if r.get("ranged") else "mp4"
+    except Exception as e:
+        # Timeouts and network errors leave the source as unknown but playable
+        print(f"[LocalServer] Probe failed for {raw[:80]}: {e}", file=sys.stderr)
+    qualities = sorted(qualities, reverse=True)
+    return {**src, "quality": qualities[0] if qualities else None, "qualities": qualities, "kind": kind, "alive": alive}
+
+
+def is_mirror_source(src):
+    """Re-hosting mirrors serve a synthetic "FirePlayer" master that always announces 360p + 720p
+    whatever the real picture is (CAM copies included), so at equal declared quality they lose."""
+    url = src.get("raw_url", "").lower()
+    return "playercdn" in url or "workers.dev" in url or "powestream" in url
+
+
+def rank_sources_by_quality(sources, tie_breaker=lambda s: 0):
+    """Probes sources in parallel (capped) and sorts them best-first."""
+    from concurrent.futures import ThreadPoolExecutor
+    to_probe = sources[:PROBE_MAX_SOURCES]
+    with ThreadPoolExecutor(max_workers=max(1, len(to_probe))) as pool:
+        probed = list(pool.map(probe_source, to_probe))
+    probed += [{**s, "quality": None, "qualities": [], "kind": "unknown", "alive": True} for s in sources[PROBE_MAX_SOURCES:]]
+    indexed = list(enumerate(probed))
+    indexed.sort(key=lambda x: (
+        -int(x[1]["alive"]),
+        -(x[1]["quality"] or 0),
+        int(is_mirror_source(x[1])),
+        KIND_RANK[x[1]["kind"]],
+        -tie_breaker(x[1]),
+        x[0],
+    ))
+    return [s for _, s in indexed]
+
+
 MAL_PREFIX_CACHE = {}
 
 def search_mal_prefix(keyword: str):
@@ -352,21 +748,25 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                             "url": f"{proxy_base}?url={urllib.parse.quote(sub_src, safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}",
                         })
 
+                    zoko_source = probe_source({
+                        "label": "ZokoAnime",
+                        "type": "hls",
+                        "stream_url": stream_url,
+                        "raw_url": master_url,
+                        "headers": {
+                            "Referer": "https://zokoanime.video/",
+                            "Origin": "https://zokoanime.video",
+                        },
+                    })
+                    if zoko_source["quality"]:
+                        zoko_source["label"] = f"ZokoAnime [{zoko_source['quality']}p HLS]"
+
                     result = {
                         "success": True,
                         "title": title_param or f"Anime Ep {episode}",
                         "category": "anime",
                         "audio": "subtitled",
-                        "primary_source": {
-                            "label": "ZokoAnime [1080p FHD HLS]",
-                            "type": "hls",
-                            "stream_url": stream_url,
-                            "raw_url": master_url,
-                            "headers": {
-                                "Referer": "https://zokoanime.video/",
-                                "Origin": "https://zokoanime.video",
-                            },
-                        },
+                        "primary_source": zoko_source,
                         "fallback_sources": [],
                         "subtitles": subtitles,
                         "aniskip": {
@@ -450,14 +850,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         return 50
                     return 10
 
-                valid_sources = [s for s in parsed_sources if score_source(s) > 0]
-                if valid_sources:
-                    valid_sources.sort(key=score_source, reverse=True)
-                    primary = valid_sources[0]
-                    fallbacks = valid_sources[1:]
-                else:
-                    primary = parsed_sources[0]
-                    fallbacks = parsed_sources[1:]
+                # Best quality first; the host score only breaks ties between equal qualities
+                ranked_sources = rank_sources_by_quality(parsed_sources, score_source)
+                primary = ranked_sources[0]
+                fallbacks = ranked_sources[1:]
 
                 result = {
                     "success": True,

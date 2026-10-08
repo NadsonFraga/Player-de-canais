@@ -17,7 +17,7 @@ import {
 } from '../core/constants.js';
 import { showToast } from '../core/toast.js';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset } from '../player/engine.js';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset } from '../player/engine.js?v=20261008_q3';
 import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js';
 
 // --- TMDB Genres Dictionary ---
@@ -2372,11 +2372,10 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
 
             mountNativePlayer({
                 containerId: "series-artplayer-container",
-                streamUrl: data.primary_source.stream_url,
+                sources: [data.primary_source, ...(data.fallback_sources || [])],
                 title: `${showName} • T${seasonNumber}:E${episodeNumber}`,
                 poster: backdropUrl,
                 subtitles: data.subtitles || [],
-                fallbackSources: data.fallback_sources || [],
                 onAllFailed: () => {
                     showToast("Todas as fontes diretas deste episódio falharam. Selecione outro servidor abaixo se desejar.");
                     if (seriesArt) {

@@ -26,5 +26,8 @@ for c in cases:
         stream_url = data.get('primary_source', {}).get('stream_url', '')[:80]
         mal_id = data.get('aniskip', {}).get('mal_id')
         print(f"SUCCESS [T{c['season']}: {c['season_name']}]: MAL ID = {mal_id} | Label = {source_label} | Stream = {stream_url}...")
+        # Quality probing: every source in ranked order with its resolutions
+        for src in [data.get('primary_source', {})] + data.get('fallback_sources', []):
+            print(f"    {src.get('quality') or '?'}p {src.get('kind', '?')} qualities={src.get('qualities', [])} alive={src.get('alive')}")
     except Exception as e:
         print(f"ERROR [T{c['season']}: {c['season_name']}]: {e}")

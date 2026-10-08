@@ -18,7 +18,7 @@ import {
 import { showToast } from '../core/toast.js';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
 import { getUiSvg } from '../core/icons.js';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset } from '../player/engine.js';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset } from '../player/engine.js?v=20261008_q3';
 import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js';
 
 let isMoviesInitialized = false;
@@ -1328,11 +1328,10 @@ export function selectMovieServer(server, buttonElement = null) {
 
             mountNativePlayer({
                 containerId: "movie-artplayer-container",
-                streamUrl: data.primary_source.stream_url,
+                sources: [data.primary_source, ...(data.fallback_sources || [])],
                 title: data.title || currentSelectedMovie.title,
                 poster: backdropUrl,
                 subtitles: data.subtitles || [],
-                fallbackSources: data.fallback_sources || [],
                 onAllFailed: () => {
                     showToast("Todas as fontes diretas falharam. Selecione outro servidor abaixo se desejar.");
                     if (movieArt) {

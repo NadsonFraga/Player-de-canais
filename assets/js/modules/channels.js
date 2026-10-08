@@ -8,7 +8,7 @@ import { store } from '../core/state.js';
 import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js';
 import { getUiSvg, createLogoBadgeHtml } from '../core/icons.js';
 import { showToast } from '../core/toast.js';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261008_q3';
 
 /**
  * Counts available direct and contingency options for a channel
