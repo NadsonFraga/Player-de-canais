@@ -6,7 +6,7 @@
 
 - Chat in Brazilian Portuguese; planning files in English (project `CLAUDE.md`).
 - Always paste the full plan in chat and wait for approval. During multi-phase work, hard stop after every phase with numbers.
-- **No git operations (commit, push, branch) unless the user asks.** All work lives on local branch `feat/native-player-quality`.
+- **No git operations (commit, push, branch) unless the user asks.** All work lives on branch `feat/native-player-quality` (pushed).
 - Prefer general fixes over per-host patches.
 - Decided: no "Cópia de cinema" badge for now; keep the "Stream nativo indisponível" message for titles without sources; no image-based CAM detection.
 
@@ -14,7 +14,7 @@
 
 - Branch `feat/native-player-quality` pushed to GitHub (user approved, 2026-10-08). `master` untouched (local master is 2 commits ahead of origin/master, not pushed).
 - To resume on another machine: `git fetch && git switch feat/native-player-quality`.
-- `.archives/` now lives inside the main repo (user decision, accepted that it becomes public). Its old nested `.git` (private repo `Player-de-canais-archives`) was moved to `C:\Users\nadson\Documents\CODE\TVZINHA-archives-git-backup` on the original notebook; the private GitHub repo was left as is.
+- `.archives/` now lives inside the main repo (user decision, accepted that it becomes public). Its old nested `.git` (private repo `Player-de-canais-archives`) was moved to `C:\Users\nadson\Documents\CODE\TVZINHA-archives-git-backup` on the original notebook (safe to delete); the private GitHub repo was deleted by the user.
 - Working rules are in the project `CLAUDE.md` (loaded automatically).
 - Module cache-busting version: `20261008_q7` (bump in all importers of engine.js + main.js + index.html on every frontend change).
 
@@ -39,7 +39,7 @@
 2. **Anime lookups by Portuguese title fail** (MAL search with "Frieren e a Jornada para o Além"). Proposed general fix: send TMDB `original_name` and use it for the MAL lookup. Awaiting user decision.
 3. AniSkip ("Pular abertura", credits-based next episode) for anime: later, separate task.
 4. CAM: only partially mitigated (mirrors lose ties; MGEB source list rotates). Revisit later.
-5. Nothing is committed beyond 3bc7194; ask the user before any commit/push/deploy.
+5. All work up to this handover is committed and pushed (b52f021 and later on `feat/native-player-quality`); ask the user before any further commit/push/deploy.
 
 ## How to run locally
 
