@@ -594,6 +594,10 @@ export function mountTvContingencyIframe(contingencyUrl) {
     }
 }
 
+// Source URLs carry expiring tokens, so cached resolves are kept for a short time only
+const RESOLVE_CACHE_TTL_MS = 20 * 60 * 1000;
+const resolveCache = new Map();
+
 /**
  * Resolves direct media stream via local or remote proxy API
  */
@@ -610,15 +614,35 @@ export async function resolveDirectStream({ id, type, season = 1, episode = 1, l
     if (imdb_id) params.set("imdb_id", imdb_id);
 
     const url = `${STREAM_ENGINE_API_BASE}/api/resolve?${params.toString()}`;
-    try {
-        const res = await fetch(url);
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data && data.success ? data : null;
-    } catch (err) {
-        console.error("[StreamEngine] Erro ao resolver stream:", err);
-        return null;
-    }
+
+    // Reuse a fresh (or in-flight) resolve: prefetched next episodes and reopened titles skip the wait
+    const cached = resolveCache.get(url);
+    if (cached && Date.now() - cached.at < RESOLVE_CACHE_TTL_MS) return cached.promise;
+
+    const promise = (async () => {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data && data.success ? data : null;
+        } catch (err) {
+            console.error("[StreamEngine] Erro ao resolver stream:", err);
+            return null;
+        }
+    })();
+    resolveCache.set(url, { at: Date.now(), promise });
+    // Failures are not cached, so the next attempt asks the server again
+    promise.then(data => {
+        if (!data && resolveCache.get(url)?.promise === promise) resolveCache.delete(url);
+    });
+    return promise;
+}
+
+/** Resolves in the background (e.g. the next episode) so a later resolveDirectStream() is instant. */
+export function prefetchDirectStream(options) {
+    resolveDirectStream(options).then(data => {
+        if (data) console.info("[StreamEngine] Pré-carregado:", options.title, `T${options.season}E${options.episode}`);
+    });
 }
 
 /* ============================================================
@@ -628,12 +652,21 @@ export async function resolveDirectStream({ id, type, season = 1, episode = 1, l
  * resolutions and switch between sources while keeping the position.
  * ============================================================ */
 
-const NATIVE_WATCHDOG_MS = 10000;
-const NATIVE_WATCHDOG_MAX_MS = 30000;
-// MP4 reports no progress until its moov box (often 4-6 MB) is downloaded, so it gets a longer first wait
-const NATIVE_WATCHDOG_MP4_MS = 25000;
+// Start budget per source before failing over to the next one
+const NATIVE_START_BUDGET_HLS_MS = 12000;
+// MP4 reports no progress until its moov box (often 4-6 MB) is downloaded, so it gets more time
+const NATIVE_START_BUDGET_MP4_MS = 20000;
 // The last remaining source is given up to this long before the error screen
-const NATIVE_WATCHDOG_LAST_SOURCE_MS = 90000;
+const NATIVE_START_BUDGET_LAST_SOURCE_MS = 90000;
+// This much buffered ahead without playback means the source is stuck, not slow
+const NATIVE_STUCK_BUFFER_S = 10;
+const NATIVE_STUCK_GRACE_MS = 3000;
+// Largest gap at the start (empty first segments) the player jumps over
+const NATIVE_START_GAP_MAX_S = 30;
+// onNearEnd fires with this much left (next-episode prefetch keeps fresh links)
+const NATIVE_NEAR_END_S = 180;
+// "Próximo episódio" countdown length before the end
+const NATIVE_UP_NEXT_S = 10;
 const NATIVE_SETTING_WIDTH = 230;
 const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate', 'aspect-ratio', 'flip'];
 
@@ -745,8 +778,12 @@ function isHlsSource(src) {
 /**
  * Mounts native Artplayer for Movies, Series and Anime.
  * Accepts `sources` (ranked list from /api/resolve) or the legacy `streamUrl` + `fallbackSources`.
+ * `onNearEnd` runs once when NATIVE_NEAR_END_S or less is left (also right away on short videos),
+ * e.g. to prefetch the next episode while its links are still fresh.
+ * `getNextUp` returns { title, play } or null; when set, the last seconds show an
+ * "Próximo episódio" countdown that plays it (cancelable), and the end of the video plays it too.
  */
-export function mountNativePlayer({ containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null }) {
+export function mountNativePlayer({ containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null }) {
     const normalized = normalizeNativeSources({ sources, streamUrl, fallbackSources });
     if (normalized.length === 0) {
         atomicPlayerReset();
@@ -761,6 +798,10 @@ export function mountNativePlayer({ containerId, streamUrl, sources, title, post
         poster,
         subtitles: Array.isArray(subtitles) ? subtitles : [],
         onAllFailed,
+        onNearEnd,
+        nearEndFired: false,
+        getNextUp,
+        upNextCancelled: false,
         sources: normalized,
         failed: new Set(),
         currentIndex: 0,
@@ -816,7 +857,7 @@ function failoverNativeSource(session, reason) {
         return;
     }
     console.warn(`[PlayerEngine] Fonte ${session.currentIndex + 1} falhou (${reason}). Alternando para fonte ${nextIdx + 1}.`);
-    showToast("Alternando para link alternativo de streaming...", 2500);
+    session.statusNote = 'Fonte anterior não respondeu.';
     mountNativeSource(session, nextIdx, { startTime: resumeAt });
 }
 
@@ -859,43 +900,71 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
     const isHls = isHlsSource(source);
     let hasStarted = false;
-    let lastProgressAt = Date.now();
     const mountedAt = Date.now();
-
-    const markProgress = () => { lastProgressAt = Date.now(); };
 
     function markStreamSuccess() {
         if (hasStarted || !isSessionLive(session, token)) return;
         hasStarted = true;
         if (window.cascadeTimer) {
-            clearTimeout(window.cascadeTimer);
+            clearInterval(window.cascadeTimer);
             window.cascadeTimer = null;
         }
+        session.statusNote = '';
+        setSourceStatus(session, '');
         setPlaybackActiveState(true);
     }
 
-    // Watchdog: fail over only when nothing is loading; a slow but progressing load gets more time
-    function armWatchdog(delay) {
-        window.cascadeTimer = setTimeout(() => {
-            if (hasStarted || !isSessionLive(session, token)) return;
-            const elapsed = Date.now() - mountedAt;
-            const stillLoading = Date.now() - lastProgressAt < NATIVE_WATCHDOG_MS;
-            if (stillLoading && elapsed < Math.max(NATIVE_WATCHDOG_MAX_MS, initialWatchdog + NATIVE_WATCHDOG_MS)) {
-                armWatchdog(NATIVE_WATCHDOG_MS / 2);
+    /**
+     * Some hosts ship an empty first segment, so buffered data starts seconds after
+     * the playhead and the video never starts. Jump to the first buffered range.
+     */
+    function jumpStartGap() {
+        const video = session.art && session.art.video;
+        if (hasStarted || !video || !video.buffered || !video.buffered.length) return;
+        const t = video.currentTime;
+        for (let i = 0; i < video.buffered.length; i++) {
+            if (video.buffered.start(i) <= t + 0.1 && video.buffered.end(i) > t) return;
+        }
+        for (let i = 0; i < video.buffered.length; i++) {
+            const start = video.buffered.start(i);
+            if (start > t && start - t <= NATIVE_START_GAP_MAX_S) {
+                console.info(`[PlayerEngine] Pulando ${(start - t).toFixed(1)}s sem mídia no início da fonte ${index + 1}.`);
+                video.currentTime = start + 0.05;
                 return;
             }
-            // With no other source left, a slow host is better than an error screen
-            const hasAlternative = session.sources.some((src, idx) => idx !== session.currentIndex && !session.failed.has(idx));
-            if (!hasAlternative && elapsed < NATIVE_WATCHDOG_LAST_SOURCE_MS) {
-                armWatchdog(NATIVE_WATCHDOG_MS);
-                return;
-            }
-            console.warn(`[PlayerEngine] Watchdog disparado (${Math.round(elapsed / 1000)}s sem playback).`);
-            failoverNativeSource(session, 'watchdog');
-        }, delay);
+        }
     }
-    const initialWatchdog = isHls ? NATIVE_WATCHDOG_MS : NATIVE_WATCHDOG_MP4_MS;
-    armWatchdog(initialWatchdog);
+
+    function bufferedAhead() {
+        const video = session.art && session.art.video;
+        if (!video || !video.buffered || !video.buffered.length) return 0;
+        return Math.max(0, video.buffered.end(video.buffered.length - 1) - video.currentTime);
+    }
+
+    // Start monitor: fail over when the source is stuck (data buffered, no playback)
+    // or over its budget; the last remaining source is allowed to be slow.
+    const budget = isHls ? NATIVE_START_BUDGET_HLS_MS : NATIVE_START_BUDGET_MP4_MS;
+    let stuckSince = 0;
+    window.cascadeTimer = setInterval(() => {
+        if (hasStarted || !isSessionLive(session, token)) {
+            clearInterval(window.cascadeTimer);
+            return;
+        }
+        jumpStartGap();
+        const now = Date.now();
+        const elapsed = now - mountedAt;
+        const hasAlternative = session.sources.some((src, idx) => idx !== session.currentIndex && !session.failed.has(idx));
+        const limit = hasAlternative ? budget : NATIVE_START_BUDGET_LAST_SOURCE_MS;
+
+        stuckSince = bufferedAhead() >= NATIVE_STUCK_BUFFER_S ? (stuckSince || now) : 0;
+        const stuck = stuckSince && now - stuckSince >= NATIVE_STUCK_GRACE_MS;
+
+        if ((stuck && hasAlternative) || elapsed >= limit) {
+            clearInterval(window.cascadeTimer);
+            console.warn(`[PlayerEngine] Fonte ${index + 1} sem reprodução após ${Math.round(elapsed / 1000)}s (${stuck ? 'travada' : 'tempo esgotado'}).`);
+            failoverNativeSource(session, stuck ? 'stuck' : 'timeout');
+        }
+    }, 1000);
 
     const subtitles = session.subtitles;
     // Taller rows and a wider main panel for the YouTube-like settings (Artplayer sizes panels from these constants)
@@ -955,14 +1024,14 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
                         hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
                             if (!isSessionLive(session, token)) return;
-                            markProgress();
                             applyLockedLevel(session);
                             refreshQualityMenu(session);
                             refreshAudioMenu(session);
                         });
 
-                        hls.on(window.Hls.Events.FRAG_LOADED, markProgress);
-                        hls.on(window.Hls.Events.LEVEL_LOADED, markProgress);
+                        hls.on(window.Hls.Events.FRAG_BUFFERED, () => {
+                            if (isSessionLive(session, token)) jumpStartGap();
+                        });
 
                         hls.on(window.Hls.Events.LEVEL_SWITCHED, () => {
                             if (isSessionLive(session, token)) updateQualityIndicators(session);
@@ -1001,6 +1070,8 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         session.art = art;
         window.artInstance = art;
         setupMobileOrientationLock(art);
+        const total = session.sources.length;
+        setSourceStatus(session, [session.statusNote, total > 1 ? `Conectando à fonte ${index + 1} de ${total}...` : 'Conectando...'].filter(Boolean).join(' '));
 
         art.on('ready', () => {
             if (!isSessionLive(session, token)) return;
@@ -1022,11 +1093,12 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             }
         });
 
-        art.on('video:progress', markProgress);
+        art.on('video:progress', () => {
+            if (isSessionLive(session, token)) jumpStartGap();
+        });
 
         art.on('video:loadedmetadata', () => {
             if (!isSessionLive(session, token)) return;
-            markProgress();
             measureCurrentQuality(session);
         });
 
@@ -1035,6 +1107,16 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
         art.on('video:pause', () => {
             setPlaybackActiveState(false);
+        });
+
+        art.on('video:timeupdate', () => {
+            if (isSessionLive(session, token)) handleEndApproach(session);
+        });
+
+        art.on('video:ended', () => {
+            if (!isSessionLive(session, token)) return;
+            const next = !session.upNextCancelled && typeof session.getNextUp === 'function' ? session.getNextUp() : null;
+            if (next) playNextUp(session, next);
         });
 
         art.on('error', (err) => {
@@ -1050,6 +1132,145 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         failoverNativeSource(session, 'init');
         return null;
     }
+}
+
+/**
+ * Runs on every timeupdate: fires onNearEnd once and drives the "Próximo episódio" countdown.
+ */
+function handleEndApproach(session) {
+    const video = session.art && session.art.video;
+    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    const remaining = video.duration - video.currentTime;
+
+    if (!session.nearEndFired && typeof session.onNearEnd === 'function' && remaining <= NATIVE_NEAR_END_S) {
+        session.nearEndFired = true;
+        try { session.onNearEnd(); } catch (e) { console.warn("[PlayerEngine] onNearEnd falhou:", e); }
+    }
+
+    if (typeof session.getNextUp !== 'function' || session.upNextCancelled) return;
+    if (remaining > NATIVE_UP_NEXT_S) {
+        // Seeking back before the end stops the countdown
+        stopUpNextCountdown(session);
+        return;
+    }
+    if (!session.upNextTimer) startUpNextCountdown(session, Math.max(1, Math.ceil(remaining)));
+}
+
+/**
+ * Counts down on its own clock: some HLS streams never fire "ended" (playback just
+ * stops at the last frame), so the switch cannot depend on video events.
+ */
+function startUpNextCountdown(session, seconds) {
+    const next = session.getNextUp();
+    if (!next) return;
+    let left = seconds;
+    setUpNext(session, next, left);
+    session.upNextTimer = setInterval(() => {
+        if (!isSessionLive(session) || session.upNextCancelled) {
+            stopUpNextCountdown(session);
+            return;
+        }
+        const video = session.art && session.art.video;
+        // A paused (not finished) video freezes the countdown
+        if (video && video.paused && !video.ended && video.duration - video.currentTime > 1) return;
+        left -= 1;
+        if (left <= 0) {
+            playNextUp(session, next);
+            return;
+        }
+        setUpNext(session, next, left);
+    }, 1000);
+}
+
+function stopUpNextCountdown(session) {
+    if (session.upNextTimer) {
+        clearInterval(session.upNextTimer);
+        session.upNextTimer = null;
+    }
+    setUpNext(session, null);
+}
+
+/**
+ * Shows (next != null) or removes the "Próximo episódio" card with its countdown.
+ */
+function setUpNext(session, next, seconds = 0) {
+    const art = session.art;
+    if (!art || !art.layers) return;
+    try {
+        if (!next) {
+            if (art.layers['tvz-upnext']) art.layers.remove('tvz-upnext');
+            return;
+        }
+        const existing = art.layers['tvz-upnext'];
+        if (existing) {
+            const counter = existing.querySelector('.tvz-upnext-count');
+            if (counter) counter.textContent = String(seconds);
+            return;
+        }
+        art.layers.add({
+            name: 'tvz-upnext',
+            html: `<div class="tvz-upnext">
+                <div class="tvz-upnext-label">Próximo episódio em <span class="tvz-upnext-count">${seconds}</span>s</div>
+                <div class="tvz-upnext-title"></div>
+                <div class="tvz-upnext-actions">
+                    <button type="button" class="tvz-upnext-play">Assistir agora</button>
+                    <button type="button" class="tvz-upnext-cancel">Cancelar</button>
+                </div>
+            </div>`,
+            style: { position: 'absolute', right: '16px', bottom: '84px', pointerEvents: 'auto' },
+            mounted: ($el) => {
+                // textContent: the title comes from TMDB
+                $el.querySelector('.tvz-upnext-title').textContent = next.title || '';
+                $el.querySelector('.tvz-upnext-play').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    playNextUp(session, next);
+                });
+                $el.querySelector('.tvz-upnext-cancel').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    session.upNextCancelled = true;
+                    stopUpNextCountdown(session);
+                });
+            }
+        });
+    } catch (e) {
+        // Countdown is optional UI
+    }
+}
+
+function playNextUp(session, next) {
+    if (session.upNextStarted) return;
+    session.upNextStarted = true;
+    stopUpNextCountdown(session);
+    // Defer: the handler may run inside Artplayer events of the instance being replaced
+    setTimeout(() => next.play(), 0);
+}
+
+/**
+ * Shows a short status line under the loading spinner ("Conectando à fonte 2 de 4...").
+ * An empty text removes it.
+ */
+function setSourceStatus(session, text) {
+    const art = session.art;
+    if (!art || !art.layers) return;
+    try {
+        if (!text) {
+            if (art.layers['tvz-status']) art.layers.remove('tvz-status');
+            return;
+        }
+        art.layers.update({
+            name: 'tvz-status',
+            html: `<div class="tvz-source-status">${text}</div>`,
+            style: { position: 'absolute', left: '0', right: '0', top: 'calc(50% + 46px)', display: 'flex', justifyContent: 'center', pointerEvents: 'none' }
+        });
+    } catch (e) {
+        // Status is cosmetic
+    }
+}
+
+/** Sets the text of a page loader overlay (the <span> next to its spinner). */
+export function setLoaderText(loader, text) {
+    const label = loader && loader.querySelector('span');
+    if (label) label.textContent = text;
 }
 
 /* ---------- Settings panel helpers (idempotent: one entry per name) ---------- */

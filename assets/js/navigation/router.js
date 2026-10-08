@@ -4,7 +4,7 @@
  */
 
 import { store } from '../core/state.js';
-import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261008_q3';
+import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261008_q7';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
 import { showToast } from '../core/toast.js';
 import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome } from './historyManager.js';

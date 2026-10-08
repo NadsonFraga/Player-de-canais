@@ -7,12 +7,19 @@
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
+// MGEB pages can take ~15 s on some titles: one long attempt instead of two short ones
+const MGEB_TIMEOUT_MS = 25000;
+// After the first MGEB lookup with sources, wait this long to merge the other one
+const MGEB_MERGE_WINDOW_MS = 1500;
+
 /**
- * Fetches canonical IMDb ID (tt...) from TMDB for unambiguous movie resolution in MGEB.
+ * Fetches the canonical IMDb ID (tt...) from TMDB ("movie" or "serie").
  */
-async function fetchImdbId(tmdbId) {
+async function fetchImdbId(tmdbId, type = "movie") {
   try {
-    const url = `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_API_KEY}`;
+    const url = type === "movie"
+      ? `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_API_KEY}`
+      : `https://api.themoviedb.org/3/tv/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
     const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
     if (res.ok) {
       const data = await res.json();
@@ -24,6 +31,50 @@ async function fetchImdbId(tmdbId) {
     // Graceful fallback
   }
   return null;
+}
+
+/** Same file served over http/https or :80 counts once. */
+function mgebSourceKey(source) {
+  return String(source.file || "").trim().replace(/^https?:\/\//i, "").replace(/:80\//, "/").split("?")[0];
+}
+
+/**
+ * Resolves with the first non-null lookup, then waits up to `windowMs` for the
+ * others and merges their sources (first lookup's order first, duplicates dropped).
+ */
+function firstThenMerge(lookups, windowMs) {
+  return new Promise(resolve => {
+    const results = [];
+    let pending = lookups.length;
+    let timer = null;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (!results.length) return resolve(null);
+      const seen = new Set();
+      const sources = [];
+      for (const r of results) {
+        for (const s of r.sources) {
+          const key = mgebSourceKey(s);
+          if (!seen.has(key)) { seen.add(key); sources.push(s); }
+        }
+      }
+      resolve({ title: results[0].title, sources });
+    };
+    if (!pending) return finish();
+    for (const lookup of lookups) {
+      Promise.resolve(lookup).catch(() => null).then(r => {
+        pending -= 1;
+        if (r && r.sources && r.sources.length) {
+          results.push(r);
+          if (!timer) timer = setTimeout(finish, windowMs);
+        }
+        if (pending === 0) finish();
+      });
+    }
+  });
 }
 
 export async function onRequestOptions() {
@@ -72,37 +123,32 @@ async function resolveMgeb(type, id, season = 1, episode = 1) {
     "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
   };
 
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), MGEB_TIMEOUT_MS);
+  try {
+    const res = await fetch(embedUrl, {
+      headers,
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
 
-      const res = await fetch(embedUrl, {
-        headers,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+    const sourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
+    if (!sourcesMatch) return null;
 
-      if (!res.ok) continue;
-      const html = await res.text();
+    const rawSources = JSON.parse(sourcesMatch[1]);
+    const titleMatch = html.match(/var\s+title\s*=\s*"(.*?)";/);
+    const title = titleMatch ? titleMatch[1].replace(/\\\//g, "/") : "";
 
-      const sourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
-      if (!sourcesMatch) continue;
-
-      const rawSources = JSON.parse(sourcesMatch[1]);
-      const titleMatch = html.match(/var\s+title\s*=\s*"(.*?)";/);
-      const title = titleMatch ? titleMatch[1].replace(/\\\//g, "/") : "";
-
-      return {
-        title,
-        sources: rawSources,
-      };
-    } catch (e) {
-      // Retry once on handshake timeout
-    }
+    return {
+      title,
+      sources: rawSources,
+    };
+  } catch (e) {
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return null;
 }
 
 /**
@@ -140,6 +186,8 @@ async function resolveZoko(malId, episode = 1) {
 
 const PROBE_TIMEOUT_MS = 3500;
 const PROBE_MAX_SOURCES = 6;
+// Probing stops after this budget; sources not measured in time keep host order
+const PROBE_BUDGET_MS = 2500;
 const KIND_RANK = { "hls-multi": 0, "hls-single": 1, "mp4-range": 2, "mp4": 3, "unknown": 4 };
 
 /**
@@ -448,27 +496,41 @@ async function probeHls(url, referer) {
   if (!text.trimStart().startsWith("#EXTM3U")) return { qualities: [] };
 
   if (text.includes("#EXT-X-STREAM-INF")) {
-    const qualities = [];
-    for (const m of text.matchAll(/#EXT-X-STREAM-INF:([^\n\r]*)/g)) {
-      const res = m[1].match(/RESOLUTION=(\d+)x(\d+)/i);
-      const q = res ? qualityClass(res[1], res[2]) : null;
-      if (q && !qualities.includes(q)) qualities.push(q);
+    const lines = text.split(/\r?\n/);
+    const variants = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].startsWith("#EXT-X-STREAM-INF")) continue;
+      const uri = lines.slice(i + 1).find(l => l.trim() && !l.startsWith("#"));
+      const res = lines[i].match(/RESOLUTION=(\d+)x(\d+)/i);
+      const bw = lines[i].match(/[^-]BANDWIDTH=(\d+)/i) || lines[i].match(/^#EXT-X-STREAM-INF:BANDWIDTH=(\d+)/i);
+      variants.push({ uri, quality: res ? qualityClass(res[1], res[2]) : null, bandwidth: bw ? Number(bw[1]) : 0 });
     }
-    const variants = (text.match(/#EXT-X-STREAM-INF/g) || []).length;
+    let qualities = [...new Set(variants.map(v => v.quality).filter(Boolean))];
+    // Re-hosting players ("FirePlayer") publish a fixed 360p/720p ladder whatever the real picture is
+    const bandwidths = variants.map(v => v.bandwidth).sort((a, b) => a - b).join(",");
+    const synthetic = /FirePlayer/i.test(text) || bandwidths === "276000,2048000";
+
+    // Check the top variant: its first segment must start at byte 0, and its real
+    // frame size replaces a declared resolution that is not there
     let broken = false;
     try {
-      const variantLine = text.split(/\r?\n/).find(l => l.trim() && !l.startsWith("#"));
-      if (variantLine) {
-        const variantUrl = new URL(variantLine.trim(), url).toString();
+      const top = variants.filter(v => v.uri).sort((a, b) => (b.quality || 0) - (a.quality || 0) || b.bandwidth - a.bandwidth)[0];
+      if (top) {
+        const variantUrl = new URL(top.uri.trim(), url).toString();
         const media = await probeFetch(variantUrl, referer);
         if (media.status < 400) {
-          broken = (await probeFirstSegment(variantUrl, new TextDecoder().decode(media.buf), referer, false)).broken;
+          const seg = await probeFirstSegment(variantUrl, new TextDecoder().decode(media.buf), referer, true);
+          broken = seg.broken;
+          const measured = seg.res ? qualityClass(seg.res.width, seg.res.height) : null;
+          if (measured && top.quality && measured !== top.quality) {
+            qualities = [...new Set([measured, ...qualities.filter(q => q < measured)])];
+          }
         }
       }
     } catch (e) {
       // The variant check is best effort
     }
-    return { qualities, multi: variants > 1, broken };
+    return { qualities, multi: variants.length > 1, broken, synthetic };
   }
 
   // Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
@@ -488,6 +550,7 @@ async function probeSource(src) {
   let qualities = [];
   let kind = "unknown";
   let alive = true;
+  let synthetic = false;
   try {
     if (isHls) {
       const r = await probeHls(src.raw_url, referer);
@@ -496,6 +559,7 @@ async function probeSource(src) {
       } else {
         qualities = r.qualities;
         kind = r.multi ? "hls-multi" : "hls-single";
+        synthetic = Boolean(r.synthetic);
         // A broken first segment stalls playback: keep it only as a last resort
         if (r.broken) alive = false;
       }
@@ -513,7 +577,7 @@ async function probeSource(src) {
     // Timeouts and network errors leave the source as unknown but playable
   }
   qualities.sort((a, b) => b - a);
-  return { ...src, quality: qualities[0] || null, qualities, kind, alive };
+  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, probed: true };
 }
 
 /**
@@ -526,17 +590,44 @@ function isMirrorSource(src) {
   return u.includes("playercdn") || u.includes("workers.dev") || u.includes("powestream");
 }
 
-/** Probes sources in parallel (capped) and sorts them best-first. */
+/** Low trust: synthetic master, or a known re-hosting mirror. */
+function isLowTrustSource(src) {
+  return Boolean(src.synthetic) || isMirrorSource(src);
+}
+
+/** A measured, healthy 1080p+ HLS from a trusted host: no need to wait for the others. */
+function isTrustedTopSource(src) {
+  return src.probed && src.alive && (src.quality || 0) >= 1080 && src.kind.startsWith("hls") && !isLowTrustSource(src);
+}
+
+/**
+ * Probes sources in parallel within PROBE_BUDGET_MS and sorts them best-first.
+ * Returns early when a trusted 1080p HLS is confirmed; sources not measured in
+ * time stay "unknown" and fall back to kind/host order.
+ */
 async function rankSourcesByQuality(sources, tieBreaker = () => 0) {
-  const probed = await Promise.all(sources.map((s, i) => (
-    i < PROBE_MAX_SOURCES ? probeSource(s) : Promise.resolve({ ...s, quality: null, qualities: [], kind: "unknown", alive: true })
-  )));
-  return probed
+  const results = sources.map(s => ({ ...s, quality: null, qualities: [], kind: "unknown", alive: true, synthetic: false, probed: false }));
+  const toProbe = Math.min(sources.length, PROBE_MAX_SOURCES);
+  if (toProbe > 0) {
+    await new Promise(resolve => {
+      let pending = toProbe;
+      const timer = setTimeout(resolve, PROBE_BUDGET_MS);
+      const done = () => { clearTimeout(timer); resolve(); };
+      for (let i = 0; i < toProbe; i++) {
+        probeSource(sources[i]).then(r => {
+          results[i] = r;
+          pending -= 1;
+          if (isTrustedTopSource(r) || pending === 0) done();
+        });
+      }
+    });
+  }
+  return results.slice()
     .map((s, i) => ({ s, i }))
     .sort((a, b) => (
       (Number(b.s.alive) - Number(a.s.alive)) ||
       ((b.s.quality || 0) - (a.s.quality || 0)) ||
-      (Number(isMirrorSource(a.s)) - Number(isMirrorSource(b.s))) ||
+      (Number(isLowTrustSource(a.s)) - Number(isLowTrustSource(b.s))) ||
       (KIND_RANK[a.s.kind] - KIND_RANK[b.s.kind]) ||
       (tieBreaker(b.s) - tieBreaker(a.s)) ||
       (a.i - b.i)
@@ -694,17 +785,29 @@ export async function onRequestGet(context) {
   const proxyBase = `${urlObj.origin}/api/stream`;
   let result = null;
 
+  // Per-step durations exposed as a Server-Timing header (ms)
+  const startedAt = Date.now();
+  const timings = {};
+  const timed = async (name, promise) => {
+    const t0 = Date.now();
+    try {
+      return await promise;
+    } finally {
+      timings[name] = (timings[name] || 0) + (Date.now() - t0);
+    }
+  };
+
   // ROTA 1: Anime Legendado (ZokoAnime)
   if (type === "anime" && lang === "sub") {
     if (!malId && titleParam) {
-      malId = await getMalIdFromTitle(titleParam, season, seasonNameParam);
+      malId = await timed("mal", getMalIdFromTitle(titleParam, season, seasonNameParam));
     } else if (!malId && id) {
       // If numeric ID is passed for anime, test as MAL ID or title
       malId = id;
     }
 
     if (malId) {
-      const zokoData = await resolveZoko(malId, episode);
+      const zokoData = await timed("zoko", resolveZoko(malId, episode));
       if (zokoData && zokoData.src) {
         const streamUrl = `${proxyBase}?url=${encodeURIComponent(zokoData.src)}&referer=${encodeURIComponent("https://zokoanime.video/")}`;
         
@@ -716,7 +819,7 @@ export async function onRequestGet(context) {
           url: `${proxyBase}?url=${encodeURIComponent(s.src)}&referer=${encodeURIComponent("https://zokoanime.video/")}`,
         }));
 
-        const zokoSource = await probeSource({
+        const zokoSource = await timed("probe", probeSource({
           label: "ZokoAnime",
           type: "hls",
           stream_url: streamUrl,
@@ -725,7 +828,7 @@ export async function onRequestGet(context) {
             "Referer": "https://zokoanime.video/",
             "Origin": "https://zokoanime.video",
           },
-        });
+        }));
         if (zokoSource.quality) zokoSource.label = `ZokoAnime [${zokoSource.quality}p HLS]`;
 
         result = {
@@ -750,38 +853,23 @@ export async function onRequestGet(context) {
   const imdbId = urlObj.searchParams.get("imdb_id");
   if (!result && (id || imdbId)) {
     const mgebType = type === "anime" ? "serie" : type;
-    let targetId = (imdbId && imdbId.startsWith("tt")) ? imdbId : id;
+    const givenImdb = imdbId && imdbId.startsWith("tt") ? imdbId : null;
+    const tmdbId = id && /^\d+$/.test(id) ? id : null;
 
-    // For movies: resolve canonical IMDb ID if target is numeric to eliminate TV series collisions (e.g. 1422 -> The Middle vs The Departed)
-    if (type === "movie" && targetId && /^\d+$/.test(targetId)) {
-      const resolvedImdb = await fetchImdbId(targetId);
-      if (resolvedImdb) {
-        targetId = resolvedImdb;
-      }
+    // MGEB answers by IMDb id and by TMDB id with different (rotating) source lists:
+    // ask both in parallel, take the first with sources and merge the other if it arrives soon.
+    // A numeric movie id may collide with a TV series (e.g. 1422 -> The Middle vs The Departed).
+    const isTvCollision = (data) => type === "movie" && /[-–]\s*T\d+E\d+|S\d+E\d+|Epis[oó]dio|\bPiloto\b/i.test(data.title || "");
+    const lookups = [];
+    const imdbLookupId = givenImdb
+      ? Promise.resolve(givenImdb)
+      : (tmdbId ? timed("tmdb", fetchImdbId(tmdbId, mgebType)) : Promise.resolve(null));
+    lookups.push(imdbLookupId.then(tt => (tt ? resolveMgeb(mgebType, tt, season, episode) : null)));
+    if (tmdbId || (!givenImdb && id)) {
+      lookups.push(resolveMgeb(mgebType, tmdbId || id, season, episode).then(data => (data && !isTvCollision(data) ? data : null)));
     }
 
-    let mgebData = await resolveMgeb(mgebType, targetId, season, episode);
-
-    // Sanity check: If movie resolution returned a TV episode title, fallback to IMDb resolution or discard collision
-    if (mgebData && type === "movie") {
-      const retTitle = mgebData.title || "";
-      let isTvCollision = /[-–]\s*T\d+E\d+|S\d+E\d+|Epis[oó]dio|\bPiloto\b/i.test(retTitle);
-      if (isTvCollision && !String(targetId).startsWith("tt")) {
-        const resolvedImdb = await fetchImdbId(id);
-        if (resolvedImdb && resolvedImdb !== targetId) {
-          const retryData = await resolveMgeb("movie", resolvedImdb);
-          if (retryData && retryData.sources && retryData.sources.length > 0) {
-            mgebData = retryData;
-            targetId = resolvedImdb;
-            isTvCollision = false;
-          }
-        }
-      }
-
-      if (isTvCollision) {
-        mgebData = null;
-      }
-    }
+    const mgebData = await timed("mgeb", firstThenMerge(lookups, MGEB_MERGE_WINDOW_MS));
 
     if (mgebData && mgebData.sources && mgebData.sources.length > 0) {
       const parsedSources = mgebData.sources.map((s, idx) => {
@@ -843,7 +931,7 @@ export async function onRequestGet(context) {
       }
 
       // Best quality first; the host score only breaks ties between equal qualities
-      const rankedSources = await rankSourcesByQuality(parsedSources, scoreSource);
+      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, scoreSource));
       const primary = rankedSources[0];
       const fallbacks = rankedSources.slice(1);
 
@@ -864,6 +952,9 @@ export async function onRequestGet(context) {
     }
   }
 
+  timings.total = Date.now() - startedAt;
+  const serverTiming = Object.entries(timings).map(([k, v]) => `${k};dur=${v}`).join(", ");
+
   if (result) {
     return new Response(JSON.stringify(result), {
       status: 200,
@@ -871,6 +962,7 @@ export async function onRequestGet(context) {
         "Content-Type": "application/json; charset=utf-8",
         "Access-Control-Allow-Origin": "*",
         "Cache-Control": "public, max-age=1800",
+        "Server-Timing": serverTiming,
       },
     });
   }
@@ -884,6 +976,7 @@ export async function onRequestGet(context) {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
+      "Server-Timing": serverTiming,
     },
   });
 }

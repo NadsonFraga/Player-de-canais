@@ -24,10 +24,19 @@ TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d"
 # In-memory resolver cache (TTL 30 minutes)
 RESOLVE_CACHE = {}
 
-def fetch_imdb_id(tmdb_id: str):
-    """Fetches canonical IMDb ID (tt...) from TMDB for unambiguous movie resolution in MGEB."""
+# MGEB pages can take ~15 s on some titles: one long attempt instead of two short ones
+MGEB_TIMEOUT_S = 25
+# After the first MGEB lookup with sources, wait this long to merge the other one
+MGEB_MERGE_WINDOW_S = 1.5
+
+
+def fetch_imdb_id(tmdb_id: str, media_type: str = "movie"):
+    """Fetches the canonical IMDb ID (tt...) from TMDB ("movie" or "serie")."""
     try:
-        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}"
+        if media_type == "movie":
+            url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}"
+        else:
+            url = f"https://api.themoviedb.org/3/tv/{tmdb_id}/external_ids?api_key={TMDB_API_KEY}"
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
         with urllib.request.urlopen(req, timeout=6) as res:
             data = json.loads(res.read().decode("utf-8"))
@@ -58,22 +67,64 @@ def fetch_mgeb(media_type: str, media_id: str, season: int = 1, episode: int = 1
         "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
     }
     
-    for attempt in range(2):
-        try:
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=12) as res:
-                html = res.read().decode("utf-8", errors="ignore")
-            m = re.search(r"var\s+sources\s*=\s*(\[.*?\]);", html, re.DOTALL)
-            if not m:
-                continue
-            sources = json.loads(m.group(1))
-            title_m = re.search(r'var\s+title\s*=\s*"(.*?)";', html)
-            title = title_m.group(1).replace(r"\/", "/") if title_m else ""
-            return {"title": title, "sources": sources}
-        except Exception as e:
-            if attempt == 1:
-                print(f"[LocalServer] Error fetching MGEB ({url}): {e}", file=sys.stderr)
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=MGEB_TIMEOUT_S) as res:
+            html = res.read().decode("utf-8", errors="ignore")
+        m = re.search(r"var\s+sources\s*=\s*(\[.*?\]);", html, re.DOTALL)
+        if not m:
+            return None
+        sources = json.loads(m.group(1))
+        title_m = re.search(r'var\s+title\s*=\s*"(.*?)";', html)
+        title = title_m.group(1).replace(r"\/", "/") if title_m else ""
+        return {"title": title, "sources": sources}
+    except Exception as e:
+        print(f"[LocalServer] Error fetching MGEB ({url}): {e}", file=sys.stderr)
     return None
+
+
+def mgeb_source_key(source):
+    """Same file served over http/https or :80 counts once."""
+    url = str(source.get("file", "")).strip()
+    url = re.sub(r"^https?://", "", url, flags=re.I).replace(":80/", "/")
+    return url.split("?")[0]
+
+
+def first_then_merge(lookups, window_s):
+    """Runs lookups (callables) in parallel; returns the first result with sources, merged
+    with any other that arrives within window_s (first result's order first, no duplicates)."""
+    from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+    if not lookups:
+        return None
+    pool = ThreadPoolExecutor(max_workers=len(lookups))
+    pending = {pool.submit(fn) for fn in lookups}
+    results = []
+    deadline = None
+    while pending:
+        timeout = None if deadline is None else max(0, deadline - time.time())
+        done, pending = wait(pending, timeout=timeout, return_when=FIRST_COMPLETED)
+        if not done:
+            break
+        for fut in done:
+            try:
+                r = fut.result()
+            except Exception:
+                r = None
+            if r and r.get("sources"):
+                results.append(r)
+                if deadline is None:
+                    deadline = time.time() + window_s
+    pool.shutdown(wait=False, cancel_futures=True)
+    if not results:
+        return None
+    seen, sources = set(), []
+    for r in results:
+        for s in r["sources"]:
+            key = mgeb_source_key(s)
+            if key not in seen:
+                seen.add(key)
+                sources.append(s)
+    return {"title": results[0].get("title", ""), "sources": sources}
 
 
 def fetch_zoko(mal_id: str, episode: int = 1):
@@ -105,6 +156,8 @@ def fetch_zoko(mal_id: str, episode: int = 1):
 
 PROBE_TIMEOUT_S = 3.5
 PROBE_MAX_SOURCES = 6
+# Probing stops after this budget; sources not measured in time keep host order
+PROBE_BUDGET_S = 2.5
 KIND_RANK = {"hls-multi": 0, "hls-single": 1, "mp4-range": 2, "mp4": 3, "unknown": 4}
 H264_HIGH_PROFILES = {100, 110, 122, 244, 44, 83, 86, 118, 128, 138, 139, 134, 135}
 
@@ -415,23 +468,46 @@ def probe_hls(url, referer):
         return {"qualities": []}
 
     if "#EXT-X-STREAM-INF" in text:
+        lines = text.splitlines()
+        variants = []
+        for i, line in enumerate(lines):
+            if not line.startswith("#EXT-X-STREAM-INF"):
+                continue
+            uri = next((l.strip() for l in lines[i + 1:] if l.strip() and not l.startswith("#")), None)
+            res = re.search(r"RESOLUTION=(\d+)x(\d+)", line, re.I)
+            bw = re.search(r"(?:^#EXT-X-STREAM-INF:|[^-])BANDWIDTH=(\d+)", line, re.I)
+            variants.append({
+                "uri": uri,
+                "quality": quality_class(res.group(1), res.group(2)) if res else None,
+                "bandwidth": int(bw.group(1)) if bw else 0,
+            })
         qualities = []
-        for attrs in re.findall(r"#EXT-X-STREAM-INF:([^\n\r]*)", text):
-            m = re.search(r"RESOLUTION=(\d+)x(\d+)", attrs, re.I)
-            q = quality_class(m.group(1), m.group(2)) if m else None
-            if q and q not in qualities:
-                qualities.append(q)
+        for v in variants:
+            if v["quality"] and v["quality"] not in qualities:
+                qualities.append(v["quality"])
+        # Re-hosting players ("FirePlayer") publish a fixed 360p/720p ladder whatever the real picture is
+        bandwidths = ",".join(str(b) for b in sorted(v["bandwidth"] for v in variants))
+        synthetic = bool(re.search(r"FirePlayer", text, re.I)) or bandwidths == "276000,2048000"
+
+        # Check the top variant: its first segment must start at byte 0, and its real
+        # frame size replaces a declared resolution that is not there
         broken = False
         try:
-            variant_line = next((l.strip() for l in text.splitlines() if l.strip() and not l.startswith("#")), None)
-            if variant_line:
-                variant_url = urllib.parse.urljoin(url, variant_line)
+            candidates = [v for v in variants if v["uri"]]
+            candidates.sort(key=lambda v: (-(v["quality"] or 0), -v["bandwidth"]))
+            if candidates:
+                top = candidates[0]
+                variant_url = urllib.parse.urljoin(url, top["uri"])
                 v_status, v_body, _ = probe_fetch(variant_url, referer)
                 if v_status < 400:
-                    broken = probe_first_segment(variant_url, v_body.decode("utf-8", errors="ignore"), referer, False)["broken"]
+                    seg = probe_first_segment(variant_url, v_body.decode("utf-8", errors="ignore"), referer, True)
+                    broken = seg["broken"]
+                    measured = quality_class(*seg["res"]) if seg["res"] else None
+                    if measured and top["quality"] and measured != top["quality"]:
+                        qualities = [measured] + [q for q in qualities if q < measured]
         except Exception:
             pass  # The variant check is best effort
-        return {"qualities": qualities, "multi": text.count("#EXT-X-STREAM-INF") > 1, "broken": broken}
+        return {"qualities": qualities, "multi": len(variants) > 1, "broken": broken, "synthetic": synthetic}
 
     # Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
     seg = probe_first_segment(url, text, referer, True)
@@ -445,7 +521,7 @@ def probe_source(src):
     is_hls = src.get("type") == "hls" or ".m3u8" in raw
     referer = (src.get("headers") or {}).get("Referer", "")
     is_proxied = "/api/stream" in src.get("stream_url", "")
-    qualities, kind, alive = [], "unknown", True
+    qualities, kind, alive, synthetic = [], "unknown", True, False
     try:
         r = probe_hls(raw, referer) if is_hls else probe_mp4(raw, referer)
         if r.get("dead"):
@@ -453,6 +529,7 @@ def probe_source(src):
         elif is_hls:
             qualities = r["qualities"]
             kind = "hls-multi" if r.get("multi") else "hls-single"
+            synthetic = bool(r.get("synthetic"))
             # A broken first segment stalls playback: keep it only as a last resort
             if r.get("broken"):
                 alive = False
@@ -464,7 +541,8 @@ def probe_source(src):
         # Timeouts and network errors leave the source as unknown but playable
         print(f"[LocalServer] Probe failed for {raw[:80]}: {e}", file=sys.stderr)
     qualities = sorted(qualities, reverse=True)
-    return {**src, "quality": qualities[0] if qualities else None, "qualities": qualities, "kind": kind, "alive": alive}
+    return {**src, "quality": qualities[0] if qualities else None, "qualities": qualities, "kind": kind,
+            "alive": alive, "synthetic": synthetic, "probed": True}
 
 
 def is_mirror_source(src):
@@ -474,18 +552,49 @@ def is_mirror_source(src):
     return "playercdn" in url or "workers.dev" in url or "powestream" in url
 
 
+def is_low_trust_source(src):
+    """Low trust: synthetic master, or a known re-hosting mirror."""
+    return bool(src.get("synthetic")) or is_mirror_source(src)
+
+
+def is_trusted_top_source(src):
+    """A measured, healthy 1080p+ HLS from a trusted host: no need to wait for the others."""
+    return (src.get("probed") and src.get("alive") and (src.get("quality") or 0) >= 1080
+            and src.get("kind", "").startswith("hls") and not is_low_trust_source(src))
+
+
 def rank_sources_by_quality(sources, tie_breaker=lambda s: 0):
-    """Probes sources in parallel (capped) and sorts them best-first."""
-    from concurrent.futures import ThreadPoolExecutor
+    """Probes sources in parallel within PROBE_BUDGET_S and sorts them best-first.
+    Returns early when a trusted 1080p HLS is confirmed; sources not measured in
+    time stay "unknown" and fall back to kind/host order."""
+    from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+    results = [{**s, "quality": None, "qualities": [], "kind": "unknown", "alive": True,
+                "synthetic": False, "probed": False} for s in sources]
     to_probe = sources[:PROBE_MAX_SOURCES]
-    with ThreadPoolExecutor(max_workers=max(1, len(to_probe))) as pool:
-        probed = list(pool.map(probe_source, to_probe))
-    probed += [{**s, "quality": None, "qualities": [], "kind": "unknown", "alive": True} for s in sources[PROBE_MAX_SOURCES:]]
-    indexed = list(enumerate(probed))
+    if to_probe:
+        pool = ThreadPoolExecutor(max_workers=len(to_probe))
+        futures = {pool.submit(probe_source, src): i for i, src in enumerate(to_probe)}
+        deadline = time.time() + PROBE_BUDGET_S
+        pending = set(futures)
+        while pending:
+            done, pending = wait(pending, timeout=max(0, deadline - time.time()), return_when=FIRST_COMPLETED)
+            if not done:
+                break
+            trusted = False
+            for fut in done:
+                try:
+                    results[futures[fut]] = fut.result()
+                except Exception:
+                    continue
+                trusted = trusted or is_trusted_top_source(results[futures[fut]])
+            if trusted:
+                break
+        pool.shutdown(wait=False, cancel_futures=True)
+    indexed = list(enumerate(results))
     indexed.sort(key=lambda x: (
         -int(x[1]["alive"]),
         -(x[1]["quality"] or 0),
-        int(is_mirror_source(x[1])),
+        int(is_low_trust_source(x[1])),
         KIND_RANK[x[1]["kind"]],
         -tie_breaker(x[1]),
         x[0],
@@ -688,6 +797,12 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_cors_headers(200, "application/json")
                 self.end_headers()
                 self.wfile.write(b'{"status":"healthy","service":"tvzinha-local-resolver"}')
+            elif path == "/__dev/clear-cache":
+                # Local-only helper for tools/player_benchmark.mjs (measures cold resolves)
+                RESOLVE_CACHE.clear()
+                self.send_cors_headers(200, "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"cleared":true}')
             else:
                 super().do_GET()
         except Exception as e:
@@ -715,10 +830,21 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}_{season_name_param}"
         now = time.time()
+        # Per-step durations exposed as a Server-Timing header (ms)
+        timings = {}
+
+        def timed(name, fn, *args):
+            started = time.time()
+            try:
+                return fn(*args)
+            finally:
+                timings[name] = timings.get(name, 0) + (time.time() - started) * 1000
+
         if cache_key in RESOLVE_CACHE:
             cached_time, cached_res = RESOLVE_CACHE[cache_key]
             if now - cached_time < 1800:
                 self.send_cors_headers(200, "application/json; charset=utf-8")
+                self.send_header("Server-Timing", 'cache;desc="hit"')
                 self.end_headers()
                 self.wfile.write(json.dumps(cached_res, ensure_ascii=False).encode("utf-8"))
                 return
@@ -728,12 +854,12 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         # Route 1: Anime Subtitled via ZokoAnime
         if media_type == "anime" and lang == "sub":
             if not mal_id and title_param:
-                mal_id = fetch_mal_id_from_title(title_param, season, season_name_param)
+                mal_id = timed("mal", fetch_mal_id_from_title, title_param, season, season_name_param)
             elif not mal_id and media_id:
                 mal_id = media_id
 
             if mal_id:
-                zoko_data = fetch_zoko(str(mal_id), episode)
+                zoko_data = timed("zoko", fetch_zoko, str(mal_id), episode)
                 if zoko_data and zoko_data.get("src"):
                     master_url = zoko_data["src"]
                     stream_url = f"{proxy_base}?url={urllib.parse.quote(master_url, safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}"
@@ -748,7 +874,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                             "url": f"{proxy_base}?url={urllib.parse.quote(sub_src, safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}",
                         })
 
-                    zoko_source = probe_source({
+                    zoko_source = timed("probe", probe_source, {
                         "label": "ZokoAnime",
                         "type": "hls",
                         "stream_url": stream_url,
@@ -779,32 +905,30 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         # Route 2: Movies, Series or Anime Dubbed via MGEB
         if not result and (media_id or imdb_id):
             mgeb_type = "serie" if media_type == "anime" else media_type
-            target_id = imdb_id if (imdb_id and imdb_id.startswith("tt")) else media_id
+            given_imdb = imdb_id if (imdb_id and imdb_id.startswith("tt")) else None
+            tmdb_id = media_id if (media_id and str(media_id).isdigit()) else None
 
-            # For movies: check canonical IMDb ID to eliminate TV series collisions (e.g. 1422 -> The Middle vs The Departed)
-            if media_type == "movie" and target_id and str(target_id).isdigit():
-                resolved_imdb = fetch_imdb_id(str(target_id))
-                if resolved_imdb:
-                    target_id = resolved_imdb
+            # MGEB answers by IMDb id and by TMDB id with different (rotating) source lists:
+            # ask both in parallel, take the first with sources and merge the other if it arrives soon.
+            # A numeric movie id may collide with a TV series (e.g. 1422 -> The Middle vs The Departed).
+            def is_tv_collision(data):
+                return media_type == "movie" and bool(re.search(r'[-–]\s*T\d+E\d+|S\d+E\d+|Epis[oó]dio|\bPiloto\b', data.get("title", ""), re.I))
 
-            mgeb_data = fetch_mgeb(mgeb_type, target_id, season, episode)
+            def lookup_by_imdb():
+                tt = given_imdb or (timed("tmdb", fetch_imdb_id, str(tmdb_id), mgeb_type) if tmdb_id else None)
+                return fetch_mgeb(mgeb_type, tt, season, episode) if tt else None
 
-            # Sanity check: If movie resolution returned a TV episode title, fallback to IMDb resolution
-            if mgeb_data and media_type == "movie":
-                ret_title = mgeb_data.get("title", "")
-                is_tv_collision = bool(re.search(r'[-–]\s*T\d+E\d+|S\d+E\d+|Epis[oó]dio|\bPiloto\b', ret_title, re.I))
-                if is_tv_collision and not str(target_id).startswith("tt"):
-                    resolved_imdb = fetch_imdb_id(str(media_id))
-                    if resolved_imdb and resolved_imdb != target_id:
-                        retry_data = fetch_mgeb("movie", resolved_imdb)
-                        if retry_data and retry_data.get("sources"):
-                            mgeb_data = retry_data
-                            target_id = resolved_imdb
-                            is_tv_collision = False
+            def lookup_by_id():
+                data = fetch_mgeb(mgeb_type, tmdb_id or media_id, season, episode)
+                if data and is_tv_collision(data):
+                    print(f"[LocalServer] Rejected TV series collision for movie: {data.get('title')}", file=sys.stderr)
+                    return None
+                return data
 
-                if is_tv_collision:
-                    print(f"[LocalServer] Rejected TV series collision for movie: {ret_title}", file=sys.stderr)
-                    mgeb_data = None
+            lookups = [lookup_by_imdb]
+            if tmdb_id or (not given_imdb and media_id):
+                lookups.append(lookup_by_id)
+            mgeb_data = timed("mgeb", first_then_merge, lookups, MGEB_MERGE_WINDOW_S)
 
             if mgeb_data and mgeb_data.get("sources"):
                 raw_sources = mgeb_data["sources"]
@@ -851,7 +975,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     return 10
 
                 # Best quality first; the host score only breaks ties between equal qualities
-                ranked_sources = rank_sources_by_quality(parsed_sources, score_source)
+                ranked_sources = timed("probe", rank_sources_by_quality, parsed_sources, score_source)
                 primary = ranked_sources[0]
                 fallbacks = ranked_sources[1:]
 
@@ -870,13 +994,17 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     },
                 }
 
+        timings["total"] = (time.time() - now) * 1000
+        server_timing = ", ".join(f"{k};dur={v:.0f}" for k, v in timings.items())
         if result:
             RESOLVE_CACHE[cache_key] = (now, result)
             self.send_cors_headers(200, "application/json; charset=utf-8")
+            self.send_header("Server-Timing", server_timing)
             self.end_headers()
             self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
         else:
             self.send_cors_headers(404, "application/json; charset=utf-8")
+            self.send_header("Server-Timing", server_timing)
             self.end_headers()
             self.wfile.write(b'{"success":false,"error":"No direct streams resolved","fallback_recommended":true}')
 
