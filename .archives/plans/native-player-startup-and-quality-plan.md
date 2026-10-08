@@ -59,7 +59,7 @@ The user wants general fixes, not per-host patches. Targets: episode switch ~5 s
 
 ## Rollout
 
-1. All work stays local on branch `feat/native-player-quality` (one local commit, 3bc7194). No further commits, pushes or deploys unless the user asks.
+1. All work lives on branch `feat/native-player-quality` (pushed to GitHub with user approval: 3bc7194, b52f021 and later). No further commits, pushes or deploys unless the user asks.
 2. Benchmarks run against the local server; the local Python proxy is slower than the Cloudflare edge, so a preview deployment may be proposed later, only with the user's approval.
 
 ## Progress (2026-10-08)
