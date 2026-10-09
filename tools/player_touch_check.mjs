@@ -8,7 +8,7 @@
  *   python tools/local_server.py                      (in another terminal)
  *   node tools/player_touch_check.mjs
  *
- * Uses 127.0.0.1 on purpose. Keep the cache version in the import() below equal to the one in index.html.
+ * Uses 127.0.0.1 on purpose. The cache version used by the import() below is read from index.html.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync } from "node:fs";
@@ -63,7 +63,8 @@ await sleep(2500);
 await evaluate("(window.TvzinhaActions.closeAdblockModal && window.TvzinhaActions.closeAdblockModal(), true)").catch(() => {});
 
 // ---------- anime episode playing on the phone
-await evaluate(`import('/assets/js/modules/series.js?v=20261008_q20').then(m => { window.__series = m; return true; })`);
+const APP_VERSION = (await import('node:fs')).readFileSync(new URL('../index.html', import.meta.url), 'utf8').match(/main\.js\?v=([^"]+)/)[1];
+await evaluate(`import('/assets/js/modules/series.js?v=${APP_VERSION}').then(m => { window.__series = m; return true; })`);
 await evaluate("(window.TvzinhaActions.switchView('animes'), true)");
 await sleep(1500);
 await evaluate(`window.__series.openSeriesModal({ id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, 'tv', { autoPlaySeason: 9, autoPlayEpisode: 31 }).then(() => true)`);

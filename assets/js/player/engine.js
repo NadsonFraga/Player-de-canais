@@ -3,11 +3,11 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js';
-import { showToast } from '../core/toast.js';
-import { setPlaybackActiveState } from '../core/wakeLock.js';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js';
+import { store } from '../core/state.js?v=20261009_a';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261009_a';
+import { showToast } from '../core/toast.js?v=20261009_a';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_a';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261009_a';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {

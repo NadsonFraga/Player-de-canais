@@ -9,7 +9,7 @@
  *   python tools/local_server.py                      (in another terminal)
  *   node tools/player_ui_check.mjs <screenshotDir>    (saves a few PNGs there)
  *
- * Uses 127.0.0.1 on purpose. Keep the cache version in the import() below equal to the one in index.html.
+ * Uses 127.0.0.1 on purpose. The cache version used by the import() below is read from index.html.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
@@ -103,7 +103,8 @@ check("TV tab: the Movies carousel stays still (it rotates every 7.5 s)", tvHero
 check("TV tab: no TMDB image requests in 17 s", tvAfter === tvBefore, `${tvBefore} -> ${tvAfter}`);
 
 // ---------- DBZ season 9 episode 31 through the anime player
-await evaluate(`import('/assets/js/modules/series.js?v=20261008_q20').then(m => { window.__series = m; return true; })`);
+const APP_VERSION = (await import('node:fs')).readFileSync(new URL('../index.html', import.meta.url), 'utf8').match(/main\.js\?v=([^"]+)/)[1];
+await evaluate(`import('/assets/js/modules/series.js?v=${APP_VERSION}').then(m => { window.__series = m; return true; })`);
 await evaluate("(window.TvzinhaActions.switchView('animes'), true)");
 await sleep(1500);
 await evaluate(`window.__series.openSeriesModal({ id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, 'tv', { autoPlaySeason: 9, autoPlayEpisode: 31 }).then(() => true)`);

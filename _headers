@@ -7,7 +7,16 @@
   Cache-Control: no-cache, no-store, must-revalidate
   CDN-Cache-Control: no-store
 
-# Static Assets (Modular CSS, Logos, Favicons)
-/assets/*
+# Code (JS and CSS): the browser must ask whether the file changed before using its copy (a cheap 304 when it did not).
+# Together with the single ?v= stamp from tools/bump_version.py this keeps old and new modules from ever being mixed.
+# Rules must not overlap: Cloudflare joins the values when two rules set the same header.
+/assets/js/*
+  Cache-Control: no-cache
+
+/assets/css/*
+  Cache-Control: no-cache
+
+# Images (logos, favicons): they rarely change, keep them cached
+/assets/logos/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 

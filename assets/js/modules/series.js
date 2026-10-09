@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js';
+import { store } from '../core/state.js?v=20261009_a';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,12 +14,12 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js';
-import { showToast } from '../core/toast.js';
-import { isBackgroundMediaAllowed } from '../core/activity.js';
-import { setPlaybackActiveState } from '../core/wakeLock.js';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261008_q20';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js';
+} from '../core/constants.js?v=20261009_a';
+import { showToast } from '../core/toast.js?v=20261009_a';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_a';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_a';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261009_a';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_a';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
