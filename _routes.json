@@ -10,7 +10,8 @@
     "/scratch/*",
     "/CLAUDE.md",
     "/.gitignore",
-    "/_headers"
+    "/_headers",
+    "/*%*"
   ],
   "exclude": []
 }

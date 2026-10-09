@@ -5,6 +5,10 @@
  * downloadable by anyone. These paths answer 404 as if they did not exist. `_routes.json` limits this middleware
  * to the paths below plus /api/*, so ordinary page, image and script requests never run it (no extra cost).
  *
+ * `_routes.json` matches the path as it was SENT, while Cloudflare decodes %2E, %61 and the like when it looks up the
+ * file. Without the "/*%*" rule, "/%2Earchives/README.md" skipped this middleware and was served. That rule sends every
+ * path containing a percent sign here, where it is decoded and compared. Normal asset paths contain no percent sign.
+ *
  * Keep BLOCKED_PREFIXES, BLOCKED_FILES and `_routes.json` in sync.
  */
 
@@ -20,7 +24,7 @@ function normalizePath(pathname) {
     // A malformed escape is never a legitimate asset request
     return null;
   }
-  return path.toLowerCase().replace(/\/{2,}/g, "/");
+  return path.toLowerCase().replace(/\\/g, "/").replace(/\/{2,}/g, "/");
 }
 
 function isBlockedPath(pathname) {
