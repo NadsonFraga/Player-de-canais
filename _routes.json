@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "include": [
+    "/api/*",
+    "/.archives/*",
+    "/tools/*",
+    "/docs/*",
+    "/.github/*",
+    "/.git/*",
+    "/scratch/*",
+    "/CLAUDE.md",
+    "/.gitignore",
+    "/_headers"
+  ],
+  "exclude": []
+}
