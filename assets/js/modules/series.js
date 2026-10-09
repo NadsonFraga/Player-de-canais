@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261009_a';
+import { store } from '../core/state.js?v=20261009_h';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,12 +14,12 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261009_a';
-import { showToast } from '../core/toast.js?v=20261009_a';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_a';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_a';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261009_a';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_a';
+} from '../core/constants.js?v=20261009_h';
+import { showToast } from '../core/toast.js?v=20261009_h';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_h';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_h';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261009_h';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_h';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -1938,7 +1938,7 @@ async function loadSeasonEpisodes(showId, seasonNumber) {
     if (!episodes) {
         try {
             const data = await fetchSeriesEndpoint(`tv/${showId}/season/${seasonNumber}`);
-            episodes = data.results || data.episodes || [];
+            episodes = normalizeSeasonEpisodes(data.results || data.episodes || []);
             cachedSeasonsMap[cacheKey] = episodes;
         } catch (err) {
             console.error("[Series] Erro ao carregar episódios:", err);
@@ -2078,6 +2078,18 @@ function findCachedEpisode(showId, seasonNumber, episodeNumber) {
 
 const seasonEpisodeRequests = new Map();
 
+/**
+ * Some TMDB shows keep counting across seasons inside each season (Naruto Shippuden season 2 starts at episode 33).
+ * The whole app (player hosts, show-wide number, next episode) works with the number inside the season, so such a
+ * season is shifted to start at 1. The TMDB number is kept in `tmdb_episode_number`.
+ */
+function normalizeSeasonEpisodes(list) {
+    if (!Array.isArray(list) || list.length === 0) return list;
+    const first = Math.min(...list.map(ep => Number(ep.episode_number)).filter(Number.isFinite));
+    if (!Number.isFinite(first) || first <= 1) return list;
+    return list.map(ep => ({ ...ep, tmdb_episode_number: ep.episode_number, episode_number: Number(ep.episode_number) - (first - 1) }));
+}
+
 /** Episodes of one season (TMDB), cached; simultaneous callers share one request. */
 function fetchSeasonEpisodes(showId, seasonNumber) {
     const key = `${showId}_${seasonNumber}`;
@@ -2086,7 +2098,7 @@ function fetchSeasonEpisodes(showId, seasonNumber) {
     if (seasonEpisodeRequests.has(key)) return seasonEpisodeRequests.get(key);
     const request = fetchSeriesEndpoint(`tv/${showId}/season/${seasonNumber}`)
         .then(data => {
-            const list = data.episodes || data.results || [];
+            const list = normalizeSeasonEpisodes(data.episodes || data.results || []);
             if (list.length > 0) cachedSeasonsMap[key] = list;
             return list;
         })
@@ -2525,6 +2537,15 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
                 title: `${showName} • T${seasonNumber}:E${episodeNumber}`,
                 poster: backdropUrl,
                 subtitles: data.subtitles || [],
+                // Opening/ending times (anime only). The anime host numbers episodes per MyAnimeList entry like
+                // AniSkip does; for the main host the entry and number are looked up in the background
+                aniskip: !isAnime ? null : serverKey === 'native_anime' ? data.aniskip
+                    : resolveDirectStream({ ...buildNativeResolveRequest(showItem, 'native_anime', seasonNumber, episodeNumber, activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode), aniskip_only: true })
+                        .then(found => {
+                            const key = found && found.aniskip;
+                            if (key && key.mal_id) animeMalIds.set(`${showItem.id}_${seasonNumber}`, key.mal_id);
+                            return key;
+                        }),
                 // Near the end, resolve the next episode so "Próximo" starts without the search wait
                 onNearEnd: () => {
                     if (currentSessionId !== seriesPlaybackSessionId) return;

@@ -3,11 +3,12 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261009_a';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261009_a';
-import { showToast } from '../core/toast.js?v=20261009_a';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_a';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261009_a';
+import { store } from '../core/state.js?v=20261009_h';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261009_h';
+import { showToast } from '../core/toast.js?v=20261009_h';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_h';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261009_h';
+import { fetchAniSkipSegments } from './skipSegments.js?v=20261009_h';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -717,7 +718,7 @@ const resolveCache = new Map();
 /**
  * Resolves direct media stream via local or remote proxy API
  */
-export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', original_title = '', year = '', season_name = '', mal_id = null, imdb_id = null, absolute_episode = '', total_episodes = '' }) {
+export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', original_title = '', year = '', season_name = '', mal_id = null, imdb_id = null, absolute_episode = '', total_episodes = '', aniskip_only = false }) {
     const params = new URLSearchParams();
     if (id) params.set("id", id);
     if (type) params.set("type", type);
@@ -732,6 +733,7 @@ export async function resolveDirectStream({ id, type, season = 1, episode = 1, l
     if (season_name) params.set("season_name", season_name);
     if (mal_id) params.set("mal_id", mal_id);
     if (imdb_id) params.set("imdb_id", imdb_id);
+    if (aniskip_only) params.set("aniskip_only", "1");
 
     const url = `${STREAM_ENGINE_API_BASE}/api/resolve?${params.toString()}`;
 
@@ -785,10 +787,18 @@ const NATIVE_STUCK_GRACE_MS = 3000;
 const NATIVE_START_GAP_MAX_S = 30;
 // onNearEnd fires with this much left (next-episode prefetch keeps fresh links)
 const NATIVE_NEAR_END_S = 180;
-// "Próximo episódio" countdown length before the end
+// "Próximo episódio" countdown length before the end when the ending is known (it is offered at the ending already)
 const NATIVE_UP_NEXT_S = 10;
+// Same countdown when the ending is not known: earlier, since there was no offer before. It ends with the video,
+// so a scene after the credits is covered by the card, never cut
+const NATIVE_UP_NEXT_NO_DATA_S = 30;
+// An ending followed by more than this (a scene or a preview) also offers "Pular encerramento"
+const SKIP_OUTRO_TAIL_S = 10;
 const NATIVE_SETTING_WIDTH = 230;
-const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate'];
+const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate', 'fit'];
+// "Tela": Ajustar shows the whole picture (bars when the shape differs), Preencher covers the box and crops the edges
+const FIT_OPTIONS = [{ value: 'contain', html: 'Ajustar' }, { value: 'cover', html: 'Preencher' }];
+const FIT_STORAGE_KEY = 'tvz-video-fit';
 // Shown when the stream carries a single audio track (no separate dub/sub renditions to choose from)
 const AUDIO_SINGLE_LABEL = 'Original';
 const SUBTITLES_NONE_LABEL = 'Nenhuma disponível';
@@ -796,6 +806,7 @@ const SUBTITLES_NONE_LABEL = 'Nenhuma disponível';
 const NATIVE_ICONS = {
     quality: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.2" fill="#000"/><circle cx="15" cy="12" r="2.2" fill="#000"/><circle cx="7" cy="17" r="2.2" fill="#000"/></svg>',
     audio: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+    fit: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>',
     subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10.5 10.2a2.2 2.2 0 1 0 0 3.6M16.5 10.2a2.2 2.2 0 1 0 0 3.6" stroke-linecap="round"/></svg>'
 };
 
@@ -905,8 +916,9 @@ function isHlsSource(src) {
  * e.g. to prefetch the next episode while its links are still fresh.
  * `getNextUp` returns { title, play } or null; when set, the last seconds show an
  * "Próximo episódio" countdown that plays it (cancelable), and the end of the video plays it too.
+ * `aniskip` ({ mal_id, episode }, anime player only) looks up the opening, recap and ending once the video length is known.
  */
-export function mountNativePlayer({ containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null }) {
+export function mountNativePlayer({ containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null, aniskip = null }) {
     const normalized = normalizeNativeSources({ sources, streamUrl, fallbackSources });
     if (normalized.length === 0) {
         atomicPlayerReset();
@@ -925,6 +937,11 @@ export function mountNativePlayer({ containerId, streamUrl, sources, title, post
         nearEndFired: false,
         getNextUp,
         upNextCancelled: false,
+        // { mal_id, episode } or a promise of it (looked up in the background for anime played from another host)
+        aniskip: aniskip || null,
+        skipRequested: false,
+        skipSegments: [],
+        skipDismissed: new Set(),
         sources: normalized,
         failed: new Set(),
         currentIndex: 0,
@@ -1211,6 +1228,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             refreshQualityMenu(session);
             refreshAudioMenu(session);
             refreshSubtitleMenu(session);
+            installFitSetting(art);
 
             const playPromise = art.play();
             if (playPromise && typeof playPromise.catch === 'function') {
@@ -1230,6 +1248,9 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         art.on('video:loadedmetadata', () => {
             if (!isSessionLive(session, token)) return;
             measureCurrentQuality(session);
+            requestSkipSegments(session);
+            // A source switch builds a new progress bar: draw the known ranges again
+            renderSkipRanges(session);
         });
 
         art.on('video:canplay', markStreamSuccess);
@@ -1240,7 +1261,11 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         });
 
         art.on('video:timeupdate', () => {
-            if (isSessionLive(session, token)) handleEndApproach(session);
+            if (!isSessionLive(session, token)) return;
+            // Some streams only report their length after a while: the lookup waits for it
+            requestSkipSegments(session);
+            handleEndApproach(session);
+            updateSkipButton(session);
         });
 
         art.on('video:ended', () => {
@@ -1265,6 +1290,132 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 }
 
 /**
+ * Looks up the skip segments once per session, when the video length is first known (a source switch keeps them).
+ */
+function requestSkipSegments(session) {
+    const video = session.art && session.art.video;
+    if (session.skipRequested || !session.aniskip || !video || !(video.duration > 0) || !Number.isFinite(video.duration)) return;
+    session.skipRequested = true;
+    const duration = video.duration;
+    Promise.resolve(session.aniskip).then(key => key && key.mal_id && key.episode
+        ? fetchAniSkipSegments({ malId: key.mal_id, episode: key.episode, duration })
+        : []).then(segments => {
+        if (activeNativeSession !== session) return;
+        session.skipSegments = segments;
+        renderSkipRanges(session);
+        updateSkipButton(session);
+    });
+}
+
+const SKIP_LABELS = { intro: 'Pular abertura', recap: 'Pular recapitulação', outro: 'Pular encerramento' };
+// The skip button fades after this long untouched; it comes back whenever the controls are shown
+const SKIP_IDLE_MS = 8000;
+const SKIP_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l7 7-7 7"/><path d="M13 5l7 7-7 7"/></svg>';
+const NEXT_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5l10 7-10 7z"/><path d="M19 5v14"/></svg>';
+const CLOSE_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+/**
+ * Draws the opening, recap and ending as discreet ranges on the progress bar.
+ */
+function renderSkipRanges(session) {
+    const art = session.art;
+    const video = art && art.video;
+    const inner = art && art.template && art.template.$player && art.template.$player.querySelector('.art-control-progress-inner');
+    if (!inner || !video || !(video.duration > 0)) return;
+    const old = inner.querySelector('.tvz-skip-ranges');
+    if (old) old.remove();
+    if (!session.skipSegments.length) return;
+    const layer = document.createElement('div');
+    layer.className = 'tvz-skip-ranges';
+    for (const seg of session.skipSegments) {
+        const span = document.createElement('span');
+        span.className = `tvz-skip-range tvz-skip-range--${seg.type}`;
+        span.style.left = `${(seg.start / video.duration) * 100}%`;
+        span.style.width = `${((seg.end - seg.start) / video.duration) * 100}%`;
+        layer.appendChild(span);
+    }
+    inner.appendChild(layer);
+}
+
+/**
+ * What the side card offers right now, as a list of actions ('skip' or 'next'), or null.
+ * Opening/recap: skip. Ending followed by more than a few seconds (a scene or a preview): skip and next.
+ * Ending that runs to the end of the video: next only. After skipping the ending: next.
+ * The countdown card has priority, and the viewer can dismiss each offer with the x.
+ */
+function skipCardState(session) {
+    const video = session.art && session.art.video;
+    if (!video || session.upNextTimer || !(video.duration > 0)) return null;
+    const t = video.currentTime;
+    const next = !session.upNextCancelled && typeof session.getNextUp === 'function' ? session.getNextUp() : null;
+    const seg = session.skipSegments.find(s => t >= s.start && t < s.end - 1);
+    if (seg && !session.skipDismissed.has(seg.type)) {
+        if (seg.type !== 'outro') return { key: seg.type, seg, actions: ['skip'] };
+        const contentAfter = video.duration - seg.end > SKIP_OUTRO_TAIL_S;
+        const actions = [...(contentAfter ? ['skip'] : []), ...(next ? ['next'] : [])];
+        return actions.length ? { key: `outro:${actions.join('+')}`, seg, actions, next } : null;
+    }
+    const outro = session.skipSegments.find(s => s.type === 'outro');
+    if (outro && next && session.outroSkipped && t >= outro.end - 1 && !session.skipDismissed.has('after-outro')) {
+        return { key: 'after-outro', actions: ['next'], next };
+    }
+    return null;
+}
+
+/**
+ * Shows, swaps or removes the side card ("Pular abertura", "Pular encerramento", "Próximo episódio").
+ */
+function updateSkipButton(session) {
+    const art = session.art;
+    const video = art && art.video;
+    if (!video || !art.layers) return;
+    const state = skipCardState(session);
+    const existing = art.layers['tvz-skip'];
+    if (existing && (!state || existing.dataset.key !== state.key)) {
+        clearTimeout(session.skipIdleTimer);
+        art.layers.remove('tvz-skip');
+    }
+    if (!state || art.layers['tvz-skip']) return;
+    const buttons = state.actions.map(action => action === 'skip'
+        ? `<button type="button" class="tvz-skip-go" data-action="skip">${SKIP_ICON}<span>${SKIP_LABELS[state.seg.type]}</span></button>`
+        : `<button type="button" class="tvz-skip-go tvz-skip-next" data-action="next">${NEXT_ICON}<span>Próximo episódio</span></button>`).join('');
+    try {
+        art.layers.add({
+            name: 'tvz-skip',
+            html: `<div class="tvz-skip">${buttons}<button type="button" class="tvz-skip-close" aria-label="Dispensar" title="Dispensar">${CLOSE_ICON}</button></div>`,
+            style: { position: 'absolute', right: '16px', bottom: '84px', pointerEvents: 'auto' },
+            mounted: ($el) => {
+                $el.classList.add('tvz-side-card');
+                $el.dataset.key = state.key;
+                const nextButton = $el.querySelector('[data-action="next"]');
+                // textContent: the title comes from TMDB
+                if (nextButton && state.next) nextButton.title = state.next.title || '';
+                $el.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (button.dataset.action === 'next') {
+                        playNextUp(session, state.next);
+                        return;
+                    }
+                    session.skipDismissed.add(state.seg.type);
+                    if (state.seg.type === 'outro') session.outroSkipped = true;
+                    art.currentTime = Math.min(state.seg.end, video.duration - 0.5);
+                    updateSkipButton(session);
+                }));
+                $el.querySelector('.tvz-skip-close').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Dismissing only hides the offer: the next episode still plays when the video ends
+                    session.skipDismissed.add(state.seg ? state.seg.type : 'after-outro');
+                    updateSkipButton(session);
+                });
+                session.skipIdleTimer = setTimeout(() => $el.classList.add('tvz-skip-layer--idle'), SKIP_IDLE_MS);
+            }
+        });
+    } catch (e) {
+        // The skip card is optional UI
+    }
+}
+
+/**
  * Runs on every timeupdate: fires onNearEnd once and drives the "Próximo episódio" countdown.
  */
 function handleEndApproach(session) {
@@ -1278,7 +1429,8 @@ function handleEndApproach(session) {
     }
 
     if (typeof session.getNextUp !== 'function' || session.upNextCancelled) return;
-    if (remaining > NATIVE_UP_NEXT_S) {
+    const lead = session.skipSegments.some(s => s.type === 'outro') ? NATIVE_UP_NEXT_S : NATIVE_UP_NEXT_NO_DATA_S;
+    if (remaining > lead) {
         // Seeking back before the end stops the countdown
         stopUpNextCountdown(session);
         return;
@@ -1349,6 +1501,7 @@ function setUpNext(session, next, seconds = 0) {
             </div>`,
             style: { position: 'absolute', right: '16px', bottom: '84px', pointerEvents: 'auto' },
             mounted: ($el) => {
+                $el.classList.add('tvz-side-card');
                 // textContent: the title comes from TMDB
                 $el.querySelector('.tvz-upnext-title').textContent = next.title || '';
                 $el.querySelector('.tvz-upnext-play').addEventListener('click', (e) => {
@@ -1401,6 +1554,39 @@ function setSourceStatus(session, text) {
 export function setLoaderText(loader, text) {
     const label = loader && loader.querySelector('span');
     if (label) label.textContent = text;
+}
+
+/** The viewer's last "Tela" choice, kept in this browser only. */
+function storedFit() {
+    try {
+        return localStorage.getItem(FIT_STORAGE_KEY) === 'cover' ? 'cover' : 'contain';
+    } catch (e) {
+        return 'contain';
+    }
+}
+
+function applyFit(art, value) {
+    const player = art && art.template && art.template.$player;
+    if (player) player.classList.toggle('tvz-fit-cover', value === 'cover');
+}
+
+/** "Tela: Ajustar / Preencher" row in the gear menu. */
+function installFitSetting(art) {
+    const current = storedFit();
+    applyFit(art, current);
+    upsertSetting(art, {
+        name: 'fit',
+        html: 'Tela',
+        icon: NATIVE_ICONS.fit,
+        width: NATIVE_SETTING_WIDTH,
+        tooltip: FIT_OPTIONS.find(o => o.value === current).html,
+        selector: FIT_OPTIONS.map(o => ({ ...o, default: o.value === current })),
+        onSelect: (item) => {
+            applyFit(art, item.value);
+            try { localStorage.setItem(FIT_STORAGE_KEY, item.value); } catch (e) { /* the choice just is not remembered */ }
+            return item.html;
+        }
+    });
 }
 
 /* ---------- Settings panel helpers (idempotent: one entry per name) ---------- */

@@ -421,6 +421,125 @@
     color: #04130a;
 }
 
+/* "Tela: Preencher": the picture covers the whole box, cropping the edges */
+.art-video-player.tvz-fit-cover video {
+    object-fit: cover !important;
+}
+
+/* The video box keeps the 16:9 shape of almost every video. The media area used a fixed maximum height, so on
+   wide windows the box got wider than 16:9 and 16:9 videos showed black bars on the sides. When the window is
+   short, the box now gets narrower (centered) instead of flatter. Phones keep their own layout (below 641 px). */
+@media (min-width: 641px) {
+    .movie-modal-card.is-playing .movie-modal-media-area {
+        aspect-ratio: auto;
+        max-height: none;
+        height: auto;
+        background: transparent;
+    }
+
+    .movie-modal-card.is-playing .movie-player-stage {
+        flex: none;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        width: min(100%, calc((100vh - 200px) * 16 / 9));
+        margin: 0 auto;
+    }
+}
+
+/* Opening, recap and ending on the progress bar: a lighter band, nothing louder */
+.art-video-player .tvz-skip-ranges {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 11;
+}
+
+.art-video-player .tvz-skip-range {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.38);
+    border-left: 1px solid rgba(0, 0, 0, 0.45);
+    border-right: 1px solid rgba(0, 0, 0, 0.45);
+}
+
+/* "Pular abertura" button, same look as the "Próximo episódio" card */
+.art-video-player .tvz-skip {
+    display: flex;
+    align-items: stretch;
+    border-radius: 10px;
+    background: rgba(20, 20, 22, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+
+.art-video-player .tvz-skip button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+}
+
+.art-video-player .tvz-skip-go {
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.art-video-player .tvz-skip-go svg,
+.art-video-player .tvz-skip-close svg {
+    fill: none !important;
+    stroke: currentColor;
+}
+
+.art-video-player .tvz-skip-go + .tvz-skip-go {
+    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.art-video-player .tvz-skip-next {
+    color: #22c55e !important;
+}
+
+.art-video-player .tvz-skip-close {
+    padding: 0 11px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.art-video-player .tvz-skip-go:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.art-video-player .tvz-skip-close:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Side cards (skip, next episode): just above the controls while they show, near the bottom edge when they hide */
+.art-video-player .tvz-side-card {
+    bottom: 72px !important;
+    transition: bottom 0.2s ease, opacity 0.25s ease;
+}
+
+.art-video-player:not(.art-control-show) .tvz-side-card {
+    bottom: 20px !important;
+}
+
+/* Untouched for a while: hidden until the controls are shown again */
+.art-video-player .tvz-skip-layer--idle {
+    transition: opacity 0.25s ease;
+}
+
+.art-video-player:not(.art-control-show) .tvz-skip-layer--idle {
+    opacity: 0;
+    pointer-events: none !important;
+}
+
 /* HD badge on the gear button while playing 720p or higher */
 .art-video-player.tvz-playing-hd .art-control-setting {
     position: relative;
