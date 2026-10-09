@@ -148,6 +148,38 @@ check("Áudio row is always there (single track shows 'Original')", rows.some(r 
 const wanted = answer && answer.subs.some(l => /Português/.test(l)) ? /Português/ : /Inglês/;
 check("Legendas row starts on Portuguese when the title has it, otherwise English", rows.some(r => r.name === "subtitle" && wanted.test(r.tooltip || "")), `server subs=${JSON.stringify(answer && answer.subs)}`);
 
+// ---------- AniSkip: DBZ episode 284 has an opening (0-203 s) and an ending; the video is inside the opening now
+const skip = await evaluate(`new Promise(resolve => {
+  const started = Date.now();
+  const look = () => {
+    const root = document.querySelector('#series-artplayer-container .art-video-player');
+    const ranges = root ? root.querySelectorAll('.art-control-progress-inner .tvz-skip-range').length : 0;
+    const button = root && root.querySelector('.tvz-skip-go');
+    if ((ranges && button) || Date.now() - started > 15000) {
+      resolve({ ranges, label: button ? button.textContent.trim() : null, close: Boolean(root && root.querySelector('.tvz-skip-close')) });
+    } else setTimeout(look, 300);
+  };
+  look();
+})`);
+check("AniSkip: opening and ending drawn on the progress bar", skip.ranges === 2, JSON.stringify(skip));
+check("AniSkip: 'Pular abertura' button with a dismiss control inside the opening", skip.label === "Pular abertura" && skip.close, JSON.stringify(skip));
+await shot("anime-skip-button.png");
+await evaluate("(document.querySelector('#series-artplayer-container .tvz-skip-go').click(), true)");
+await sleep(600);
+const afterSkip = await evaluate("({ t: window.artInstance.currentTime, button: Boolean(document.querySelector('#series-artplayer-container .tvz-skip-go')) })");
+check("AniSkip: the button jumps to the end of the opening and goes away", afterSkip.t > 195 && afterSkip.t < 215 && !afterSkip.button, JSON.stringify(afterSkip));
+// DBZ 284's ending runs to the end of the video: the card offers only the next episode (no countdown yet)
+await evaluate("(window.artInstance.currentTime = 1365, true)");
+// the seek completes once the proxy delivers the segment there
+await evaluate("new Promise(r => { const t0 = Date.now(); const look = () => (document.querySelector('#series-artplayer-container .tvz-skip') || Date.now() - t0 > 12000) ? r(true) : setTimeout(look, 300); look(); })");
+const outroCard = await evaluate("({ t: window.artInstance.currentTime, actions: [...document.querySelectorAll('#series-artplayer-container .tvz-skip [data-action]')].map(b => b.dataset.action), close: Boolean(document.querySelector('#series-artplayer-container .tvz-skip-close')), countdown: Boolean(document.querySelector('#series-artplayer-container .tvz-upnext')) })");
+check("AniSkip: an ending that runs to the end offers 'Próximo episódio' with a dismiss control, no countdown", outroCard.actions.join() === "next" && outroCard.close && !outroCard.countdown, JSON.stringify(outroCard));
+await evaluate("(document.querySelector('#series-artplayer-container .tvz-skip-close').click(), true)");
+await sleep(400);
+const dismissed = await evaluate("Boolean(document.querySelector('#series-artplayer-container .tvz-skip'))");
+check("AniSkip: the x removes the card", !dismissed);
+await evaluate("(window.artInstance.currentTime = 210, true)");
+
 // ---------- progress bar hit area and volume
 // controls hide when the mouse is idle, and they move while hiding: wake them before measuring
 const playerBox = await evaluate("(() => { const r = document.querySelector('#series-artplayer-container .art-video-player').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; })()");

@@ -3,7 +3,7 @@
  * Purely DOM-based spatial navigation with Euclidean 2D distance calculation
  */
 
-import { store } from '../core/state.js?v=20261009_a';
+import { store } from '../core/state.js?v=20261009_h';
 
 export function setupTvRemoteNavigation() {
     function getFocusableElements() {

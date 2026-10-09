@@ -955,6 +955,8 @@ export async function onRequestGet(context) {
   const absoluteEpisodeParam = parseInt(urlObj.searchParams.get("absolute_episode") || "0", 10) || 0;
   const totalEpisodesParam = parseInt(urlObj.searchParams.get("total_episodes") || "0", 10) || 0;
   let malId = urlObj.searchParams.get("mal_id");
+  // aniskip_only=1: only the MyAnimeList entry and its episode number (skip times for anime played from another host)
+  const aniskipOnly = urlObj.searchParams.get("aniskip_only") === "1";
 
   if (!id && !malId && !titleParam) {
     return new Response(JSON.stringify({ success: false, error: "Missing required media identifier (id, mal_id, or title)" }), {
@@ -1006,7 +1008,9 @@ export async function onRequestGet(context) {
       }
     }
 
-    if (zokoData) {
+    if (zokoData && aniskipOnly) {
+      result = { success: true, aniskip: { mal_id: parseInt(malId, 10), episode: effectiveEpisode, ready: true } };
+    } else if (zokoData) {
       const streamUrl = `${proxyBase}?url=${encodeURIComponent(zokoData.src)}&referer=${encodeURIComponent("https://zokoanime.video/")}`;
     
       // Build subtitles list with proxy URLs, keeping only Portuguese and English

@@ -989,11 +989,13 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         total_episodes = int(total_param) if total_param.isdigit() else 0
         mal_id = params.get("mal_id", [""])[0]
         imdb_id = params.get("imdb_id", [""])[0]
+        # aniskip_only=1: only the MyAnimeList entry and its episode number (skip times for anime played from another host)
+        aniskip_only = params.get("aniskip_only", [""])[0] == "1"
 
         host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
         proxy_base = f"http://{host_header}/api/stream"
 
-        cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}_{original_title_param}_{year_value}_{absolute_episode}_{total_episodes}_{season_name_param}"
+        cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}_{original_title_param}_{year_value}_{absolute_episode}_{total_episodes}_{season_name_param}_{aniskip_only}"
         now = time.time()
         # Per-step durations exposed as a Server-Timing header (ms)
         timings = {}
@@ -1038,7 +1040,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     effective_episode = candidate_episode
                     break
 
-            if zoko_data:
+            if zoko_data and aniskip_only:
+                result = {"success": True, "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": effective_episode, "ready": True}}
+            elif zoko_data:
                 master_url = zoko_data["src"]
                 stream_url = f"{proxy_base}?url={urllib.parse.quote(master_url, safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}"
                 
