@@ -4,12 +4,13 @@
  */
 
 import { store } from '../core/state.js';
-import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261008_q7';
+import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261008_q20';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
 import { showToast } from '../core/toast.js';
 import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome } from './historyManager.js';
 
 let viewHooks = {
+    onTvLeave: null,
     onHome: null,
     onMovies: null,
     onSeries: null,
@@ -17,10 +18,18 @@ let viewHooks = {
     onTv: null
 };
 
+/**
+ * Registers the callback that runs when a tab opens. Accepts 'movies' or 'onMovies': callers use the short
+ * name while the table below is keyed 'onMovies', and a mismatch used to drop the hook without any sign
+ * (the tabs only worked because the catalogs were preloaded). An unknown name now warns instead.
+ */
 export function registerViewHook(viewName, callback) {
-    if (viewHooks[viewName] !== undefined) {
-        viewHooks[viewName] = callback;
+    const key = /^on[A-Z]/.test(viewName) ? viewName : `on${viewName.charAt(0).toUpperCase()}${viewName.slice(1)}`;
+    if (viewHooks[key] === undefined) {
+        console.warn(`[Router] Gancho de aba desconhecido: "${viewName}"`);
+        return;
     }
+    viewHooks[key] = callback;
 }
 
 export function teardownAllMedia() {
@@ -99,6 +108,9 @@ export function switchAppView(viewName) {
     if (viewName !== 'tv') {
         closeMobileMenu();
         atomicTvPlayerReset();
+        // Leaving Canais ends the session: back to the welcome screen with no active channel,
+        // so nothing keeps playing in a hidden tab and coming back starts clean
+        if (previousView === 'tv' && typeof viewHooks.onTvLeave === 'function') viewHooks.onTvLeave();
     }
 
     if (viewName !== 'movies') {

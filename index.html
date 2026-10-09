@@ -131,7 +131,7 @@
     <link rel="stylesheet" href="assets/css/07-modals.css?v=20261006_v22">
     <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261006_v22">
     <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261006_v22">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261008_q7">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261008_q20">
 </head>
 
 <body>
@@ -446,7 +446,7 @@
 
         <!-- Main Content Area -->
         <main id="main-content" class="main-content">
-            <!-- Dynamic Content rendered by script.js (Welcome or Player View) -->
+            <!-- Dynamic content rendered by the channels module (Welcome or Player View) -->
             <div id="content-display" class="content-display">
                 <!-- Initial Welcome Screen -->
                 <div class="welcome-screen">
@@ -1537,7 +1537,7 @@
 
             <div class="team-modal-body">
                 <div class="teams-grid" id="teams-grid">
-                    <!-- Populated dynamically via script.js -->
+                    <!-- Populated dynamically by the application modules -->
                 </div>
             </div>
         </div>
@@ -1668,21 +1668,10 @@
                     <div class="movie-player-top-bar">
                         <span id="movie-player-server-title" class="movie-player-server-title">Servidor 1</span>
                         <div class="movie-player-actions">
-                            <button id="btn-reload-movie-player" class="btn-player-action-mini" title="Recarregar player">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="23 4 23 10 17 10"></polyline>
-                                    <polyline points="1 20 1 14 7 14"></polyline>
-                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                                </svg>
-                                <span>Recarregar</span>
-                            </button>
-                            <button id="btn-close-movie-player" class="btn-player-action-mini danger" title="Fechar player e voltar aos detalhes">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                                <span>Fechar Player</span>
-                            </button>
+                            <!-- Back-to-details step used only by the device Back button (history manager); the visible exit is the X -->
+                            <button id="btn-close-movie-player" class="btn-player-icon" type="button" hidden title="Voltar aos detalhes" aria-label="Voltar aos detalhes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+                            <button id="btn-reload-movie-player" class="btn-player-icon" type="button" title="Recarregar player" aria-label="Recarregar player"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+                            <button id="btn-exit-movie-player" class="btn-player-icon danger" type="button" title="Sair para Filmes" aria-label="Sair para Filmes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                         </div>
                     </div>
                     <div class="movie-player-stage">
@@ -1834,23 +1823,11 @@
             <!-- Media / Player Area -->
             <div class="movie-modal-media-area series-modal-media-area">
                 <div class="movie-player-top-bar series-player-top-bar">
+                    <button id="btn-close-series-player" class="btn-player-icon" type="button" title="Voltar aos episódios" aria-label="Voltar aos episódios"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
                     <span id="series-player-current-ep" class="movie-player-server-title series-player-header-title">Carregando episódio...</span>
                     <div class="movie-player-actions series-player-actions">
-                        <button id="btn-reload-series-player" class="btn-player-action-mini" title="Recarregar player">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="23 4 23 10 17 10"></polyline>
-                                <polyline points="1 20 1 14 7 14"></polyline>
-                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                            </svg>
-                            <span>Recarregar</span>
-                        </button>
-                        <button id="btn-close-series-player" class="btn-player-action-mini danger" title="Fechar player e voltar aos episódios">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                            <span>Voltar aos Episódios</span>
-                        </button>
+                        <button id="btn-reload-series-player" class="btn-player-icon" type="button" title="Recarregar player" aria-label="Recarregar player"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+                        <button id="btn-exit-series-player" class="btn-player-icon danger" type="button" title="Sair para Séries" aria-label="Sair para Séries"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                     </div>
                 </div>
 
@@ -1940,7 +1917,7 @@
     <script src="https://cdn.jsdelivr.net/npm/artplayer@5.1.7/dist/artplayer.js"></script>
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261008_q7"></script>
+    <script type="module" src="assets/js/main.js?v=20261008_q20"></script>
 </body>
 
 </html>

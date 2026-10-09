@@ -71,6 +71,111 @@ function releaseVideoElement(video) {
     }
 }
 
+// Arrow keys and the mobile double tap skip this many seconds in movies, series and anime
+const NATIVE_SEEK_STEP_S = 10;
+// A double tap in the outer 40% on each side skips; the middle keeps play/pause
+const DOUBLE_TAP_SIDE_ZONE = 0.4;
+const CHEVRON_ATTRS = 'width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+const SEEK_FLASH_ICONS = {
+    left: `<svg ${CHEVRON_ATTRS}><polyline points="15 18 9 12 15 6"></polyline></svg>`,
+    right: `<svg ${CHEVRON_ATTRS}><polyline points="9 18 15 12 9 6"></polyline></svg>`,
+};
+
+const VOLUME_ICONS = {
+    high: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+    low: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>',
+    muted: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>',
+};
+
+/**
+ * Replaces Artplayer's volume control (a vertical panel that opens over the progress bar) with a button
+ * plus a horizontal slider that grows to its right, so it never covers the bar. The original is hidden by CSS.
+ */
+export function installHorizontalVolume(art) {
+    if (!art || !art.controls || art.tvzVolumeInstalled) return;
+    art.tvzVolumeInstalled = true;
+    try {
+        art.controls.add({
+            name: 'tvz-volume',
+            position: 'left',
+            index: 20,
+            html: `<button type="button" class="tvz-volume-btn" aria-label="Silenciar ou ativar o som"></button><input class="tvz-volume-range" type="range" min="0" max="100" step="1" aria-label="Volume">`,
+            mounted($control) {
+                const button = $control.querySelector('.tvz-volume-btn');
+                const range = $control.querySelector('.tvz-volume-range');
+                const sync = () => {
+                    const level = art.muted ? 0 : art.volume;
+                    range.value = Math.round(level * 100);
+                    range.style.setProperty('--tvz-fill', `${range.value}%`);
+                    button.innerHTML = level === 0 ? VOLUME_ICONS.muted : (level < 0.5 ? VOLUME_ICONS.low : VOLUME_ICONS.high);
+                };
+                button.addEventListener('click', () => {
+                    art.muted = !art.muted;
+                    if (!art.muted && art.volume === 0) art.volume = 0.5;
+                    sync();
+                });
+                range.addEventListener('input', () => {
+                    const level = Number(range.value) / 100;
+                    art.volume = level;
+                    art.muted = level === 0;
+                    sync();
+                });
+                art.on('video:volumechange', sync);
+                sync();
+            },
+        });
+    } catch (e) {
+        console.warn("[PlayerEngine] Falha ao instalar o controle de volume:", e);
+    }
+}
+
+/**
+ * Mobile only: double tap on the left side goes back 10 s, on the right side forward 10 s (the middle toggles
+ * play/pause as before). Needs Artplayer.MOBILE_DBCLICK_PLAY = false, otherwise Artplayer toggles play first.
+ * A short label confirms the jump. Live players do not use it.
+ */
+export function installDoubleTapSeek(art) {
+    const player = art && art.template && art.template.$player;
+    if (!player || art.tvzDoubleTapSeek) return;
+    art.tvzDoubleTapSeek = true;
+
+    const flash = document.createElement('div');
+    flash.className = 'tvz-seek-flash';
+    player.appendChild(flash);
+    let hideTimer = null;
+    const showFlash = (side, text) => {
+        // Static markup only (an icon and a number), never data from outside
+        flash.innerHTML = side === 'left'
+            ? `${SEEK_FLASH_ICONS.left}<span>${text}</span>`
+            : `<span>${text}</span>${SEEK_FLASH_ICONS.right}`;
+        flash.dataset.side = side;
+        flash.classList.add('is-visible');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => flash.classList.remove('is-visible'), 650);
+    };
+
+    art.on('dblclick', (event) => {
+        if (!player.classList.contains('art-mobile') || !(art.duration > 0)) return;
+        // Taps on the control bar, menus and overlays are not skips
+        if (event && event.target && event.target.closest && event.target.closest('.art-bottom, .art-settings, .art-contextmenus, .art-info, .tvz-upnext')) return;
+
+        const box = player.getBoundingClientRect();
+        const point = event && event.changedTouches ? event.changedTouches[0] : event;
+        const x = (point && Number.isFinite(point.clientX) ? point.clientX : box.left + box.width / 2) - box.left;
+        const zone = x / box.width;
+
+        if (zone <= DOUBLE_TAP_SIDE_ZONE) {
+            art.seek = Math.max(0, art.currentTime - NATIVE_SEEK_STEP_S);
+            showFlash('left', `- ${NATIVE_SEEK_STEP_S} s`);
+        } else if (zone >= 1 - DOUBLE_TAP_SIDE_ZONE) {
+            art.seek = Math.min(art.duration - 0.5, art.currentTime + NATIVE_SEEK_STEP_S);
+            showFlash('right', `+ ${NATIVE_SEEK_STEP_S} s`);
+        } else {
+            art.toggle();
+        }
+    });
+}
+
 /**
  * Resets the TV player instances, timers, and containers cleanly
  */
@@ -115,6 +220,14 @@ export function atomicTvPlayerReset() {
     if (tvContainer) {
         tvContainer.innerHTML = "";
         tvContainer.classList.add("hidden");
+    }
+
+    // The contingency player is an iframe: only emptying it stops its audio. (A hidden iframe keeps playing.)
+    const contingencyFrame = document.getElementById("stream-iframe");
+    if (contingencyFrame) {
+        contingencyFrame.onload = null;
+        contingencyFrame.src = "about:blank";
+        contingencyFrame.classList.add("hidden");
     }
 }
 
@@ -363,6 +476,8 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
     }, 12000);
 
     try {
+        window.Artplayer.SEEK_STEP = 5;
+        window.Artplayer.MOBILE_DBCLICK_PLAY = true;
         const art = new window.Artplayer({
             container: '#tv-artplayer-container',
             url: currentSource.url,
@@ -378,9 +493,9 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
             pip: true,
             setting: true,
             loop: false,
-            flip: true,
+            flip: false,
             playbackRate: false,
-            aspectRatio: true,
+            aspectRatio: false,
             customType: {
                 m3u8: function (video, url, artInstance) {
                     if (window.Hls && window.Hls.isSupported()) {
@@ -514,6 +629,7 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
 
         window.tvArtInstance = art;
         setupMobileOrientationLock(art);
+        installHorizontalVolume(art);
 
         // Artplayer Life-Cycle Events
         art.on('ready', () => {
@@ -601,14 +717,18 @@ const resolveCache = new Map();
 /**
  * Resolves direct media stream via local or remote proxy API
  */
-export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', season_name = '', mal_id = null, imdb_id = null }) {
+export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', original_title = '', year = '', season_name = '', mal_id = null, imdb_id = null, absolute_episode = '', total_episodes = '' }) {
     const params = new URLSearchParams();
     if (id) params.set("id", id);
     if (type) params.set("type", type);
     params.set("season", season);
     params.set("episode", episode);
+    if (absolute_episode) params.set("absolute_episode", absolute_episode);
+    if (total_episodes) params.set("total_episodes", total_episodes);
     params.set("lang", lang);
     if (title) params.set("title", title);
+    if (original_title) params.set("original_title", original_title);
+    if (year) params.set("year", year);
     if (season_name) params.set("season_name", season_name);
     if (mal_id) params.set("mal_id", mal_id);
     if (imdb_id) params.set("imdb_id", imdb_id);
@@ -668,7 +788,10 @@ const NATIVE_NEAR_END_S = 180;
 // "Próximo episódio" countdown length before the end
 const NATIVE_UP_NEXT_S = 10;
 const NATIVE_SETTING_WIDTH = 230;
-const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate', 'aspect-ratio', 'flip'];
+const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate'];
+// Shown when the stream carries a single audio track (no separate dub/sub renditions to choose from)
+const AUDIO_SINGLE_LABEL = 'Original';
+const SUBTITLES_NONE_LABEL = 'Nenhuma disponível';
 
 const NATIVE_ICONS = {
     quality: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.2" fill="#000"/><circle cx="15" cy="12" r="2.2" fill="#000"/><circle cx="7" cy="17" r="2.2" fill="#000"/></svg>',
@@ -967,9 +1090,13 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
     }, 1000);
 
     const subtitles = session.subtitles;
+    const defaultSubtitle = subtitles[defaultSubtitleIndex(subtitles)];
     // Taller rows and a wider main panel for the YouTube-like settings (Artplayer sizes panels from these constants)
     window.Artplayer.SETTING_ITEM_HEIGHT = 40;
     window.Artplayer.SETTING_WIDTH = 290;
+    // Statics are read when the instance is created: arrows skip 10 s and the mobile double tap is ours
+    window.Artplayer.SEEK_STEP = NATIVE_SEEK_STEP_S;
+    window.Artplayer.MOBILE_DBCLICK_PLAY = false;
 
     try {
         const art = new window.Artplayer({
@@ -988,13 +1115,13 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             fullscreenWeb: false,
             pip: true,
             setting: true,
-            flip: true,
+            flip: false,
             playbackRate: true,
-            aspectRatio: true,
+            aspectRatio: false,
             hotkey: true,
             airplay: true,
             subtitle: subtitles.length > 0 ? {
-                url: subtitles[0].url || subtitles[0].file,
+                url: defaultSubtitle.url || defaultSubtitle.file,
                 type: 'vtt',
                 escape: false,
                 style: {
@@ -1070,6 +1197,8 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         session.art = art;
         window.artInstance = art;
         setupMobileOrientationLock(art);
+        installHorizontalVolume(art);
+        installDoubleTapSeek(art);
         const total = session.sources.length;
         setSourceStatus(session, [session.statusNote, total > 1 ? `Conectando à fonte ${index + 1} de ${total}...` : 'Conectando...'].filter(Boolean).join(' '));
 
@@ -1080,6 +1209,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             }
 
             refreshQualityMenu(session);
+            refreshAudioMenu(session);
             refreshSubtitleMenu(session);
 
             const playPromise = art.play();
@@ -1490,7 +1620,21 @@ function measureCurrentQuality(session) {
 
 function refreshAudioMenu(session) {
     const hls = session.hls;
-    if (!session.art || !hls || !hls.audioTracks || hls.audioTracks.length <= 1) return;
+    if (!session.art) return;
+    if (!hls || !hls.audioTracks || hls.audioTracks.length <= 1) {
+        // One audio track (or an MP4): the row still tells what is playing. It carries a one-entry list because
+        // Artplayer swaps the icon of a row without a selector for its own (hidden) check mark.
+        upsertSetting(session.art, {
+            name: 'audio',
+            html: 'Áudio',
+            icon: NATIVE_ICONS.audio,
+            width: NATIVE_SETTING_WIDTH,
+            tooltip: AUDIO_SINGLE_LABEL,
+            selector: [{ default: true, html: AUDIO_SINGLE_LABEL }],
+            onSelect: (item) => item.html,
+        });
+        return;
+    }
     const selector = hls.audioTracks.map((trk, idx) => ({
         default: idx === hls.audioTrack,
         html: trk.name || trk.lang || `Áudio ${idx + 1}`,
@@ -1510,12 +1654,46 @@ function refreshAudioMenu(session) {
     });
 }
 
+/**
+ * Index of the subtitle to start with: Brazilian Portuguese, then Portuguese, then the one the host marks as
+ * default, then English. The host's own order is alphabetical (Arabic first), so it must not decide.
+ */
+function defaultSubtitleIndex(subtitles) {
+    const rank = sub => {
+        const lang = String(sub.lang || '').toLowerCase();
+        if (/^pt[-_]?br$/.test(lang)) return 0;
+        if (lang.startsWith('pt')) return 1;
+        if (sub.default) return 2;
+        if (lang.startsWith('en')) return 3;
+        return 4;
+    };
+    let best = 0;
+    subtitles.forEach((sub, idx) => {
+        if (rank(sub) < rank(subtitles[best])) best = idx;
+    });
+    return best;
+}
+
 function refreshSubtitleMenu(session) {
     const art = session.art;
     const subtitles = session.subtitles;
-    if (!art || !subtitles.length) return;
+    if (!art) return;
+    if (!subtitles.length) {
+        // Every player has the row, so external subtitles can be added to it later
+        upsertSetting(art, {
+            name: 'subtitle',
+            html: 'Legendas',
+            icon: NATIVE_ICONS.subtitle,
+            width: NATIVE_SETTING_WIDTH,
+            tooltip: SUBTITLES_NONE_LABEL,
+            selector: [{ default: true, html: SUBTITLES_NONE_LABEL }],
+            onSelect: (item) => item.html,
+        });
+        return;
+    }
+    const preferred = defaultSubtitleIndex(subtitles);
     const selector = subtitles.map((sub, idx) => ({
-        default: idx === 0,
+        default: idx === preferred,
         html: sub.label || sub.name || `Legenda ${idx + 1}`,
         url: sub.url || sub.file
     }));
@@ -1526,7 +1704,7 @@ function refreshSubtitleMenu(session) {
         html: 'Legendas',
         icon: NATIVE_ICONS.subtitle,
         width: NATIVE_SETTING_WIDTH,
-        tooltip: selector[1]?.html || 'Ativada',
+        tooltip: selector[preferred + 1]?.html || 'Ativada',
         selector,
         onSelect: (item) => {
             if (!item.url) {

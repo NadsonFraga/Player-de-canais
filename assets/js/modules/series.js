@@ -16,9 +16,10 @@ import {
     SERIES_SERVERS
 } from '../core/constants.js';
 import { showToast } from '../core/toast.js';
+import { isBackgroundMediaAllowed } from '../core/activity.js';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261008_q7';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261008_q20';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -587,6 +588,7 @@ function initHeroSeriesCarousel(seriesItems) {
 
     clearInterval(heroSeriesAutoRotateTimer);
     heroSeriesAutoRotateTimer = setInterval(() => {
+        if (!isBackgroundMediaAllowed('series')) return;
         showHeroSeriesSlide(currentHeroSeriesIndex + 1);
     }, 7000);
 
@@ -595,6 +597,7 @@ function initHeroSeriesCarousel(seriesItems) {
         heroSection.onmouseleave = () => {
             clearInterval(heroSeriesAutoRotateTimer);
             heroSeriesAutoRotateTimer = setInterval(() => {
+                if (!isBackgroundMediaAllowed('series')) return;
                 showHeroSeriesSlide(currentHeroSeriesIndex + 1);
             }, 7000);
         };
@@ -1168,6 +1171,7 @@ function initHeroAnimesCarousel(animeItems) {
 
     clearInterval(heroAnimesAutoRotateTimer);
     heroAnimesAutoRotateTimer = setInterval(() => {
+        if (!isBackgroundMediaAllowed('animes')) return;
         showHeroAnimesSlide(currentHeroAnimesIndex + 1);
     }, 7000);
 
@@ -1176,6 +1180,7 @@ function initHeroAnimesCarousel(animeItems) {
         heroSection.onmouseleave = () => {
             clearInterval(heroAnimesAutoRotateTimer);
             heroAnimesAutoRotateTimer = setInterval(() => {
+                if (!isBackgroundMediaAllowed('animes')) return;
                 showHeroAnimesSlide(currentHeroAnimesIndex + 1);
             }, 7000);
         };
@@ -1633,6 +1638,12 @@ export function setupSeriesModalHandlers() {
         btnClosePlayer.addEventListener("click", stopSeriesPlayer);
     }
 
+    // X: leave to the catalog of this kind (Animes or Séries) instead of the episode list
+    const btnExitPlayer = document.getElementById("btn-exit-series-player");
+    if (btnExitPlayer) {
+        btnExitPlayer.addEventListener("click", exitSeriesToCatalog);
+    }
+
     const btnPrevEp = document.getElementById("btn-series-prev-ep");
     const btnNextEp = document.getElementById("btn-series-next-ep");
 
@@ -1975,6 +1986,10 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
 
         const epTitle = ep.name || `Episódio ${ep.episode_number}`;
         const epDuration = ep.runtime ? `${ep.runtime} min` : '';
+        // Shows with several seasons also list the show-wide number, to find an episode by its overall position
+        const episodeDetails = detailsFor(currentSelectedSeries && currentSelectedSeries.id);
+        const epAbsolute = regularSeasonsOf(episodeDetails).length > 1 ? absoluteEpisodeOf(episodeDetails, seasonNumber, ep.episode_number) : 0;
+        const epAbsoluteLabel = epAbsolute ? `Ep. geral ${epAbsolute}` : '';
 
         card.innerHTML = `
             <div class="ep-thumbnail-box">
@@ -1994,6 +2009,7 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
                 <div class="ep-meta-row">
                     <span>${ep.air_date ? ep.air_date.substring(0, 4) : ''}</span>
                     <span>${epDuration}</span>
+                    ${epAbsoluteLabel ? `<span>${epAbsoluteLabel}</span>` : ''}
                 </div>
                 <p class="ep-overview">${ep.overview || "Sem descrição disponível."}</p>
             </div>
@@ -2016,6 +2032,80 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
 
     container.appendChild(fragment);
 }
+
+// --- Episode numbering (season-relative vs show-wide "absolute") ---
+
+/** TMDB details of the show, only when they belong to `showId` (the modal may hold another show). */
+function detailsFor(showId) {
+    return currentSeriesDetails && Number(currentSeriesDetails.id) === Number(showId) ? currentSeriesDetails : null;
+}
+
+function regularSeasonsOf(details) {
+    if (!details || !Array.isArray(details.seasons)) return [];
+    return details.seasons
+        .filter(s => s.season_number > 0 && typeof s.episode_count === 'number' && s.episode_count > 0)
+        .sort((a, b) => a.season_number - b.season_number);
+}
+
+/** Show-wide number of a season episode: episodes of the earlier regular seasons plus its own number. 0 when unknown. */
+function absoluteEpisodeOf(details, seasonNumber, episodeNumber) {
+    const seasons = regularSeasonsOf(details);
+    if (!(Number(seasonNumber) > 0) || seasons.length === 0) return 0;
+    let before = 0;
+    for (const season of seasons) {
+        if (season.season_number >= Number(seasonNumber)) break;
+        before += season.episode_count;
+    }
+    return before + Number(episodeNumber);
+}
+
+function totalEpisodesOf(details) {
+    const sum = regularSeasonsOf(details).reduce((total, season) => total + season.episode_count, 0);
+    return sum || (details && details.number_of_episodes) || 0;
+}
+
+// --- Episode names and the player header ---
+
+/** Placeholders such as "Episódio 109" stand for a name that is not known yet. */
+function isGenericEpisodeName(name) {
+    return !name || /^Epis[oó]dio\s+\d+$/i.test(String(name).trim());
+}
+
+function findCachedEpisode(showId, seasonNumber, episodeNumber) {
+    const list = cachedSeasonsMap[`${showId}_${seasonNumber}`];
+    return Array.isArray(list) ? (list.find(ep => Number(ep.episode_number) === Number(episodeNumber)) || null) : null;
+}
+
+const seasonEpisodeRequests = new Map();
+
+/** Episodes of one season (TMDB), cached; simultaneous callers share one request. */
+function fetchSeasonEpisodes(showId, seasonNumber) {
+    const key = `${showId}_${seasonNumber}`;
+    const cached = cachedSeasonsMap[key];
+    if (Array.isArray(cached) && cached.length > 0) return Promise.resolve(cached);
+    if (seasonEpisodeRequests.has(key)) return seasonEpisodeRequests.get(key);
+    const request = fetchSeriesEndpoint(`tv/${showId}/season/${seasonNumber}`)
+        .then(data => {
+            const list = data.episodes || data.results || [];
+            if (list.length > 0) cachedSeasonsMap[key] = list;
+            return list;
+        })
+        .finally(() => seasonEpisodeRequests.delete(key));
+    seasonEpisodeRequests.set(key, request);
+    return request;
+}
+
+/** Title of the player header: show, season/episode, show-wide number (several seasons only), episode name. */
+function episodeHeaderText(showItem, seasonNumber, episodeNumber, episodeName, absoluteEpisode) {
+    const showName = showItem.name || showItem.title || 'Série';
+    const details = detailsFor(showItem.id);
+    const several = regularSeasonsOf(details).length > 1;
+    const absolute = several ? (absoluteEpisode || absoluteEpisodeOf(details, seasonNumber, episodeNumber)) : 0;
+    return `${showName} • T${seasonNumber}:E${episodeNumber}${absolute ? ` • Ep. geral ${absolute}` : ''}${episodeName ? ` – ${episodeName}` : ''}`;
+}
+
+// MyAnimeList id the server picked per show+season, so the next episodes skip the title search
+const animeMalIds = new Map();
 
 // --- Continuous Mode Navigation ---
 function mapAbsoluteEpisodeToSeason(seasons, absoluteEp) {
@@ -2090,7 +2180,9 @@ function renderContinuousChunk(startEp, endEp) {
     grid.innerHTML = "";
 
     const seasons = (currentSeriesDetails && currentSeriesDetails.seasons) ? currentSeriesDetails.seasons : [];
+    const showId = currentSelectedSeries.id;
     const fragment = document.createDocumentFragment();
+    const seasonsInChunk = new Set();
 
     for (let epNum = startEp; epNum <= endEp; epNum++) {
         const card = document.createElement("div");
@@ -2098,6 +2190,9 @@ function renderContinuousChunk(startEp, endEp) {
         card.tabIndex = 0;
 
         const mapped = mapAbsoluteEpisodeToSeason(seasons, epNum);
+        seasonsInChunk.add(mapped.season);
+        card.dataset.season = mapped.season;
+        card.dataset.episode = mapped.episode;
 
         const isCurrentPlaying = (activeSeriesPlaying.show && activeSeriesPlaying.show.id === currentSelectedSeries.id &&
                                   ((activeSeriesPlaying.absoluteEpisodeNumber && activeSeriesPlaying.absoluteEpisodeNumber === epNum) ||
@@ -2125,15 +2220,21 @@ function renderContinuousChunk(startEp, endEp) {
                 <h4 class="ep-title">Episódio ${epNum}</h4>
                 <div class="ep-meta-row">
                     <span>T${mapped.season} • Ep. ${mapped.episode}</span>
-                    <span>Reproduzir ▶</span>
+                    <span>Reproduzir ▶\uFE0E</span>
                 </div>
+                <p class="ep-overview"></p>
             </div>
         `;
+
+        // Real name, thumbnail and synopsis when the season is already cached; the rest arrives below
+        const known = findCachedEpisode(showId, mapped.season, mapped.episode);
+        if (known) applyEpisodeToCard(card, known);
 
         const currentEpNum = epNum;
         const playAction = () => {
             const targetMapped = mapAbsoluteEpisodeToSeason(seasons, currentEpNum);
-            playSeriesEpisode(currentSelectedSeries, targetMapped.season, targetMapped.episode, { name: `Episódio ${currentEpNum}` }, currentEpNum);
+            playSeriesEpisode(currentSelectedSeries, targetMapped.season, targetMapped.episode,
+                findCachedEpisode(showId, targetMapped.season, targetMapped.episode), currentEpNum);
         };
 
         card.addEventListener("click", playAction);
@@ -2148,13 +2249,38 @@ function renderContinuousChunk(startEp, endEp) {
     }
 
     grid.appendChild(fragment);
+
+    // Names are not part of the show details: fetch the seasons this block covers (cached, shared requests)
+    seasonsInChunk.forEach(seasonNumber => {
+        fetchSeasonEpisodes(showId, seasonNumber).then(episodes => {
+            if (!currentSelectedSeries || currentSelectedSeries.id !== showId) return;
+            grid.querySelectorAll(`.series-ep-card[data-season="${seasonNumber}"]`).forEach(card => {
+                const episode = episodes.find(ep => Number(ep.episode_number) === Number(card.dataset.episode));
+                if (episode) applyEpisodeToCard(card, episode);
+            });
+        }).catch(err => console.warn("[Series] Nomes dos episódios indisponíveis para a temporada", seasonNumber, err));
+    });
+}
+
+/** Fills a continuous-list card with the TMDB episode (text through textContent, never as HTML). */
+function applyEpisodeToCard(card, episode) {
+    const title = card.querySelector(".ep-title");
+    if (title && episode.name) {
+        title.textContent = episode.name;
+        title.title = episode.name;
+    }
+    const overview = card.querySelector(".ep-overview");
+    if (overview) overview.textContent = episode.overview || "";
+    const image = card.querySelector(".ep-thumbnail-img");
+    if (image && episode.still_path) image.src = `${TMDB_IMG_W500}${episode.still_path}`;
 }
 
 function goToEpisodeByAbsoluteNumber(epNumber) {
     if (!currentSelectedSeries) return;
     const seasons = (currentSeriesDetails && currentSeriesDetails.seasons) ? currentSeriesDetails.seasons : [];
     const mapped = mapAbsoluteEpisodeToSeason(seasons, epNumber);
-    playSeriesEpisode(currentSelectedSeries, mapped.season, mapped.episode, { name: `Episódio ${epNumber}` }, epNumber);
+    playSeriesEpisode(currentSelectedSeries, mapped.season, mapped.episode,
+        findCachedEpisode(currentSelectedSeries.id, mapped.season, mapped.episode), epNumber);
     showToast(`Carregando Episódio ${epNumber} (T${mapped.season}:E${mapped.episode})...`);
 }
 
@@ -2186,8 +2312,9 @@ function getNextEpisodeTarget() {
 }
 
 /**
- * /api/resolve parameters for the native players. native_anime (ZokoAnime) uses the
- * absolute episode when known; native_direct (MGEB) uses the season-relative one.
+ * /api/resolve parameters for the native players. native_direct always sends the season-relative episode.
+ * native_anime sends both numberings plus the show total: the server picks the one the chosen
+ * MyAnimeList entry uses (a whole-show entry wants the absolute number, a per-season entry the relative one).
  */
 function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNumber, absoluteEpisode) {
     const isAnimeMode = serverKey === 'native_anime';
@@ -2196,13 +2323,29 @@ function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNum
         const matchedSeason = currentSeriesDetails.seasons.find(s => Number(s.season_number) === Number(seasonNumber));
         if (matchedSeason && matchedSeason.name) seasonName = matchedSeason.name;
     }
+    // TMDB original_name (Japanese for anime): MyAnimeList finds it even when the pt-BR title is a translation.
+    // Items reopened through the resume card only carry id/name, so fall back to the loaded details.
+    let originalTitle = showItem.original_name || '';
+    if (!originalTitle && currentSeriesDetails && Number(currentSeriesDetails.id) === Number(showItem.id)) {
+        originalTitle = currentSeriesDetails.original_name || '';
+    }
+    // First air year tells apart remakes that share one title (Hunter x Hunter 1999 vs 2011)
+    const airDate = showItem.first_air_date
+        || (currentSeriesDetails && Number(currentSeriesDetails.id) === Number(showItem.id) ? currentSeriesDetails.first_air_date : '')
+        || '';
+    const details = detailsFor(showItem.id);
     return {
         id: showItem.id,
         type: isAnimeMode ? "anime" : "serie",
         season: seasonNumber,
-        episode: isAnimeMode && absoluteEpisode ? absoluteEpisode : episodeNumber,
+        episode: episodeNumber,
+        absolute_episode: isAnimeMode ? (absoluteEpisode || absoluteEpisodeOf(details, seasonNumber, episodeNumber) || '') : '',
+        total_episodes: isAnimeMode ? (totalEpisodesOf(details) || '') : '',
+        mal_id: isAnimeMode ? (animeMalIds.get(`${showItem.id}_${seasonNumber}`) || '') : '',
         lang: isAnimeMode ? "sub" : "dub",
         title: showItem.name || showItem.title || 'Série',
+        original_title: isAnimeMode ? originalTitle : '',
+        year: isAnimeMode ? airDate.substring(0, 4) : '',
         season_name: seasonName
     };
 }
@@ -2244,42 +2387,34 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
     pauseHeroCarousels();
 
     const showName = showItem.name || showItem.title || 'Série';
-    let epName = (epData && epData.name) ? ` – ${epData.name}` : '';
+    let epName = (epData && !isGenericEpisodeName(epData.name)) ? epData.name : '';
 
-    // If episode name is not available or is generic, resolve from cache or asynchronously from TMDB
-    const cacheKey = `${showItem.id}_${seasonNumber}`;
-    if (!epName || epName === ` – Episódio ${episodeNumber}`) {
-        const cached = cachedSeasonsMap[cacheKey];
-        if (cached && Array.isArray(cached) && cached.length > 0) {
-            const found = cached.find(ep => Number(ep.episode_number) === Number(episodeNumber));
-            if (found && found.name) {
-                epName = ` – ${found.name}`;
-                epData = { ...found, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
-                activeSeriesPlaying.episodeData = epData;
-            }
+    // No real name yet (nothing passed, or a placeholder): use the season cache, else ask TMDB
+    if (!epName) {
+        const found = findCachedEpisode(showItem.id, seasonNumber, episodeNumber);
+        if (found && found.name) {
+            epName = found.name;
+            epData = { ...found, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
+            activeSeriesPlaying.episodeData = epData;
         }
     }
 
-    if (!epName || epName === ` – Episódio ${episodeNumber}`) {
-        fetchSeriesEndpoint(`tv/${showItem.id}/season/${seasonNumber}`).then(data => {
-            const epList = data.episodes || data.results || [];
-            if (epList.length > 0) {
-                cachedSeasonsMap[cacheKey] = epList;
-                const match = epList.find(ep => Number(ep.episode_number) === Number(episodeNumber));
-                if (match && match.name) {
-                    activeSeriesPlaying.episodeData = { ...match, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
-                    const currentTitleEl = document.getElementById("series-player-current-ep");
-                    const currentOverviewEl = document.getElementById("series-player-overview");
-                    if (currentTitleEl &&
-                        activeSeriesPlaying.show && String(activeSeriesPlaying.show.id) === String(showItem.id) &&
-                        Number(activeSeriesPlaying.seasonNumber) === Number(seasonNumber) &&
-                        Number(activeSeriesPlaying.episodeNumber) === Number(episodeNumber)) {
-                        currentTitleEl.textContent = `${showName} • T${seasonNumber}:E${episodeNumber} – ${match.name}`;
-                        if (currentOverviewEl && match.overview) {
-                            currentOverviewEl.textContent = match.overview;
-                        }
-                    }
-                }
+    if (!epName) {
+        fetchSeasonEpisodes(showItem.id, seasonNumber).then(epList => {
+            const match = epList.find(ep => Number(ep.episode_number) === Number(episodeNumber));
+            if (!match || !match.name) return;
+            const stillThisEpisode = activeSeriesPlaying.show && String(activeSeriesPlaying.show.id) === String(showItem.id) &&
+                Number(activeSeriesPlaying.seasonNumber) === Number(seasonNumber) &&
+                Number(activeSeriesPlaying.episodeNumber) === Number(episodeNumber);
+            if (!stillThisEpisode) return;
+            activeSeriesPlaying.episodeData = { ...match, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
+            const currentTitleEl = document.getElementById("series-player-current-ep");
+            const currentOverviewEl = document.getElementById("series-player-overview");
+            if (currentTitleEl) {
+                currentTitleEl.textContent = episodeHeaderText(showItem, seasonNumber, episodeNumber, match.name, activeSeriesPlaying.absoluteEpisodeNumber);
+            }
+            if (currentOverviewEl && match.overview) {
+                currentOverviewEl.textContent = match.overview;
             }
         }).catch(err => {
             console.warn("[Series] Não foi possível obter o nome do episódio do TMDB:", err);
@@ -2287,7 +2422,7 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
     }
 
     if (currentEpTitle) {
-        currentEpTitle.textContent = `${showName} • T${seasonNumber}:E${episodeNumber}${epName}`;
+        currentEpTitle.textContent = episodeHeaderText(showItem, seasonNumber, episodeNumber, epName, activeSeriesPlaying.absoluteEpisodeNumber);
     }
 
     const isAnime = Boolean(
@@ -2298,6 +2433,13 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
 
     if (!isAnime && activeSeriesPlaying.server === 'native_anime') {
         activeSeriesPlaying.server = 'native_direct';
+    }
+
+    const exitButton = document.getElementById("btn-exit-series-player");
+    if (exitButton) {
+        const exitLabel = isAnime ? 'Sair para Animes' : 'Sair para Séries';
+        exitButton.title = exitLabel;
+        exitButton.setAttribute('aria-label', exitLabel);
     }
 
     renderSeriesServerButtons(showItem);
@@ -2312,7 +2454,9 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
     if (showTitleEl) showTitleEl.textContent = showName;
     if (metaBadgeEl) {
         const year = (showItem.first_air_date || showItem.release_date || '').substring(0, 4) || 'Série';
-        metaBadgeEl.textContent = `${year} • T${seasonNumber}:E${episodeNumber}`;
+        const details = detailsFor(showItem.id);
+        const absoluteLabel = regularSeasonsOf(details).length > 1 ? absoluteEpisodeOf(details, seasonNumber, episodeNumber) : 0;
+        metaBadgeEl.textContent = `${year} • T${seasonNumber}:E${episodeNumber}${absoluteLabel ? ` • Ep. geral ${absoluteLabel}` : ''}`;
     }
     if (ratingBadgeEl) {
         const vote = showItem.vote_average ? showItem.vote_average.toFixed(1) : '8.0';
@@ -2351,14 +2495,20 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
                 return;
             }
             if (seriesLoader) seriesLoader.classList.add("hidden");
+            if (data && data.primary_source && serverKey === 'native_anime' && data.aniskip && data.aniskip.mal_id) {
+                animeMalIds.set(`${showItem.id}_${seasonNumber}`, data.aniskip.mal_id);
+            }
             if (!data || !data.primary_source) {
-                showToast("Fontes diretas indisponíveis para este episódio. Selecione outro servidor abaixo se desejar.");
+                const animeMissing = serverKey === 'native_anime';
+                showToast(animeMissing
+                    ? "Anime não encontrado no player nativo. Tente outro servidor."
+                    : "Fontes diretas indisponíveis para este episódio. Selecione outro servidor abaixo se desejar.");
                 if (seriesArt) {
                     seriesArt.innerHTML = `
                         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);">
                             <svg width="44" height="44" fill="none" stroke="#eab308" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
-                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Stream nativo indisponível</div>
-                            <div style="font-size:13px;max-width:380px;line-height:1.5;">Não encontramos transmissões diretas sem anúncios ativas para este episódio no momento. Por favor, escolha um dos servidores alternativos na barra abaixo.</div>
+                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${animeMissing ? 'Anime não encontrado no player nativo' : 'Stream nativo indisponível'}</div>
+                            <div style="font-size:13px;max-width:380px;line-height:1.5;">${animeMissing ? 'Não encontramos este episódio no player nativo de animes. Escolha um dos outros servidores na barra abaixo.' : 'Não encontramos transmissões diretas sem anúncios ativas para este episódio no momento. Por favor, escolha um dos servidores alternativos na barra abaixo.'}</div>
                         </div>`;
                     seriesArt.classList.remove("hidden");
                 }
@@ -2476,7 +2626,7 @@ function populateSeriesDrawer() {
         item.className = `drawer-item ${ep.episode_number === activeSeriesPlaying.episodeNumber ? 'active' : ''}`;
         item.innerHTML = `
             <span>Ep. ${ep.episode_number} - ${ep.name || 'Episódio'}</span>
-            <span>▶</span>
+            <span>▶\uFE0E</span>
         `;
         item.addEventListener("click", () => {
             playSeriesEpisode(activeSeriesPlaying.show, activeSeriesPlaying.seasonNumber, ep.episode_number, ep);
@@ -2485,6 +2635,34 @@ function populateSeriesDrawer() {
         });
         drawerList.appendChild(item);
     });
+}
+
+/** Anime-like show (same rule the player uses to offer the anime server). */
+function isAnimeShow(showItem) {
+    return Boolean(showItem && (
+        (showItem.genre_ids && showItem.genre_ids.includes(16)) ||
+        showItem.original_language === 'ja' ||
+        (showItem.origin_country && (showItem.origin_country.includes('JP') || showItem.origin_country.includes('Japan')))
+    ));
+}
+
+/**
+ * Closes the player and the details panel, then shows the catalog tab of this kind.
+ * The player is stopped first so its history layer is popped before the details layer.
+ */
+function exitSeriesToCatalog() {
+    const target = isAnimeShow(activeSeriesPlaying.show || currentSelectedSeries) ? 'animes' : 'series';
+    runNavBatch(() => {
+        stopSeriesPlayer();
+        closeSeriesModal();
+    });
+    // The grouped history step settles a moment later; changing tabs before that would mix with it.
+    // Only needed when the title was opened from another tab (for example Home).
+    setTimeout(() => {
+        if (window.TvzinhaActions && store.currentView !== target) {
+            window.TvzinhaActions.switchView(target);
+        }
+    }, 150);
 }
 
 export function stopSeriesPlayer() {

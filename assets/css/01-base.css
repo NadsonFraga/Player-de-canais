@@ -73,6 +73,8 @@ html {
 }
 
 body {
+    /* Glyphs such as the play triangle always draw as text in the surrounding color, never as a colored emoji */
+    font-variant-emoji: text;
     min-height: 100%;
     width: 100%;
     overflow-x: hidden;

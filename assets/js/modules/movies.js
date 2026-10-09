@@ -16,10 +16,11 @@ import {
     MOVIE_SERVERS
 } from '../core/constants.js';
 import { showToast } from '../core/toast.js';
+import { isBackgroundMediaAllowed } from '../core/activity.js';
 import { setPlaybackActiveState } from '../core/wakeLock.js';
 import { getUiSvg } from '../core/icons.js';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261008_q7';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261008_q20';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -337,6 +338,8 @@ function startHeroAutoRotate() {
     clearInterval(heroAutoRotateTimer);
     if (heroMoviesList.length <= 1) return;
     heroAutoRotateTimer = setInterval(() => {
+        // Nothing is downloaded for a carousel nobody can see (other tab, player open, browser tab hidden)
+        if (!isBackgroundMediaAllowed('movies')) return;
         const nextIndex = (currentHeroIndex + 1) % heroMoviesList.length;
         goToHeroSlide(nextIndex);
     }, 7500);
@@ -1126,6 +1129,7 @@ export function setupMovieModal() {
     const btnClose = document.getElementById("btn-close-movie-modal");
     const btnReload = document.getElementById("btn-reload-movie-player");
     const btnClosePlayer = document.getElementById("btn-close-movie-player");
+    const btnExitPlayer = document.getElementById("btn-exit-movie-player");
 
     if (btnClose) {
         btnClose.addEventListener("click", () => closeMovieDetailsModal());
@@ -1142,6 +1146,23 @@ export function setupMovieModal() {
             if (activeMovieServer && currentSelectedMovie) {
                 selectMovieServer(activeMovieServer);
             }
+        });
+    }
+
+    // X: leave to the Filmes catalog. The (hidden) back-to-details step runs first so the player's history
+    // layer is popped before the modal's own.
+    if (btnExitPlayer) {
+        btnExitPlayer.addEventListener("click", () => {
+            runNavBatch(() => {
+                if (btnClosePlayer) btnClosePlayer.click();
+                closeMovieDetailsModal();
+            });
+            // The grouped history step settles a moment later; changing tabs before that would mix with it
+            setTimeout(() => {
+                if (window.TvzinhaActions && store.currentView !== 'movies') {
+                    window.TvzinhaActions.switchView('movies');
+                }
+            }, 150);
         });
     }
 

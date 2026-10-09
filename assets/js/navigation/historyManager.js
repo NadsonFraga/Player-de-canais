@@ -8,6 +8,8 @@ import { store } from '../core/state.js';
 let navigationDepth = 0;
 let isProgrammaticBack = false;
 let isHandlingPopState = false;
+let navBatchDepth = 0;
+let batchedPops = 0;
 
 let switchAppViewFn = null;
 let closeMobileMenuFn = null;
@@ -54,6 +56,11 @@ export function popNavLayer() {
     if (isHandlingPopState) {
         return;
     }
+    if (navBatchDepth > 0) {
+        // Inside runNavBatch: only count it, the browser history moves once at the end
+        if (navigationDepth - batchedPops > 0) batchedPops++;
+        return;
+    }
     if (navigationDepth > 0) {
         navigationDepth--;
         isProgrammaticBack = true;
@@ -61,6 +68,32 @@ export function popNavLayer() {
             window.history.back();
         } catch (e) {
             isProgrammaticBack = false;
+        }
+    }
+}
+
+/**
+ * Runs `closeSteps` (which may close several layers, each calling popNavLayer) and then moves the browser history
+ * back ONCE by that many entries. Separate history.back() calls in the same tick produce several popstate events,
+ * and the flag that marks a back as "ours" covers only the first: the next one is treated as the user's Back button
+ * and the app jumps to Home.
+ */
+export function runNavBatch(closeSteps) {
+    navBatchDepth++;
+    try {
+        closeSteps();
+    } finally {
+        navBatchDepth--;
+        if (navBatchDepth === 0 && batchedPops > 0) {
+            const steps = batchedPops;
+            batchedPops = 0;
+            navigationDepth -= steps;
+            isProgrammaticBack = true;
+            try {
+                window.history.go(-steps);
+            } catch (e) {
+                isProgrammaticBack = false;
+            }
         }
     }
 }
