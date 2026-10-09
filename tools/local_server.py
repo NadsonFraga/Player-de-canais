@@ -9,6 +9,7 @@ import os
 import sys
 import re
 import json
+import math
 import base64
 import time
 import urllib.parse
@@ -604,6 +605,12 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0):
 
 MAL_PREFIX_CACHE = {}
 
+# Every MyAnimeList request gets this long; a slow or blocking answer must not hold the resolve
+MAL_SEARCH_TIMEOUT_S = 2.0
+# Hard limit for a whole title lookup (searches plus the Jikan fallback)
+MAL_LOOKUP_BUDGET_S = 4.0
+
+
 def search_mal_prefix(keyword: str):
     clean_kw = keyword.strip()
     if clean_kw in MAL_PREFIX_CACHE:
@@ -612,7 +619,7 @@ def search_mal_prefix(keyword: str):
         encoded = urllib.parse.quote(clean_kw)
         url = f"https://myanimelist.net/search/prefix.json?type=anime&keyword={encoded}"
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-        with urllib.request.urlopen(req, timeout=5) as res:
+        with urllib.request.urlopen(req, timeout=MAL_SEARCH_TIMEOUT_S) as res:
             data = json.loads(res.read().decode("utf-8"))
         items = []
         for cat in data.get("categories", []):
@@ -624,59 +631,103 @@ def search_mal_prefix(keyword: str):
         print(f"[LocalServer] MAL prefix search error for '{keyword}': {e}", file=sys.stderr)
         return []
 
-def fetch_mal_id_from_title(title: str, season: int = 1, season_name: str = ""):
-    clean_title = re.sub(r'\(.*?\)|\[.*?\]', '', title).strip()
-    
+# Only entries tied with the best MAL match are tried as fallbacks: a lower-ranked entry is a different
+# show, and playing it silently would be worse than reporting that nothing was found
+MAL_RUNNER_UP_MARGIN = 0
+
+
+def is_latin_text(text: str) -> bool:
+    # Text without Latin letters (e.g. the Japanese TMDB original_name) cannot take "Season N" suffixes
+    return not re.search(r'[ɐ-￿]', text)
+
+
+def lookup_mal_candidates(title: str, original_title: str = "", season: int = 1, season_name: str = "", year: int = 0):
+    """
+    Ranks MyAnimeList entries for a TMDB anime title with season and arc awareness.
+    The pt-BR TMDB name is often a translation MAL does not know ("Frieren e a Jornada para o Além"),
+    so the TMDB original name (Japanese) is searched too. Returns up to 3 ids, best first.
+    """
+    def strip_notes(t):
+        return re.sub(r'\(.*?\)|\[.*?\]', '', t or '').strip()
+
+    clean_title = strip_notes(title)
+    clean_original = strip_notes(original_title)
+
     clean_sname = ""
     if season_name:
         sname_cand = re.sub(r'^(Temporada|Season)\s*\d+[:\-]?\s*', '', season_name, flags=re.I).strip()
         if sname_cand.lower() not in ["especiais", "specials", "temporada", "season", ""] and len(sname_cand) > 2:
             clean_sname = sname_cand
 
-    # Build prioritized query list
-    queries = []
-    if clean_sname:
-        queries.append((f"{clean_title} {clean_sname}", 50))
-        queries.append((clean_sname, 40))
-    
-    if season > 1:
-        queries.append((f"{clean_title} Season {season}", 35))
-        queries.append((f"{clean_title} Part {season}", 35))
-        suffix = "nd" if season == 2 else "rd" if season == 3 else "th"
-        queries.append((f"{clean_title} {season}{suffix} Season", 30))
+    variants = [clean_title]
+    if clean_original and clean_original.lower() != clean_title.lower():
+        variants.append(clean_original)
 
-    queries.append((clean_title, 10))
+    queries = []
+    queued = set()
+
+    def add_query(q, priority):
+        key = q.strip().lower()
+        if not key or key in queued:
+            return
+        queued.add(key)
+        queries.append((q, priority))
+
+    for base in variants:
+        if is_latin_text(base):
+            if clean_sname:
+                add_query(f"{base} {clean_sname}", 50)
+                add_query(clean_sname, 40)
+            if season > 1:
+                add_query(f"{base} Season {season}", 35)
+                add_query(f"{base} Part {season}", 35)
+                suffix = "nd" if season == 2 else "rd" if season == 3 else "th"
+                add_query(f"{base} {season}{suffix} Season", 30)
+        add_query(base, 10)
+
+    # All searches run in parallel; results are merged in query order so ranking stays deterministic.
+    # urllib's timeout does not cover DNS, so the whole lookup also has a hard deadline: threads that
+    # miss it are abandoned (daemon-like) instead of holding the resolve.
+    from concurrent.futures import ThreadPoolExecutor, wait
+    deadline = time.time() + MAL_LOOKUP_BUDGET_S
+    pool = ThreadPoolExecutor(max_workers=len(queries) + 1)
+    futures = [pool.submit(search_mal_prefix, q_text) for q_text, _ in queries]
+    done, _pending = wait(futures, timeout=MAL_SEARCH_TIMEOUT_S + 0.5)
+    results = [f.result() if f in done else [] for f in futures]
 
     candidates = []
     seen = set()
-
-    for q_text, q_priority in queries:
-        items = search_mal_prefix(q_text)
+    for (q_text, q_priority), items in zip(queries, results):
         for idx, it in enumerate(items[:6]):
             iid = it.get("id")
             if iid and iid not in seen:
                 seen.add(iid)
                 rank_bonus = max(0, 15 - idx * 3)
                 candidates.append((it, q_priority + rank_bonus))
-        if len(candidates) >= 12:
-            break
 
     if not candidates:
-        # Fallback to Jikan API search
-        try:
+        # Fallback to Jikan API search, inside what is left of the lookup budget
+        def jikan_first_id():
             encoded = urllib.parse.quote(f"{clean_title} {clean_sname}".strip())
             url = f"https://api.jikan.moe/v4/anime?q={encoded}&limit=1"
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=5) as res:
+            with urllib.request.urlopen(req, timeout=MAL_SEARCH_TIMEOUT_S) as res:
                 data = json.loads(res.read().decode("utf-8"))
-            if data.get("data") and len(data["data"]) > 0:
-                return data["data"][0].get("mal_id")
-        except Exception as e:
-            print(f"[LocalServer] Jikan fallback error: {e}", file=sys.stderr)
-        return None
+            return data["data"][0].get("mal_id") if data.get("data") else None
 
-    if season == 1 and not clean_sname:
-        return candidates[0][0].get("id")
+        try:
+            jikan_id = pool.submit(jikan_first_id).result(timeout=max(0.3, deadline - time.time()))
+            if jikan_id:
+                pool.shutdown(wait=False)
+                return [jikan_id]
+        except Exception as e:
+            print(f"[LocalServer] Jikan fallback error: {e!r}", file=sys.stderr)
+        pool.shutdown(wait=False)
+        return []
+
+    pool.shutdown(wait=False)
+
+    title_keys = [v.lower() for v in variants if is_latin_text(v)]
 
     def score_item(cand_tuple):
         cand, base_score = cand_tuple
@@ -688,17 +739,37 @@ def fetch_mal_id_from_title(title: str, season: int = 1, season_name: str = ""):
         if mtype in ["TV", "ONA"]:
             pts += 40
         elif mtype in ["SPECIAL", "TV SPECIAL", "OVA", "MOVIE"]:
-            pts -= 35
+            # Specials, OVAs and movies are never the episodic series (e.g. "Episode of East Blue" for One Piece)
+            pts -= 100
 
         # Heavy penalty for recaps, summaries, PVs, pilots
         if any(bad in c_name for bad in ["pilot", "kanketsu-hen", "recap", "summary", "preview", "remix", "music", "special"]):
             pts -= 60
+
+        # Spin-offs mention the title without starting with it ("Boruto: Naruto Next Generations")
+        if any(len(key) > 2 and key in c_name and not c_name.startswith(key) for key in title_keys):
+            pts -= 50
 
         if clean_sname:
             s_words = [w.lower() for w in re.findall(r'\b[a-zA-Z]{3,}\b', clean_sname)]
             matches = sum(1 for w in s_words if w in c_name)
             if matches:
                 pts += (matches * 25)
+
+        # Remakes share one title ("Hunter x Hunter" 1999 vs 2011): the show's first air year picks the right
+        # entry. Only season 1 is compared, later seasons start years after the show's first air date.
+        start_year = str(payload.get("start_year", "")).strip()
+        if year and season == 1 and start_year.isdigit() and int(start_year):
+            gap = abs(int(start_year) - year)
+            if gap <= 1:
+                pts += 30
+            elif gap >= 3:
+                pts -= 30
+
+        # An explicit season marker for another season ("2nd Season" when asking for season 1) is a mismatch
+        marker = re.search(r'(\d+)(?:st|nd|rd|th)\s*season|season\s*(\d+)|part\s*(\d+)', c_name)
+        if marker and int(marker.group(1) or marker.group(2) or marker.group(3)) != season:
+            pts -= 30
 
         season_patterns = [
             rf'\bpart\s*{season}\b',
@@ -713,11 +784,93 @@ def fetch_mal_id_from_title(title: str, season: int = 1, season_name: str = ""):
 
         return pts
 
-    candidates.sort(key=score_item, reverse=True)
-    best_id = candidates[0][0].get("id")
-    best_name = candidates[0][0].get("name")
-    print(f"[LocalServer] Resolved Anime MAL ID: {best_id} ('{best_name}') for '{title}' (T{season} '{season_name}')", file=sys.stderr)
-    return best_id
+    scored = sorted(((score_item(c), c[0]) for c in candidates), key=lambda x: x[0], reverse=True)
+    best_score, best_item = scored[0]
+    print(f"[LocalServer] Resolved Anime MAL ID: {best_item.get('id')} ('{best_item.get('name')}') for '{title}' / '{original_title}' (T{season} '{season_name}')", file=sys.stderr)
+    return [it.get("id") for score, it in scored if score >= best_score - MAL_RUNNER_UP_MARGIN][:3]
+
+
+# ============================================================
+# MAL LOOKUP CACHE
+# Hits live a week, misses only minutes (a rate limit or captcha from MyAnimeList must not stick).
+# ============================================================
+MAL_CACHE_HIT_TTL_S = 7 * 24 * 3600
+MAL_CACHE_MISS_TTL_S = 5 * 60
+MAL_LOOKUP_CACHE = {}
+
+
+def get_mal_candidates(title: str, original_title: str = "", season: int = 1, season_name: str = "", year: int = 0):
+    """Cached front for lookup_mal_candidates."""
+    key = "|".join(str(v if v is not None else "").strip().lower() for v in (title, original_title, season, season_name, year))
+    cached = MAL_LOOKUP_CACHE.get(key)
+    if cached and time.time() - cached[0] < cached[1]:
+        return cached[2]
+    ids = lookup_mal_candidates(title, original_title, season, season_name, year)
+    MAL_LOOKUP_CACHE[key] = (time.time(), MAL_CACHE_HIT_TTL_S if ids else MAL_CACHE_MISS_TTL_S, ids)
+    return ids
+
+
+# ============================================================
+# EPISODE NUMBERING
+# The anime host numbers episodes inside each MyAnimeList entry and answers 404 right after the last one.
+# Some entries cover the whole show (Dragon Ball Z, One Piece), others a single season (Jujutsu Kaisen),
+# so a season's episode must be sent as the absolute number for the first kind and the relative for the second.
+# ============================================================
+# An entry that still has this share of the show's episodes covers the whole show
+WHOLE_SHOW_RATIO = 0.9
+ENTRY_SPAN_CACHE = {}
+
+
+def pick_episode_number(mal_id, season: int, relative: int, absolute: int, total: int):
+    if not absolute or absolute == relative or season <= 1:
+        return relative
+    if not total:
+        return absolute
+    key = f"{mal_id}:{total}"
+    if key not in ENTRY_SPAN_CACHE:
+        data = fetch_zoko(str(mal_id), math.ceil(total * WHOLE_SHOW_RATIO))
+        ENTRY_SPAN_CACHE[key] = bool(data and data.get("src"))
+    return absolute if ENTRY_SPAN_CACHE[key] else relative
+
+
+# ============================================================
+# SUBTITLE TRACKS
+# The host lists every language alphabetically and marks them all with the same lang code, so the
+# language comes from the label. Only Portuguese (Brazilian when known) and English are kept.
+# ============================================================
+def subtitle_language(track: dict) -> str:
+    label = str(track.get("label") or track.get("name") or "").strip().lower()
+    lang = str(track.get("lang") or "").strip().lower()
+    if "portugu" in label:
+        return "pt-BR" if re.search(r"brazil|brasil", label) else "pt"
+    if re.match(r"^(english|ingl[eê]s)\b", label):
+        return "en"
+    if re.match(r"^pt[-_]?br$", lang):
+        return "pt-BR"
+    if lang.startswith("pt"):
+        return "pt"
+    if not label and lang.startswith("en"):
+        return "en"
+    return "other"
+
+
+def normalize_subtitles(tracks: list) -> list:
+    by_language = {}
+    for track in tracks:
+        language = subtitle_language(track)
+        if language != "other" and language not in by_language:
+            by_language[language] = track
+    chosen = []
+    if "pt-BR" in by_language:
+        chosen.append(("pt-BR", "Português (Brasil)", by_language["pt-BR"]))
+    elif "pt" in by_language:
+        chosen.append(("pt", "Português", by_language["pt"]))
+    if "en" in by_language:
+        chosen.append(("en", "Inglês", by_language["en"]))
+    return [
+        {"lang": lang, "label": label, "default": index == 0, "url": track.get("url", "")}
+        for index, (lang, label, track) in enumerate(chosen)
+    ]
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
@@ -800,6 +953,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             elif path == "/__dev/clear-cache":
                 # Local-only helper for tools/player_benchmark.mjs (measures cold resolves)
                 RESOLVE_CACHE.clear()
+                MAL_PREFIX_CACHE.clear()
+                MAL_LOOKUP_CACHE.clear()
+                ENTRY_SPAN_CACHE.clear()
                 self.send_cors_headers(200, "application/json")
                 self.end_headers()
                 self.wfile.write(b'{"cleared":true}')
@@ -822,13 +978,22 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         lang = params.get("lang", ["sub" if media_type == "anime" else "dub"])[0]
         title_param = params.get("title", [""])[0]
         season_name_param = params.get("season_name", [""])[0]
+        # TMDB original_name (e.g. Japanese): MyAnimeList knows it even when the pt-BR title is a translation
+        original_title_param = params.get("original_title", [""])[0]
+        year_param = params.get("year", [""])[0]
+        year_value = int(year_param) if year_param.isdigit() else 0
+        # The client sends both numberings; the server picks the one the chosen MAL entry uses
+        absolute_param = params.get("absolute_episode", [""])[0]
+        absolute_episode = int(absolute_param) if absolute_param.isdigit() else 0
+        total_param = params.get("total_episodes", [""])[0]
+        total_episodes = int(total_param) if total_param.isdigit() else 0
         mal_id = params.get("mal_id", [""])[0]
         imdb_id = params.get("imdb_id", [""])[0]
 
         host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
         proxy_base = f"http://{host_header}/api/stream"
 
-        cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}_{season_name_param}"
+        cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}_{original_title_param}_{year_value}_{absolute_episode}_{total_episodes}_{season_name_param}"
         now = time.time()
         # Per-step durations exposed as a Server-Timing header (ms)
         timings = {}
@@ -853,57 +1018,70 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         # Route 1: Anime Subtitled via ZokoAnime
         if media_type == "anime" and lang == "sub":
+            mal_ids = []
             if not mal_id and title_param:
-                mal_id = timed("mal", fetch_mal_id_from_title, title_param, season, season_name_param)
-            elif not mal_id and media_id:
-                mal_id = media_id
+                mal_ids = timed("mal", get_mal_candidates, title_param, original_title_param, season, season_name_param, year_value)
+            elif mal_id:
+                mal_ids = [mal_id]
+            elif media_id:
+                mal_ids = [media_id]
 
-            if mal_id:
-                zoko_data = timed("zoko", fetch_zoko, str(mal_id), episode)
-                if zoko_data and zoko_data.get("src"):
-                    master_url = zoko_data["src"]
-                    stream_url = f"{proxy_base}?url={urllib.parse.quote(master_url, safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}"
-                    
-                    subtitles = []
-                    for s in zoko_data.get("subtitles", []):
-                        sub_src = s.get("src", "")
-                        subtitles.append({
-                            "lang": s.get("lang", "pt-BR"),
-                            "label": s.get("label", "Legenda"),
-                            "default": bool(s.get("default")),
-                            "url": f"{proxy_base}?url={urllib.parse.quote(sub_src, safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}",
-                        })
+            # Entries tied for best are all tried before giving up (the first one may be missing on the stream host)
+            zoko_data = None
+            effective_episode = episode
+            for candidate_id in mal_ids:
+                candidate_episode = timed("span", pick_episode_number, candidate_id, season, episode, absolute_episode, total_episodes)
+                data = timed("zoko", fetch_zoko, str(candidate_id), candidate_episode)
+                if data and data.get("src"):
+                    zoko_data = data
+                    mal_id = candidate_id
+                    effective_episode = candidate_episode
+                    break
 
-                    zoko_source = timed("probe", probe_source, {
-                        "label": "ZokoAnime",
-                        "type": "hls",
-                        "stream_url": stream_url,
-                        "raw_url": master_url,
-                        "headers": {
-                            "Referer": "https://zokoanime.video/",
-                            "Origin": "https://zokoanime.video",
-                        },
-                    })
-                    if zoko_source["quality"]:
-                        zoko_source["label"] = f"ZokoAnime [{zoko_source['quality']}p HLS]"
-
-                    result = {
-                        "success": True,
-                        "title": title_param or f"Anime Ep {episode}",
-                        "category": "anime",
-                        "audio": "subtitled",
-                        "primary_source": zoko_source,
-                        "fallback_sources": [],
-                        "subtitles": subtitles,
-                        "aniskip": {
-                            "mal_id": int(mal_id) if str(mal_id).isdigit() else None,
-                            "episode": episode,
-                            "ready": True,
-                        },
+            if zoko_data:
+                master_url = zoko_data["src"]
+                stream_url = f"{proxy_base}?url={urllib.parse.quote(master_url, safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}"
+                
+                # Proxy URLs, keeping only Portuguese and English
+                subtitles = normalize_subtitles([
+                    {
+                        "lang": s.get("lang", ""),
+                        "label": s.get("label", ""),
+                        "url": f"{proxy_base}?url={urllib.parse.quote(s.get('src', ''), safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}",
                     }
+                    for s in zoko_data.get("subtitles", [])
+                ])
 
-        # Route 2: Movies, Series or Anime Dubbed via MGEB
-        if not result and (media_id or imdb_id):
+                zoko_source = timed("probe", probe_source, {
+                    "label": "ZokoAnime",
+                    "type": "hls",
+                    "stream_url": stream_url,
+                    "raw_url": master_url,
+                    "headers": {
+                        "Referer": "https://zokoanime.video/",
+                        "Origin": "https://zokoanime.video",
+                    },
+                })
+                if zoko_source["quality"]:
+                    zoko_source["label"] = f"ZokoAnime [{zoko_source['quality']}p HLS]"
+
+                result = {
+                    "success": True,
+                    "title": title_param or f"Anime Ep {episode}",
+                    "category": "anime",
+                    "audio": "subtitled",
+                    "primary_source": zoko_source,
+                    "fallback_sources": [],
+                    "subtitles": subtitles,
+                    "aniskip": {
+                        "mal_id": int(mal_id) if str(mal_id).isdigit() else None,
+                        "episode": effective_episode,
+                        "ready": True,
+                    },
+                }
+
+        # Route 2: Movies, Series or Anime Dubbed via MGEB (never for subtitled anime: independent players)
+        if not result and (media_id or imdb_id) and not (media_type == "anime" and lang == "sub"):
             mgeb_type = "serie" if media_type == "anime" else media_type
             given_imdb = imdb_id if (imdb_id and imdb_id.startswith("tt")) else None
             tmdb_id = media_id if (media_id and str(media_id).isdigit()) else None
@@ -1006,7 +1184,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             self.send_cors_headers(404, "application/json; charset=utf-8")
             self.send_header("Server-Timing", server_timing)
             self.end_headers()
-            self.wfile.write(b'{"success":false,"error":"No direct streams resolved","fallback_recommended":true}')
+            reason = "anime_not_found" if media_type == "anime" and lang == "sub" else "no_sources"
+            self.wfile.write(json.dumps({"success": False, "error": "No direct streams resolved", "reason": reason, "fallback_recommended": True}).encode("utf-8"))
 
     def handle_stream(self, params, is_head=False):
         target_url = params.get("url", [""])[0]
