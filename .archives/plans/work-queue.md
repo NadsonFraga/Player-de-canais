@@ -196,3 +196,10 @@ Não commitado. Arquivos alterados: `functions/api/resolve.js`, `tools/local_ser
 - **Rodada seguinte (F4 e F5):** `tools/player_ui_check.mjs` agora tem 22 verificações, todas passando (inclui cabeçalho com "Ep. geral", lista contínua com nomes e o layout do cabeçalho no celular). Versão de cache `20261008_q13`; `series.js`, `10-player-v3.css` e `index.html` alterados.
 - **Rodada do duplo toque e das margens:** `tools/player_touch_check.mjs` (12 verificações, celular simulado) e `tools/player_ui_check.mjs` (31 verificações) passam. Versão de cache `20261008_q17`. Os scripts de teste passaram a usar uma porta de depuração aleatória e a encerrar só a árvore do navegador que eles abriram.
 - Segurança (D1-D10), AniSkip (A8), investigações A7/A9 e melhorias de tempo de carga (B7) **não foram tocados** nesta rodada.
+
+---
+
+# ITENS NOVOS (08/10, noite)
+
+- `[investigar]` F9. **Até que episódio cada fonte tem (One Piece e longos):** o usuário notou que o episódio mais recente existe em uma fonte, falta em outra e em uma terceira não há nada. Levantar, por fonte, o último episódio disponível para One Piece (e outros longos em exibição); decidir se o ranking de fontes deve considerar "tem o episódio pedido" antes de escolher e se vale mostrar aviso quando o episódio ainda não saiu.
+- `[investigar]` D11. **Cota da Cloudflare (100 mil invocações/dia no plano grátis):** o proxy `/api/stream` reescreve a playlist e passa cada segmento de vídeo pela função, então cada segmento conta como uma invocação. Medir quantas invocações um episódio gera, ver no painel (Métricas) a hora dos picos, e avaliar: servir segmentos direto da origem quando o host permitir CORS, cachear respostas de `/api/resolve`, e regra de limite por IP quando houver domínio próprio.
