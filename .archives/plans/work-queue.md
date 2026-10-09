@@ -1,0 +1,198 @@
+# Fila de Trabalho (alterações e testes)
+
+> **Atualizado em:** 2026-10-08
+> **Status:** documento vivo. Nada daqui está aprovado para implementação, exceto o que estiver marcado como feito.
+> **Regras** (`CLAUDE.md`): mostrar o plano no chat, esperar aprovação, parar ao fim de cada fase, nenhuma operação git sem pedido, preferir correções gerais a remendos por título, testar vários títulos no Edge e no Firefox.
+
+Legenda: `[feito]` implementado e verificado · `[impl]` implementado, verificação incompleta · `[aberto]` não iniciado · `[investigar]` causa ainda não confirmada · `[causa]` causa confirmada, falta decidir a correção · `[decisão]` depende de você.
+
+---
+
+# PARTE 1: ALTERAÇÕES
+
+## A. Player de animes (`native_anime`) e busca do título
+
+Plano detalhado: `plans/anime-title-lookup-and-resolve-speed.md`.
+
+- `[feito]` A1. Fase 0: `tools/test_anime_lookup.py` (28 casos; opções `--original`, `--mal`, `--warm`, `--only=`).
+- `[impl]` A2. Fase 1: envio de `original_title` e do ano de estreia; correções de pontuação (especiais/OVAs/filmes -100, spin-offs -50, marcador de outra temporada -30, ano coincidente +30 / distante -30); buscas em paralelo; reserva só em empate exato. JS 28/28 (Node); Python 28/28 antes da última mudança. **Sem commit** (branch `feat/native-player-quality`).
+- `[feito]` A3. Fase 2: cache `título + original + temporada + nome da temporada + ano → mal_id` (acertos 24 h; falhas por pouco tempo, proposta 5 min); cliente guarda o `mal_id` por série e temporada. **Mais urgente do que o previsto:** o MyAnimeList respondeu 405 + captcha (AWS WAF) depois de ~150 consultas dos testes, e a Fase 1 dispara até ~7 buscas por abertura. `[decisão]` usar a Cache API do Cloudflare? Valor do cache de falhas?
+  - **Feito em 08/10:** cache do `mal_id` no servidor (memória por instância + Cache API do Cloudflare quando existir; acertos 7 dias, falhas 5 min), busca compartilhada entre pedidos simultâneos, e o cliente passa a guardar o `mal_id` por série e temporada. Falta confirmar em deploy de pré-visualização se a Cache API funciona no domínio `*.pages.dev` (em domínio próprio funciona; no padrão pode ser ignorada sem erro).
+- `[feito]` A4. Fase 3: limite de tempo (~3 s) para a busca do MAL, com o Jikan dentro do limite, e retorno imediato quando o anime legendado não é encontrado (hoje cai na rota por ID e a falha leva 10-14 s).
+  - **Feito em 08/10:** orçamento de 4 s para a busca do MAL (2 s por requisição, Jikan dentro do mesmo limite, com prazo duro no Python porque o `timeout` do `urllib` não cobre DNS) e o anime legendado **nunca mais cai na rota do MGEB**. Falha medida: 4,0 s (era 11-14 s).
+- `[feito]` A5. Fase 4: mensagem específica de falha ("Anime não encontrado no player nativo. Tente outro servidor.").
+  - **Feito em 08/10:** mensagem "Anime não encontrado no player nativo. Tente outro servidor." no aviso e no painel; a resposta 404 traz `reason: anime_not_found`.
+- `[feito]` A6. **Episódio errado em anime com várias temporadas** (Dragon Ball Z, T9 E31 "Saga de Majin Boo (Parte 2)" toca um episódio da saga dos Saiyajins no player de animes; no MGEB está certo).
+  - **Causa confirmada:** clicar num episódio da lista por temporada chama `playSeriesEpisode(show, temporada, episódio, ep)` sem o número absoluto (`series.js:2003`), e `buildNativeResolveRequest` envia o relativo (31). O DBZ tem 291 episódios (T1=1-39, T2=40-74, T3=75-107, T4=108-139, T5=140-165, T6=166-194, T7=195-219, T8=220-253, T9=254-291): T9E31 = **absoluto 284**.
+  - Mesmos caminhos: Próximo/Anterior (`series.js:1589, 1622, 1651`), retomar de "continuar assistindo" (`1704, 1840`), lista do player (`2494`), próximo automático (`getNextEpisodeTarget`, `2169`) e a pré-carga.
+  - **O que medimos no host de animes (08/10):** ele numera **dentro de cada entrada do MyAnimeList** e responde 404 exatamente no episódio seguinte ao último. DBZ (MAL 813): 1-291 existem, 292 não. Jujutsu Kaisen 2ª temporada (MAL 51009): 1-23, 24 não. Attack on Titan T1 (MAL 16498): 1-25, 26 não. O 404 é, portanto, um sinal confiável do tamanho da entrada. O Jikan não respondeu (HTTP 000), então não dá para depender dele.
+  - **Regra proposta (geral, sem caso por título), decidida no servidor:**
+    1. O cliente passa a **sempre** enviar `episode` (relativo), `absolute_episode` (soma das temporadas regulares do TMDB), `season_episodes` (episódios da temporada) e `total_episodes` (total do TMDB), em todos os caminhos (resolve e pré-carga). Isso corrige todos os pontos acima de uma vez.
+    2. Temporada 1, ou absoluto = relativo: não há ambiguidade, usa o número como está.
+    3. Temporada ≥ 2: depois de escolher a entrada do MAL, o servidor verifica no host se existe o episódio ⌈0,9 × total⌉. Se existe, a entrada cobre a série inteira (DBZ, One Piece, Naruto) e vale o **absoluto**. Se não existe, a entrada é por temporada (Jujutsu Kaisen, Attack on Titan) e vale o **relativo**. O resultado é guardado por entrada do MAL (no máximo 1 verificação extra por entrada).
+    4. **Resíduo realmente impossível pela regra:** temporada do TMDB que o MAL dividiu em várias entradas (por exemplo Attack on Titan "Final Season" em partes). Ali o relativo pode passar do tamanho da entrada. Nesse caso o app deve **falhar com mensagem clara** em vez de tocar o episódio errado; mapear a sequência de entradas fica para depois e só se ainda for necessário.
+  - `[decisão]` única parte que realmente é sua: quando a regra não consegue decidir, preferir erro claro (recomendado) ou tocar o melhor palpite?
+  - **Feito em 08/10:** o cliente envia sempre `episode` (relativo), `absolute_episode` e `total_episodes` em todos os caminhos (lista, Próximo/Anterior, retomar, pré-carga) e o servidor decide por entrada do MAL (teste no host do episódio ⌈0,9 × total⌉, guardado por entrada). DBZ T9E31 agora toca "A Última Esperança" (episódio 284), confirmado no navegador. 9 casos de regra passam no Python e no JS. Resíduo conhecido (temporada do TMDB dividida em várias entradas do MAL, como a Final Season de Attack on Titan): falha com erro claro, não toca episódio errado. Decisão tomada pela recomendação (erro claro).
+- `[investigar]` A7. Doraemon tocou em português no player de animes. Pelo que vimos, o vídeo do FMA:B tem **uma só trilha de áudio**, então um áudio dublado em português é provavelmente uma trilha única (sem menu). Confirmar nas trilhas do Doraemon. O rótulo "legendado" da resposta (`audio: "subtitled"`) é fixo no código e está errado nesse caso.
+- `[aberto]` A8. **AniSkip** (depois):
+  - Marcação dos trechos (abertura, encerramento, recapitulação) **na linha do tempo**, e botões "Pular abertura" / "Pular encerramento".
+  - **Próximo episódio melhor:** usar o início do **encerramento** informado pelo AniSkip para mostrar o cartão "Próximo episódio" e a contagem, no lugar dos 10 s finais, que são curtos demais. Se o encerramento for seguido de uma prévia curta, o cartão aparece no início do encerramento, com opção de cancelar.
+  - Sem dados do AniSkip (séries e animes sem cadastro): usar um tempo de antecedência maior que 10 s (a definir, por exemplo 30-45 s ou uma porcentagem da duração), configurável.
+  - O AniSkip identifica a entrada pelo ID do MAL e numera o episódio dentro dela, como o host de animes, então combina com o ID que já escolhemos. A resposta do `/api/resolve` já traz `aniskip: {mal_id, episode, ready}`.
+- `[investigar]` A9. Cowboy Bebop demorou mais no episódio 1: medir onde (`Server-Timing`: mal / zoko / probe) e se o bloqueio do MAL ou o plano B (Jikan) entrou no meio.
+
+## B. Player nativo (todos os players)
+
+- `[feito]` B1. **Legenda começa em árabe.**
+  - **Causa confirmada** (FMA:B, 18 legendas): o host devolve as legendas em **ordem alfabética**, **todas com `lang='en'`** (o idioma real só aparece no texto do rótulo), e só a inglesa vem com `default=true`. O `engine.js` ignora esse campo e usa sempre a primeira da lista (`subtitles[0]` na criação do player, linha ~998, e `default: idx === 0` em `refreshSubtitleMenu`).
+  - **Regra decidida por você:** ficam **somente** português e inglês de contenção. Se houver informação de Brasil, fica só a brasileira; se não houver, fica a "pt" genérica; de preferência só uma em português. Português selecionado automaticamente sempre que existir; senão, inglês.
+  - Implementação proposta (geral): filtrar, ordenar e limpar os rótulos no servidor para todas as fontes ("Português (Brasil)"), com proteção no cliente.
+  - **Feito em 08/10:** o servidor entrega só português (Brasil, senão Portugal) e inglês, com o português marcado como padrão; o player escolhe o padrão pela língua e não pela primeira da lista. FMA:B abre em Português (Brasil), com Desativada / Português (Brasil) / Inglês. Títulos que só têm inglês (como o DBZ) abrem em inglês.
+- `[feito]` B2. **Aba "Legendas" em todos os players** (filme, série, anime), **exceto TV ao vivo**, mesmo quando a fonte não traz nenhuma legenda (hoje o MGEB não mostra a aba). Assim todos já nascem prontos para a atualização de **legenda externa** (arquivo `.srt`/`.vtt` do usuário) com ajuste de sincronia (atraso/adiantamento), lembrado por título, sem dessincronizar. Sem legendas e sem arquivo, a aba mostra "Nenhuma disponível".
+  - **Feito em 08/10:** a aba **Legendas** existe em todos os players (menos TV ao vivo) e mostra "Nenhuma disponível" quando não há legenda (MGEB). **Continua aberta** a legenda externa com ajuste de sincronia (próxima atualização).
+- `[feito]` B3. Remover **Espelhar** e **Proporção** de todos os players (`engine.js`: opções `flip`/`aspectRatio` nas linhas ~381-383 e ~993-995, e `NATIVE_SETTING_ORDER` na linha ~673; inclui o player de TV ao vivo).
+  - **Feito em 08/10:** Espelhar e Proporção removidos dos players de filme, série, anime e TV ao vivo.
+- `[feito]` B4. **Barra de progresso difícil de acertar e sobreposição com o volume.**
+  - **Causa 1:** a barra tem só **5 px de altura** (8 px no hover) em `10-player-v3.css:67-75`, e a área clicável é essa faixa fina.
+  - **Causa 2:** o painel de volume do Artplayer abre na **vertical, por cima da barra** (print do "73"); ao descer o mouse para o volume, o painel cobre a barra, e o contrário também.
+  - Correção proposta: área de clique maior e invisível (cerca de ±12 px) na barra; painel de volume horizontal para a direita (como o YouTube) ou deslocado para não cruzar a barra; revisar no celular (toque).
+  - **Feito em 08/10:** área de clique da barra de 24 px (linha visível de 5 px, 8 px no hover) e volume horizontal ao lado do botão (substitui o painel vertical que cobria a barra; some no celular). Verificado no Edge: a barra reage com o mouse a 8 px da linha e o controle de volume não cruza a barra.
+- `[feito]` B5. **Linha de áudio fixa em todos os players** (exceto TV ao vivo). Com várias trilhas: seletor normal. Com uma trilha só ou sem informação de trilhas: linha somente leitura **"Áudio: Original"** (ou **"Áudio: Único"**), para o usuário sempre saber o que está tocando. Hoje o menu só existe com mais de uma trilha (`engine.js:1495`). `[decisão]` texto final: "Original" ou "Único"?
+  - **Feito em 08/10:** linha **Áudio: Original** fixa quando há uma trilha só (e seletor quando há mais de uma), com ícone. Texto escolhido: "Original".
+- `[feito]` B6. **Imagens e rede em segundo plano** (print: Canais/TV aberta com ~24 MB em 18 requisições de pôsteres do TMDB):
+  - **Causa 1:** 200 ms após abrir o site, o `main.js:171-176` pré-carrega os catálogos de Filmes, Séries e Animes, com imagens, mesmo que o usuário nunca visite essas abas.
+  - **Causa 2:** os carrosséis de destaque giram a cada ~7,5 s desde o primeiro carregamento (`movies.js:337-342`, `series.js:588` e `1169`) e a cada giro pré-carregam imagens (`new Image()`). Só o player de **séries** pausa os de séries/animes (`pauseHeroCarousels`, `series.js:2256`). O carrossel de **Filmes não é pausado por nada**, nem TV ao vivo nem player de filme nem troca de aba.
+  - Correção proposta (geral): um controle central de visibilidade; cada carrossel só roda quando a sua própria aba está ativa, nenhum player está aberto e a aba do navegador está visível (Page Visibility API); pré-carga dos catálogos adiada para tempo ocioso e só do que for necessário; `loading="lazy"` nas imagens fora da tela; conferir os tamanhos pedidos ao TMDB nos destaques.
+  - **Feito em 08/10:** carrosséis de Filmes/Séries/Animes só giram com a própria aba ativa, sem player ou painel aberto e com a aba do navegador visível; o pré-carregamento dos catálogos espera tempo ocioso na tela inicial. Medido: com a aba de TV aberta, o carrossel de Filmes fica parado e 0 requisições de imagem do TMDB em 17 s (antes ~6 por 24 s).
+- `[aberto]` B7. Tempo de carregamento: melhorou bastante nos dois players, mas ainda há ganho possível. **Correção de medida:** os totais de ~5,7 s que eu reportava para animes incluíam ~2 s de atraso do próprio teste (o Python resolve `localhost` por IPv6 antes de IPv4 nesta máquina); o tempo real é ~3,5 s (MAL ~0,5 s, host ~0,8 s, medição de qualidade ~2 s). Candidatos: cache do resultado da medição; reduzir o orçamento do `probe` quando o host é confiável; pré-resolver o primeiro episódio ao abrir os detalhes.
+- `[aberto]` B8. Herdado do agente anterior: selo "Cópia de cinema" (adiado), título sem fonte nativa (mantém a mensagem, já decidido), detecção de CAM por imagem (não será feita).
+
+- `[feito]` B9. **Número absoluto do episódio na visualização de detalhes** de todo anime/série com mais de uma temporada, por exemplo "T9:E31 • Ep. 284" (hoje só aparece no modo contínuo, como no One Piece). Calculado pela soma dos episódios das temporadas regulares do TMDB, o mesmo número que a regra A6 usa. Serve também de conferência do que está tocando. Rotular como "Ep. geral" porque o número do TMDB pode diferir um pouco do da fonte.
+  - **Feito em 08/10:** badge do player ("1989 • T9:E31 • Ep. geral 284") e etiqueta "Ep. geral N" nos cartões da lista de episódios, para todo título com mais de uma temporada.- `[feito]` B10. **Cabeçalho do player só com ícones** (pedido seu): `←` voltar aos episódios (só séries e animes), `↻` recarregar e `✕` sair para o catálogo do mesmo tipo (Animes, Séries ou Filmes), com dicas ("Sair para Animes" etc.). Uma linha só em qualquer largura; no celular o título pode ter duas linhas. O botão Voltar do celular e do navegador continua subindo um nível por vez (usa os mesmos botões de antes; nos filmes o "voltar aos detalhes" ficou escondido, só para ele). **Correção junto:** fechar duas camadas de uma vez (player e detalhes) fazia o app cair na tela inicial, porque o histórico recebia dois `history.back()` seguidos e tratava o segundo como Voltar do usuário; agora o `historyManager` agrupa os fechamentos (`runNavBatch`) e anda o histórico uma única vez. Versão de cache `20261008_q16`. Testes novos no `tools/player_ui_check.mjs` (30 verificações passando): layout no celular, ← volta à lista, ✕ sai para o catálogo certo em animes e filmes.
+- `[feito]` B12. **Duplo toque para pular 10 s no celular** (pedido seu): toque duplo no lado esquerdo volta 10 s, no direito avança 10 s (rótulo "⏪ 10 s" / "10 s ⏩"), e o do meio continua pausando/tocando. O toque simples não pula. As **setas do teclado no PC** também pulam 10 s agora (eram 5 s, padrão do Artplayer). Vale para filmes, séries e animes; a TV ao vivo mantém o padrão. Medido no celular simulado: +10,1 s à direita e −9,5 s à esquerda; no PC a seta foi de 8,6 s para 18,6 s. Observação: o Artplayer não liga atalhos de teclado em celular, por isso as setas só existem no PC.
+- `[feito]` B13. **Margens iguais nos quatro lados dos painéis** (pedido seu): o cartão do celular usava `94vh`, mas no Android `vh` ignora a barra do navegador, então o cartão ficava mais alto que a área visível e era cortado em cima e embaixo enquanto as laterais tinham folga. O cartão agora ocupa a altura do próprio fundo (`100%`) com a mesma folga em todos os lados (14 px no celular, 20 px no desktop, respeitando as áreas seguras de telas com notch). Medido: 14/14/14/14 px no player, nos detalhes de série/anime e no modal de filme.
+- `[feito]` B14. **URGENTE: canal continuava tocando áudio depois de sair da aba Canais** (visto com a Globo, aba mostrando o alto-falante em outra aba do site). **Causa:** o player de contingência dos canais é um `iframe` (`#stream-iframe`), e a limpeza ao trocar de aba (`atomicTvPlayerReset`) derrubava só o player direto (Artplayer/HLS) e deixava o iframe com o endereço carregado, apenas escondido; por isso o áudio seguia e, ao voltar, "continuava normal". **Correção:** o reset agora esvazia o iframe (`about:blank`) e o esconde; sair da aba Canais também limpa o canal ativo e volta para a tela de boas-vindas (`renderHomeView`), então nada fica tocando e ao voltar começa limpo. Vale para qualquer troca de aba. **Testes fixos** em `tools/player_ui_check.mjs`: canal no player direto e canal no iframe de contingência, trocando de aba, conferindo que não resta player, mídia tocando, iframe com endereço nem canal ativo, e que a volta mostra a tela limpa.
+- `[feito]` B15. **Rótulo do pulo de 10 s sem emoji** (regra do projeto): trocados os símbolos `⏪`/`⏩` por setas de contorno (SVG, mesmo estilo dos ícones do site) mais o texto "- 10 s" / "+ 10 s", como no exemplo do YouTube. Detalhe técnico: o Artplayer pinta de branco todo SVG dentro do player, por isso o ícone leva `fill: none` no CSS.
+- `[feito]` E5. **Símbolos antigos do site (★ ✓ ✦ ▶)** mantidos como estão, na cor de cada elemento (por exemplo o ✦ dos destaques na cor de cada aba, que você gosta). Para nenhum aparelho transformar isso em emoji colorido: o `▶` das duas posições da lista contínua ganhou o seletor de apresentação em texto (U+FE0E) e o site inteiro passou a usar `font-variant-emoji: text`; os demais símbolos já não têm versão emoji. O 🔴 que estava só num comentário de `liveLatency.js` foi removido. Teste novo confere o modo texto e o código do `▶`. Versão de cache `20261008_q20`.
+- `[aberto]` B11. **Carregamento da página depende do CDN dos players.** O `hls.js` e o `Artplayer` vêm do jsDelivr como scripts que bloqueiam a página (`<head>`, antes do app). Quando o CDN está lento, a página inteira (catálogo, canais, tudo) espera, mesmo sem tocar nenhum vídeo. Observado nos testes de hoje (o app às vezes levou mais de 20 s para iniciar). Correção proposta: carregar essas duas bibliotecas só quando um player for aberto (carga sob demanda) ou, no mínimo, com `defer`; manter a integridade (SRI) do item D7.
+
+## C. Fontes (MGEB voltou)
+
+- `[aberto]` C1. Revalidar o que ficou sem teste enquanto o MGEB estava fora: Fase 2 do plano de qualidade/início (buscas por IMDb e TMDB em paralelo, orçamento do `probe`, detecção de master sintético).
+- `[aberto]` C2. Comparar os números atuais com o benchmark da Fase 1 (TTFF mediano 8,8 s Edge / 9,3 s Firefox; pior caso ~17 s).
+
+## D. Segurança (análise de 2026-10-08)
+
+Crítico:
+- `[feito]` D1. **Arquivos internos estão públicos.** O Pages publica a raiz do repositório. Confirmados na produção: `docs/*` (exportações antigas de conversa, com chaves e caminhos locais), `tools/local_server.py`, `script.js`, `.gitignore`. Com esta branch, `.archives/`, `stream-lab/` e `CLAUDE.md` também ficariam públicos. Correção: bloquear caminhos (`/.archives/*`, `/tools/*`, `/stream-lab/*`, `/docs/*`, `*.md`) ou publicar só uma pasta de saída. Recomendado: bloquear caminhos (não mexe na configuração do Cloudflare; `data/proximos_jogos.json` precisa continuar público).
+  - **Feito em 08/10:** uma função de middleware do Cloudflare (`functions/_middleware.js`) responde 404 para `/.archives/`, `/tools/`, `/docs/`, `/.github/`, `/.git/`, `/scratch/`, `/CLAUDE.md`, `/.gitignore` e `/_headers`, inclusive variações com maiúsculas, `%2e`, barras duplas e `..`. O `_routes.json` limita a função a esses caminhos e a `/api/*`, para páginas, imagens e scripts comuns nunca a executarem (sem custo extra de invocações). 33 verificações em `tools/test_path_block.mjs`. **Falta confirmar no deploy de pré-visualização** (os caminhos devem dar 404 e o site seguir normal). Opção mais limpa para depois: publicar só uma pasta de saída (`dist/`) em vez da raiz inteira.
+- `[aberto]` D2. **`/api/stream` é proxy aberto e permite rodar código no nosso domínio (XSS).** Ele busca qualquer URL e devolve o `Content-Type` original. Correção: forçar tipo neutro (`application/octet-stream` + `nosniff` + CSP `sandbox`) em vez de recusar tipos (alguns hosts disfarçam segmentos de `.jpeg` ou `text/html`); só `https`; limites de tamanho e tempo; checagem de origem que tolere a falta do cabeçalho `Origin` (a tag `<video>` não envia) e aceite `localhost:8787` e o IP da rede local. `local_server.py` e `stream.js` precisam continuar idênticos.
+
+Alto:
+- `[aberto]` D3. Chave do TMDB escrita em `resolve.js`, `local_server.py`, `script.js`, `core/constants.js` e no histórico do git (há uma segunda chave no histórico de chat). Plano: chave nova, rota `/api/tmdb` que lê `context.env`, revogar as antigas.
+- `[aberto]` D4. ~100 usos de `innerHTML` com dados externos (títulos, gêneros, nomes de times) sem escape. Criar `escapeHtml()` em `core/` e aplicar, ou usar `textContent`.
+
+Médio e baixo:
+- `[aberto]` D5. Restringir o CORS (`*`) de `/api/resolve` e `/api/stream` às nossas origens.
+- `[aberto]` D6. Cabeçalhos de segurança no `_headers`: CSP (precisa liberar Artplayer, hls.js, imagens do TMDB e o proxy de stream), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors`.
+- `[aberto]` D7. Integridade (SRI) para hls.js 1.5.8 e Artplayer 5.1.7 (jsDelivr).
+- `[aberto]` D8. Mensagens de erro genéricas no `/api/stream` (sem `err.message`).
+- `[aberto]` D9. `local_server.py` escuta em `0.0.0.0`; usar `127.0.0.1` por padrão, com opção para a rede (teste no celular).
+- `[feito]` D10. Remover o `script.js` legado (370 KB, não é carregado pelo `index.html`).
+  - **Feito em 08/10:** `script.js` removido (não era carregado por nada; só dois comentários do `index.html` o citavam, já reescritos).
+## E. Organização
+
+- `[aberto]` E1. Commitar o trabalho da Fase 1 dos animes (só quando você pedir). Nada de hoje foi commitado depois de `f9db5a1`.
+- `[feito]` E2. `stream-lab/` e `tools/stream_tester.html` estão sem rastrear e não fazem parte do app; este agente não os revisou nem continuou. Decidir se ficam no repositório.
+  - **Feito em 08/10:** `stream-lab/` e `tools/stream_tester.html` apagados a seu pedido (eram arquivos sem rastrear).
+- `[aberto]` E3. Sobras da Fase 5 do backlog: logos em WebP no lugar dos PNG pesados; mover para esta fila os itens "AniSkip" e "troca automática quando o Player 1 vem sem fontes".
+- `[feito]` E4. Node.js 24.20 LTS instalado pelo winget (no bash: `export PATH="/c/Program Files/nodejs:$PATH"`); `tools/player_benchmark.mjs` pode ser usado.
+- `[feito]` E6. **Limpeza de legados antes da produção** (pedido seu): `script.js` removido; 10 scripts antigos de diagnóstico (`browser_inspector`, `browser_test_all_tabs`, `check_all_modules`, `check_sidebar`, `test_browser`, `test_continue_watching`, `test_scroll`, `test_scroll_ack`, `trace_overflow`, `export_chat_history`) movidos para `.archives/old/tools/`; `scratch/` é só local e ignorado pelo git. Logos de canais mantidos (64 PNGs sem uso, 2,9 MB, deixados por decisão sua). Ficam em `tools/` só o que está em uso: `local_server.py`, `check_js.py`, `test_get_matches.py` (é ele que o GitHub Action roda para a agenda de jogos), `test_live_resolve.py`, `player_benchmark.mjs` e os testes novos.
+
+## F. Itens novos (08/10, relatados nos seus testes)
+
+Ordem sugerida: F1 (crítico, você decidiu deixar na fila geral) → F2 e F3 (investigação) → F6 e F7 (funcionalidades grandes, pedem plano próprio). F4 e F5 já foram feitos.
+
+- `[crítico]` F1. **Canais "não estão ao vivo" (testado na Globo).** Investigado hoje, sem alterar código:
+  - **Medição (08/10, 15:49-15:51):** as 4 fontes cadastradas da Globo (SP principal, SP reserva, RJ principal, RJ reserva) devolvem sempre a **mesma playlist**: sequência 5271 (SP) e 5210 (RJ), igual em leituras com mais de 75 s de intervalo. Um HLS ao vivo avança a cada ~12 s. Band, SBT e Record avançam normalmente (cerca de 6 segmentos por 40 s). Lendo a fonte **direto da origem**, sem passar pelo nosso proxy, o resultado é o mesmo: o congelamento está na origem, não no proxy nem no player.
+  - **Falha de desenho do app:** o `data/canais.json` marca a Globo como `ONLINE` e o player toca em silêncio um conteúdo repetido, sem perceber que a playlist não anda.
+  - Correção proposta (geral, vale para qualquer canal): (a) o player vigia o avanço da sequência da playlist; se não avançar em ~3 × a duração do segmento (cerca de 36 s), marca a fonte como parada e troca para a próxima fonte e, por fim, para a opção de contingência (iframe), com aviso na tela; (b) a rotina que gera `canais.json` passa a comparar duas leituras e gravar `PARADA` em vez de `ONLINE`; (c) conferir se a contingência da Globo (iframes) está ao vivo e preferi-la automaticamente quando as fontes diretas estiverem paradas; (d) o selo "Ao vivo" só aparece quando a playlist realmente avança.
+  - Observação: pode ser temporário na origem. Medir de novo antes e depois da correção.
+- `[investigar]` F2. **Temporada do TMDB que o MyAnimeList dividiu em várias entradas** (item que a regra A6 deixa em erro claro). Dados concretos:
+  - **Diário de uma Apotecária** (TMDB 220542): o TMDB tem **uma só temporada com 60 episódios**, enquanto o MyAnimeList separa em entradas distintas (1ª temporada e 2ª temporada). Você viu os dois players mostrando episódios diferentes: o MGEB numera pelo TMDB e o player de animes numera dentro da entrada do MyAnimeList, então do episódio 25 em diante eles não concordam. Ainda falta confirmar qual dos dois está errado em cada episódio (comparar com os nomes dos episódios do TMDB).
+  - Attack on Titan "Final Season" é o mesmo caso (uma temporada do TMDB em partes no MyAnimeList).
+  - **Melhor correção a investigar (geral):** montar a cadeia de entradas da série (1ª temporada, 2ª temporada, partes...), medir o tamanho de cada uma pelo limite de 404 do host e somar os tamanhos: o episódio X da temporada do TMDB cai na entrada cujo intervalo acumulado o contém, com o número relativo àquela entrada. Se for inviável, correção pontual só para os poucos casos que sobrarem.
+- `[investigar]` F3. **Initial D no MGEB:** vem em japonês com legenda em português e a qualidade do áudio é ruim. Perguntas: o vídeo escolhido é a melhor das fontes que já temos? Algum dos outros servidores já cadastrados (SuperFlix, MyEmbed, WarezCDN, VsEmbed) oferece dublagem em português ou áudio melhor? A ordenação das fontes hoje mede só a **resolução do vídeo**; propor incluir informações de **áudio** (idioma, codec, taxa de bits) na escolha e nos rótulos ("Áudio: Japonês", "Áudio: Português"). Fica restrito às fontes que o app já usa; não inclui criar fontes novas.
+- `[feito]` F4. **Mostrar o número absoluto também no cabeçalho do player**, não só na etiqueta abaixo dos servidores (print do Dragon Ball Z T4:E2: o cabeçalho mostra "Dragon Ball Z • T4:E2 – A Neblina do Mal" sem o número geral). Formato proposto: "Dragon Ball Z • T4:E2 – A Neblina do Mal • Ep. geral 109", cortando o nome com reticências no celular.
+  - **Feito em 08/10:** o cabeçalho do player mostra "Dragon Ball Z • T9:E31 • Ep. geral 284 – A Última Esperança" (número geral logo depois de T:E, antes do nome, que é a parte que pode ser cortada). Vale para todo título com mais de uma temporada. **Celular (até 640 px):** o título ganhou a própria linha, acima dos botões "Recarregar" e "Voltar/Fechar", e pode ocupar duas linhas; a área do vídeo passou a ser uma coluna flexível para não cortar os controles. Vale também para o player de filmes (conferido nos dois).
+- `[feito]` F5. **Lista contínua: o episódio aparece sem nome** (nem no cartão da lista nem no cabeçalho do player, que mostra só anime, temporada/episódio e número geral). **Causa confirmada no código:** os cartões da lista contínua só escrevem "Episódio N" (`series.js` ~2158-2169) e o clique passa um nome provisório `{ name: "Episódio <número geral>" }` (~2180 e ~2201). O `playSeriesEpisode` só reconhece esse provisório quando ele é igual a "Episódio <número da temporada>" (~2312-2324), então com o número geral nunca busca o nome verdadeiro. Correção: não passar nome provisório (ou compará-lo com o número geral) para que a busca do nome na temporada (cache e TMDB) rode; e os cartões da lista contínua devem mostrar nome, miniatura e sinopse buscando as temporadas sob demanda.
+  - **Feito em 08/10:** a lista contínua mostra nome, miniatura e sinopse reais (busca as temporadas do bloco sob demanda, com cache e pedidos compartilhados) e o player aberto por ela traz o nome verdadeiro. O nome provisório "Episódio N" deixou de ser tratado como nome. Conferido no navegador: o episódio geral 45 vira T2:E6 "A Ambição de Vegeta!...".
+- `[aberto]` F6. **Reestruturar por completo a aba de Canais e a tela inicial** (estilo, formato, design) para seguir o padrão das abas de Filmes, Séries e Animes. Pede um plano de design próprio (levantamento do padrão atual, protótipo das telas, depois fases); não começar sem aprovação.
+- `[aberto]` F7. **Calendário de esportes** (F1, futebol e várias ligas e campeonatos). Pede um plano próprio: a aba "Esportes" hoje aparece como "EM BREVE" e já existe `data/proximos_jogos.json`, atualizado por uma rotina automática de commits ("update match schedule"); decidir as fontes de dados (calendários públicos gratuitos), as ligas, o formato do calendário e como ligar cada jogo ao canal que transmite.
+- `[feito]` F8. **Catálogos de Filmes, Séries e Animes em branco quando a aba é aberta logo depois de abrir o app** (visto no celular e no Firefox em `localhost`, 08/10; o endereço que abriu com calma funcionava). **Causa confirmada e reproduzida:** os ganchos de abertura de aba eram registrados com nome curto (`'movies'`) e o roteador os guarda e chama com outro nome (`onMovies`), então **nunca funcionaram** (defeito antigo). Os catálogos só carregavam pelo pré-carregamento incondicional dos 200 ms; quando eu o fiz esperar a tela inicial ociosa (item B6), quem trocava de aba antes disso ficou sem catálogo, sem erro e sem nova tentativa. **Correção:** `registerViewHook` aceita os dois formatos e avisa no console se o nome for desconhecido; ligar os ganchos também ativa o de início ("continuar assistindo") e o de TV (grade de canais), que estavam escritos mas nunca rodaram. Versão de cache `20261008_q14`. **Teste fixo:** `tools/player_ui_check.mjs` abre cada aba de catálogo logo no início com armazenamento limpo (Filmes 6-11 chamadas ao TMDB e 224 imagens; Séries 10 e 206; Animes 10 e 182). Verificado em Edge simulando celular; falta confirmar no celular e no Firefox reais.
+  - **Ainda aberto (proteção extra):** as 5 buscas do catálogo usam `Promise.allSettled`; se todas falharem (limite do TMDB, queda de rede), as fileiras ficam vazias sem mensagem. Mostrar "Não foi possível carregar o catálogo" com botão "Tentar de novo" e nova tentativa automática.
+
+---
+
+# PARTE 2: TESTES
+
+## Já feitos
+
+- `[feito]` Matriz de API `tools/test_anime_lookup.py --original`: Python 28/28 e `resolve.js` no Node 28/28. Só com o título (frontend antigo): falham Frieren e Zodíaco, como esperado.
+- `[feito]` Manuais seus (08/10, localhost, MGEB de volta): Re:Zero (MGEB e animes OK), Jujutsu Kaisen OK, Cowboy Bebop E1 OK porém mais lento, Doraemon em português no player de animes, Dragon Ball Z OK no MGEB e **episódio errado no player de animes (A6)**.
+- `[feito]` Dados colhidos para a análise: FMA:B tem 18 legendas (alfabéticas, todas `lang='en'`) e 1 trilha de áudio; DBZ tem 291 episódios em 9 temporadas.
+
+## A fazer
+
+Animes:
+- `[aberto]` T1. Frieren pelo catálogo em português, na interface (até agora só pela API): episódios 1 e 2 (pré-carga) e troca de temporada.
+- `[aberto]` T2. Títulos fora da amostra que o captcha do MAL bloqueou: Solo Leveling, Dr. Stone, Dragon Ball Z. Rodar com `--only=` e esperar entre as rodadas.
+- `[aberto]` T3. Mapeamento de episódio (A6): DBZ T9E31 (esperado absoluto 284), One Piece T2+ pela lista de temporadas, Naruto Shippuden T5, Jujutsu Kaisen T2 (entrada própria no MAL, esperado relativo), Attack on Titan T2, Próximo/Anterior na virada de temporada, retomar de "continuar assistindo". Comparar o episódio tocado com o esperado.
+- `[aberto]` T3b. Regra A6: casos de entrada única (DBZ, One Piece, Naruto, Naruto Shippuden) e de entrada por temporada (Jujutsu Kaisen T2, Attack on Titan T2/T3) no mesmo teste; caso residual (Attack on Titan "Final Season") deve dar erro claro, nunca episódio errado; confirmar que a verificação extra é feita uma vez por entrada.
+- `[aberto]` T3c. Conferir que o "Ep. geral" mostrado nos detalhes bate com o episódio realmente tocado.
+- `[aberto]` T4. Reexecutar o lado Python da matriz depois da mudança da margem de reserva.
+- `[aberto]` T5. Comportamento quando o MAL responde 405 (simular) depois do cache: sem buscas repetidas, falha rápida.
+- `[aberto]` T6. Doraemon e mais 3 títulos longos: listar as trilhas de áudio e legendas que o vídeo expõe.
+
+Player (Edge e Firefox, desktop e celular pelo IP da rede):
+- `[aberto]` T7. Legendas: títulos com muitos idiomas (só português + inglês; português selecionado sozinho), títulos sem português (inglês), legenda externa com ajuste de sincronia.
+- `[aberto]` T8. Menu de configurações sem Espelhar/Proporção nos players de filme, série, anime e TV ao vivo.
+- `[aberto]` T9. Barra de progresso: acertar com o mouse um pouco fora da barra, com toque, em tela cheia; passar do volume para a barra e voltar sem o painel cobrir nada.
+- `[aberto]` T10. Rede em segundo plano: com o DevTools aberto, 60 s com TV ao vivo, com player de filme, de série e de anime abertos; esperado: nenhuma requisição de imagem do TMDB; ao trocar de aba, o carrossel dessa aba volta a girar; com a aba do navegador oculta, nada roda. Medir MB transferidos antes e depois.
+- `[aberto]` T11. Benchmark de carregamento antes/depois (A3-A5, B7): `node tools/player_benchmark.mjs --browser=edge` e `--browser=firefox`; registrar TTFF mediano e pior caso.
+
+Fontes:
+- `[aberto]` T12. Matriz completa de filmes e séries do `tools/player_benchmark.mjs` com o MGEB de volta (Reacher E1-E3, Friends, O Mentalista, Breaking Bad, The Last of Us, Avatar, Super Mario Galaxy, Robo Selvagem, O Lado Bom de Ser Traída, O Estranho Mundo de Jack, Demon Slayer, A Ilha Esquecida, Zootopia 2, Divertida Mente 2, Deadpool & Wolverine, Corrida dos Bichos). Critérios do plano anterior: troca de episódio mediana ≤ 5 s (pior ≤ 10 s), primeira abertura ≤ 10 s, sem CAM quando houver fonte limpa, zero erros no console.
+
+Segurança (primeiro em deploy de pré-visualização, depois produção):
+- `[aberto]` T13. Caminhos bloqueados dão 404 no site publicado; `data/*.json` e `assets/*` continuam servidos.
+- `[aberto]` T14. Regressão do `/api/stream`: Range em MP4, HEAD, reescrita de m3u8, limpeza de WebVTT, canais ao vivo, fontes de anime e de filme; mais testes negativos (URL de página HTML, URL não-https, resposta grande demais, Origin estranha).
+- `[aberto]` T15. Prova de XSS: um título com `<img src=x onerror=...>` fica inerte em cada caminho de `innerHTML`.
+- `[aberto]` T16. A CSP não quebra Artplayer, hls.js, legendas nem imagens do TMDB; os hashes SRI conferem.
+- `[aberto]` T17. A chave nova do TMDB funciona pela rota `/api/tmdb`; a antiga foi revogada.
+- `[aberto]` T18. `local_server.py` e `stream.js`/`resolve.js` comparados (paridade) a cada mudança.
+
+Geral:
+- `[aberto]` T19. `python tools/check_js.py` e `node --check` em todo arquivo alterado; mesma versão de cache em `index.html`, `main.js` e em todos que importam o `engine.js`.
+
+## Testes dos itens novos (F)
+
+- `[aberto]` T20. **Canais ao vivo (F1):** para cada canal da lista, ler a playlist duas vezes com 40 s de intervalo e exigir que a sequência avance; depois do conserto, abrir a Globo no navegador, ver o aviso de fonte parada e a troca automática; conferir que Band, SBT e Record continuam sem falso alarme.
+- `[aberto]` T21. **Cadeia de entradas (F2):** Diário de uma Apotecária (episódios 1, 24, 25, 48, 60), Attack on Titan "Final Season", e conferir cada episódio tocado com o nome do episódio no TMDB; repetir nos dois players.
+- `[aberto]` T22. **Áudio (F3):** Initial D e mais 3 títulos dublados/legendados; listar o idioma e a taxa de bits do áudio de cada fonte disponível.
+- `[feito]` T23. **Cabeçalho (F4):** o "Ep. geral" aparece no player em desktop e no celular, sem estourar a largura.
+- `[feito]` T24. **Lista contínua (F5):** abrir episódios de vários blocos (1-50, 51-100...) e conferir nome, cartão e cabeçalho.
+
+---
+
+# RESULTADOS DA EXECUÇÃO DE 08/10 (correções A3-A6, B1-B6, B9)
+
+Não commitado. Arquivos alterados: `functions/api/resolve.js`, `tools/local_server.py` (idênticos na lógica), `assets/js/modules/series.js`, `movies.js`, `assets/js/player/engine.js`, `assets/js/main.js`, `assets/js/core/activity.js` (novo), `assets/css/10-player-v3.css`, `index.html` (versão de cache `20261008_q10`). Testes novos: `tools/test_anime_episode_rule.py`, `tools/test_anime_lookup.py` (28 casos).
+
+- Regra de episódios, legendas e falha rápida: `python tools/test_anime_episode_rule.py` passa tudo; a mesma regra e o filtro de legendas passam no Node contra `resolve.js`.
+- Matriz de títulos (`test_anime_lookup.py --original`): 28/28 corretos no Python e no Node; mediana de 3,5 s por resolve.
+- Navegador real (Edge headless, 17 verificações): 17/17.
+- **Cuidado de ambiente:** nos testes em Python use `127.0.0.1`, não `localhost` (custa ~2 s por requisição nesta máquina). Os scripts já usam `127.0.0.1`.
+- **Rodada seguinte (F4 e F5):** `tools/player_ui_check.mjs` agora tem 22 verificações, todas passando (inclui cabeçalho com "Ep. geral", lista contínua com nomes e o layout do cabeçalho no celular). Versão de cache `20261008_q13`; `series.js`, `10-player-v3.css` e `index.html` alterados.
+- **Rodada do duplo toque e das margens:** `tools/player_touch_check.mjs` (12 verificações, celular simulado) e `tools/player_ui_check.mjs` (31 verificações) passam. Versão de cache `20261008_q17`. Os scripts de teste passaram a usar uma porta de depuração aleatória e a encerrar só a árvore do navegador que eles abriram.
+- Segurança (D1-D10), AniSkip (A8), investigações A7/A9 e melhorias de tempo de carga (B7) **não foram tocados** nesta rodada.

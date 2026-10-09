@@ -64,13 +64,90 @@
     object-position: center !important;
 }
 
+/* Progress bar: a thin line with a tall clickable area, so the mouse does not have to be exactly on it */
+/* Artplayer injects its own stylesheet after this one, so the height is set on the element itself */
 .art-video-player .art-progress {
-    height: 5px !important;
-    transition: height 0.2s ease !important;
+    height: auto !important;
 }
 
-.art-video-player .art-progress:hover {
+.art-video-player .art-control-progress {
+    height: 24px !important;
+}
+
+.art-video-player .art-control-progress .art-control-progress-inner {
+    height: 5px !important;
+    transition: height 0.15s ease !important;
+}
+
+.art-video-player .art-control-progress:hover .art-control-progress-inner {
     height: 8px !important;
+}
+
+/* Volume: the built-in vertical panel opens over the progress bar; a horizontal control replaces it */
+.art-video-player .art-control-volume {
+    display: none !important;
+}
+
+.art-video-player .art-control-tvz-volume {
+    display: flex;
+    align-items: center;
+}
+
+.art-video-player .tvz-volume-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.art-video-player .tvz-volume-range {
+    --tvz-fill: 90%;
+    width: 0;
+    height: 4px;
+    margin: 0;
+    opacity: 0;
+    border-radius: 2px;
+    background: linear-gradient(to right, #22c55e var(--tvz-fill), rgba(255, 255, 255, 0.28) var(--tvz-fill));
+    cursor: pointer;
+    transition: width 0.18s ease, opacity 0.18s ease, margin 0.18s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.art-video-player .art-control-tvz-volume:hover .tvz-volume-range,
+.art-video-player .art-control-tvz-volume:focus-within .tvz-volume-range {
+    width: 84px;
+    margin: 0 10px 0 2px;
+    opacity: 1;
+}
+
+.art-video-player .tvz-volume-range::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+    border: 0;
+    border-radius: 50%;
+    background: #ffffff;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.art-video-player .tvz-volume-range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 0;
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+/* Phones use the device volume keys */
+.art-video-player.art-mobile .art-control-tvz-volume {
+    display: none !important;
 }
 
 /* Native Option Badges in Movie Servers Grid */
@@ -510,3 +587,145 @@
     border: 1px solid rgba(234, 179, 8, 0.25);
 }
 
+/* Player header: icon-only buttons (back to episodes, reload, exit to the catalog) next to the title */
+.btn-player-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #f4f4f5;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-player-icon:hover,
+.btn-player-icon:focus-visible {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-player-icon.danger:hover,
+.btn-player-icon.danger:focus-visible {
+    background: rgba(239, 68, 68, 0.28);
+    border-color: rgba(239, 68, 68, 0.7);
+    color: #ffffff;
+}
+
+.btn-player-icon[hidden] {
+    display: none !important;
+}
+
+.movie-player-top-bar {
+    gap: 10px;
+}
+
+.movie-player-top-bar .movie-player-server-title,
+.movie-player-top-bar .series-player-header-title {
+    margin-right: 0;
+}
+
+/* Phones: one row (back, title, reload, exit). The title may use two lines, so the bar grows a little and
+   the media area becomes a column so the video stage takes the height the bar leaves. */
+@media (max-width: 640px) {
+    .movie-modal-card.is-playing .movie-modal-media-area {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .movie-modal-card.is-playing .movie-player-top-bar {
+        height: auto;
+        min-height: 52px;
+        flex: 0 0 auto;
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .movie-modal-card.is-playing .movie-player-server-title,
+    .movie-modal-card.is-playing .series-player-header-title {
+        line-height: 1.3;
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .movie-modal-card.is-playing .movie-player-stage {
+        flex: 1 1 0;
+        min-height: 0;
+        height: auto;
+    }
+
+    .btn-player-icon {
+        width: 38px;
+        height: 38px;
+    }
+}
+
+/* Seek confirmation shown by the mobile double tap */
+.art-video-player .tvz-seek-flash {
+    position: absolute;
+    top: 50%;
+    z-index: 35;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.62);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.92);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+/* Artplayer paints every svg inside the player white; the chevron is a line icon like the rest of the site */
+.art-video-player .tvz-seek-flash svg {
+    fill: none;
+    stroke: currentColor;
+    flex-shrink: 0;
+}
+
+.art-video-player .tvz-seek-flash[data-side="left"] {
+    left: 8%;
+}
+
+.art-video-player .tvz-seek-flash[data-side="right"] {
+    right: 8%;
+}
+
+.art-video-player .tvz-seek-flash.is-visible {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+}
+
+/* Modals fill the visible screen with the same gap on every side. The phone card used 94vh, but vh ignores the
+   browser address bar on Android, so the card was taller than the visible area and got cut at the top and bottom
+   while the sides kept their gap. The card now takes the height of its own container instead. */
+.movie-modal-backdrop {
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+
+.movie-modal-backdrop .movie-modal-card {
+    max-height: 100%;
+}
+
+@media (max-width: 640px) {
+    .movie-modal-backdrop {
+        padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    }
+
+    .movie-modal-backdrop .movie-modal-card {
+        height: 100%;
+        max-height: 100%;
+    }
+}

@@ -1,6 +1,6 @@
 /**
  * TVZINHA ONLINE - Live Latency & Live-Edge Synchronizer
- * Handles Hls.js liveSyncPosition calculations and dynamic 🔴 AO VIVO badge states
+ * Handles Hls.js liveSyncPosition calculations and dynamic AO VIVO badge states
  */
 
 import { showToast } from '../core/toast.js';

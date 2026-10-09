@@ -5,11 +5,12 @@
 
 import { store } from './core/state.js';
 import { showToast } from './core/toast.js';
-import { initChannelsCatalog, selectChannelByName, renderChannelGridCards } from './modules/channels.js';
+import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js';
 import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js';
-import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal } from './modules/movies.js?v=20261008_q7';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching } from './modules/series.js?v=20261008_q7';
-import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js';
+import { runWhenHomeIdle } from './core/activity.js';
+import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal } from './modules/movies.js?v=20261008_q20';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching } from './modules/series.js?v=20261008_q20';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261008_q20';
 import { setupTvRemoteNavigation } from './navigation/remote.js';
 import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js';
 
@@ -135,6 +136,9 @@ async function bootstrapApp() {
     registerViewHook('home', () => {
         renderHomeContinueWatching();
     });
+    registerViewHook('tvLeave', () => {
+        renderHomeView();
+    });
     registerViewHook('tv', () => {
         if (!store.activeChannel) {
             renderChannelGridCards();
@@ -168,12 +172,14 @@ async function bootstrapApp() {
     // Start on Home view by default (aligned with original behavior)
     switchAppView('home');
 
-    // Preload TMDB catalogs in background for instantaneous navigation & ready search listeners
-    setTimeout(() => {
+    // Preload TMDB catalogs for instantaneous navigation, but only when the browser is idle on the home screen:
+    // opening a channel or a title first must not compete with its stream for bandwidth.
+    // Each catalog still loads by itself when its tab is opened (view hooks above).
+    runWhenHomeIdle(() => {
         initMoviesView().catch(e => console.warn("[Preload] Movies:", e));
         initSeriesView().catch(e => console.warn("[Preload] Series:", e));
         initAnimesView().catch(e => console.warn("[Preload] Animes:", e));
-    }, 200);
+    });
 
     console.log("[Tvzinha] Application bootstrap complete.");
 }
