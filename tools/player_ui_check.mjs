@@ -325,6 +325,11 @@ await evaluate("(window.TvzinhaActions.openMovie({ id: 1022789, title: 'Divertid
 await sleep(6000);
 const movieButtons = await evaluate("({ hiddenBack: document.getElementById('btn-close-movie-player').hidden, exitTitle: document.getElementById('btn-exit-movie-player').title, modalOpen: !document.getElementById('movie-modal').classList.contains('hidden') })");
 check("movie header shows reload and exit only (back-to-details is hidden)", movieButtons.modalOpen && movieButtons.hiddenBack && movieButtons.exitTitle === "Sair para Filmes", JSON.stringify(movieButtons));
+// an embedded (iframe) server fills the player box instead of the browser's default 150 px
+await evaluate("(document.querySelectorAll('#movie-servers-grid .btn-movie-server:not(.native-direct)')[1]?.click(), true)");
+await sleep(2500);
+const frameBox = await evaluate("(() => { const f = document.getElementById('movie-modal-iframe'); const s = f && f.parentElement.getBoundingClientRect(); const r = f && f.getBoundingClientRect(); return f ? { frameH: Math.round(r.height), stageH: Math.round(s.height), frameW: Math.round(r.width), stageW: Math.round(s.width) } : null; })()");
+check("an iframe server fills the whole player box", frameBox && frameBox.frameH > 200 && Math.abs(frameBox.frameH - frameBox.stageH) <= 2 && Math.abs(frameBox.frameW - frameBox.stageW) <= 2, JSON.stringify(frameBox));
 await evaluate("(document.getElementById('btn-exit-movie-player').click(), true)");
 await sleep(1500);
 const movieAfter = await evaluate("({ modal: !document.getElementById('movie-modal').classList.contains('hidden'), view: window.TvzinhaActions.store.currentView, locked: document.body.classList.contains('modal-open') })");
