@@ -635,11 +635,45 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0) {
     .map(x => x.s);
 }
 
+// Every MyAnimeList request gets this long; a slow or blocking answer must not hold the resolve
+const MAL_SEARCH_TIMEOUT_MS = 2000;
+
 /**
- * Fetches MyAnimeList ID from title via fast prefix search or public Jikan API with season and arc awareness
+ * MyAnimeList prefix search (fast, no auth). Returns the anime items, or [] on any failure.
  */
-async function getMalIdFromTitle(title, season = 1, seasonName = "") {
-  const cleanTitle = title.replace(/\(.*?\)|\[.*?\]/g, '').trim();
+async function searchMalPrefix(keyword) {
+  try {
+    const searchUrl = `https://myanimelist.net/search/prefix.json?type=anime&keyword=${encodeURIComponent(keyword.trim())}`;
+    const res = await fetch(searchUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      signal: AbortSignal.timeout(MAL_SEARCH_TIMEOUT_MS),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.categories || []).flatMap(c => c.type === 'anime' ? (c.items || []) : []);
+  } catch (e) {
+    return [];
+  }
+}
+
+// Only entries tied with the best MAL match are tried as fallbacks: a lower-ranked entry is a different
+// show, and playing it silently would be worse than reporting that nothing was found
+const MAL_RUNNER_UP_MARGIN = 0;
+
+// Text without Latin letters (e.g. the Japanese TMDB original_name) cannot take "Season N" suffixes
+function isLatinText(text) {
+  return !/[ɐ-￿]/.test(text);
+}
+
+/**
+ * Ranks MyAnimeList entries for a TMDB anime title with season and arc awareness.
+ * The pt-BR TMDB name is often a translation MAL does not know ("Frieren e a Jornada para o Além"),
+ * so the TMDB original name (Japanese) is searched too. Returns up to 3 ids, best first.
+ */
+async function lookupMalCandidates(title, originalTitle = "", season = 1, seasonName = "", year = 0) {
+  const stripNotes = t => (t || "").replace(/\(.*?\)|\[.*?\]/g, '').trim();
+  const cleanTitle = stripNotes(title);
+  const cleanOriginal = stripNotes(originalTitle);
 
   let cleanSname = "";
   if (seasonName) {
@@ -649,46 +683,49 @@ async function getMalIdFromTitle(title, season = 1, seasonName = "") {
     }
   }
 
+  const variants = [cleanTitle];
+  if (cleanOriginal && cleanOriginal.toLowerCase() !== cleanTitle.toLowerCase()) variants.push(cleanOriginal);
+
   const queries = [];
-  if (cleanSname) {
-    queries.push({ q: `${cleanTitle} ${cleanSname}`, priority: 50 });
-    queries.push({ q: cleanSname, priority: 40 });
+  const queued = new Set();
+  const addQuery = (q, priority) => {
+    const key = q.trim().toLowerCase();
+    if (!key || queued.has(key)) return;
+    queued.add(key);
+    queries.push({ q, priority });
+  };
+
+  for (const base of variants) {
+    if (isLatinText(base)) {
+      if (cleanSname) {
+        addQuery(`${base} ${cleanSname}`, 50);
+        addQuery(cleanSname, 40);
+      }
+      if (season > 1) {
+        addQuery(`${base} Season ${season}`, 35);
+        addQuery(`${base} Part ${season}`, 35);
+        const suffix = season === 2 ? "nd" : season === 3 ? "rd" : "th";
+        addQuery(`${base} ${season}${suffix} Season`, 30);
+      }
+    }
+    addQuery(base, 10);
   }
 
-  if (season > 1) {
-    queries.push({ q: `${cleanTitle} Season ${season}`, priority: 35 });
-    queries.push({ q: `${cleanTitle} Part ${season}`, priority: 35 });
-    const suffix = season === 2 ? "nd" : season === 3 ? "rd" : "th";
-    queries.push({ q: `${cleanTitle} ${season}${suffix} Season`, priority: 30 });
-  }
-
-  queries.push({ q: cleanTitle, priority: 10 });
+  // All searches run in parallel; results are merged in query order so ranking stays deterministic
+  const results = await Promise.all(queries.map(({ q }) => searchMalPrefix(q)));
 
   const candidates = [];
   const seen = new Set();
-
-  for (const { q, priority } of queries) {
-    try {
-      const searchUrl = `https://myanimelist.net/search/prefix.json?type=anime&keyword=${encodeURIComponent(q.trim())}`;
-      const res = await fetch(searchUrl, {
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const items = (data.categories || []).flatMap(c => c.type === 'anime' ? (c.items || []) : []);
-        for (let idx = 0; idx < Math.min(items.length, 6); idx++) {
-          const it = items[idx];
-          if (it.id && !seen.has(it.id)) {
-            seen.add(it.id);
-            const rankBonus = Math.max(0, 15 - idx * 3);
-            candidates.push({ item: it, baseScore: priority + rankBonus });
-          }
-        }
+  results.forEach((items, qi) => {
+    for (let idx = 0; idx < Math.min(items.length, 6); idx++) {
+      const it = items[idx];
+      if (it.id && !seen.has(it.id)) {
+        seen.add(it.id);
+        const rankBonus = Math.max(0, 15 - idx * 3);
+        candidates.push({ item: it, baseScore: queries[qi].priority + rankBonus });
       }
-    } catch (e) {}
-
-    if (candidates.length >= 12) break;
-  }
+    }
+  });
 
   if (candidates.length === 0) {
     // Fallback to Public Jikan API
@@ -697,31 +734,25 @@ async function getMalIdFromTitle(title, season = 1, seasonName = "") {
       const searchUrl = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(jikanQuery)}&limit=1`;
       const res = await fetch(searchUrl, {
         headers: { "User-Agent": USER_AGENT },
+        signal: AbortSignal.timeout(MAL_SEARCH_TIMEOUT_MS),
       });
       if (res.ok) {
         const data = await res.json();
         if (data.data && data.data.length > 0) {
-          return data.data[0].mal_id;
+          return [data.data[0].mal_id];
         }
       }
     } catch (e) {}
-    return null;
+    return [];
   }
 
-  if (season === 1 && !cleanSname) {
-    return candidates[0].item.id;
-  }
-
-  candidates.sort((a, b) => {
-    const scoreA = calculateItemScore(a.item, a.baseScore, cleanSname, season);
-    const scoreB = calculateItemScore(b.item, b.baseScore, cleanSname, season);
-    return scoreB - scoreA;
-  });
-
-  return candidates[0].item.id;
+  const titleKeys = variants.filter(isLatinText).map(v => v.toLowerCase());
+  const scored = candidates.map(c => ({ id: c.item.id, score: calculateItemScore(c.item, c.baseScore, cleanSname, season, titleKeys, year) }));
+  scored.sort((a, b) => b.score - a.score);
+  return scored.filter(s => s.score >= scored[0].score - MAL_RUNNER_UP_MARGIN).slice(0, 3).map(s => s.id);
 }
 
-function calculateItemScore(cand, baseScore, cleanSname, season) {
+function calculateItemScore(cand, baseScore, cleanSname, season, titleKeys = [], year = 0) {
   const cName = (cand.name || "").toLowerCase();
   const payload = cand.payload || {};
   const mtype = String(payload.media_type || "").toUpperCase();
@@ -730,12 +761,18 @@ function calculateItemScore(cand, baseScore, cleanSname, season) {
   if (["TV", "ONA"].includes(mtype)) {
     pts += 40;
   } else if (["SPECIAL", "TV SPECIAL", "OVA", "MOVIE"].includes(mtype)) {
-    pts -= 35;
+    // Specials, OVAs and movies are never the episodic series (e.g. "Episode of East Blue" for One Piece)
+    pts -= 100;
   }
 
   // Heavy penalty for recaps, summaries, PVs, pilots
   if (["pilot", "kanketsu-hen", "recap", "summary", "preview", "remix", "music", "special"].some(bad => cName.includes(bad))) {
     pts -= 60;
+  }
+
+  // Spin-offs mention the title without starting with it ("Boruto: Naruto Next Generations")
+  if (titleKeys.some(key => key.length > 2 && cName.includes(key) && !cName.startsWith(key))) {
+    pts -= 50;
   }
 
   if (cleanSname) {
@@ -744,6 +781,21 @@ function calculateItemScore(cand, baseScore, cleanSname, season) {
     if (matches > 0) {
       pts += (matches * 25);
     }
+  }
+
+  // Remakes share one title ("Hunter x Hunter" 1999 vs 2011): the show's first air year picks the right
+  // entry. Only season 1 is compared, later seasons start years after the show's first air date.
+  const startYear = parseInt(payload.start_year, 10);
+  if (year && season === 1 && startYear) {
+    const gap = Math.abs(startYear - year);
+    if (gap <= 1) pts += 30;
+    else if (gap >= 3) pts -= 30;
+  }
+
+  // An explicit season marker for another season ("2nd Season" when asking for season 1) is a mismatch
+  const marker = cName.match(/(\d+)(?:st|nd|rd|th)\s*season|season\s*(\d+)|part\s*(\d+)/);
+  if (marker && parseInt(marker[1] || marker[2] || marker[3], 10) !== season) {
+    pts -= 30;
   }
 
   const seasonPatterns = [
@@ -762,6 +814,129 @@ function calculateItemScore(cand, baseScore, cleanSname, season) {
   return pts;
 }
 
+/* ============================================================
+ * MAL LOOKUP CACHE
+ * Hits live a week, misses only minutes (a rate limit or captcha from MyAnimeList must not stick).
+ * Memory cache per isolate plus the Cloudflare Cache API when it is available.
+ * ============================================================ */
+
+const MAL_CACHE_HIT_TTL_S = 7 * 24 * 3600;
+const MAL_CACHE_MISS_TTL_S = 5 * 60;
+const malMemoryCache = new Map();
+
+function edgeCacheRequest(key) {
+  return new Request(`https://mal-cache.tvzinha.invalid/${encodeURIComponent(key)}`);
+}
+
+async function readEdgeCache(key) {
+  try {
+    if (typeof caches === "undefined" || !caches.default) return null;
+    const hit = await caches.default.match(edgeCacheRequest(key));
+    if (!hit) return null;
+    const data = await hit.json();
+    return Array.isArray(data.ids) ? data.ids : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function writeEdgeCache(key, ids) {
+  try {
+    if (typeof caches === "undefined" || !caches.default) return;
+    await caches.default.put(edgeCacheRequest(key), new Response(JSON.stringify({ ids }), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": `public, max-age=${ids.length ? MAL_CACHE_HIT_TTL_S : MAL_CACHE_MISS_TTL_S}`,
+      },
+    }));
+  } catch (e) {}
+}
+
+/**
+ * Cached front for lookupMalCandidates. Concurrent calls for the same title share one lookup
+ * (the next-episode prefetch and the episode itself ask at the same time).
+ */
+function getMalCandidates(title, originalTitle = "", season = 1, seasonName = "", year = 0) {
+  const key = [title, originalTitle, season, seasonName, year].map(v => String(v ?? "").trim().toLowerCase()).join("|");
+  const cached = malMemoryCache.get(key);
+  if (cached && Date.now() - cached.at < cached.ttlMs) return cached.promise;
+
+  const promise = (async () => {
+    const fromEdge = await readEdgeCache(key);
+    if (fromEdge) return fromEdge;
+    const ids = await lookupMalCandidates(title, originalTitle, season, seasonName, year);
+    writeEdgeCache(key, ids);
+    return ids;
+  })();
+
+  const entry = { at: Date.now(), ttlMs: MAL_CACHE_MISS_TTL_S * 1000, promise };
+  malMemoryCache.set(key, entry);
+  promise.then(ids => {
+    entry.at = Date.now();
+    entry.ttlMs = (ids.length ? MAL_CACHE_HIT_TTL_S : MAL_CACHE_MISS_TTL_S) * 1000;
+  }).catch(() => malMemoryCache.delete(key));
+  return promise;
+}
+
+/* ============================================================
+ * EPISODE NUMBERING
+ * The anime host numbers episodes inside each MyAnimeList entry and answers 404 right after the last one.
+ * Some entries cover the whole show (Dragon Ball Z, One Piece), others a single season (Jujutsu Kaisen),
+ * so a season's episode must be sent as the absolute number for the first kind and the relative for the second.
+ * ============================================================ */
+
+// An entry that still has this share of the show's episodes covers the whole show
+const WHOLE_SHOW_RATIO = 0.9;
+const entrySpanCache = new Map();
+
+async function pickEpisodeNumber(malId, { season, relative, absolute, total }) {
+  if (!absolute || absolute === relative || season <= 1) return relative;
+  if (!total) return absolute;
+
+  const key = `${malId}:${total}`;
+  let coversWholeShow = entrySpanCache.get(key);
+  if (coversWholeShow === undefined) {
+    const data = await resolveZoko(malId, Math.ceil(total * WHOLE_SHOW_RATIO));
+    coversWholeShow = Boolean(data && data.src);
+    entrySpanCache.set(key, coversWholeShow);
+  }
+  return coversWholeShow ? absolute : relative;
+}
+
+/* ============================================================
+ * SUBTITLE TRACKS
+ * The host lists every language alphabetically and marks them all with the same lang code, so the
+ * language comes from the label. Only Portuguese (Brazilian when known) and English are kept.
+ * ============================================================ */
+
+function subtitleLanguage(track) {
+  const label = String(track.label || track.name || "").trim().toLowerCase();
+  const lang = String(track.lang || "").trim().toLowerCase();
+  if (/portugu/.test(label)) return /brazil|brasil/.test(label) ? "pt-BR" : "pt";
+  if (/^english\b|^ingl[eê]s\b/.test(label)) return "en";
+  if (/^pt[-_]?br$/.test(lang)) return "pt-BR";
+  if (/^pt/.test(lang)) return "pt";
+  if (!label && /^en/.test(lang)) return "en";
+  return "other";
+}
+
+function normalizeSubtitles(tracks) {
+  const byLanguage = {};
+  for (const track of tracks) {
+    const language = subtitleLanguage(track);
+    if (language !== "other" && !byLanguage[language]) byLanguage[language] = track;
+  }
+  const portuguese = byLanguage["pt-BR"] ? { track: byLanguage["pt-BR"], lang: "pt-BR", label: "Português (Brasil)" }
+    : byLanguage["pt"] ? { track: byLanguage["pt"], lang: "pt", label: "Português" } : null;
+  const english = byLanguage["en"] ? { track: byLanguage["en"], lang: "en", label: "Inglês" } : null;
+  return [portuguese, english].filter(Boolean).map((entry, index) => ({
+    lang: entry.lang,
+    label: entry.label,
+    default: index === 0,
+    url: entry.track.url,
+  }));
+}
+
 export async function onRequestGet(context) {
   const { request } = context;
   const urlObj = new URL(request.url);
@@ -773,6 +948,12 @@ export async function onRequestGet(context) {
   const lang = urlObj.searchParams.get("lang") || (type === "anime" ? "sub" : "dub");
   const titleParam = urlObj.searchParams.get("title") || "";
   const seasonNameParam = urlObj.searchParams.get("season_name") || "";
+  // TMDB original_name (e.g. Japanese): MyAnimeList knows it even when the pt-BR title is a translation
+  const originalTitleParam = urlObj.searchParams.get("original_title") || "";
+  const yearParam = parseInt(urlObj.searchParams.get("year") || "0", 10) || 0;
+  // The client sends both numberings; the server picks the one the chosen MAL entry uses
+  const absoluteEpisodeParam = parseInt(urlObj.searchParams.get("absolute_episode") || "0", 10) || 0;
+  const totalEpisodesParam = parseInt(urlObj.searchParams.get("total_episodes") || "0", 10) || 0;
   let malId = urlObj.searchParams.get("mal_id");
 
   if (!id && !malId && !titleParam) {
@@ -799,59 +980,74 @@ export async function onRequestGet(context) {
 
   // ROTA 1: Anime Legendado (ZokoAnime)
   if (type === "anime" && lang === "sub") {
+    let malIds = [];
     if (!malId && titleParam) {
-      malId = await timed("mal", getMalIdFromTitle(titleParam, season, seasonNameParam));
-    } else if (!malId && id) {
+      malIds = await timed("mal", getMalCandidates(titleParam, originalTitleParam, season, seasonNameParam, yearParam));
+    } else if (malId) {
+      malIds = [malId];
+    } else if (id) {
       // If numeric ID is passed for anime, test as MAL ID or title
-      malId = id;
+      malIds = [id];
     }
 
-    if (malId) {
-      const zokoData = await timed("zoko", resolveZoko(malId, episode));
-      if (zokoData && zokoData.src) {
-        const streamUrl = `${proxyBase}?url=${encodeURIComponent(zokoData.src)}&referer=${encodeURIComponent("https://zokoanime.video/")}`;
-        
-        // Build subtitles list with proxy URLs
-        const subtitles = (zokoData.subtitles || []).map(s => ({
-          lang: s.lang || "pt-BR",
-          label: s.label || "Legenda",
-          default: Boolean(s.default),
-          url: `${proxyBase}?url=${encodeURIComponent(s.src)}&referer=${encodeURIComponent("https://zokoanime.video/")}`,
-        }));
-
-        const zokoSource = await timed("probe", probeSource({
-          label: "ZokoAnime",
-          type: "hls",
-          stream_url: streamUrl,
-          raw_url: zokoData.src,
-          headers: {
-            "Referer": "https://zokoanime.video/",
-            "Origin": "https://zokoanime.video",
-          },
-        }));
-        if (zokoSource.quality) zokoSource.label = `ZokoAnime [${zokoSource.quality}p HLS]`;
-
-        result = {
-          success: true,
-          title: titleParam || `Anime Ep ${episode}`,
-          category: "anime",
-          audio: "subtitled",
-          primary_source: zokoSource,
-          fallback_sources: [],
-          subtitles,
-          aniskip: {
-            mal_id: parseInt(malId, 10),
-            episode,
-            ready: true,
-          },
-        };
+    // Entries tied for best are all tried before giving up (the first one may be missing on the stream host)
+    let zokoData = null;
+    let effectiveEpisode = episode;
+    for (const candidateId of malIds) {
+      const candidateEpisode = await timed("span", pickEpisodeNumber(candidateId, {
+        season, relative: episode, absolute: absoluteEpisodeParam, total: totalEpisodesParam,
+      }));
+      const data = await timed("zoko", resolveZoko(candidateId, candidateEpisode));
+      if (data && data.src) {
+        zokoData = data;
+        malId = candidateId;
+        effectiveEpisode = candidateEpisode;
+        break;
       }
+    }
+
+    if (zokoData) {
+      const streamUrl = `${proxyBase}?url=${encodeURIComponent(zokoData.src)}&referer=${encodeURIComponent("https://zokoanime.video/")}`;
+    
+      // Build subtitles list with proxy URLs, keeping only Portuguese and English
+      const subtitles = normalizeSubtitles((zokoData.subtitles || []).map(s => ({
+        lang: s.lang || "",
+        label: s.label || "",
+        url: `${proxyBase}?url=${encodeURIComponent(s.src)}&referer=${encodeURIComponent("https://zokoanime.video/")}`,
+      })));
+
+      const zokoSource = await timed("probe", probeSource({
+        label: "ZokoAnime",
+        type: "hls",
+        stream_url: streamUrl,
+        raw_url: zokoData.src,
+        headers: {
+          "Referer": "https://zokoanime.video/",
+          "Origin": "https://zokoanime.video",
+        },
+      }));
+      if (zokoSource.quality) zokoSource.label = `ZokoAnime [${zokoSource.quality}p HLS]`;
+
+      result = {
+        success: true,
+        title: titleParam || `Anime Ep ${episode}`,
+        category: "anime",
+        audio: "subtitled",
+        primary_source: zokoSource,
+        fallback_sources: [],
+        subtitles,
+        aniskip: {
+          mal_id: parseInt(malId, 10),
+          episode: effectiveEpisode,
+          ready: true,
+        },
+      };
     }
   }
 
   // ROTA 2: Filmes, Séries ou Anime Dublado (MGEB)
   const imdbId = urlObj.searchParams.get("imdb_id");
-  if (!result && (id || imdbId)) {
+  if (!result && (id || imdbId) && !(type === "anime" && lang === "sub")) {
     const mgebType = type === "anime" ? "serie" : type;
     const givenImdb = imdbId && imdbId.startsWith("tt") ? imdbId : null;
     const tmdbId = id && /^\d+$/.test(id) ? id : null;
@@ -970,6 +1166,7 @@ export async function onRequestGet(context) {
   return new Response(JSON.stringify({
     success: false,
     error: "No direct streams resolved for the requested title.",
+    reason: type === "anime" && lang === "sub" ? "anime_not_found" : "no_sources",
     fallback_recommended: true,
   }), {
     status: 404,
