@@ -4,11 +4,11 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js';
-import { getUiSvg, createLogoBadgeHtml } from '../core/icons.js';
-import { showToast } from '../core/toast.js';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261008_q20';
+import { store } from '../core/state.js?v=20261009_a';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261009_a';
+import { getUiSvg, createLogoBadgeHtml } from '../core/icons.js?v=20261009_a';
+import { showToast } from '../core/toast.js?v=20261009_a';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261009_a';
 
 /**
  * Counts available direct and contingency options for a channel

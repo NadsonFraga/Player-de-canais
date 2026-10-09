@@ -3,7 +3,7 @@
  * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and modal playback
  */
 
-import { store } from '../core/state.js';
+import { store } from '../core/state.js?v=20261009_a';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,13 +14,13 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js';
-import { showToast } from '../core/toast.js';
-import { isBackgroundMediaAllowed } from '../core/activity.js';
-import { setPlaybackActiveState } from '../core/wakeLock.js';
-import { getUiSvg } from '../core/icons.js';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261008_q20';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js';
+} from '../core/constants.js?v=20261009_a';
+import { showToast } from '../core/toast.js?v=20261009_a';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_a';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_a';
+import { getUiSvg } from '../core/icons.js?v=20261009_a';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261009_a';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_a';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
