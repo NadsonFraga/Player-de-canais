@@ -3,12 +3,12 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261009_h';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261009_h';
-import { showToast } from '../core/toast.js?v=20261009_h';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_h';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261009_h';
-import { fetchAniSkipSegments } from './skipSegments.js?v=20261009_h';
+import { store } from '../core/state.js?v=20261009_i';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261009_i';
+import { showToast } from '../core/toast.js?v=20261009_i';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_i';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261009_i';
+import { fetchAniSkipSegments } from './skipSegments.js?v=20261009_i';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1351,7 +1351,8 @@ function skipCardState(session) {
     const seg = session.skipSegments.find(s => t >= s.start && t < s.end - 1);
     if (seg && !session.skipDismissed.has(seg.type)) {
         if (seg.type !== 'outro') return { key: seg.type, seg, actions: ['skip'] };
-        const contentAfter = video.duration - seg.end > SKIP_OUTRO_TAIL_S;
+        // Times taken from a slightly different cut are a few seconds off: skipping could cut the scene after it
+        const contentAfter = !seg.approx && video.duration - seg.end > SKIP_OUTRO_TAIL_S;
         const actions = [...(contentAfter ? ['skip'] : []), ...(next ? ['next'] : [])];
         return actions.length ? { key: `outro:${actions.join('+')}`, seg, actions, next } : null;
     }

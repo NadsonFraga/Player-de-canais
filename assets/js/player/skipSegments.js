@@ -33,6 +33,10 @@ function isPlausible(seg, duration) {
     return true;
 }
 
+// A cut this close to our video is the same cut; up to the tolerance it is used, with approximate times
+const EXACT_CUT_S = 10;
+const ANY_CUT_TOLERANCE_S = 30;
+
 const cache = new Map();
 
 /**
@@ -50,7 +54,7 @@ export function normalizeSkipSegments(list, duration) {
         if (!Number.isFinite(start) || !Number.isFinite(end) || end - start < MIN_SEGMENT_S) continue;
         if (!isPlausible({ type, start, end }, limit)) continue;
         const kept = byType.get(type);
-        if (!kept || start < kept.start) byType.set(type, { type, start, end });
+        if (!kept || start < kept.start) byType.set(type, { type, start, end, approx: Boolean(item.approx) });
     }
     const sorted = [...byType.values()].sort((a, b) => a.start - b.start);
     const result = [];
@@ -66,6 +70,54 @@ export function normalizeSkipSegments(list, duration) {
     return result;
 }
 
+/** AniSkip results for one episode; `length` 0 asks for the best-voted submissions of any cut. */
+async function requestAniSkip(mal, ep, length) {
+    const params = new URLSearchParams();
+    ANISKIP_TYPES.forEach(t => params.append('types[]', t));
+    params.set('episodeLength', String(length));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ANISKIP_TIMEOUT_MS);
+    try {
+        const res = await fetch(`${ANISKIP_API}/${mal}/${ep}?${params}`, { signal: controller.signal });
+        // 404 is AniSkip's "no skip times found"
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data && Array.isArray(data.results) ? data.results : [];
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+/**
+ * Picks one submission per part (opening, recap, ending) for a video of `duration` seconds.
+ * `matched` came back for this exact length (AniSkip only returns cuts within a few seconds of it); `any` holds the
+ * best-voted submissions of every cut. Dubbed or re-encoded videos are often 20-30 s off the cut people timed, so a
+ * part missing from `matched` is taken from `any` when its cut is at most ANY_CUT_TOLERANCE_S away. Its times may
+ * then be a few seconds off: such a range is flagged `approx` (no "Pular encerramento", only "Próximo episódio").
+ */
+export function pickAniSkipResults(matched, any, duration) {
+    const chosen = new Map();
+    for (const r of matched) {
+        const type = TYPE_MAP[r.skipType];
+        if (type && !chosen.has(type)) chosen.set(type, { r, approx: false });
+    }
+    const fallback = new Map();
+    for (const r of any) {
+        const type = TYPE_MAP[r.skipType];
+        const diff = Math.abs(Number(r.episodeLength) - duration);
+        if (!type || chosen.has(type) || !(diff <= ANY_CUT_TOLERANCE_S)) continue;
+        const best = fallback.get(type);
+        if (!best || diff < best.diff) fallback.set(type, { r, diff, approx: diff > EXACT_CUT_S });
+    }
+    fallback.forEach((value, type) => chosen.set(type, value));
+    return [...chosen.entries()].map(([type, { r, approx }]) => ({
+        type,
+        start: r.interval && r.interval.startTime,
+        end: r.interval && r.interval.endTime,
+        approx,
+    }));
+}
+
 /**
  * Opening/recap/ending of an anime episode, or [] when AniSkip has nothing that fits this video.
  * Never throws: a failure only means no markers.
@@ -79,27 +131,12 @@ export async function fetchAniSkipSegments({ malId, episode, duration }) {
     if (cache.has(key)) return cache.get(key);
 
     const pending = (async () => {
-        const params = new URLSearchParams();
-        ANISKIP_TYPES.forEach(t => params.append('types[]', t));
-        params.set('episodeLength', String(length));
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), ANISKIP_TIMEOUT_MS);
         try {
-            const res = await fetch(`${ANISKIP_API}/${mal}/${ep}?${params}`, { signal: controller.signal });
-            // 404 is AniSkip's "no skip times found"
-            if (!res.ok) return [];
-            const data = await res.json();
-            const raw = (data && Array.isArray(data.results) ? data.results : []).map(r => ({
-                type: TYPE_MAP[r.skipType],
-                start: r.interval && r.interval.startTime,
-                end: r.interval && r.interval.endTime
-            }));
-            return normalizeSkipSegments(raw, duration);
+            const [matched, any] = await Promise.all([requestAniSkip(mal, ep, length), requestAniSkip(mal, ep, 0)]);
+            return normalizeSkipSegments(pickAniSkipResults(matched, any, duration), duration);
         } catch (e) {
             cache.delete(key);
             return [];
-        } finally {
-            clearTimeout(timer);
         }
     })();
     cache.set(key, pending);

@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261009_h';
+import { store } from '../core/state.js?v=20261009_i';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,12 +14,13 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261009_h';
-import { showToast } from '../core/toast.js?v=20261009_h';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_h';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_h';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261009_h';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_h';
+} from '../core/constants.js?v=20261009_i';
+import { showToast } from '../core/toast.js?v=20261009_i';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261009_i';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_i';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_i';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261009_i';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_i';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -917,7 +918,20 @@ async function executeFilteredSeriesSearch(page = 1) {
             if (sectionTitle) sectionTitle.textContent = "Catálogo de Séries";
         }
 
-        const data = await fetchSeriesEndpoint(endpoint);
+        // Text + filter: TMDB's search ignores the filters, so they are applied over the first search pages
+        const filterWithText = query && (activeSeriesFilterGenre || activeSeriesFilterYearRange || activeSeriesFilterSort !== 'popularity.desc');
+        const data = filterWithText
+            ? await filteredSearchPage({
+                key: `tv|${query}|${activeSeriesFilterGenre}|${activeSeriesFilterYearRange}|${activeSeriesFilterSort}`,
+                fetchPage: n => fetchSeriesEndpoint(`search/tv?query=${encodeURIComponent(query)}&page=${n}`),
+                keep: item => !(item.genre_ids || []).includes(16)
+                    && (!activeSeriesFilterGenre || (item.genre_ids || []).includes(Number(activeSeriesFilterGenre)))
+                    && inYearRange(item.first_air_date, activeSeriesFilterYearRange),
+                sort: activeSeriesFilterSort,
+                dateField: 'first_air_date',
+                page,
+            })
+            : await fetchSeriesEndpoint(endpoint);
         let results = data.results || [];
 
         // Exclude animation (genre 16) from series search when text query is used
@@ -928,7 +942,7 @@ async function executeFilteredSeriesSearch(page = 1) {
         posterGrid.innerHTML = "";
 
         if (resultsCount) {
-            const count = query ? results.length : (data.total_results || 0);
+            const count = query && !data.filtered ? results.length : (data.total_results || 0);
             resultsCount.textContent = `${count.toLocaleString('pt-BR')} ${count === 1 ? 'série encontrada' : 'séries encontradas'}`;
         }
 
@@ -1503,7 +1517,26 @@ async function executeFilteredAnimesSearch(page = 1) {
             if (sectionTitle) sectionTitle.textContent = "Catálogo de Animes";
         }
 
-        const data = await fetchSeriesEndpoint(endpoint);
+        const isAnimeResult = item => {
+            if (!item.genre_ids || !item.genre_ids.includes(16)) return false;
+            const lang = item.original_language || '';
+            const countries = item.origin_country || [];
+            return lang === 'ja' || countries.includes('JP') || lang === 'ko' || lang === 'zh';
+        };
+        // Text + filter: TMDB's search ignores the filters, so they are applied over the first search pages
+        const filterWithText = query && (activeAnimesFilterGenre || activeAnimesFilterYearRange || activeAnimesFilterSort !== 'popularity.desc');
+        const data = filterWithText
+            ? await filteredSearchPage({
+                key: `anime|${query}|${activeAnimesFilterGenre}|${activeAnimesFilterYearRange}|${activeAnimesFilterSort}`,
+                fetchPage: n => fetchSeriesEndpoint(`search/tv?query=${encodeURIComponent(query)}&page=${n}`),
+                keep: item => isAnimeResult(item)
+                    && (!activeAnimesFilterGenre || item.genre_ids.includes(Number(activeAnimesFilterGenre)))
+                    && inYearRange(item.first_air_date, activeAnimesFilterYearRange),
+                sort: activeAnimesFilterSort,
+                dateField: 'first_air_date',
+                page,
+            })
+            : await fetchSeriesEndpoint(endpoint);
         let results = data.results || [];
 
         // Filter to only genuine Anime (Animation genre 16 + Japanese or Asian anime origin) when a text query is used
@@ -1518,7 +1551,7 @@ async function executeFilteredAnimesSearch(page = 1) {
         posterGrid.innerHTML = "";
 
         if (resultsCount) {
-            const count = query ? results.length : (data.total_results || 0);
+            const count = query && !data.filtered ? results.length : (data.total_results || 0);
             resultsCount.textContent = `${count.toLocaleString('pt-BR')} ${count === 1 ? 'anime encontrado' : 'animes encontrados'}`;
         }
 

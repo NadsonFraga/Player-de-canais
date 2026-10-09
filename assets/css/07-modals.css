@@ -168,9 +168,13 @@
     color: #fca5a5;
 }
 
+/* Fills the player stage. The stage is not a flex box, so the old `flex: 1` never applied and the iframe fell back
+   to the browser's default height of 150 px (the server page or the player showed squeezed at the top). */
 .movie-modal-iframe {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    flex: 1;
+    height: 100%;
     border: none;
     background: #000;
 }
