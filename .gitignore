@@ -7,3 +7,5 @@ __pycache__/
 scratch/
 .env
 *.env
+# Chat exports stay on this computer: they hold local paths, an e-mail address and API keys
+.archives/history/
