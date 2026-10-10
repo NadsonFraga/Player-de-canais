@@ -1,6 +1,6 @@
 # Skip segments for series (TheIntroDB + SkipDB)
 
-Status: proposal, waiting for approval. Branch `feat/introdb`. Research: `.archives/scopes/Pular abertura em séries gerais.md`.
+Status: proposal, waiting for approval. Branch `feat/introdb`. Research: `research.md` (this folder).
 
 ## Live checks (2026-10-09)
 
