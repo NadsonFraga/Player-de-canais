@@ -55,6 +55,12 @@
 - B1: syntax checks, `python tools/bump_version.py`, `tools/player_ui_check.mjs` (button present with an Android user agent, absent on desktop; the intent address carries the source URL). Manual on the user's phone + projector: movie, series, anime.
 - B2: proxy suite (playlist rewrite keeps the new endings, Range/206 and HEAD unchanged) in Python and Node; benchmark Chrome + Firefox; manual detection test with the app on preview.
 
+### Phase 2 result (B1, 2026-10-10, not committed)
+
+- `engine.js`: "Transmitir" row last in the settings menu (after Tela), Android only (`navigator.userAgent`), one option "Abrir no Web Video Caster" that pauses the player and opens `castIntentUrl()`: `intent://<playing address>#Intent;action=VIEW;scheme;type=application/x-mpegURL|video/mp4;package=com.instantbits.cast.webvideo;S.title;S.browser_fallback_url=<Play Store>;end`. The address is the playing source made absolute (proxied sources carry their Referer). Cache version `20261010_1539`.
+- `tools/cast_check.mjs` (Chrome/Edge over CDP, Firefox over BiDi; one real resolve, cached by the local server): 6/6 in Chrome and 6/6 in Firefox. Desktop menu complete without the row; Android menu complete with the row last; intent shape for the playing HLS source, a relative proxy address and a direct MP4.
+- Not testable here: the app itself (which intent types it accepts, whether the projector plays the proxied HLS). Manual test by the user on the phone.
+
 ## Phases
 
 1. Merged seasons (Jujutsu Kaisen). Stop and report.
