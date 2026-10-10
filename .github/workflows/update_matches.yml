@@ -22,7 +22,7 @@ jobs:
           python-version: '3.11'
 
       - name: Execute match extraction script
-        run: python tools/test_get_matches.py
+        run: python tools/fetch_matches.py
 
       - name: Publish match schedule to data branch
         run: |

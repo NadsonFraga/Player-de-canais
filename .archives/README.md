@@ -14,7 +14,7 @@ Project documentation folder (replaces the former `docs/`). When resuming work, 
 - `scopes/` — long-lived specs: design system, sources, streaming engine, knowledge base (some describe older layouts; check the code)
 - `history/` — chat history exports (made with `old/tools/export_chat_history.py`); **local only, not versioned** (listed in `.gitignore`)
 - `reference/` — reference dumps
-- `old/` — legacy assets; `old/tools/` holds retired diagnostic scripts from the single-file era
+- `old/` — legacy assets; `old/tools/` holds retired diagnostic scripts (single-file era, plus `test_live_resolve.py`)
 
 ## Feature process
 
