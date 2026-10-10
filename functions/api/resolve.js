@@ -33,9 +33,80 @@ async function fetchImdbId(tmdbId, type = "movie") {
   return null;
 }
 
+/**
+ * TMDB lists some shows as one long season (Jujutsu Kaisen: 59 episodes) while MGEB numbers
+ * them by the real seasons (24 / 23 / 12). TMDB keeps the real split in an episode group of
+ * type 6 ("Seasons"). Returns its regular groups as lists of [season, episode] in airing order,
+ * or null when the show has more than one regular season or no usable group.
+ */
+const SEASON_GROUPS_TTL_MS = 24 * 60 * 60 * 1000;
+const seasonGroupsCache = new Map();
+
+/** Regular seasons of a TMDB episode group (specials, OVAs and empty groups skipped). */
+function regularSeasonGroups(detail) {
+  const groups = ((detail && detail.groups) || [])
+    .filter(g => (g.episodes || []).length > 0
+      && !/special|especia|ova|oad|extra/i.test(g.name || "")
+      && g.episodes.every(ep => (ep.season_number || 0) >= 1))
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map(g => g.episodes.slice()
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(ep => [ep.season_number, ep.episode_number]));
+  return groups.length >= 2 ? groups : null;
+}
+
+/** Maps a TMDB season/episode to its position in the real seasons: { season, episode } or null. */
+function mapMergedEpisode(groups, season, episode) {
+  if (!groups) return null;
+  for (let g = 0; g < groups.length; g++) {
+    const pos = groups[g].findIndex(([s, e]) => s === Number(season) && e === Number(episode));
+    if (pos >= 0) return { season: g + 1, episode: pos + 1 };
+  }
+  return null;
+}
+
+async function fetchSeasonGroups(tmdbId) {
+  const cached = seasonGroupsCache.get(tmdbId);
+  if (cached && Date.now() - cached.at < SEASON_GROUPS_TTL_MS) return cached.groups;
+  let groups = null;
+  try {
+    const get = async (path) => {
+      const res = await fetch(`https://api.themoviedb.org/3${path}?api_key=${TMDB_API_KEY}`, { headers: { "User-Agent": USER_AGENT } });
+      return res.ok ? res.json() : null;
+    };
+    const show = await get(`/tv/${tmdbId}`);
+    const regularSeasons = ((show && show.seasons) || []).filter(s => s.season_number >= 1 && s.episode_count > 0);
+    if (regularSeasons.length === 1) {
+      const list = await get(`/tv/${tmdbId}/episode_groups`);
+      const candidates = ((list && list.results) || [])
+        .filter(g => g.type === 6)
+        .sort((a, b) => Number(b.name === "Seasons") - Number(a.name === "Seasons"));
+      for (const candidate of candidates.slice(0, 3)) {
+        groups = regularSeasonGroups(await get(`/tv/episode_group/${candidate.id}`));
+        if (groups) break;
+      }
+    }
+  } catch (e) {
+    groups = null;
+  }
+  seasonGroupsCache.set(tmdbId, { at: Date.now(), groups });
+  return groups;
+}
+
 /** Same file served over http/https or :80 counts once. */
 function mgebSourceKey(source) {
   return String(source.file || "").trim().replace(/^https?:\/\//i, "").replace(/:80\//, "/").split("?")[0];
+}
+
+/**
+ * MGEB titles name the episode they serve ("Show - T1E1 - Name"). For an episode it does not
+ * have, MGEB answers with the T1E1 page, so a title naming another episode is refused.
+ * Titles without the pattern are kept.
+ */
+function mgebEpisodeMatches(title, season, episode) {
+  const m = /\bT(\d+)E(\d+)\b/i.exec(title || "");
+  if (!m) return true;
+  return Number(m[1]) === Number(season) && Number(m[2]) === Number(episode);
 }
 
 /**
@@ -429,7 +500,45 @@ function parseMoovResolution(buf, moovStart) {
   return best;
 }
 
-/** Reads the MP4 box layout with Range requests and returns { res, ranged }. */
+/** Reads the movie length (seconds) from the mvhd box of a moov buffer. */
+function parseMoovDuration(buf, moovStart) {
+  const moov = readBoxHeader(buf, moovStart);
+  if (!moov) return null;
+  const u32 = (o) => ((buf[o] << 24) >>> 0) + (buf[o + 1] << 16) + (buf[o + 2] << 8) + buf[o + 3];
+  const end = Math.min(moovStart + moov.size, buf.length);
+  let off = moovStart + moov.header;
+  while (off + 8 <= end) {
+    const box = readBoxHeader(buf, off);
+    if (!box || box.size < 8) return null;
+    if (box.type === "mvhd") {
+      const v1 = buf[off + 8] === 1;
+      if (off + (v1 ? 40 : 28) > buf.length) return null;
+      const timescale = u32(off + (v1 ? 28 : 20));
+      const duration = v1 ? u32(off + 32) * 4294967296 + u32(off + 36) : u32(off + 24);
+      // All bits set means "unknown"
+      if (!timescale || (!v1 && duration === 0xFFFFFFFF)) return null;
+      return Math.round((duration / timescale) * 10) / 10 || null;
+    }
+    off += box.size;
+  }
+  return null;
+}
+
+/**
+ * Sums the #EXTINF of a media playlist. The length (seconds) is only given for a finished
+ * playlist (#EXT-X-ENDLIST): a live or partial one has no meaningful total.
+ */
+function hlsPlaylistDuration(text) {
+  let segments = 0;
+  let seconds = 0;
+  for (const m of text.matchAll(/#EXTINF:\s*([\d.]+)/g)) {
+    segments += 1;
+    seconds += parseFloat(m[1]) || 0;
+  }
+  return { segments, seconds: text.includes("#EXT-X-ENDLIST") ? Math.round(seconds * 10) / 10 : null };
+}
+
+/** Reads the MP4 box layout with Range requests and returns { res, ranged, duration }. */
 async function probeMp4(url, referer) {
   const first = await probeFetch(url, referer, "bytes=0-131071", 131072);
   if (first.status >= 400) return { dead: true };
@@ -448,7 +557,7 @@ async function probeMp4(url, referer) {
       off += box.size;
     }
     if (moovAt >= 0) {
-      return { res: parseMoovResolution(buf, moovAt), ranged };
+      return { res: parseMoovResolution(buf, moovAt), ranged, duration: parseMoovDuration(buf, moovAt) };
     }
     if (nextAbs < 0 || !ranged) break;
     const next = await probeFetch(url, referer, `bytes=${nextAbs}-${nextAbs + 131071}`, 131072);
@@ -513,13 +622,19 @@ async function probeHls(url, referer) {
     // Check the top variant: its first segment must start at byte 0, and its real
     // frame size replaces a declared resolution that is not there
     let broken = false;
+    let duration = null;
+    let empty = false;
     try {
       const top = variants.filter(v => v.uri).sort((a, b) => (b.quality || 0) - (a.quality || 0) || b.bandwidth - a.bandwidth)[0];
       if (top) {
         const variantUrl = new URL(top.uri.trim(), url).toString();
         const media = await probeFetch(variantUrl, referer);
         if (media.status < 400) {
-          const seg = await probeFirstSegment(variantUrl, new TextDecoder().decode(media.buf), referer, true);
+          const mediaText = new TextDecoder().decode(media.buf);
+          const length = hlsPlaylistDuration(mediaText);
+          duration = length.seconds;
+          empty = mediaText.trimStart().startsWith("#EXTM3U") && length.segments === 0;
+          const seg = await probeFirstSegment(variantUrl, mediaText, referer, true);
           broken = seg.broken;
           const measured = seg.res ? qualityClass(seg.res.width, seg.res.height) : null;
           if (measured && top.quality && measured !== top.quality) {
@@ -530,13 +645,14 @@ async function probeHls(url, referer) {
     } catch (e) {
       // The variant check is best effort
     }
-    return { qualities, multi: variants.length > 1, broken, synthetic };
+    return { qualities, multi: variants.length > 1, broken, synthetic, duration, empty };
   }
 
   // Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
+  const length = hlsPlaylistDuration(text);
   const seg = await probeFirstSegment(url, text, referer, true);
   const q = seg.res ? qualityClass(seg.res.width, seg.res.height) : null;
-  return { qualities: q ? [q] : [], broken: seg.broken };
+  return { qualities: q ? [q] : [], broken: seg.broken, duration: length.seconds, empty: length.segments === 0 };
 }
 
 /**
@@ -551,6 +667,7 @@ async function probeSource(src) {
   let kind = "unknown";
   let alive = true;
   let synthetic = false;
+  let duration = null;
   try {
     if (isHls) {
       const r = await probeHls(src.raw_url, referer);
@@ -560,8 +677,10 @@ async function probeSource(src) {
         qualities = r.qualities;
         kind = r.multi ? "hls-multi" : "hls-single";
         synthetic = Boolean(r.synthetic);
-        // A broken first segment stalls playback: keep it only as a last resort
-        if (r.broken) alive = false;
+        duration = r.duration || null;
+        // A broken first segment stalls playback, and a playlist without segments plays
+        // nothing: keep them only as a last resort
+        if (r.broken || r.empty) alive = false;
       }
     } else {
       const r = await probeMp4(src.raw_url, referer);
@@ -571,13 +690,47 @@ async function probeSource(src) {
         const q = r.res ? qualityClass(r.res.width, r.res.height) : null;
         qualities = q ? [q] : [];
         kind = r.ranged ? "mp4-range" : "mp4";
+        duration = r.duration || null;
       }
     }
   } catch (e) {
     // Timeouts and network errors leave the source as unknown but playable
   }
   qualities.sort((a, b) => b - a);
-  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, probed: true };
+  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, probed: true };
+}
+
+// Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
+const DURATION_TOLERANCE = 0.05;
+const DURATION_MIN_GAP_S = 45;
+
+function durationsAgree(seconds, reference) {
+  return Math.abs(seconds - reference) <= Math.max(DURATION_TOLERANCE * reference, DURATION_MIN_GAP_S);
+}
+
+/**
+ * Hosts sometimes list another video under the same episode (another show, another cut).
+ * With 3 or more measured lengths, a source far from the median is flagged; it is ranked
+ * after the others but kept as a fallback. With fewer there is no majority to trust.
+ */
+function markDurationOutliers(sources) {
+  const measured = sources.filter(s => s.alive && s.duration > 0);
+  if (measured.length < 3) return sources;
+  const values = measured.map(s => s.duration).sort((a, b) => a - b);
+  const mid = values.length >> 1;
+  const median = values.length % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+  for (const s of measured) s.duration_mismatch = !durationsAgree(s.duration, median);
+  return sources;
+}
+
+/**
+ * Ranking may stop early on a trusted 1080p HLS, but only once another measured source
+ * confirms its length: the first trusted source may itself be the wrong video.
+ */
+function canStopProbing(results) {
+  return results.some(t => isTrustedTopSource(t) && t.duration > 0 && results.some(o => (
+    o !== t && o.probed && o.alive && o.duration > 0 && durationsAgree(o.duration, t.duration)
+  )));
 }
 
 /**
@@ -602,11 +755,14 @@ function isTrustedTopSource(src) {
 
 /**
  * Probes sources in parallel within PROBE_BUDGET_MS and sorts them best-first.
- * Returns early when a trusted 1080p HLS is confirmed; sources not measured in
- * time stay "unknown" and fall back to kind/host order.
+ * Returns early when a trusted 1080p HLS is measured; sources not measured in time stay
+ * "unknown" and fall back to kind/host order.
+ * With `checkLengths` (episodes, which all have one length; movies have legitimate cuts of
+ * different lengths), the early return also needs another source confirming the length, and
+ * a source whose length disagrees with the others goes after every agreeing live source.
  */
-async function rankSourcesByQuality(sources, tieBreaker = () => 0) {
-  const results = sources.map(s => ({ ...s, quality: null, qualities: [], kind: "unknown", alive: true, synthetic: false, probed: false }));
+async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths = false) {
+  const results = sources.map(s => ({ ...s, quality: null, qualities: [], kind: "unknown", alive: true, synthetic: false, duration: null, duration_mismatch: false, probed: false }));
   const toProbe = Math.min(sources.length, PROBE_MAX_SOURCES);
   if (toProbe > 0) {
     await new Promise(resolve => {
@@ -617,15 +773,17 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0) {
         probeSource(sources[i]).then(r => {
           results[i] = r;
           pending -= 1;
-          if (isTrustedTopSource(r) || pending === 0) done();
+          if (pending === 0 || (checkLengths ? canStopProbing(results) : isTrustedTopSource(r))) done();
         });
       }
     });
   }
+  if (checkLengths) markDurationOutliers(results);
   return results.slice()
     .map((s, i) => ({ s, i }))
     .sort((a, b) => (
       (Number(b.s.alive) - Number(a.s.alive)) ||
+      (Number(a.s.duration_mismatch) - Number(b.s.duration_mismatch)) ||
       ((b.s.quality || 0) - (a.s.quality || 0)) ||
       (Number(isLowTrustSource(a.s)) - Number(isLowTrustSource(b.s))) ||
       (KIND_RANK[a.s.kind] - KIND_RANK[b.s.kind]) ||
@@ -1051,6 +1209,7 @@ export async function onRequestGet(context) {
 
   // ROTA 2: Filmes, Séries ou Anime Dublado (MGEB)
   const imdbId = urlObj.searchParams.get("imdb_id");
+  let mgebEpisodeMismatch = false;
   if (!result && (id || imdbId) && !(type === "anime" && lang === "sub")) {
     const mgebType = type === "anime" ? "serie" : type;
     const givenImdb = imdbId && imdbId.startsWith("tt") ? imdbId : null;
@@ -1060,16 +1219,34 @@ export async function onRequestGet(context) {
     // ask both in parallel, take the first with sources and merge the other if it arrives soon.
     // A numeric movie id may collide with a TV series (e.g. 1422 -> The Middle vs The Departed).
     const isTvCollision = (data) => type === "movie" && /[-–]\s*T\d+E\d+|S\d+E\d+|Epis[oó]dio|\bPiloto\b/i.test(data.title || "");
-    const lookups = [];
     const imdbLookupId = givenImdb
       ? Promise.resolve(givenImdb)
       : (tmdbId ? timed("tmdb", fetchImdbId(tmdbId, mgebType)) : Promise.resolve(null));
-    lookups.push(imdbLookupId.then(tt => (tt ? resolveMgeb(mgebType, tt, season, episode) : null)));
-    if (tmdbId || (!givenImdb && id)) {
-      lookups.push(resolveMgeb(mgebType, tmdbId || id, season, episode).then(data => (data && !isTvCollision(data) ? data : null)));
-    }
+    const lookupMgeb = (s, e) => {
+      const checkEpisode = (data) => {
+        if (data && mgebType === "serie" && !mgebEpisodeMatches(data.title, s, e)) {
+          mgebEpisodeMismatch = true;
+          return null;
+        }
+        return data;
+      };
+      const lookups = [imdbLookupId.then(tt => (tt ? resolveMgeb(mgebType, tt, s, e) : null)).then(checkEpisode)];
+      if (tmdbId || (!givenImdb && id)) {
+        lookups.push(resolveMgeb(mgebType, tmdbId || id, s, e).then(data => (data && !isTvCollision(data) ? checkEpisode(data) : null)));
+      }
+      return firstThenMerge(lookups, MGEB_MERGE_WINDOW_MS);
+    };
 
-    const mgebData = await timed("mgeb", firstThenMerge(lookups, MGEB_MERGE_WINDOW_MS));
+    let mgebData = await timed("mgeb", lookupMgeb(season, episode));
+    let mgebEpisode = { season, episode };
+    // MGEB answered for another episode: the show may be one long season on TMDB and split on MGEB
+    if (!mgebData && mgebEpisodeMismatch && tmdbId && mgebType === "serie") {
+      const mapped = mapMergedEpisode(await timed("groups", fetchSeasonGroups(tmdbId)), season, episode);
+      if (mapped && (mapped.season !== season || mapped.episode !== episode)) {
+        mgebData = await timed("mgeb2", lookupMgeb(mapped.season, mapped.episode));
+        if (mgebData) mgebEpisode = mapped;
+      }
+    }
 
     if (mgebData && mgebData.sources && mgebData.sources.length > 0) {
       const parsedSources = mgebData.sources.map((s, idx) => {
@@ -1131,7 +1308,7 @@ export async function onRequestGet(context) {
       }
 
       // Best quality first; the host score only breaks ties between equal qualities
-      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, scoreSource));
+      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, scoreSource, mgebType === "serie"));
       const primary = rankedSources[0];
       const fallbacks = rankedSources.slice(1);
 
@@ -1142,6 +1319,7 @@ export async function onRequestGet(context) {
         audio: lang === "sub" ? "subtitled" : "dubbed",
         primary_source: primary,
         fallback_sources: fallbacks,
+        mgeb_episode: mgebType === "serie" ? `T${mgebEpisode.season}E${mgebEpisode.episode}` : null,
         subtitles: [],
         aniskip: {
           mal_id: malId ? parseInt(malId, 10) : null,
@@ -1170,7 +1348,7 @@ export async function onRequestGet(context) {
   return new Response(JSON.stringify({
     success: false,
     error: "No direct streams resolved for the requested title.",
-    reason: type === "anime" && lang === "sub" ? "anime_not_found" : "no_sources",
+    reason: type === "anime" && lang === "sub" ? "anime_not_found" : (mgebEpisodeMismatch ? "episode_mismatch" : "no_sources"),
     fallback_recommended: true,
   }), {
     status: 404,
