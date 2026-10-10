@@ -1,5 +1,5 @@
 /**
- * Real-browser check of the native player (headless Edge over CDP, no dependencies, Node 22+).
+ * Real-browser check of the native player (headless Chrome or Edge over CDP, no dependencies, Node 22+).
  *
  * Covers: background image/carousel activity per tab, the anime episode numbering (Dragon Ball Z S9E31),
  * the details badge, the settings menu rows (no Espelhar/Proporção, Áudio and Legendas always present,
@@ -18,6 +18,10 @@ import { tmpdir } from "node:os";
 
 const BASE = "http://127.0.0.1:8787";
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+// --browser=chrome (default) or --browser=edge: both Chromium; Chrome is what most viewers use
+const BROWSER = (process.argv.find(a => a.startsWith("--browser=")) || "--browser=chrome").split("=")[1];
+const CHROMIUM = BROWSER === "edge" ? EDGE : CHROME;
 const shotDir = process.argv[2];
 const PORT = 9700 + Math.floor(Math.random() * 200);
 const stopBrowser = () => { try { spawnSync("taskkill", ["/PID", String(proc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {} };
@@ -26,7 +30,7 @@ const results = [];
 const check = (name, ok, detail = "") => { results.push(ok); console.log(`${ok ? "OK  " : "FAIL"} ${name} ${detail}`); };
 
 const profile = mkdtempSync(join(tmpdir(), "tvz-ui-"));
-const proc = spawn(EDGE, ["--headless=new", `--remote-debugging-port=${PORT}`, "--remote-allow-origins=*", `--user-data-dir=${profile}`,
+const proc = spawn(CHROMIUM, ["--headless=new", `--remote-debugging-port=${PORT}`, "--remote-allow-origins=*", `--user-data-dir=${profile}`,
   "--no-first-run", "--mute-audio", "--autoplay-policy=no-user-gesture-required", "--window-size=1280,800", "about:blank"], { stdio: "ignore" });
 let page;
 for (let i = 0; i < 60 && !page; i++) {
@@ -46,7 +50,8 @@ ws.onmessage = (ev) => {
 };
 const send = (method, params = {}) => new Promise((res, rej) => { const id = ++nextId; pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params })); });
 const evaluate = async (expr) => {
-  const r = await send("Runtime.evaluate", { expression: `(async () => JSON.stringify(await (${expr})))()`, awaitPromise: true, returnByValue: true });
+  // userGesture: counts as a click (Chrome refuses fullscreen without one; Edge was lenient)
+  const r = await send("Runtime.evaluate", { expression: `(async () => JSON.stringify(await (${expr})))()`, awaitPromise: true, returnByValue: true, userGesture: true });
   if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
   return JSON.parse(r.result.value ?? "null");
 };
@@ -163,7 +168,21 @@ const skip = await evaluate(`new Promise(resolve => {
 })`);
 check("AniSkip: opening and ending drawn on the progress bar", skip.ranges === 2, JSON.stringify(skip));
 check("AniSkip: 'Pular abertura' button with a dismiss control inside the opening", skip.label === "Pular abertura" && skip.close, JSON.stringify(skip));
+// the card sits above the progress bar (its clickable area), in the window and in fullscreen
+const CARD_GAP = `(() => { const root = document.querySelector('#series-artplayer-container .art-video-player');
+  root.classList.add('art-control-show'); window.artInstance.emit('control', true);
+  const card = root.querySelector('.tvz-side-card'); const bar = root.querySelector('.art-control-progress');
+  return new Promise(r => setTimeout(() => r(card && bar ? Math.round(bar.getBoundingClientRect().top - card.getBoundingClientRect().bottom) : null), 400)); })()`;
+const gapWindow = await evaluate(CARD_GAP);
 await shot("anime-skip-button.png");
+await evaluate("(window.artInstance.fullscreen = true, new Promise(r => setTimeout(() => r(true), 1200)))").catch(() => {});
+const inFullscreen = await evaluate("Boolean(document.fullscreenElement)");
+const gapFull = inFullscreen ? await evaluate(CARD_GAP) : null;
+if (inFullscreen) await shot("anime-skip-button-fullscreen.png");
+await evaluate("(window.artInstance.fullscreen = false, new Promise(r => setTimeout(() => r(true), 800)))").catch(() => {});
+check("skip card sits above the progress bar (window, and fullscreen when the test browser allows it)",
+  gapWindow !== null && gapWindow >= 0 && gapWindow <= 30 && (!inFullscreen || (gapFull >= 0 && gapFull <= 30)),
+  `window gap ${gapWindow}px, fullscreen ${inFullscreen ? gapFull + "px" : "not available here"}`);
 await evaluate("(document.querySelector('#series-artplayer-container .tvz-skip-go').click(), true)");
 await sleep(600);
 const afterSkip = await evaluate("({ t: window.artInstance.currentTime, button: Boolean(document.querySelector('#series-artplayer-container .tvz-skip-go')) })");
@@ -334,6 +353,29 @@ await evaluate("(document.getElementById('btn-exit-movie-player').click(), true)
 await sleep(1500);
 const movieAfter = await evaluate("({ modal: !document.getElementById('movie-modal').classList.contains('hidden'), view: window.TvzinhaActions.store.currentView, locked: document.body.classList.contains('modal-open') })");
 check("movie exit (X) closes the player and shows the Filmes catalog", !movieAfter.modal && movieAfter.view === "movies" && !movieAfter.locked, JSON.stringify(movieAfter));
+
+// ---------- series skip segments (TheIntroDB + SkipDB): Game of Thrones S1E1 on the main player
+// Expected: the 100 s opening (the 13 s submission loses), the ending, and no recap in a first episode
+await evaluate("(window.__series.openEpisode({ id: 1399, name: 'Game of Thrones' }, { season: 1, episode: 1 }), true)");
+const gotSkip = await evaluate(`new Promise(resolve => {
+  const started = Date.now();
+  const look = () => {
+    const root = document.querySelector('#series-artplayer-container .art-video-player');
+    const ranges = root ? [...root.querySelectorAll('.art-control-progress-inner .tvz-skip-range')].map(r => r.className.replace('tvz-skip-range tvz-skip-range--', '')) : [];
+    if (ranges.length || Date.now() - started > 45000) resolve({ ranges, duration: Math.round(window.artInstance?.video?.duration || 0) });
+    else setTimeout(look, 500);
+  };
+  look();
+})`);
+check("series: opening and ending of Game of Thrones S1E1 on the bar, no recap in a first episode", gotSkip.ranges.join() === "intro,outro", JSON.stringify(gotSkip));
+await evaluate("(window.artInstance.currentTime = 445, true)");
+// a seek this far into a long MP4 can take a while in headless Chrome
+await evaluate("new Promise(r => { const t0 = Date.now(); const look = () => ((document.querySelector('#series-artplayer-container .tvz-skip-go') && !window.artInstance.video.seeking) || Date.now() - t0 > 40000) ? r(true) : setTimeout(look, 300); look(); })");
+const gotButton = await evaluate("(document.querySelector('#series-artplayer-container .tvz-skip-go') || {}).textContent || ''");
+await evaluate("(document.querySelector('#series-artplayer-container .tvz-skip-go')?.click(), true)");
+await sleep(1500);
+const gotAfter = await evaluate("Math.round(window.artInstance.currentTime)");
+check("series: 'Pular abertura' jumps to the end of the 100 s opening (~8:57)", /Pular abertura/.test(gotButton) && gotAfter >= 530 && gotAfter <= 545, `${gotButton.trim()} -> ${gotAfter}s`);
 
 check("no uncaught console errors", consoleErrors.filter(e => !/favicon|ERR_|net::|Failed to load resource|403|404/.test(e)).length === 0, JSON.stringify(consoleErrors.slice(0, 4)));
 

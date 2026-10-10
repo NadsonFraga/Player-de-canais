@@ -17,6 +17,10 @@ import { tmpdir } from "node:os";
 
 const BASE = "http://127.0.0.1:8787";
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+// --browser=chrome (default) or --browser=edge: both Chromium; Chrome is what most viewers use
+const BROWSER = (process.argv.find(a => a.startsWith("--browser=")) || "--browser=chrome").split("=")[1];
+const CHROMIUM = BROWSER === "edge" ? EDGE : CHROME;
 const PHONE_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36";
 const PORT = 9700 + Math.floor(Math.random() * 200);
 const stopBrowser = () => { try { spawnSync("taskkill", ["/PID", String(proc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {} };
@@ -25,7 +29,7 @@ const results = [];
 const check = (name, ok, detail = "") => { results.push(ok); console.log(`${ok ? "OK  " : "FAIL"} ${name} ${detail}`); };
 
 const profile = mkdtempSync(join(tmpdir(), "tvz-touch-"));
-const proc = spawn(EDGE, ["--headless=new", `--remote-debugging-port=${PORT}`, "--remote-allow-origins=*", `--user-data-dir=${profile}`,
+const proc = spawn(CHROMIUM, ["--headless=new", `--remote-debugging-port=${PORT}`, "--remote-allow-origins=*", `--user-data-dir=${profile}`,
   "--no-first-run", "--mute-audio", "--autoplay-policy=no-user-gesture-required", "about:blank"], { stdio: "ignore" });
 let page;
 for (let i = 0; i < 60 && !page; i++) {
@@ -77,6 +81,19 @@ const box = await evaluate("(() => { const r = document.querySelector('#series-a
 const at = (fraction) => ({ x: box.x + box.w * fraction, y: box.y + box.h * 0.3 });
 const time = () => evaluate("window.artInstance.currentTime");
 check("player runs in phone mode (art-mobile)", await evaluate("document.querySelector('#series-artplayer-container .art-video-player').classList.contains('art-mobile')"));
+
+// ---------- tapping "Pular abertura" with the controls hidden skips (the tap must not land on the progress bar)
+await evaluate("new Promise(r => { const t0 = Date.now(); const look = () => (document.querySelector('#series-artplayer-container .tvz-skip-go') || Date.now() - t0 > 20000) ? r(true) : setTimeout(look, 300); look(); })");
+await evaluate("new Promise(r => { const t0 = Date.now(); const look = () => (!document.querySelector('#series-artplayer-container .art-video-player').classList.contains('art-control-show') || Date.now() - t0 > 8000) ? r(true) : setTimeout(look, 300); look(); })");
+const skipBox = await evaluate("(() => { const b = document.querySelector('#series-artplayer-container .tvz-skip-go'); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()");
+const beforeSkip = await time();
+if (skipBox) await click(skipBox.x, skipBox.y);
+await sleep(1200);
+const afterSkip = await time();
+check("tapping 'Pular abertura' with the controls hidden jumps to the end of the opening", Boolean(skipBox) && afterSkip > 190 && afterSkip < 215,
+  `${beforeSkip.toFixed(1)} -> ${afterSkip.toFixed(1)}`);
+await evaluate("(window.artInstance.currentTime = 5, true)");
+await sleep(800);
 
 // ---------- double tap
 let t0 = await time();

@@ -1,6 +1,8 @@
 /**
  * TVZINHA ONLINE - Skip segments (opening, recap, ending) for the native player.
  *
+ * Anime: AniSkip (below). Series, and the parts AniSkip lacks for an anime: TheIntroDB and SkipDB (further below).
+ *
  * Source: AniSkip (api.aniskip.com), keyed by the MyAnimeList entry and the episode number inside it, the same pair
  * /api/resolve returns in `aniskip` for the anime player. Called straight from the browser (open CORS), so it costs no
  * Cloudflare invocation. The data is crowd-sourced: `episodeLength` makes AniSkip drop timings recorded on a cut of a
@@ -18,15 +20,24 @@ const MIN_SEGMENT_S = 5;
 // of the episode, right after the opening): anything outside these bounds is dropped.
 // maxStart/minStart are shares of the video length; minLength/maxLength are seconds.
 const PLAUSIBLE = {
-    intro: { maxStart: 0.4, minLength: 20, maxLength: 240 },
+    // Short openings exist (Breaking Bad's title card lasts ~17 s), so only the 5 s noise floor applies
+    intro: { maxStart: 0.4, minLength: MIN_SEGMENT_S, maxLength: 240 },
     recap: { maxStart: 0.25, minLength: MIN_SEGMENT_S, maxLength: 180 },
-    outro: { minStart: 0.6, minLength: 20, maxLength: 240 },
+    // Friends credits can be a 6 s card over the last scene
+    outro: { minStart: 0.6, minLength: MIN_SEGMENT_S, maxLength: 240 },
 };
+// An ending this close to the end of the file "runs to the end"; such an ending may last up to OUTRO_TO_END_MAX_S
+const OUTRO_TO_END_S = 10;
+const OUTRO_TO_END_MAX_S = 300;
 
 function isPlausible(seg, duration) {
     const rule = PLAUSIBLE[seg.type];
     const length = seg.end - seg.start;
-    if (length < rule.minLength || length > rule.maxLength) return false;
+    // Credits that run to the end of the file may be longer than those in the middle, up to OUTRO_TO_END_MAX_S.
+    // Longer ones are dropped (Game of Thrones S8E3 lists 13 min from a scene with different sound): the episode is
+    // then treated as having no ending data (countdown in the last 30 s)
+    const maxLength = seg.type === 'outro' && Number.isFinite(duration) && duration - seg.end <= OUTRO_TO_END_S ? OUTRO_TO_END_MAX_S : rule.maxLength;
+    if (length < rule.minLength || length > maxLength) return false;
     if (!Number.isFinite(duration)) return true;
     if (rule.maxStart !== undefined && seg.start > duration * rule.maxStart) return false;
     if (rule.minStart !== undefined && seg.start < duration * rule.minStart) return false;
@@ -54,7 +65,7 @@ export function normalizeSkipSegments(list, duration) {
         if (!Number.isFinite(start) || !Number.isFinite(end) || end - start < MIN_SEGMENT_S) continue;
         if (!isPlausible({ type, start, end }, limit)) continue;
         const kept = byType.get(type);
-        if (!kept || start < kept.start) byType.set(type, { type, start, end, approx: Boolean(item.approx) });
+        if (!kept || start < kept.start) byType.set(type, { type, start, end, approx: Boolean(item.approx), source: item.source || 'aniskip' });
     }
     const sorted = [...byType.values()].sort((a, b) => a.start - b.start);
     const result = [];
@@ -141,4 +152,137 @@ export async function fetchAniSkipSegments({ malId, episode, duration }) {
     })();
     cache.set(key, pending);
     return pending;
+}
+
+/* ---------- Series: TheIntroDB + SkipDB ---------- */
+
+// TheIntroDB is keyed by TMDB id, SkipDB by IMDb id; both allow calls from the browser (no Cloudflare cost)
+const THEINTRODB_API = 'https://api.theintrodb.org/v3/media';
+const SKIPDB_API = 'https://skipdb.tv/api/segments';
+const TV_TIMEOUT_MS = 6000;
+// SkipDB says whether its timing was recorded on a cut of our length; these labels mean it was
+const SKIPDB_TRUSTED = new Set(['exact', 'shifted']);
+// Two bases agreeing this closely on a start confirm each other
+const CONFIRM_S = 5;
+// When one base's range is shorter than this share of the other's, it is taken as a wrong submission (Game of
+// Thrones S1E1: a 13 s "opening" against the real 100 s one) and the longer range is used
+const MUCH_SHORTER = 0.5;
+const TV_TYPES = ['intro', 'recap', 'outro'];
+
+const tvCache = new Map();
+
+async function getJson(url) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TV_TIMEOUT_MS);
+    try {
+        const res = await fetch(url, { signal: controller.signal });
+        // 404 is "no data for this episode"
+        return res.ok ? await res.json() : null;
+    } catch (e) {
+        return null;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+/** TheIntroDB answer -> { intro, recap, outro } in seconds (first range of each list); null edges mean the file edges. */
+export function readTheIntroDb(data, duration) {
+    const out = {};
+    const pick = (list, type) => {
+        const r = Array.isArray(list) ? list[0] : null;
+        if (!r) return;
+        const start = r.start_ms == null ? 0 : r.start_ms / 1000;
+        const end = r.end_ms == null ? duration : r.end_ms / 1000;
+        if (Number.isFinite(start) && Number.isFinite(end) && end > start) out[type] = { start, end };
+    };
+    if (data) {
+        pick(data.intro, 'intro');
+        pick(data.recap, 'recap');
+        pick(data.credits, 'outro');
+    }
+    return out;
+}
+
+/**
+ * SkipDB answer -> { intro, recap, outro } in seconds. `trusted`: recorded on a cut of our length (exact) or within a
+ * few seconds of it (shifted). For a shifted cut SkipDB moves the times by the whole length difference, assuming the
+ * extra seconds sit at the start of the file; checked frame by frame (Breaking Bad S1E1, The Office S2E3) they sat at
+ * the end, so the times as submitted are used and the range is `approx`.
+ */
+export function readSkipDb(data, duration) {
+    const out = {};
+    const segs = data && data.segments ? data.segments : {};
+    for (const type of TV_TYPES) {
+        const r = segs[type];
+        if (!r) continue;
+        const undo = r.adjusted && Number.isFinite(r.offset_ms) ? r.offset_ms / 1000 : 0;
+        const start = r.start_ms == null ? 0 : r.start_ms / 1000 - undo;
+        const end = r.end_ms == null ? duration : r.end_ms / 1000 - undo;
+        if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
+            out[type] = { start, end, trusted: SKIPDB_TRUSTED.has(r.match), approx: r.match !== 'exact' };
+        }
+    }
+    return out;
+}
+
+/**
+ * One source per part, never mixed: SkipDB when it confirms our cut, else TheIntroDB, else SkipDB for another cut.
+ * A range not proven to belong to our cut is `approx` (an ending then offers only "Próximo episódio"), unless the
+ * other base agrees on its start within CONFIRM_S.
+ */
+export function mergeTvSources(skipdb, theintrodb) {
+    const list = [];
+    for (const type of TV_TYPES) {
+        const s = skipdb[type];
+        const t = theintrodb[type];
+        const length = r => r.end - r.start;
+        if (s && t && Math.min(length(s), length(t)) < Math.max(length(s), length(t)) * MUCH_SHORTER) {
+            const longer = length(s) > length(t) ? { ...s, source: 'skipdb' } : { ...t, source: 'theintrodb', trusted: false };
+            const confirmed = Math.abs(s.start - t.start) <= CONFIRM_S;
+            list.push({ type, start: longer.start, end: longer.end, approx: !((longer.trusted && !longer.approx) || confirmed), source: longer.source });
+        } else if (s && s.trusted) {
+            const confirmed = Boolean(t) && Math.abs(s.start - t.start) <= CONFIRM_S;
+            list.push({ type, start: s.start, end: s.end, approx: Boolean(s.approx) && !confirmed, source: 'skipdb' });
+        } else if (t) {
+            const confirmed = Boolean(s) && Math.abs(s.start - t.start) <= CONFIRM_S;
+            list.push({ type, start: t.start, end: t.end, approx: !confirmed, source: 'theintrodb' });
+        } else if (s) {
+            list.push({ type, start: s.start, end: s.end, approx: true, source: 'skipdb' });
+        }
+    }
+    return list;
+}
+
+/**
+ * Opening/recap/ending of a series episode from TheIntroDB and SkipDB, or [] when neither has it.
+ * `season`/`episode` use TMDB's own numbering. Never throws.
+ */
+export async function fetchTvSkipSegments({ tmdbId, imdbId, season, episode, duration }) {
+    const tmdb = parseInt(tmdbId, 10);
+    const s = parseInt(season, 10);
+    const e = parseInt(episode, 10);
+    if (!(s >= 0) || !(e > 0) || !(duration > 0) || (!(tmdb > 0) && !imdbId)) return [];
+    const length = Math.round(duration);
+    const key = `${tmdb}_${imdbId}_${s}_${e}_${length}`;
+    if (tvCache.has(key)) return tvCache.get(key);
+    const pending = (async () => {
+        const [tidb, skip] = await Promise.all([
+            tmdb > 0 ? getJson(`${THEINTRODB_API}?tmdb_id=${tmdb}&season=${s}&episode=${e}&duration_ms=${length * 1000}`) : null,
+            imdbId ? getJson(`${SKIPDB_API}?imdb_id=${encodeURIComponent(imdbId)}&season=${s}&episode=${e}&duration=${length}`) : null,
+        ]);
+        return normalizeSkipSegments(mergeTvSources(readSkipDb(skip, duration), readTheIntroDb(tidb, duration)), duration);
+    })();
+    tvCache.set(key, pending);
+    return pending;
+}
+
+/**
+ * Adds to `primary` (AniSkip) the parts it lacks, taken from `extra` (series bases), never overlapping a range
+ * already there. One source per part, so the progress bar never shows two openings.
+ */
+export function complementSegments(primary, extra, duration) {
+    const have = new Set(primary.map(seg => seg.type));
+    const added = extra.filter(seg => !have.has(seg.type)
+        && !primary.some(p => seg.start < p.end && p.start < seg.end));
+    return normalizeSkipSegments([...primary, ...added], duration);
 }

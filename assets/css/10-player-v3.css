@@ -421,6 +421,19 @@
     color: #04130a;
 }
 
+/* The stage (not Artplayer's element) goes fullscreen, so the next episode mounts inside it and stays fullscreen */
+.movie-player-stage:fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #000;
+}
+
+.movie-player-stage:-webkit-full-screen {
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #000;
+}
+
 /* "Tela: Preencher": the picture covers the whole box, cropping the edges */
 .art-video-player.tvz-fit-cover video {
     object-fit: cover !important;
@@ -521,13 +534,29 @@
 }
 
 /* Side cards (skip, next episode): just above the controls while they show, near the bottom edge when they hide */
+/* The cards never move: one that dropped over the hidden progress bar slid back up when a tap or the pointer showed
+   the controls, and the tap then landed on the bar (seek instead of skip) */
 .art-video-player .tvz-side-card {
-    bottom: 72px !important;
-    transition: bottom 0.2s ease, opacity 0.25s ease;
+    /* measured by the engine (placeSideCards): just above the progress bar in every layout */
+    bottom: var(--tvz-side-card-bottom, 84px) !important;
+    transition: opacity 0.25s ease;
 }
 
-.art-video-player:not(.art-control-show) .tvz-side-card {
-    bottom: 20px !important;
+/* "Continuando de 12:34" notice, bottom left, same card look */
+.art-video-player .tvz-resume {
+    align-items: center;
+}
+
+.art-video-player .tvz-resume-text {
+    padding: 10px 4px 10px 14px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.art-video-player .tvz-resume-restart {
+    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+    font-size: 13px !important;
 }
 
 /* Untouched for a while: hidden until the controls are shown again */
