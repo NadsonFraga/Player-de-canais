@@ -24,7 +24,7 @@ HOST = urllib.parse.urlparse(BASE).netloc
 failures = 0
 
 # Strings that only appear in internal files, never in the public page
-INTERNAL_MARKERS = [b"Archives & Documentation", b"Working rules", b"DevAPIHandler", b"update_matches", b"BLOCKED_PREFIXES", b"work-queue"]
+INTERNAL_MARKERS = [b"Archives & Documentation", b"Working rules", b"DevAPIHandler", b"update_matches", b"BLOCKED_PREFIXES", b"Fila de Trabalho"]
 
 
 def fetch(raw_path, timeout=60):
@@ -55,7 +55,7 @@ for path in ["/", "/assets/js/main.js", "/assets/css/10-player-v3.css", "/data/c
 
 print("\n== internal files are not served (HTTP 404, or the plain home page, never the file)")
 blocked = [
-    "/CLAUDE.md", "/tools/local_server.py", "/tools/test_path_block.mjs", "/.archives/README.md", "/.archives/plans/work-queue.md",
+    "/CLAUDE.md", "/tools/local_server.py", "/tools/test_path_block.mjs", "/.archives/README.md", "/.archives/backlog.md",
     "/.github/workflows/update_matches.yml", "/.gitignore", "/_headers", "/docs/CHAT_HISTORY.md", "/.archives/history/CHAT_HISTORY.md",
     # encoded, doubled and dot-segment ways of asking for the same files
     "/%2Earchives/README.md", "/%2e%61rchives/README.md", "/.%61rchives/README.md", "/.archives%2FREADME.md",

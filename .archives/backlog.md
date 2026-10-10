@@ -12,7 +12,7 @@ Legenda: `[feito]` implementado e verificado · `[impl]` implementado, verifica�
 
 ## A. Player de animes (`native_anime`) e busca do título
 
-Plano detalhado: `plans/anime-title-lookup-and-resolve-speed.md`.
+Plano detalhado: `features/2026-10-08-anime-title-lookup-and-resolve-speed/plan.md`.
 
 - `[feito]` A1. Fase 0: `tools/test_anime_lookup.py` (28 casos; opções `--original`, `--mal`, `--warm`, `--only=`).
 - `[impl]` A2. Fase 1: envio de `original_title` e do ano de estreia; correções de pontuação (especiais/OVAs/filmes -100, spin-offs -50, marcador de outra temporada -30, ano coincidente +30 / distante -30); buscas em paralelo; reserva só em empate exato. JS 28/28 (Node); Python 28/28 antes da última mudança. **Sem commit** (branch `feat/native-player-quality`).

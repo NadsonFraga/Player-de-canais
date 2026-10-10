@@ -1,6 +1,6 @@
 # Handover: Native Player Quality & Startup Speed (2026-10-08)
 
-> Read this first when resuming on another machine. Full plan: `.archives/plans/native-player-startup-and-quality-plan.md`. Evidence log: `.archives/plans/player-startup-speed-backlog.md`.
+> Read this first when resuming on another machine. Full plan: `.archives/features/2026-10-08-native-player-startup-and-quality/plan.md`. Evidence log: `.archives/features/2026-10-08-native-player-startup-and-quality/evidence-log.md`.
 
 ## Working rules agreed with the user
 

@@ -2,7 +2,7 @@
 
 > **Status:** IN PROGRESS (Phase 0 and Phase 1 done, awaiting review; Phases 2-4 not started)
 > **Date:** 2026-10-08
-> **Follow-up to:** `summaries/native-player-handover-2026-10-08.md` (pending item 2)
+> **Follow-up to:** `handovers/2026-10-08-native-player.md` (pending item 2)
 
 ---
 
