@@ -3,14 +3,14 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261009_s';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261009_s';
-import { showToast } from '../core/toast.js?v=20261009_s';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_s';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261009_s';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261009_s';
-import { formatClock } from '../core/resume.js?v=20261009_s';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261009_s';
+import { store } from '../core/state.js?v=20261010_1539';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261010_1539';
+import { showToast } from '../core/toast.js?v=20261010_1539';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261010_1539';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261010_1539';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261010_1539';
+import { formatClock } from '../core/resume.js?v=20261010_1539';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261010_1539';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -798,7 +798,10 @@ const NATIVE_UP_NEXT_NO_DATA_S = 30;
 // An ending followed by more than this (a scene or a preview) also offers "Pular encerramento"
 const SKIP_OUTRO_TAIL_S = 10;
 const NATIVE_SETTING_WIDTH = 230;
-const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate', 'fit'];
+const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate', 'fit', 'cast'];
+// Web Video Caster (Android) takes the playing source and sends it to a TV or projector
+const CAST_APP_PACKAGE = 'com.instantbits.cast.webvideo';
+const CAST_APP_STORE_URL = `https://play.google.com/store/apps/details?id=${CAST_APP_PACKAGE}`;
 // "Tela": Ajustar shows the whole picture (bars when the shape differs), Preencher covers the box and crops the edges
 const FIT_OPTIONS = [{ value: 'contain', html: 'Ajustar' }, { value: 'cover', html: 'Preencher' }];
 // Shown when the stream carries a single audio track (no separate dub/sub renditions to choose from)
@@ -809,7 +812,8 @@ const NATIVE_ICONS = {
     quality: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.2" fill="#000"/><circle cx="15" cy="12" r="2.2" fill="#000"/><circle cx="7" cy="17" r="2.2" fill="#000"/></svg>',
     audio: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
     fit: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>',
-    subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10.5 10.2a2.2 2.2 0 1 0 0 3.6M16.5 10.2a2.2 2.2 0 1 0 0 3.6" stroke-linecap="round"/></svg>'
+    subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10.5 10.2a2.2 2.2 0 1 0 0 3.6M16.5 10.2a2.2 2.2 0 1 0 0 3.6" stroke-linecap="round"/></svg>',
+    cast: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8"/><path d="M3 16a4 4 0 0 1 4 4"/><path d="M3 20h.01"/></svg>'
 };
 
 const NATIVE_I18N = {
@@ -1316,6 +1320,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             refreshAudioMenu(session);
             refreshSubtitleMenu(session);
             installFitSetting(art);
+            installCastSetting(session);
             routeFullscreenToStage(art);
             applyPlaybackPrefs(art);
             // The controls area changes height (window, fullscreen, phone): keep the side cards right above it
@@ -1983,6 +1988,51 @@ function measureCurrentQuality(session) {
         return;
     }
     updateQualityIndicators(session);
+}
+
+function canCastToApp() {
+    return typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '');
+}
+
+/**
+ * Android intent that opens a stream in Web Video Caster (the Play Store page when the app is missing).
+ * The address is made absolute; proxied sources already carry the Referer their host needs.
+ */
+export function castIntentUrl(streamUrl, title = '', isHls = false) {
+    const url = new URL(streamUrl, window.location.href);
+    const extras = [
+        'action=android.intent.action.VIEW',
+        `scheme=${url.protocol.replace(':', '')}`,
+        `type=${isHls ? 'application/x-mpegURL' : 'video/mp4'}`,
+        `package=${CAST_APP_PACKAGE}`,
+        title ? `S.title=${encodeURIComponent(title)}` : '',
+        `S.browser_fallback_url=${encodeURIComponent(CAST_APP_STORE_URL)}`,
+    ].filter(Boolean).join(';');
+    return `intent://${url.host}${url.pathname}${url.search}#Intent;${extras};end`;
+}
+
+/**
+ * "Transmitir" row (Android only): hands the source that is playing to Web Video Caster. The browser
+ * itself cannot: hls.js plays through a blob: address and the proxy address has no media ending.
+ */
+function installCastSetting(session) {
+    if (!session.art || !canCastToApp()) return;
+    upsertSetting(session.art, {
+        name: 'cast',
+        html: 'Transmitir',
+        icon: NATIVE_ICONS.cast,
+        width: NATIVE_SETTING_WIDTH,
+        tooltip: 'Web Video Caster',
+        selector: [{ html: 'Abrir no Web Video Caster', value: 'open' }],
+        onSelect: () => {
+            const source = session.sources[session.currentIndex];
+            if (source && isSessionLive(session)) {
+                session.art.pause();
+                window.location.href = castIntentUrl(source.url, session.title, isHlsSource(source));
+            }
+            return 'Web Video Caster';
+        }
+    });
 }
 
 function refreshAudioMenu(session) {
