@@ -9,8 +9,9 @@
 - **Phases:** in approved multi-phase work (even in auto mode), hard stop at the end of every phase, or before any decision with strong impact on development: report what changed, verification results with numbers, and wait for the go-ahead.
 - **Git:** no commits, pushes, branch creation, merges or deploys unless the user asks for that specific action.
 - **Scope:** prefer general fixes over per-host or per-title patches; point fixes only when strictly necessary.
-- **Verification:** test with several titles (movies, series, anime), not just one, in Edge and Firefox when the player is involved (`tools/player_benchmark.mjs`).
+- **Verification:** test with several titles (movies, series, anime), not just one, in Chrome and Firefox when the player is involved (test scripts take `--browser=chrome|edge|firefox`, Chrome by default; `tools/player_benchmark.mjs`).
 - **No emojis in the site:** never put emojis or pictograph glyphs (play, rewind, fast-forward symbols and the like) in anything the site renders. Use inline SVG line icons in the site's own style, or no icon at all. Artplayer paints every svg inside `.art-video-player` white, so line icons there need `fill: none; stroke: currentColor` in CSS.
+- **One entry point for episodes:** every way of opening a series or anime episode (resume card, details button, season list, continuous list, go to N, player drawer, previous/next, next-episode card, and any new one) calls `openEpisode()` in `assets/js/modules/series.js`. Features read the episode context it builds (`resolveEpisodeContext`: anime flag, TMDB/IMDb/MAL ids, our and TMDB numbering, show-wide number, episode data), never the raw call arguments or a thin catalog item.
 - **Tests are proportional and silent:** small changes get a targeted check (syntax, the one affected assertion). Run the browser suites (`tools/player_ui_check.mjs`, `tools/player_touch_check.mjs`) only for broad changes (player, router, history, layout, resolve logic), and always launch test browsers with `--mute-audio`.
 
 # Project context

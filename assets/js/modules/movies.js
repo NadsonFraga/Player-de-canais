@@ -3,7 +3,7 @@
  * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and modal playback
  */
 
-import { store } from '../core/state.js?v=20261009_i';
+import { store } from '../core/state.js?v=20261009_s';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,14 +14,14 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261009_i';
-import { showToast } from '../core/toast.js?v=20261009_i';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261009_i';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_i';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_i';
-import { getUiSvg } from '../core/icons.js?v=20261009_i';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261009_i';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_i';
+} from '../core/constants.js?v=20261009_s';
+import { showToast } from '../core/toast.js?v=20261009_s';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261009_s';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_s';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_s';
+import { getUiSvg } from '../core/icons.js?v=20261009_s';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261009_s';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_s';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1192,6 +1192,7 @@ export function setupMovieModal() {
 
             if (playerContainer) playerContainer.classList.add("hidden");
             if (backdropBox) backdropBox.classList.remove("hidden");
+            leaveStageFullscreen();
             if (modalCard) modalCard.classList.remove("is-playing");
             document.querySelectorAll(".btn-movie-server").forEach(btn => btn.classList.remove("active"));
             activeMovieServer = null;
@@ -1214,6 +1215,7 @@ export function openMovieDetailsModal(movie, autoplayFirstServer = false) {
     const modalCard = document.querySelector(".movie-modal-card");
     if (playerContainer) playerContainer.classList.add("hidden");
     if (backdropBox) backdropBox.classList.remove("hidden");
+    leaveStageFullscreen();
     if (modalCard) modalCard.classList.remove("is-playing");
 
     const backdropImg = document.getElementById("movie-modal-backdrop-img");
@@ -1269,6 +1271,7 @@ export function openMovieDetailsModal(movie, autoplayFirstServer = false) {
 
 export function closeMovieDetailsModal() {
     moviePlaybackSessionId++;
+    leaveStageFullscreen();
     if (pendingMovieAutoplayTimer) {
         clearTimeout(pendingMovieAutoplayTimer);
         pendingMovieAutoplayTimer = null;

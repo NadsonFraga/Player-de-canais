@@ -3,12 +3,14 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261009_i';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261009_i';
-import { showToast } from '../core/toast.js?v=20261009_i';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_i';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261009_i';
-import { fetchAniSkipSegments } from './skipSegments.js?v=20261009_i';
+import { store } from '../core/state.js?v=20261009_s';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261009_s';
+import { showToast } from '../core/toast.js?v=20261009_s';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_s';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261009_s';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261009_s';
+import { formatClock } from '../core/resume.js?v=20261009_s';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261009_s';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -236,6 +238,7 @@ export function atomicTvPlayerReset() {
  * Resets all active players (TV, Movies, Series, Anime) across the application
  */
 export function atomicPlayerReset() {
+    reportProgress(activeNativeSession, true);
     // Detach the native session first so events from the instances being destroyed are ignored
     activeNativeSession = null;
     atomicTvPlayerReset();
@@ -798,7 +801,6 @@ const NATIVE_SETTING_WIDTH = 230;
 const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate', 'fit'];
 // "Tela": Ajustar shows the whole picture (bars when the shape differs), Preencher covers the box and crops the edges
 const FIT_OPTIONS = [{ value: 'contain', html: 'Ajustar' }, { value: 'cover', html: 'Preencher' }];
-const FIT_STORAGE_KEY = 'tvz-video-fit';
 // Shown when the stream carries a single audio track (no separate dub/sub renditions to choose from)
 const AUDIO_SINGLE_LABEL = 'Original';
 const SUBTITLES_NONE_LABEL = 'Nenhuma disponível';
@@ -916,9 +918,11 @@ function isHlsSource(src) {
  * e.g. to prefetch the next episode while its links are still fresh.
  * `getNextUp` returns { title, play } or null; when set, the last seconds show an
  * "Próximo episódio" countdown that plays it (cancelable), and the end of the video plays it too.
- * `aniskip` ({ mal_id, episode }, anime player only) looks up the opening, recap and ending once the video length is known.
+ * `aniskip` ({ mal_id, episode } or a promise of it) looks up the opening, recap and ending of an anime once the video
+ * length is known; `tvskip` ({ tmdbId, imdbId, season, episode } in TMDB numbering) does the same from the series
+ * bases, which for an anime only fill the parts AniSkip lacks. `noRecap` (first episode of a show) drops any recap.
  */
-export function mountNativePlayer({ containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null, aniskip = null }) {
+export function mountNativePlayer({ containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null, aniskip = null, tvskip = null, noRecap = false, onProgress = null, resumeNotice = false }) {
     const normalized = normalizeNativeSources({ sources, streamUrl, fallbackSources });
     if (normalized.length === 0) {
         atomicPlayerReset();
@@ -939,9 +943,18 @@ export function mountNativePlayer({ containerId, streamUrl, sources, title, post
         upNextCancelled: false,
         // { mal_id, episode } or a promise of it (looked up in the background for anime played from another host)
         aniskip: aniskip || null,
+        tvskip: tvskip || null,
+        noRecap: Boolean(noRecap),
         skipRequested: false,
         skipSegments: [],
         skipDismissed: new Set(),
+        // Saves where the viewer is (see reportProgress); `startAt` is where this episode began
+        onProgress,
+        startAt: Number(startTime) || 0,
+        resumeNotice: Boolean(resumeNotice) && Number(startTime) > 0,
+        resumeNoticeShown: false,
+        progressReady: !(Number(startTime) > 0),
+        lastReportedAt: 0,
         sources: normalized,
         failed: new Set(),
         currentIndex: 0,
@@ -951,7 +964,80 @@ export function mountNativePlayer({ containerId, streamUrl, sources, title, post
         hls: null,
         mountToken: 0
     };
-    return mountNativeSource(session, 0, { startTime });
+    // A fixed quality chosen before is kept: start on a source that has it
+    const prefs = getPlayerPrefs();
+    let firstIndex = 0;
+    if (typeof prefs.quality === 'number') {
+        session.autoMode = false;
+        session.lockedQuality = prefs.quality;
+        const withQuality = normalized.findIndex(src => src.alive !== false && src.qualities.includes(prefs.quality));
+        if (withQuality >= 0) firstIndex = withQuality;
+    }
+    return mountNativeSource(session, firstIndex, { startTime });
+}
+
+/* ---------- Where the viewer is (resume) ---------- */
+
+// Saved every this many seconds of playback, and on pause, episode change and when the page is hidden
+const PROGRESS_EVERY_S = 10;
+
+/**
+ * Hands the current time to the page (`onProgress`). Nothing is reported before a resumed episode reached its saved
+ * time, so a reopened episode never overwrites it with 0.
+ */
+function reportProgress(session, force = false) {
+    if (!session || typeof session.onProgress !== 'function') return;
+    const video = session.art && session.art.video;
+    if (!video || !(video.duration > 0) || !Number.isFinite(video.duration)) return;
+    const t = video.currentTime;
+    if (!session.progressReady) {
+        if (t >= session.startAt - 2) session.progressReady = true;
+        else return;
+    }
+    if (!force && Math.abs(t - session.lastReportedAt) < PROGRESS_EVERY_S) return;
+    session.lastReportedAt = t;
+    const outro = session.skipSegments.find(seg => seg.type === 'outro');
+    try {
+        session.onProgress({ position: t, duration: video.duration, inEnding: Boolean(outro && t >= outro.start) || video.ended });
+    } catch (e) {
+        // Saving progress is optional
+    }
+}
+
+if (typeof document !== 'undefined') {
+    const flush = () => reportProgress(activeNativeSession, true);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+    window.addEventListener('pagehide', flush);
+}
+
+/** "Continuando de 12:34" with "Começar do início"; says nothing about the episode itself. */
+function showResumeNotice(session) {
+    const art = session.art;
+    if (!art || !art.layers || session.resumeNoticeShown || !session.resumeNotice) return;
+    session.resumeNoticeShown = true;
+    try {
+        art.layers.add({
+            name: 'tvz-resume',
+            html: `<div class="tvz-skip tvz-resume">
+                <span class="tvz-resume-text"></span>
+                <button type="button" class="tvz-skip-go tvz-resume-restart">Começar do início</button>
+            </div>`,
+            style: { position: 'absolute', left: '16px', pointerEvents: 'auto' },
+            mounted: ($el) => {
+                $el.classList.add('tvz-side-card');
+                placeSideCards(art);
+                $el.querySelector('.tvz-resume-text').textContent = `Continuando de ${formatClock(session.startAt)}`;
+                $el.querySelector('.tvz-resume-restart').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    art.currentTime = 0;
+                    if (art.layers['tvz-resume']) art.layers.remove('tvz-resume');
+                });
+                setTimeout(() => { try { if (art.layers && art.layers['tvz-resume']) art.layers.remove('tvz-resume'); } catch (e) { /* gone */ } }, 7000);
+            }
+        });
+    } catch (e) {
+        // Optional UI
+    }
 }
 
 function isSessionLive(session, token) {
@@ -1107,7 +1193,8 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
     }, 1000);
 
     const subtitles = session.subtitles;
-    const defaultSubtitle = subtitles[defaultSubtitleIndex(subtitles)];
+    const chosenSubtitle = chosenSubtitleIndex(subtitles);
+    const defaultSubtitle = subtitles[chosenSubtitle >= 0 ? chosenSubtitle : 0];
     // Taller rows and a wider main panel for the YouTube-like settings (Artplayer sizes panels from these constants)
     window.Artplayer.SETTING_ITEM_HEIGHT = 40;
     window.Artplayer.SETTING_WIDTH = 290;
@@ -1122,7 +1209,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             type: isHls ? 'm3u8' : 'mp4',
             title: session.title || 'Tvzinha Cinema',
             poster: session.poster || '',
-            volume: 0.9,
+            volume: getPlayerPrefs().volume,
             autoplay: true,
             autoMini: true,
             theme: '#22c55e',
@@ -1137,7 +1224,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             aspectRatio: false,
             hotkey: true,
             airplay: true,
-            subtitle: subtitles.length > 0 ? {
+            subtitle: subtitles.length > 0 && chosenSubtitle >= 0 ? {
                 url: defaultSubtitle.url || defaultSubtitle.file,
                 type: 'vtt',
                 escape: false,
@@ -1229,6 +1316,11 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             refreshAudioMenu(session);
             refreshSubtitleMenu(session);
             installFitSetting(art);
+            routeFullscreenToStage(art);
+            applyPlaybackPrefs(art);
+            // The controls area changes height (window, fullscreen, phone): keep the side cards right above it
+            placeSideCards(art);
+            ['resize', 'fullscreen', 'control'].forEach(name => art.on(name, () => requestAnimationFrame(() => placeSideCards(art))));
 
             const playPromise = art.play();
             if (playPromise && typeof playPromise.catch === 'function') {
@@ -1255,13 +1347,18 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
         art.on('video:canplay', markStreamSuccess);
         art.on('video:playing', markStreamSuccess);
+        art.on('video:playing', () => {
+            if (isSessionLive(session, token)) showResumeNotice(session);
+        });
 
         art.on('video:pause', () => {
             setPlaybackActiveState(false);
+            if (isSessionLive(session, token)) reportProgress(session, true);
         });
 
         art.on('video:timeupdate', () => {
             if (!isSessionLive(session, token)) return;
+            reportProgress(session);
             // Some streams only report their length after a while: the lookup waits for it
             requestSkipSegments(session);
             handleEndApproach(session);
@@ -1294,17 +1391,83 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
  */
 function requestSkipSegments(session) {
     const video = session.art && session.art.video;
-    if (session.skipRequested || !session.aniskip || !video || !(video.duration > 0) || !Number.isFinite(video.duration)) return;
+    if (session.skipRequested || (!session.aniskip && !session.tvskip) || !video || !(video.duration > 0) || !Number.isFinite(video.duration)) return;
     session.skipRequested = true;
     const duration = video.duration;
-    Promise.resolve(session.aniskip).then(key => key && key.mal_id && key.episode
+    const anime = Promise.resolve(session.aniskip).then(key => key && key.mal_id && key.episode
         ? fetchAniSkipSegments({ malId: key.mal_id, episode: key.episode, duration })
-        : []).then(segments => {
+        : []);
+    const series = session.tvskip ? fetchTvSkipSegments({ ...session.tvskip, duration }) : Promise.resolve([]);
+    Promise.all([anime, series]).then(([fromAniSkip, fromSeriesBases]) => {
         if (activeNativeSession !== session) return;
+        // One source per part: AniSkip first, the series bases only fill what it lacks, never overlapping
+        let segments = complementSegments(fromAniSkip, fromSeriesBases, duration);
+        // Nothing to recap in a show's first episode
+        if (session.noRecap) segments = segments.filter(seg => seg.type !== 'recap');
         session.skipSegments = segments;
         renderSkipRanges(session);
         updateSkipButton(session);
     });
+}
+
+/* ---------- Fullscreen that survives the next episode ---------- */
+
+const STAGE_SELECTOR = '.movie-player-stage';
+
+function stageFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+
+/**
+ * Artplayer puts its own element in fullscreen, and every episode builds a new Artplayer, so the browser left
+ * fullscreen when the next episode started (and may not re-enter without a click). Its request is sent to the stage
+ * around it instead, which stays in place between episodes. Where only the video can go fullscreen (iPhone),
+ * Artplayer never makes this request and keeps its own video fullscreen, unchanged.
+ */
+function routeFullscreenToStage(art) {
+    const player = art && art.template && art.template.$player;
+    const stage = player && player.closest(STAGE_SELECTOR);
+    if (!stage || !(stage.requestFullscreen || stage.webkitRequestFullscreen)) return;
+    player.requestFullscreen = (options) => stage.requestFullscreen ? stage.requestFullscreen(options) : stage.webkitRequestFullscreen();
+    if (stage.webkitRequestFullscreen) player.webkitRequestFullscreen = () => stage.webkitRequestFullscreen();
+    // A new episode mounted while the stage is already fullscreen: tell Artplayer (button icon, phone orientation)
+    if (stageFullscreenElement() === stage) {
+        player.classList.add('art-fullscreen');
+        art.emit('fullscreen', true);
+    }
+}
+
+/** Leaves fullscreen when the player itself is closed (episode changes keep it). */
+export function leaveStageFullscreen() {
+    const current = stageFullscreenElement();
+    if (!current || !current.matches || !current.matches(STAGE_SELECTOR)) return;
+    try {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) {
+            const done = exit.call(document);
+            if (done && typeof done.catch === 'function') done.catch(() => {});
+        }
+    } catch (e) {
+        // Already out of fullscreen
+    }
+}
+
+// Space between the progress bar (its clickable area) and the side cards
+const SIDE_CARD_GAP_PX = 6;
+
+/**
+ * Puts the skip and next-episode cards right above the progress bar. Its height depends on the layout (window,
+ * fullscreen, phone), so a fixed offset either floated too high or covered the bar; the bar is measured instead.
+ */
+function placeSideCards(art) {
+    const player = art && art.template && art.template.$player;
+    const bar = player && player.querySelector('.art-control-progress');
+    if (!bar) return;
+    const playerBox = player.getBoundingClientRect();
+    const barBox = bar.getBoundingClientRect();
+    if (!(playerBox.height > 0) || !(barBox.height > 0)) return;
+    const offset = Math.max(0, Math.round(playerBox.bottom - barBox.top + SIDE_CARD_GAP_PX));
+    player.style.setProperty('--tvz-side-card-bottom', `${offset}px`);
 }
 
 const SKIP_LABELS = { intro: 'Pular abertura', recap: 'Pular recapitulação', outro: 'Pular encerramento' };
@@ -1387,6 +1550,7 @@ function updateSkipButton(session) {
             style: { position: 'absolute', right: '16px', bottom: '84px', pointerEvents: 'auto' },
             mounted: ($el) => {
                 $el.classList.add('tvz-side-card');
+                placeSideCards(art);
                 $el.dataset.key = state.key;
                 const nextButton = $el.querySelector('[data-action="next"]');
                 // textContent: the title comes from TMDB
@@ -1503,6 +1667,7 @@ function setUpNext(session, next, seconds = 0) {
             style: { position: 'absolute', right: '16px', bottom: '84px', pointerEvents: 'auto' },
             mounted: ($el) => {
                 $el.classList.add('tvz-side-card');
+                placeSideCards(art);
                 // textContent: the title comes from TMDB
                 $el.querySelector('.tvz-upnext-title').textContent = next.title || '';
                 $el.querySelector('.tvz-upnext-play').addEventListener('click', (e) => {
@@ -1557,13 +1722,25 @@ export function setLoaderText(loader, text) {
     if (label) label.textContent = text;
 }
 
-/** The viewer's last "Tela" choice, kept in this browser only. */
+/** The viewer's last "Tela" choice (player preferences). */
 function storedFit() {
+    return getPlayerPrefs().fit === 'cover' ? 'cover' : 'contain';
+}
+
+/** Volume, mute and speed from the player preferences, and saved again whenever the viewer changes them. */
+function applyPlaybackPrefs(art) {
+    const prefs = getPlayerPrefs();
     try {
-        return localStorage.getItem(FIT_STORAGE_KEY) === 'cover' ? 'cover' : 'contain';
+        art.muted = Boolean(prefs.muted);
+        if (prefs.playbackRate && prefs.playbackRate !== 1) art.playbackRate = prefs.playbackRate;
     } catch (e) {
-        return 'contain';
+        // Optional
     }
+    art.on('video:volumechange', () => {
+        setPlayerPref('volume', Math.round(art.volume * 100) / 100);
+        setPlayerPref('muted', Boolean(art.muted));
+    });
+    art.on('video:ratechange', () => setPlayerPref('playbackRate', art.playbackRate));
 }
 
 function applyFit(art, value) {
@@ -1584,7 +1761,7 @@ function installFitSetting(art) {
         selector: FIT_OPTIONS.map(o => ({ ...o, default: o.value === current })),
         onSelect: (item) => {
             applyFit(art, item.value);
-            try { localStorage.setItem(FIT_STORAGE_KEY, item.value); } catch (e) { /* the choice just is not remembered */ }
+            setPlayerPref('fit', item.value);
             return item.html;
         }
     });
@@ -1701,7 +1878,10 @@ function refreshQualityMenu(session) {
         width: NATIVE_SETTING_WIDTH,
         tooltip: qualityTooltip(session),
         selector,
-        onSelect: (item) => selectNativeQuality(session, item.value)
+        onSelect: (item) => {
+            setPlayerPref('quality', item.value === 'auto' ? 'auto' : Number(item.value));
+            return selectNativeQuality(session, item.value);
+        }
     });
     updateQualityIndicators(session);
 }
@@ -1845,6 +2025,20 @@ function refreshAudioMenu(session) {
  * Index of the subtitle to start with: Brazilian Portuguese, then Portuguese, then the one the host marks as
  * default, then English. The host's own order is alphabetical (Arabic first), so it must not decide.
  */
+/**
+ * Subtitle to start with: the language the viewer picked last when this title has it, nothing when they turned
+ * subtitles off, else the default order below. -1 means off.
+ */
+function chosenSubtitleIndex(subtitles) {
+    const pref = getPlayerPrefs().subtitle;
+    if (pref === 'off') return -1;
+    if (pref) {
+        const match = subtitles.findIndex(sub => String(sub.lang || '').toLowerCase() === String(pref).toLowerCase());
+        if (match >= 0) return match;
+    }
+    return defaultSubtitleIndex(subtitles);
+}
+
 function defaultSubtitleIndex(subtitles) {
     const rank = sub => {
         const lang = String(sub.lang || '').toLowerCase();
@@ -1878,13 +2072,14 @@ function refreshSubtitleMenu(session) {
         });
         return;
     }
-    const preferred = defaultSubtitleIndex(subtitles);
+    const preferred = chosenSubtitleIndex(subtitles);
     const selector = subtitles.map((sub, idx) => ({
         default: idx === preferred,
         html: sub.label || sub.name || `Legenda ${idx + 1}`,
-        url: sub.url || sub.file
+        url: sub.url || sub.file,
+        lang: sub.lang || ''
     }));
-    selector.unshift({ default: false, html: 'Desativada', url: '' });
+    selector.unshift({ default: preferred < 0, html: 'Desativada', url: '', lang: 'off' });
 
     upsertSetting(art, {
         name: 'subtitle',
@@ -1894,6 +2089,7 @@ function refreshSubtitleMenu(session) {
         tooltip: selector[preferred + 1]?.html || 'Ativada',
         selector,
         onSelect: (item) => {
+            setPlayerPref('subtitle', item.url ? (item.lang || null) : 'off');
             if (!item.url) {
                 art.subtitle.show = false;
             } else {

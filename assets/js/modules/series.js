@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261009_i';
+import { store } from '../core/state.js?v=20261009_s';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,13 +14,14 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261009_i';
-import { showToast } from '../core/toast.js?v=20261009_i';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261009_i';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_i';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_i';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText } from '../player/engine.js?v=20261009_i';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_i';
+} from '../core/constants.js?v=20261009_s';
+import { showToast } from '../core/toast.js?v=20261009_s';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261009_s';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261009_s';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261009_s';
+import { resumeStartTime } from '../core/resume.js?v=20261009_s';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261009_s';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261009_s';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -135,10 +136,12 @@ export function getStoredWatchProgress() {
     }
 }
 
-export function saveStoredWatchProgress(show, season, episode, epTitle, mediaType = 'tv') {
+export function saveStoredWatchProgress(show, season, episode, epTitle, mediaType = 'tv', absolute = null) {
     try {
         const progress = getStoredWatchProgress();
+        const previous = progress[show.id];
         progress[show.id] = {
+            positions: (previous && previous.positions) || {},
             id: show.id,
             title: show.name || show.title,
             poster_path: show.poster_path,
@@ -147,12 +150,46 @@ export function saveStoredWatchProgress(show, season, episode, epTitle, mediaTyp
             episode: Number(episode),
             episodeTitle: epTitle || `Episódio ${episode}`,
             mediaType: mediaType,
+            absolute: absolute ? Number(absolute) : null,
             timestamp: Date.now()
         };
         localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(progress));
         renderHomeContinueWatching();
     } catch (e) {
         console.warn("[Series] Falha ao salvar histórico de episódios:", e);
+    }
+}
+
+// Where each started episode stopped, per show (native players only), newest kept
+const EPISODE_POSITIONS_KEEP = 40;
+
+function getSavedPosition(showId, season, episode) {
+    const entry = getStoredWatchProgress()[showId];
+    return entry && entry.positions ? entry.positions[`${season}:${episode}`] || null : null;
+}
+
+/** Saves the time of the episode on screen (called by the player every ~10 s, on pause and before it closes). */
+function saveEpisodePosition(context, server, { position, duration, inEnding }) {
+    try {
+        const progress = getStoredWatchProgress();
+        const entry = progress[context.tmdbId];
+        if (!entry) return;
+        const positions = entry.positions || {};
+        positions[`${context.season}:${context.episode}`] = {
+            position: Math.round(position),
+            duration: Math.round(duration),
+            // Stopped in the ending (or almost at the end): watched, it starts from the beginning next time
+            finished: Boolean(inEnding) || (duration > 0 && position >= duration * 0.95),
+            server,
+            at: Date.now(),
+        };
+        const keys = Object.keys(positions).sort((a, b) => (positions[b].at || 0) - (positions[a].at || 0));
+        keys.slice(EPISODE_POSITIONS_KEEP).forEach(key => delete positions[key]);
+        entry.positions = positions;
+        progress[context.tmdbId] = entry;
+        localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(progress));
+    } catch (e) {
+        // Resume is optional
     }
 }
 
@@ -1600,11 +1637,7 @@ function renderSeriesServerButtons(showItem) {
     if (!serversGrid) return;
     serversGrid.innerHTML = "";
 
-    const isAnime = Boolean(
-        (showItem.genre_ids && showItem.genre_ids.includes(16)) ||
-        (showItem.original_language === 'ja') ||
-        (showItem.origin_country && (showItem.origin_country.includes('JP') || showItem.origin_country.includes('Japan')))
-    );
+    const isAnime = isAnimeShow(showItem);
 
     const availableServers = SERIES_SERVER_OPTIONS.filter(s => !s.animeOnly || isAnime);
 
@@ -1624,13 +1657,7 @@ function renderSeriesServerButtons(showItem) {
             activeSeriesPlaying.server = server.id;
 
             if (activeSeriesPlaying.show) {
-                playSeriesEpisode(
-                    activeSeriesPlaying.show,
-                    activeSeriesPlaying.seasonNumber,
-                    activeSeriesPlaying.episodeNumber,
-                    activeSeriesPlaying.episodeData,
-                    activeSeriesPlaying.absoluteEpisodeNumber
-                );
+                openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: activeSeriesPlaying.episodeNumber }, { keepPosition: true });
             }
         });
 
@@ -1657,12 +1684,7 @@ export function setupSeriesModalHandlers() {
     if (btnReload) {
         btnReload.addEventListener("click", () => {
             if (activeSeriesPlaying.show) {
-                playSeriesEpisode(
-                    activeSeriesPlaying.show,
-                    activeSeriesPlaying.seasonNumber,
-                    activeSeriesPlaying.episodeNumber,
-                    activeSeriesPlaying.episodeData
-                );
+                openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: activeSeriesPlaying.episodeNumber }, { keepPosition: true });
             }
         });
     }
@@ -1682,23 +1704,15 @@ export function setupSeriesModalHandlers() {
 
     if (btnPrevEp) {
         btnPrevEp.addEventListener("click", () => {
-            if (activeSeriesPlaying.episodeNumber > 1) {
-                const targetEp = activeSeriesPlaying.episodeNumber - 1;
-                const curSeason = activeSeriesPlaying.seasonNumber;
-                const cachedEpisodes = cachedSeasonsMap[`${activeSeriesPlaying.show.id}_${curSeason}`] || [];
-                const targetEpData = cachedEpisodes.find(ep => ep.episode_number === targetEp) || null;
-                const prevAbs = (activeSeriesPlaying.absoluteEpisodeNumber && activeSeriesPlaying.absoluteEpisodeNumber > 1)
-                    ? activeSeriesPlaying.absoluteEpisodeNumber - 1
-                    : null;
-
-                showToast(`Voltando para Episódio ${targetEp}...`, 1200);
-                playSeriesEpisode(
-                    activeSeriesPlaying.show,
-                    curSeason,
-                    targetEp,
-                    targetEpData,
-                    prevAbs
-                );
+            const current = activeSeriesPlaying.context;
+            if (!current) return;
+            // The show-wide number also crosses back into the previous season
+            if (current.absolute > 1 && regularSeasonsOf(current.details).length > 0) {
+                showToast(current.episode > 1 ? `Voltando para Episódio ${current.episode - 1}...` : `Voltando para a Temporada ${current.season - 1}...`, 1200);
+                openEpisode(current.show, { absolute: current.absolute - 1 });
+            } else if (current.episode > 1) {
+                showToast(`Voltando para Episódio ${current.episode - 1}...`, 1200);
+                openEpisode(current.show, { season: current.season, episode: current.episode - 1 });
             }
         });
     }
@@ -1711,7 +1725,7 @@ export function setupSeriesModalHandlers() {
                 return;
             }
             showToast(next.newSeason ? `Iniciando Temporada ${next.season}...` : `Passando para Episódio ${next.episode}...`, 1200);
-            playSeriesEpisode(activeSeriesPlaying.show, next.season, next.episode, next.epData, next.abs);
+            openEpisode(activeSeriesPlaying.show, { season: next.season, episode: next.episode });
         });
     }
 
@@ -1745,9 +1759,9 @@ export function setupSeriesModalHandlers() {
             if (!currentSelectedSeries) return;
             const progress = getStoredWatchProgress()[currentSelectedSeries.id];
             if (progress && progress.season && progress.episode) {
-                playSeriesEpisode(currentSelectedSeries, progress.season, progress.episode);
+                openEpisode(currentSelectedSeries, { season: progress.season, episode: progress.episode });
             } else {
-                playSeriesEpisode(currentSelectedSeries, 1, 1);
+                openEpisode(currentSelectedSeries, { season: 1, episode: 1 });
             }
         });
     }
@@ -1795,6 +1809,7 @@ export function setupSeriesModalHandlers() {
 }
 
 export async function openSeriesModal(seriesItem, mediaType = 'tv', options = {}) {
+    setupSeriesModalHandlers();
     currentSelectedSeries = seriesItem;
     const modal = document.getElementById("series-modal");
     if (!modal) return;
@@ -1861,8 +1876,10 @@ export async function openSeriesModal(seriesItem, mediaType = 'tv', options = {}
     if (continuousPanel) continuousPanel.classList.add("hidden");
 
     try {
-        const details = await fetchSeriesEndpoint(`tv/${seriesItem.id}`);
+        // external_ids brings the IMDb id (SkipDB) in the same request
+        const details = await fetchSeriesEndpoint(`tv/${seriesItem.id}?append_to_response=external_ids`);
         currentSeriesDetails = details;
+        rememberShowDetails(details);
 
         if (seasonsCountEl) {
             const totalSeasons = details.number_of_seasons || 1;
@@ -1881,7 +1898,7 @@ export async function openSeriesModal(seriesItem, mediaType = 'tv', options = {}
             pendingSeriesAutoplayTimer = setTimeout(() => {
                 const modal = document.getElementById("series-modal");
                 if (modal && !modal.classList.contains("hidden")) {
-                    playSeriesEpisode(seriesItem, options.autoPlaySeason, options.autoPlayEpisode);
+                    openEpisode(seriesItem, { season: options.autoPlaySeason, episode: options.autoPlayEpisode });
                 }
             }, 300);
         }
@@ -2049,7 +2066,7 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
         `;
 
         const playAction = () => {
-            playSeriesEpisode(currentSelectedSeries, seasonNumber, ep.episode_number, ep);
+            openEpisode(currentSelectedSeries, { season: seasonNumber, episode: ep.episode_number });
         };
 
         card.addEventListener("click", playAction);
@@ -2070,7 +2087,8 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
 
 /** TMDB details of the show, only when they belong to `showId` (the modal may hold another show). */
 function detailsFor(showId) {
-    return currentSeriesDetails && Number(currentSeriesDetails.id) === Number(showId) ? currentSeriesDetails : null;
+    if (currentSeriesDetails && Number(currentSeriesDetails.id) === Number(showId)) return currentSeriesDetails;
+    return showDetailsById.get(Number(showId)) || null;
 }
 
 function regularSeasonsOf(details) {
@@ -2095,6 +2113,103 @@ function absoluteEpisodeOf(details, seasonNumber, episodeNumber) {
 function totalEpisodesOf(details) {
     const sum = regularSeasonsOf(details).reduce((total, season) => total + season.episode_count, 0);
     return sum || (details && details.number_of_episodes) || 0;
+}
+
+// --- One entry point for opening an episode ---
+// Every way of opening an episode (resume card, details button, season list, continuous list, go to N, player
+// drawer, previous/next, next-episode card) goes through openEpisode(), and everything downstream (header, servers,
+// resolve request, AniSkip, skip bases, history) reads the same episode context. See CLAUDE.md.
+
+const showDetailsById = new Map();
+const showDetailsRequests = new Map();
+let episodeOpenToken = 0;
+
+function rememberShowDetails(details) {
+    if (details && details.id != null) showDetailsById.set(Number(details.id), details);
+}
+
+/** Show details with external_ids, loaded once per show. */
+async function loadShowDetails(showId) {
+    const known = detailsFor(showId);
+    if (known) return known;
+    const id = Number(showId);
+    if (!showDetailsRequests.has(id)) {
+        showDetailsRequests.set(id, fetchSeriesEndpoint(`tv/${id}?append_to_response=external_ids`)
+            .then(details => { rememberShowDetails(details); return details; })
+            .catch(() => null)
+            .finally(() => showDetailsRequests.delete(id)));
+    }
+    return showDetailsRequests.get(id);
+}
+
+/** The item a caller had (maybe only id and name) completed with the show details. */
+function mergeShow(showRef, details) {
+    if (!details) return showRef;
+    const given = Object.fromEntries(Object.entries(showRef).filter(([, v]) => v !== undefined && v !== null && v !== ''));
+    const merged = { ...details, ...given };
+    if (!Array.isArray(merged.genre_ids) && Array.isArray(details.genres)) merged.genre_ids = details.genres.map(g => g.id);
+    return merged;
+}
+
+/**
+ * Everything the player and its features need about one episode, built the same way whatever opened it.
+ * `target`: { season, episode } in our numbering (seasons start at 1), { absolute } (show-wide), or
+ * { season, tmdbEpisode } (TMDB's own number). An episode saved with TMDB's continuous number before seasons were
+ * renumbered (Naruto: T2E33 for T2E1) is found through `tmdb_episode_number`.
+ */
+export async function resolveEpisodeContext(showRef, target = {}) {
+    const details = await loadShowDetails(showRef.id);
+    const show = mergeShow(showRef, details);
+    let season = Number(target.season) || 1;
+    let episode = Number(target.episode) || Number(target.tmdbEpisode) || 1;
+    if (Number(target.absolute) > 0) {
+        const mapped = mapAbsoluteEpisodeToSeason(details ? details.seasons : [], Number(target.absolute));
+        season = Number(mapped.season);
+        episode = Number(mapped.episode);
+    }
+    let list = [];
+    try {
+        list = await fetchSeasonEpisodes(show.id, season);
+    } catch (e) {
+        list = [];
+    }
+    const tmdbNumber = ep => Number(ep.tmdb_episode_number != null ? ep.tmdb_episode_number : ep.episode_number);
+    let epData = target.tmdbEpisode
+        ? list.find(ep => tmdbNumber(ep) === Number(target.tmdbEpisode))
+        : list.find(ep => Number(ep.episode_number) === episode);
+    if (!epData && !target.absolute) epData = list.find(ep => ep.tmdb_episode_number != null && Number(ep.tmdb_episode_number) === episode);
+    if (epData) episode = Number(epData.episode_number);
+    return {
+        show,
+        details,
+        isAnime: isAnimeShow(show),
+        tmdbId: Number(show.id),
+        imdbId: (details && details.external_ids && details.external_ids.imdb_id) || null,
+        season,
+        episode,
+        tmdbEpisode: epData ? tmdbNumber(epData) : episode,
+        absolute: details ? (absoluteEpisodeOf(details, season, episode) || episode) : null,
+        totalEpisodes: details ? totalEpisodesOf(details) : 0,
+        epData: epData || null,
+        malId: animeMalIds.get(`${show.id}_${season}`) || null,
+    };
+}
+
+/** The context of the episode on screen (read-only use: checks and diagnostics). */
+export function getCurrentEpisodeContext() {
+    return activeSeriesPlaying.context || null;
+}
+
+/** The only way to start an episode. A newer call wins over an older one still loading. */
+export async function openEpisode(showRef, target = {}, options = {}) {
+    if (!showRef || showRef.id == null) return;
+    // The player buttons (previous, next, reload, exit, episode list) are wired here too: an episode opened from the
+    // home screen before the Séries/Animes tabs were prepared had dead buttons
+    setupSeriesModalHandlers();
+    const token = ++episodeOpenToken;
+    const context = await resolveEpisodeContext(showRef, target);
+    if (token !== episodeOpenToken) return;
+    startEpisodePlayback(context, options);
 }
 
 // --- Episode names and the player header ---
@@ -2277,9 +2392,7 @@ function renderContinuousChunk(startEp, endEp) {
 
         const currentEpNum = epNum;
         const playAction = () => {
-            const targetMapped = mapAbsoluteEpisodeToSeason(seasons, currentEpNum);
-            playSeriesEpisode(currentSelectedSeries, targetMapped.season, targetMapped.episode,
-                findCachedEpisode(showId, targetMapped.season, targetMapped.episode), currentEpNum);
+            openEpisode(currentSelectedSeries, { absolute: currentEpNum });
         };
 
         card.addEventListener("click", playAction);
@@ -2324,8 +2437,7 @@ function goToEpisodeByAbsoluteNumber(epNumber) {
     if (!currentSelectedSeries) return;
     const seasons = (currentSeriesDetails && currentSeriesDetails.seasons) ? currentSeriesDetails.seasons : [];
     const mapped = mapAbsoluteEpisodeToSeason(seasons, epNumber);
-    playSeriesEpisode(currentSelectedSeries, mapped.season, mapped.episode,
-        findCachedEpisode(currentSelectedSeries.id, mapped.season, mapped.episode), epNumber);
+    openEpisode(currentSelectedSeries, { absolute: epNumber });
     showToast(`Carregando Episódio ${epNumber} (T${mapped.season}:E${mapped.episode})...`);
 }
 
@@ -2395,8 +2507,19 @@ function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNum
     };
 }
 
-export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData = null, absoluteEpNumber = null) {
-    if (!showItem) return;
+/** Kept for older callers (main.js); goes through openEpisode like everything else. */
+export function playSeriesEpisode(showItem, seasonNumber, episodeNumber) {
+    return openEpisode(showItem, { season: seasonNumber, episode: episodeNumber });
+}
+
+/** Starts a resolved episode (see resolveEpisodeContext). Only openEpisode calls it. */
+function startEpisodePlayback(context, options = {}) {
+    const showItem = context.show;
+    const seasonNumber = context.season;
+    const episodeNumber = context.episode;
+    const absoluteEpNumber = context.absolute;
+    let epData = context.epData ? { ...context.epData, absoluteEpisode: context.absolute } : null;
+    activeSeriesPlaying.context = context;
 
     const currentSessionId = ++seriesPlaybackSessionId;
     if (pendingSeriesIframeTimer) {
@@ -2470,11 +2593,7 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
         currentEpTitle.textContent = episodeHeaderText(showItem, seasonNumber, episodeNumber, epName, activeSeriesPlaying.absoluteEpisodeNumber);
     }
 
-    const isAnime = Boolean(
-        (showItem.genre_ids && showItem.genre_ids.includes(16)) ||
-        (showItem.original_language === 'ja') ||
-        (showItem.origin_country && (showItem.origin_country.includes('JP') || showItem.origin_country.includes('Japan')))
-    );
+    const isAnime = context.isAnime;
 
     if (!isAnime && activeSeriesPlaying.server === 'native_anime') {
         activeSeriesPlaying.server = 'native_direct';
@@ -2564,12 +2683,21 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
                 ? `${TMDB_IMG_ORIGINAL}${showItem.backdrop_path}`
                 : '';
 
+            // Read after the previous player saved its last time (the reset above), so a switch keeps it
+            const resumeAt = resumeStartTime(getSavedPosition(context.tmdbId, context.season, context.episode),
+                { keep: Boolean(options.keepPosition), server: serverKey });
             mountNativePlayer({
                 containerId: "series-artplayer-container",
+                startTime: resumeAt,
+                resumeNotice: !options.keepPosition,
+                onProgress: (info) => saveEpisodePosition(context, serverKey, info),
                 sources: [data.primary_source, ...(data.fallback_sources || [])],
                 title: `${showName} • T${seasonNumber}:E${episodeNumber}`,
                 poster: backdropUrl,
                 subtitles: data.subtitles || [],
+                // Series bases (TheIntroDB, SkipDB) for every show, in TMDB's own numbering; no recap in a first episode
+                tvskip: { tmdbId: context.tmdbId, imdbId: context.imdbId, season: context.season, episode: context.tmdbEpisode },
+                noRecap: context.season === 1 && context.episode === 1,
                 // Opening/ending times (anime only). The anime host numbers episodes per MyAnimeList entry like
                 // AniSkip does; for the main host the entry and number are looked up in the background
                 aniskip: !isAnime ? null : serverKey === 'native_anime' ? data.aniskip
@@ -2591,7 +2719,7 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
                     if (!next) return null;
                     return {
                         title: `T${next.season}:E${next.episode}${next.epData?.name ? ` – ${next.epData.name}` : ''}`,
-                        play: () => playSeriesEpisode(activeSeriesPlaying.show, next.season, next.episode, next.epData, next.abs)
+                        play: () => openEpisode(activeSeriesPlaying.show, { season: next.season, episode: next.episode })
                     };
                 },
                 onAllFailed: () => {
@@ -2652,7 +2780,8 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber, epData 
         btnPrev.disabled = (seasonNumber === 1 && episodeNumber === 1);
     }
 
-    saveStoredWatchProgress(showItem, seasonNumber, episodeNumber, epData ? epData.name : `Episódio ${episodeNumber}`);
+    saveStoredWatchProgress(showItem, seasonNumber, episodeNumber, epData ? epData.name : `Episódio ${episodeNumber}`,
+        context.isAnime ? 'anime' : 'tv', context.absolute);
 
     document.querySelectorAll("#series-episodes-grid .series-ep-card").forEach(c => {
         c.classList.remove("is-active-playing");
@@ -2683,7 +2812,7 @@ function populateSeriesDrawer() {
             <span>▶\uFE0E</span>
         `;
         item.addEventListener("click", () => {
-            playSeriesEpisode(activeSeriesPlaying.show, activeSeriesPlaying.seasonNumber, ep.episode_number, ep);
+            openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: ep.episode_number });
             const drawer = document.getElementById("series-player-drawer");
             if (drawer) drawer.classList.add("hidden");
         });
@@ -2692,12 +2821,18 @@ function populateSeriesDrawer() {
 }
 
 /** Anime-like show (same rule the player uses to offer the anime server). */
+/**
+ * Anime or not, from the catalog item or, when the item is thin (the "Continuar assistindo" card only keeps id and
+ * name), from the show details loaded for it (`genres` instead of `genre_ids`).
+ */
 function isAnimeShow(showItem) {
-    return Boolean(showItem && (
-        (showItem.genre_ids && showItem.genre_ids.includes(16)) ||
-        showItem.original_language === 'ja' ||
-        (showItem.origin_country && (showItem.origin_country.includes('JP') || showItem.origin_country.includes('Japan')))
+    const looksAnime = item => Boolean(item && (
+        (item.genre_ids && item.genre_ids.includes(16)) ||
+        (Array.isArray(item.genres) && item.genres.some(g => Number(g.id) === 16)) ||
+        item.original_language === 'ja' ||
+        (item.origin_country && (item.origin_country.includes('JP') || item.origin_country.includes('Japan')))
     ));
+    return looksAnime(showItem) || Boolean(showItem && looksAnime(detailsFor(showItem.id)));
 }
 
 /**
@@ -2721,6 +2856,7 @@ function exitSeriesToCatalog() {
 
 export function stopSeriesPlayer() {
     seriesPlaybackSessionId++;
+    leaveStageFullscreen();
     if (pendingSeriesIframeTimer) {
         clearTimeout(pendingSeriesIframeTimer);
         pendingSeriesIframeTimer = null;
