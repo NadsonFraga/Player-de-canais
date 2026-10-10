@@ -84,11 +84,85 @@ def fetch_mgeb(media_type: str, media_id: str, season: int = 1, episode: int = 1
     return None
 
 
+# TMDB lists some shows as one long season (Jujutsu Kaisen: 59 episodes) while MGEB numbers
+# them by the real seasons (24 / 23 / 12). TMDB keeps the real split in an episode group of
+# type 6 ("Seasons").
+SEASON_GROUPS_TTL_S = 24 * 60 * 60
+SEASON_GROUPS_CACHE = {}
+
+
+def regular_season_groups(detail):
+    """Regular seasons of a TMDB episode group (specials, OVAs and empty groups skipped), as lists
+    of (season, episode) in airing order; None when fewer than two."""
+    groups = [
+        g for g in ((detail or {}).get("groups") or [])
+        if g.get("episodes")
+        and not re.search(r"special|especia|ova|oad|extra", g.get("name") or "", re.I)
+        and all((ep.get("season_number") or 0) >= 1 for ep in g["episodes"])
+    ]
+    groups.sort(key=lambda g: g.get("order") or 0)
+    result = [
+        [(ep["season_number"], ep["episode_number"]) for ep in sorted(g["episodes"], key=lambda ep: ep.get("order") or 0)]
+        for g in groups
+    ]
+    return result if len(result) >= 2 else None
+
+
+def map_merged_episode(groups, season, episode):
+    """Maps a TMDB season/episode to its position in the real seasons: (season, episode) or None."""
+    if not groups:
+        return None
+    for g, episodes in enumerate(groups):
+        if (int(season), int(episode)) in episodes:
+            return (g + 1, episodes.index((int(season), int(episode))) + 1)
+    return None
+
+
+def fetch_season_groups(tmdb_id):
+    """The real season split of a show listed as one season on TMDB, or None (cached 24 h)."""
+    cached = SEASON_GROUPS_CACHE.get(tmdb_id)
+    if cached and time.time() - cached[0] < SEASON_GROUPS_TTL_S:
+        return cached[1]
+
+    def get(path):
+        req = urllib.request.Request(f"https://api.themoviedb.org/3{path}?api_key={TMDB_API_KEY}",
+                                     headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=6) as res:
+            return json.loads(res.read().decode("utf-8"))
+
+    groups = None
+    try:
+        show = get(f"/tv/{tmdb_id}")
+        regular = [s for s in show.get("seasons", []) if s.get("season_number", 0) >= 1 and s.get("episode_count", 0) > 0]
+        if len(regular) == 1:
+            candidates = [g for g in get(f"/tv/{tmdb_id}/episode_groups").get("results", []) if g.get("type") == 6]
+            candidates.sort(key=lambda g: g.get("name") != "Seasons")
+            for candidate in candidates[:3]:
+                groups = regular_season_groups(get(f"/tv/episode_group/{candidate['id']}"))
+                if groups:
+                    break
+    except Exception as e:
+        print(f"[LocalServer] Season groups failed for TMDB {tmdb_id}: {e}", file=sys.stderr)
+        groups = None
+    SEASON_GROUPS_CACHE[tmdb_id] = (time.time(), groups)
+    return groups
+
+
 def mgeb_source_key(source):
     """Same file served over http/https or :80 counts once."""
     url = str(source.get("file", "")).strip()
     url = re.sub(r"^https?://", "", url, flags=re.I).replace(":80/", "/")
     return url.split("?")[0]
+
+
+def mgeb_episode_matches(title, season, episode):
+    """MGEB titles name the episode they serve ("Show - T1E1 - Name"). For an episode it does not
+    have, MGEB answers with the T1E1 page, so a title naming another episode is refused.
+    Titles without the pattern are kept."""
+    m = re.search(r"\bT(\d+)E(\d+)\b", title or "", re.I)
+    if not m:
+        return True
+    return int(m.group(1)) == int(season) and int(m.group(2)) == int(episode)
 
 
 def first_then_merge(lookups, window_s):
@@ -398,8 +472,40 @@ def parse_moov_resolution(buf, moov_start):
     return best
 
 
+def parse_moov_duration(buf, moov_start):
+    """Reads the movie length (seconds) from the mvhd box of a moov buffer."""
+    moov = read_box_header(buf, moov_start)
+    if not moov:
+        return None
+    end = min(moov_start + moov[0], len(buf))
+    off = moov_start + moov[2]
+    while off + 8 <= end:
+        box = read_box_header(buf, off)
+        if not box or box[0] < 8:
+            return None
+        if box[1] == "mvhd":
+            v1 = buf[off + 8] == 1
+            if off + (40 if v1 else 28) > len(buf):
+                return None
+            timescale = int.from_bytes(buf[off + (28 if v1 else 20):off + (32 if v1 else 24)], "big")
+            duration = int.from_bytes(buf[off + 32:off + 40], "big") if v1 else int.from_bytes(buf[off + 24:off + 28], "big")
+            # All bits set means "unknown"
+            if not timescale or (not v1 and duration == 0xFFFFFFFF):
+                return None
+            return round(duration / timescale, 1) or None
+        off += box[0]
+    return None
+
+
+def hls_playlist_duration(text):
+    """Sums the #EXTINF of a media playlist. The length (seconds) is only given for a finished
+    playlist (#EXT-X-ENDLIST): a live or partial one has no meaningful total."""
+    values = [float(v) for v in re.findall(r"#EXTINF:\s*([\d.]+)", text)]
+    return {"segments": len(values), "seconds": round(sum(values), 1) if "#EXT-X-ENDLIST" in text else None}
+
+
 def probe_mp4(url, referer):
-    """Reads the MP4 box layout with Range requests. Returns dict(res, ranged) or dict(dead)."""
+    """Reads the MP4 box layout with Range requests. Returns dict(res, ranged, duration) or dict(dead)."""
     status, buf, _ = probe_fetch(url, referer, "bytes=0-131071", 131072)
     if status >= 400:
         return {"dead": True}
@@ -420,7 +526,8 @@ def probe_mp4(url, referer):
                 break
             off += box[0]
         if moov_at >= 0:
-            return {"res": parse_moov_resolution(buf, moov_at), "ranged": ranged}
+            return {"res": parse_moov_resolution(buf, moov_at), "ranged": ranged,
+                    "duration": parse_moov_duration(buf, moov_at)}
         if next_abs < 0 or not ranged:
             break
         status, buf, _ = probe_fetch(url, referer, f"bytes={next_abs}-{next_abs + 131071}", 131072)
@@ -493,6 +600,8 @@ def probe_hls(url, referer):
         # Check the top variant: its first segment must start at byte 0, and its real
         # frame size replaces a declared resolution that is not there
         broken = False
+        duration = None
+        empty = False
         try:
             candidates = [v for v in variants if v["uri"]]
             candidates.sort(key=lambda v: (-(v["quality"] or 0), -v["bandwidth"]))
@@ -501,19 +610,26 @@ def probe_hls(url, referer):
                 variant_url = urllib.parse.urljoin(url, top["uri"])
                 v_status, v_body, _ = probe_fetch(variant_url, referer)
                 if v_status < 400:
-                    seg = probe_first_segment(variant_url, v_body.decode("utf-8", errors="ignore"), referer, True)
+                    media_text = v_body.decode("utf-8", errors="ignore")
+                    length = hls_playlist_duration(media_text)
+                    duration = length["seconds"]
+                    empty = media_text.lstrip().startswith("#EXTM3U") and length["segments"] == 0
+                    seg = probe_first_segment(variant_url, media_text, referer, True)
                     broken = seg["broken"]
                     measured = quality_class(*seg["res"]) if seg["res"] else None
                     if measured and top["quality"] and measured != top["quality"]:
                         qualities = [measured] + [q for q in qualities if q < measured]
         except Exception:
             pass  # The variant check is best effort
-        return {"qualities": qualities, "multi": len(variants) > 1, "broken": broken, "synthetic": synthetic}
+        return {"qualities": qualities, "multi": len(variants) > 1, "broken": broken, "synthetic": synthetic,
+                "duration": duration, "empty": empty}
 
     # Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
+    length = hls_playlist_duration(text)
     seg = probe_first_segment(url, text, referer, True)
     q = quality_class(*seg["res"]) if seg["res"] else None
-    return {"qualities": [q] if q else [], "broken": seg["broken"]}
+    return {"qualities": [q] if q else [], "broken": seg["broken"], "duration": length["seconds"],
+            "empty": length["segments"] == 0}
 
 
 def probe_source(src):
@@ -522,7 +638,7 @@ def probe_source(src):
     is_hls = src.get("type") == "hls" or ".m3u8" in raw
     referer = (src.get("headers") or {}).get("Referer", "")
     is_proxied = "/api/stream" in src.get("stream_url", "")
-    qualities, kind, alive, synthetic = [], "unknown", True, False
+    qualities, kind, alive, synthetic, duration = [], "unknown", True, False, None
     try:
         r = probe_hls(raw, referer) if is_hls else probe_mp4(raw, referer)
         if r.get("dead"):
@@ -531,19 +647,57 @@ def probe_source(src):
             qualities = r["qualities"]
             kind = "hls-multi" if r.get("multi") else "hls-single"
             synthetic = bool(r.get("synthetic"))
-            # A broken first segment stalls playback: keep it only as a last resort
-            if r.get("broken"):
+            duration = r.get("duration") or None
+            # A broken first segment stalls playback, and a playlist without segments plays
+            # nothing: keep them only as a last resort
+            if r.get("broken") or r.get("empty"):
                 alive = False
         else:
             q = quality_class(*r["res"]) if r.get("res") else None
             qualities = [q] if q else []
             kind = "mp4-range" if r.get("ranged") else "mp4"
+            duration = r.get("duration") or None
     except Exception as e:
         # Timeouts and network errors leave the source as unknown but playable
         print(f"[LocalServer] Probe failed for {raw[:80]}: {e}", file=sys.stderr)
     qualities = sorted(qualities, reverse=True)
     return {**src, "quality": qualities[0] if qualities else None, "qualities": qualities, "kind": kind,
-            "alive": alive, "synthetic": synthetic, "probed": True}
+            "alive": alive, "synthetic": synthetic, "duration": duration, "duration_mismatch": False,
+            "probed": True}
+
+
+# Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
+DURATION_TOLERANCE = 0.05
+DURATION_MIN_GAP_S = 45
+
+
+def durations_agree(seconds, reference):
+    return abs(seconds - reference) <= max(DURATION_TOLERANCE * reference, DURATION_MIN_GAP_S)
+
+
+def mark_duration_outliers(sources):
+    """Hosts sometimes list another video under the same episode (another show, another cut).
+    With 3 or more measured lengths, a source far from the median is flagged; it is ranked
+    after the others but kept as a fallback. With fewer there is no majority to trust."""
+    measured = [s for s in sources if s.get("alive") and (s.get("duration") or 0) > 0]
+    if len(measured) < 3:
+        return sources
+    values = sorted(s["duration"] for s in measured)
+    mid = len(values) // 2
+    median = values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
+    for s in measured:
+        s["duration_mismatch"] = not durations_agree(s["duration"], median)
+    return sources
+
+
+def can_stop_probing(results):
+    """Ranking may stop early on a trusted 1080p HLS, but only once another measured source
+    confirms its length: the first trusted source may itself be the wrong video."""
+    return any(
+        is_trusted_top_source(t) and (t.get("duration") or 0) > 0 and any(
+            o is not t and o.get("probed") and o.get("alive") and (o.get("duration") or 0) > 0
+            and durations_agree(o["duration"], t["duration"]) for o in results)
+        for t in results)
 
 
 def is_mirror_source(src):
@@ -564,13 +718,16 @@ def is_trusted_top_source(src):
             and src.get("kind", "").startswith("hls") and not is_low_trust_source(src))
 
 
-def rank_sources_by_quality(sources, tie_breaker=lambda s: 0):
+def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=False):
     """Probes sources in parallel within PROBE_BUDGET_S and sorts them best-first.
-    Returns early when a trusted 1080p HLS is confirmed; sources not measured in
-    time stay "unknown" and fall back to kind/host order."""
+    Returns early when a trusted 1080p HLS is measured; sources not measured in time stay
+    "unknown" and fall back to kind/host order.
+    With check_lengths (episodes, which all have one length; movies have legitimate cuts of
+    different lengths), the early return also needs another source confirming the length, and
+    a source whose length disagrees with the others goes after every agreeing live source."""
     from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
     results = [{**s, "quality": None, "qualities": [], "kind": "unknown", "alive": True,
-                "synthetic": False, "probed": False} for s in sources]
+                "synthetic": False, "duration": None, "duration_mismatch": False, "probed": False} for s in sources]
     to_probe = sources[:PROBE_MAX_SOURCES]
     if to_probe:
         pool = ThreadPoolExecutor(max_workers=len(to_probe))
@@ -588,12 +745,15 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0):
                 except Exception:
                     continue
                 trusted = trusted or is_trusted_top_source(results[futures[fut]])
-            if trusted:
+            if can_stop_probing(results) if check_lengths else trusted:
                 break
         pool.shutdown(wait=False, cancel_futures=True)
+    if check_lengths:
+        mark_duration_outliers(results)
     indexed = list(enumerate(results))
     indexed.sort(key=lambda x: (
         -int(x[1]["alive"]),
+        int(bool(x[1].get("duration_mismatch"))),
         -(x[1]["quality"] or 0),
         int(is_low_trust_source(x[1])),
         KIND_RANK[x[1]["kind"]],
@@ -1085,6 +1245,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 }
 
         # Route 2: Movies, Series or Anime Dubbed via MGEB (never for subtitled anime: independent players)
+        mgeb_episode_mismatch = [False]
         if not result and (media_id or imdb_id) and not (media_type == "anime" and lang == "sub"):
             mgeb_type = "serie" if media_type == "anime" else media_type
             given_imdb = imdb_id if (imdb_id and imdb_id.startswith("tt")) else None
@@ -1096,21 +1257,46 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             def is_tv_collision(data):
                 return media_type == "movie" and bool(re.search(r'[-–]\s*T\d+E\d+|S\d+E\d+|Epis[oó]dio|\bPiloto\b', data.get("title", ""), re.I))
 
-            def lookup_by_imdb():
-                tt = given_imdb or (timed("tmdb", fetch_imdb_id, str(tmdb_id), mgeb_type) if tmdb_id else None)
-                return fetch_mgeb(mgeb_type, tt, season, episode) if tt else None
+            imdb_found = []
 
-            def lookup_by_id():
-                data = fetch_mgeb(mgeb_type, tmdb_id or media_id, season, episode)
-                if data and is_tv_collision(data):
-                    print(f"[LocalServer] Rejected TV series collision for movie: {data.get('title')}", file=sys.stderr)
-                    return None
-                return data
+            def imdb_lookup_id():
+                if not imdb_found:
+                    imdb_found.append(given_imdb or (timed("tmdb", fetch_imdb_id, str(tmdb_id), mgeb_type) if tmdb_id else None))
+                return imdb_found[0]
 
-            lookups = [lookup_by_imdb]
-            if tmdb_id or (not given_imdb and media_id):
-                lookups.append(lookup_by_id)
-            mgeb_data = timed("mgeb", first_then_merge, lookups, MGEB_MERGE_WINDOW_S)
+            def lookup_mgeb(s, e):
+                def check_episode(data):
+                    if data and mgeb_type == "serie" and not mgeb_episode_matches(data.get("title", ""), s, e):
+                        print(f"[LocalServer] Rejected answer for another episode: {data.get('title')}", file=sys.stderr)
+                        mgeb_episode_mismatch[0] = True
+                        return None
+                    return data
+
+                def lookup_by_imdb():
+                    tt = imdb_lookup_id()
+                    return check_episode(fetch_mgeb(mgeb_type, tt, s, e)) if tt else None
+
+                def lookup_by_id():
+                    data = fetch_mgeb(mgeb_type, tmdb_id or media_id, s, e)
+                    if data and is_tv_collision(data):
+                        print(f"[LocalServer] Rejected TV series collision for movie: {data.get('title')}", file=sys.stderr)
+                        return None
+                    return check_episode(data)
+
+                lookups = [lookup_by_imdb]
+                if tmdb_id or (not given_imdb and media_id):
+                    lookups.append(lookup_by_id)
+                return first_then_merge(lookups, MGEB_MERGE_WINDOW_S)
+
+            mgeb_data = timed("mgeb", lookup_mgeb, season, episode)
+            mgeb_episode = (season, episode)
+            # MGEB answered for another episode: the show may be one long season on TMDB and split on MGEB
+            if not mgeb_data and mgeb_episode_mismatch[0] and tmdb_id and mgeb_type == "serie":
+                mapped = map_merged_episode(timed("groups", fetch_season_groups, str(tmdb_id)), season, episode)
+                if mapped and mapped != (season, episode):
+                    mgeb_data = timed("mgeb2", lookup_mgeb, *mapped)
+                    if mgeb_data:
+                        mgeb_episode = mapped
 
             if mgeb_data and mgeb_data.get("sources"):
                 raw_sources = mgeb_data["sources"]
@@ -1157,7 +1343,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     return 10
 
                 # Best quality first; the host score only breaks ties between equal qualities
-                ranked_sources = timed("probe", rank_sources_by_quality, parsed_sources, score_source)
+                ranked_sources = timed("probe", rank_sources_by_quality, parsed_sources, score_source, mgeb_type == "serie")
                 primary = ranked_sources[0]
                 fallbacks = ranked_sources[1:]
 
@@ -1168,6 +1354,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     "audio": "subtitled" if lang == "sub" else "dubbed",
                     "primary_source": primary,
                     "fallback_sources": fallbacks,
+                    "mgeb_episode": f"T{mgeb_episode[0]}E{mgeb_episode[1]}" if mgeb_type == "serie" else None,
                     "subtitles": [],
                     "aniskip": {
                         "mal_id": int(mal_id) if mal_id and str(mal_id).isdigit() else None,
@@ -1188,7 +1375,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             self.send_cors_headers(404, "application/json; charset=utf-8")
             self.send_header("Server-Timing", server_timing)
             self.end_headers()
-            reason = "anime_not_found" if media_type == "anime" and lang == "sub" else "no_sources"
+            reason = ("anime_not_found" if media_type == "anime" and lang == "sub"
+                      else "episode_mismatch" if mgeb_episode_mismatch[0] else "no_sources")
             self.wfile.write(json.dumps({"success": False, "error": "No direct streams resolved", "reason": reason, "fallback_recommended": True}).encode("utf-8"))
 
     def handle_stream(self, params, is_head=False):
