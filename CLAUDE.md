@@ -7,7 +7,7 @@
 
 - **Plans:** always paste the complete plan in the chat (not only in the plan file) and stop. Implement only after explicit approval in the chat.
 - **Phases:** in approved multi-phase work (even in auto mode), hard stop at the end of every phase, or before any decision with strong impact on development: report what changed, verification results with numbers, and wait for the go-ahead.
-- **Git:** no commits, pushes, branch creation, merges or deploys unless the user asks for that specific action.
+- **Git:** no commits, pushes, branch creation, merges or deploys unless the user asks for that specific action. Merge feature branches into `master` with `git merge --no-ff` (always a merge commit, so the branch shows in the history graph); never fast-forward.
 - **Scope:** prefer general fixes over per-host or per-title patches; point fixes only when strictly necessary.
 - **Verification:** test with several titles (movies, series, anime), not just one, in Chrome and Firefox when the player is involved (test scripts take `--browser=chrome|edge|firefox`, Chrome by default; `tools/player_benchmark.mjs`).
 - **No emojis in the site:** never put emojis or pictograph glyphs (play, rewind, fast-forward symbols and the like) in anything the site renders. Use inline SVG line icons in the site's own style, or no icon at all. Artplayer paints every svg inside `.art-video-player` white, so line icons there need `fill: none; stroke: currentColor` in CSS.
