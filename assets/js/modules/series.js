@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261012_1342';
+import { store } from '../core/state.js?v=20261012_1827';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,15 +14,15 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261012_1342';
-import { showToast } from '../core/toast.js?v=20261012_1342';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261012_1342';
-import { buildFeedRows } from '../core/feedRows.js?v=20261012_1342';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261012_1342';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1342';
-import { resumeStartTime } from '../core/resume.js?v=20261012_1342';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261012_1342';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261012_1342';
+} from '../core/constants.js?v=20261012_1827';
+import { showToast } from '../core/toast.js?v=20261012_1827';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261012_1827';
+import { buildFeedRows } from '../core/feedRows.js?v=20261012_1827';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261012_1827';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1827';
+import { resumeStartTime } from '../core/resume.js?v=20261012_1827';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261012_1827';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261012_1827';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -658,7 +658,11 @@ function closeSeriesExploreView() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-export function resetSeriesViewState() {
+/**
+ * Back to the tab's start page: search and filters cleared, discovery feed shown. `keepHistory` is for a tab switch,
+ * which already handles the history entry, so the explore layer is not popped again.
+ */
+export function resetSeriesViewState({ keepHistory = false } = {}) {
     const seriesExploreView = document.getElementById("series-explore-view");
     const seriesDiscoveryFeed = document.getElementById("series-discovery-feed");
     const seriesSearchInput = document.getElementById("series-search-input");
@@ -675,7 +679,7 @@ export function resetSeriesViewState() {
     const wasOpen = seriesExploreView && !seriesExploreView.classList.contains("hidden");
     if (seriesExploreView) seriesExploreView.classList.add("hidden");
     if (seriesDiscoveryFeed) seriesDiscoveryFeed.classList.remove("hidden");
-    if (wasOpen) {
+    if (wasOpen && !keepHistory) {
         popNavLayer();
     }
 
@@ -1251,7 +1255,8 @@ function closeAnimesExploreView() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-export function resetAnimesViewState() {
+/** Same as resetSeriesViewState, for the Animes tab. */
+export function resetAnimesViewState({ keepHistory = false } = {}) {
     const animesExploreView = document.getElementById("animes-explore-view");
     const animesDiscoveryFeed = document.getElementById("animes-discovery-feed");
     const animesSearchInput = document.getElementById("animes-search-input");
@@ -1268,7 +1273,7 @@ export function resetAnimesViewState() {
     const wasOpen = animesExploreView && !animesExploreView.classList.contains("hidden");
     if (animesExploreView) animesExploreView.classList.add("hidden");
     if (animesDiscoveryFeed) animesDiscoveryFeed.classList.remove("hidden");
-    if (wasOpen) {
+    if (wasOpen && !keepHistory) {
         popNavLayer();
     }
 
