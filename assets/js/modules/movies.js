@@ -3,7 +3,7 @@
  * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and modal playback
  */
 
-import { store } from '../core/state.js?v=20261010_1539';
+import { store } from '../core/state.js?v=20261012_1342';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,14 +14,15 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261010_1539';
-import { showToast } from '../core/toast.js?v=20261010_1539';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261010_1539';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261010_1539';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261010_1539';
-import { getUiSvg } from '../core/icons.js?v=20261010_1539';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261010_1539';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261010_1539';
+} from '../core/constants.js?v=20261012_1342';
+import { showToast } from '../core/toast.js?v=20261012_1342';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261012_1342';
+import { buildFeedRows } from '../core/feedRows.js?v=20261012_1342';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261012_1342';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1342';
+import { getUiSvg } from '../core/icons.js?v=20261012_1342';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261012_1342';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261012_1342';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -126,45 +127,24 @@ export async function initMoviesView() {
     await loadMoviesFromTmdb();
 }
 
-function deduplicateFeedRows(sections) {
-    const seenIds = new Set();
-    const result = {};
-    for (const [key, list] of Object.entries(sections)) {
-        result[key] = [];
-        for (const item of (list || [])) {
-            if (item && item.id && !seenIds.has(item.id)) {
-                seenIds.add(item.id);
-                result[key].push(item);
-            }
-        }
-    }
-    return result;
-}
+/** Page fetcher of a catalog row for buildFeedRows. */
+const feedPages = (path) => (page) =>
+    fetchTmdbEndpoint(`${path}${path.includes('?') ? '&' : '?'}page=${page}`).then(data => data.results || []);
 
 export async function loadMoviesFromTmdb() {
     showTrackSkeletons();
     try {
-        const [trendingRes, releasesRes, animationRes, nationalRes, classicsRes] = await Promise.allSettled([
-            fetchTmdbEndpoint('trending/movie/week'),
-            fetchTmdbEndpoint('movie/now_playing'),
-            fetchTmdbEndpoint('discover/movie?with_genres=16&sort_by=popularity.desc'),
-            fetchTmdbEndpoint('discover/movie?with_origin_country=BR&sort_by=popularity.desc'),
-            fetchTmdbEndpoint('discover/movie?primary_release_date.lte=1999-12-31&vote_count.gte=1000&sort_by=vote_average.desc')
-        ]);
-
         const todayStr = new Date().toISOString().split('T')[0];
-        const filterReleased = (list) => (list || []).filter(m => {
+        moviesCacheData = await buildFeedRows({
+            trending: feedPages('trending/movie/week'),
+            releases: feedPages('movie/now_playing'),
+            animation: feedPages('discover/movie?with_genres=16&sort_by=popularity.desc'),
+            national: feedPages('discover/movie?with_origin_country=BR&sort_by=popularity.desc'),
+            classics: feedPages('discover/movie?primary_release_date.lte=1999-12-31&vote_count.gte=1000&sort_by=vote_average.desc')
+        }, (m) => {
             const d = m.release_date || m.first_air_date;
             return !d || d <= todayStr;
         });
-
-        const trending = filterReleased(trendingRes.status === 'fulfilled' ? (trendingRes.value.results || []) : []);
-        const releases = filterReleased(releasesRes.status === 'fulfilled' ? (releasesRes.value.results || []) : []);
-        const animation = filterReleased(animationRes.status === 'fulfilled' ? (animationRes.value.results || []) : []);
-        const national = filterReleased(nationalRes.status === 'fulfilled' ? (nationalRes.value.results || []) : []);
-        const classics = filterReleased(classicsRes.status === 'fulfilled' ? (classicsRes.value.results || []) : []);
-
-        moviesCacheData = deduplicateFeedRows({ trending, releases, animation, national, classics });
 
         try {
             localStorage.setItem(TMDB_CACHE_KEY, JSON.stringify({
