@@ -3,7 +3,7 @@
  * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and modal playback
  */
 
-import { store } from '../core/state.js?v=20261012_1342';
+import { store } from '../core/state.js?v=20261012_1827';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,15 +14,15 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261012_1342';
-import { showToast } from '../core/toast.js?v=20261012_1342';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261012_1342';
-import { buildFeedRows } from '../core/feedRows.js?v=20261012_1342';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261012_1342';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1342';
-import { getUiSvg } from '../core/icons.js?v=20261012_1342';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261012_1342';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261012_1342';
+} from '../core/constants.js?v=20261012_1827';
+import { showToast } from '../core/toast.js?v=20261012_1827';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261012_1827';
+import { buildFeedRows } from '../core/feedRows.js?v=20261012_1827';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261012_1827';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1827';
+import { getUiSvg } from '../core/icons.js?v=20261012_1827';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261012_1827';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261012_1827';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -640,7 +640,8 @@ export function openExploreView(autoFocus = false) {
     executeFilteredCatalogSearch(1);
 }
 
-export function closeExploreView() {
+/** `keepHistory`: a tab switch closes it and already handles the history entry (see resetMoviesViewState). */
+export function closeExploreView({ keepHistory = false } = {}) {
     const moviesExploreView = document.getElementById("movies-explore-view");
     const discoveryFeed = document.getElementById("movies-discovery-feed");
     const moviesSearchInput = document.getElementById("movies-search-input");
@@ -657,7 +658,7 @@ export function closeExploreView() {
     const wasOpen = moviesExploreView && !moviesExploreView.classList.contains("hidden");
     if (moviesExploreView) moviesExploreView.classList.add("hidden");
     if (discoveryFeed) discoveryFeed.classList.remove("hidden");
-    if (wasOpen) {
+    if (wasOpen && !keepHistory) {
         popNavLayer();
     }
 
@@ -1100,7 +1101,7 @@ export async function openCollectionView(type, item, page = 1) {
     }
 }
 
-export function closeCollectionView() {
+export function closeCollectionView({ keepHistory = false } = {}) {
     const collectionSection = document.getElementById("movies-collection-section");
     const discoveryFeed = document.getElementById("movies-discovery-feed");
     const moviesExploreView = document.getElementById("movies-explore-view");
@@ -1113,7 +1114,7 @@ export function closeCollectionView() {
     }
     renderPaginationControls("movies-collection-pagination", 1, 0, 0, () => {});
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (wasOpen) {
+    if (wasOpen && !keepHistory) {
         popNavLayer();
     }
 }
@@ -1405,6 +1406,8 @@ export function selectMovieServer(server, buttonElement = null) {
     }
 }
 
-export function resetMoviesViewState() {
-    closeExploreView();
+/** Back to the tab's start page: a studio collection and the search/explore view closed, filters cleared. */
+export function resetMoviesViewState({ keepHistory = false } = {}) {
+    closeCollectionView({ keepHistory });
+    closeExploreView({ keepHistory });
 }

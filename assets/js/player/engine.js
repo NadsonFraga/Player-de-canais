@@ -3,14 +3,14 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261012_1342';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261012_1342';
-import { showToast } from '../core/toast.js?v=20261012_1342';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1342';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261012_1342';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261012_1342';
-import { formatClock } from '../core/resume.js?v=20261012_1342';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261012_1342';
+import { store } from '../core/state.js?v=20261012_1827';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261012_1827';
+import { showToast } from '../core/toast.js?v=20261012_1827';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1827';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261012_1827';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261012_1827';
+import { formatClock } from '../core/resume.js?v=20261012_1827';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261012_1827';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -799,6 +799,13 @@ const NATIVE_UP_NEXT_NO_DATA_S = 30;
 const SKIP_OUTRO_TAIL_S = 10;
 const NATIVE_SETTING_WIDTH = 230;
 const NATIVE_SETTING_ORDER = ['quality', 'audio', 'subtitle', 'playback-rate', 'fit', 'cast'];
+// "Buscar qualidade melhor": the server cannot measure some hosts (they block datacenters) that the viewer's browser
+// plays fine, often 1080p MP4s on a slow host. On request, the browser reads their real frame size while the video
+// keeps playing; reading the header of a 4 GB file there took 13-17 s
+const QUALITY_SEARCH_BUDGET_MS = 30000;
+const QUALITY_SEARCH_MAX = 4;
+// The source the viewer asked for is slow by nature: it gets this long to start before going back
+const QUALITY_SEARCH_START_BUDGET_MS = 45000;
 // Web Video Caster (Android) takes the playing source and sends it to a TV or projector
 const CAST_APP_PACKAGE = 'com.instantbits.cast.webvideo';
 const CAST_APP_STORE_URL = `https://play.google.com/store/apps/details?id=${CAST_APP_PACKAGE}`;
@@ -1079,6 +1086,7 @@ function failoverNativeSource(session, reason) {
     if (!isSessionLive(session)) return;
     const resumeAt = currentPlaybackTime(session) || session.resumeAt || 0;
     session.failed.add(session.currentIndex);
+    (session.failReasons || (session.failReasons = {}))[session.currentIndex] = reason;
     const nextIdx = nextPlayableIndex(session, session.autoMode ? null : session.lockedQuality);
     if (nextIdx < 0) {
         console.warn("[PlayerEngine] Todas as fontes diretas falharam.", reason || '');
@@ -1088,6 +1096,12 @@ function failoverNativeSource(session, reason) {
     }
     console.warn(`[PlayerEngine] Fonte ${session.currentIndex + 1} falhou (${reason}). Alternando para fonte ${nextIdx + 1}.`);
     session.statusNote = 'Fonte anterior não respondeu.';
+    // The better source the viewer asked for did not start: say so, instead of silently going back
+    if (session.currentIndex === session.slowStartIndex) {
+        const back = session.sources[nextIdx].quality;
+        showToast(`A fonte em ${qualityText(session.sources[session.currentIndex].quality)} não respondeu. Voltando${back ? ` para ${qualityText(back)}` : ''}.`, 5000);
+        session.slowStartIndex = null;
+    }
     mountNativeSource(session, nextIdx, { startTime: resumeAt });
 }
 
@@ -1184,7 +1198,8 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         const now = Date.now();
         const elapsed = now - mountedAt;
         const hasAlternative = session.sources.some((src, idx) => idx !== session.currentIndex && !session.failed.has(idx));
-        const limit = hasAlternative ? budget : NATIVE_START_BUDGET_LAST_SOURCE_MS;
+        const limit = !hasAlternative ? NATIVE_START_BUDGET_LAST_SOURCE_MS
+            : session.slowStartIndex === index ? QUALITY_SEARCH_START_BUDGET_MS : budget;
 
         stuckSince = bufferedAhead() >= NATIVE_STUCK_BUFFER_S ? (stuckSince || now) : 0;
         const stuck = stuckSince && now - stuckSince >= NATIVE_STUCK_GRACE_MS;
@@ -1782,6 +1797,12 @@ function installFitSetting(art) {
 function upsertSetting(art, option) {
     if (!art || !art.setting) return;
     try {
+        // Artplayer keeps every panel it drew: a list whose entries changed (a new "Buscar qualidade melhor", a quality
+        // found later) must be drawn again, or the screen keeps the old one
+        const signatures = art.tvzSettingSignatures || (art.tvzSettingSignatures = {});
+        const signature = (option.selector || []).map(item => String(item.html)).join('\u0001');
+        const listChanged = option.name in signatures && signatures[option.name] !== signature;
+        signatures[option.name] = signature;
         art.setting.update(option);
         const list = art.setting.option;
         if (Array.isArray(list)) {
@@ -1790,7 +1811,8 @@ function upsertSetting(art, option) {
                 return i === -1 ? NATIVE_SETTING_ORDER.length : i;
             };
             const sorted = [...list].sort((a, b) => rank(a.name) - rank(b.name));
-            if (sorted.some((item, i) => item !== list[i])) {
+            const reordered = sorted.some((item, i) => item !== list[i]);
+            if (reordered || listChanged) {
                 list.splice(0, list.length, ...sorted);
                 art.setting.destroy();
                 art.setting.render(list);
@@ -1875,6 +1897,9 @@ function refreshQualityMenu(session) {
             default: !session.autoMode && session.lockedQuality === quality
         });
     }
+    if (qualitySearchCandidates(session).length) {
+        selector.push({ html: session.qualitySearching ? 'Buscando qualidade melhor...' : 'Buscar qualidade melhor', value: 'search' });
+    }
 
     upsertSetting(art, {
         name: 'quality',
@@ -1884,11 +1909,95 @@ function refreshQualityMenu(session) {
         tooltip: qualityTooltip(session),
         selector,
         onSelect: (item) => {
+            if (item.value === 'search') {
+                searchBetterQuality(session);
+                return qualityTooltip(session);
+            }
             setPlayerPref('quality', item.value === 'auto' ? 'auto' : Number(item.value));
             return selectNativeQuality(session, item.value);
         }
     });
     updateQualityIndicators(session);
+}
+
+/**
+ * Sources worth measuring in the browser: live MP4s the server left unmeasured, while what plays is below 1080p
+ * (HLS cannot be read without hls.js, so those keep the server's word). A source that only ran out of start time
+ * counts again: the slow host is exactly what the viewer accepts to wait for.
+ */
+function qualitySearchCandidates(session) {
+    if (session.qualitySearchDone || (activeQuality(session) || 0) >= 1080) return [];
+    const usable = idx => !session.failed.has(idx) || (session.failReasons && session.failReasons[idx] === 'timeout');
+    return session.sources
+        .map((src, idx) => ({ src, idx }))
+        .filter(({ src, idx }) => idx !== session.currentIndex && usable(idx) && src.alive && !src.quality && !isHlsSource(src))
+        .slice(0, QUALITY_SEARCH_MAX);
+}
+
+/** Real frame size of a video from its metadata only (nothing plays); null when it does not answer in time. */
+function readFrameSize(url, budgetMs) {
+    return new Promise(resolve => {
+        const video = document.createElement('video');
+        video.muted = true;
+        video.preload = 'metadata';
+        let done = false;
+        let timer = null;
+        const finish = (size) => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            // Stops the download
+            video.removeAttribute('src');
+            video.load();
+            resolve(size);
+        };
+        timer = setTimeout(() => finish(null), budgetMs);
+        video.addEventListener('loadedmetadata', () => finish(video.videoWidth ? { width: video.videoWidth, height: video.videoHeight } : null), { once: true });
+        video.addEventListener('error', () => finish(null), { once: true });
+        video.src = url;
+        video.load();
+    });
+}
+
+/**
+ * "Buscar qualidade melhor": measures the candidates while the video keeps playing, lists what it found in the
+ * menu, and moves to the best one when it beats what plays (same position), or says nothing better was found.
+ */
+async function searchBetterQuality(session) {
+    const candidates = qualitySearchCandidates(session);
+    if (session.qualitySearching || !candidates.length) return;
+    session.qualitySearching = true;
+    refreshQualityMenu(session);
+    showToast('Procurando uma fonte de qualidade melhor...', 4000);
+
+    const sizes = await Promise.all(candidates.map(({ src }) => readFrameSize(src.url, QUALITY_SEARCH_BUDGET_MS)));
+    session.qualitySearching = false;
+    session.qualitySearchDone = true;
+    if (!isSessionLive(session)) return;
+    candidates.forEach(({ src }, i) => {
+        const quality = sizes[i] ? qualityClass(sizes[i].width, sizes[i].height) : null;
+        if (quality) {
+            src.quality = quality;
+            src.qualities = [quality];
+        }
+    });
+    console.info("[PlayerEngine] Qualidade medida no navegador:", candidates.map(({ src }) => src.quality ? `${src.quality}p` : '?').join(', '));
+    refreshQualityMenu(session);
+
+    const playing = activeQuality(session) || 0;
+    const best = candidates
+        .filter(({ src }) => (src.quality || 0) > playing)
+        .sort((a, b) => b.src.quality - a.src.quality)[0];
+    if (!best) {
+        showToast('Não encontramos uma qualidade melhor para este título.', 4500);
+        return;
+    }
+    showToast(`Fonte em ${qualityText(best.src.quality)} encontrada. Carregando...`, 4000);
+    session.autoMode = false;
+    session.lockedQuality = best.src.quality;
+    session.slowStartIndex = best.idx;
+    session.failed.delete(best.idx);
+    remountFromMenu(session, best.idx);
 }
 
 function qualityTooltip(session) {
