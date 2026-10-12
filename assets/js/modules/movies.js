@@ -3,7 +3,7 @@
  * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and modal playback
  */
 
-import { store } from '../core/state.js?v=20261012_1342';
+import { store } from '../core/state.js?v=20261012_1641';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,15 +14,15 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261012_1342';
-import { showToast } from '../core/toast.js?v=20261012_1342';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261012_1342';
-import { buildFeedRows } from '../core/feedRows.js?v=20261012_1342';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261012_1342';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1342';
-import { getUiSvg } from '../core/icons.js?v=20261012_1342';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261012_1342';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261012_1342';
+} from '../core/constants.js?v=20261012_1641';
+import { showToast } from '../core/toast.js?v=20261012_1641';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261012_1641';
+import { buildFeedRows } from '../core/feedRows.js?v=20261012_1641';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261012_1641';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1641';
+import { getUiSvg } from '../core/icons.js?v=20261012_1641';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261012_1641';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261012_1641';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
