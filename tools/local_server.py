@@ -1037,6 +1037,102 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 import http.server
 
+# ---------- Stream proxy (/api/stream): same rules as functions/api/stream.js, checked by tools/test_stream_proxy.py
+
+# Whatever the proxy returns must never run as a page here
+STREAM_SAFETY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "sandbox; default-src 'none'",
+}
+STREAM_UPSTREAM_TIMEOUT_S = 15
+STREAM_MAX_REDIRECTS = 5
+# Playlists and subtitles are read whole to be rewritten; real ones stay well under 1 MB
+STREAM_MAX_BUFFERED_BYTES = 5 * 1024 * 1024
+STREAM_MEDIA_TYPE = re.compile(r"^(video/|audio/|application/(mp4|octet-stream)$|binary/octet-stream$)", re.I)
+# Hosts disguise segments (".jpeg", text/html): the address decides the type, else plain data
+STREAM_TYPE_BY_EXTENSION = {"ts": "video/mp2t", "mp4": "video/mp4", "m4s": "video/mp4", "m4v": "video/mp4",
+                            "aac": "audio/aac", "m4a": "audio/mp4", "mp3": "audio/mpeg"}
+
+
+def is_http_url(value):
+    try:
+        parts = urllib.parse.urlsplit(value or "")
+    except ValueError:
+        return False
+    return parts.scheme in ("http", "https") and bool(parts.hostname)
+
+
+def stream_media_type(upstream_type, url):
+    """Content type of a binary answer: media types as they come, anything else from the address, else plain data."""
+    media = (upstream_type or "").split(";")[0].strip()
+    if STREAM_MEDIA_TYPE.match(media):
+        return media
+    extension = urllib.parse.urlsplit(url).path.rsplit(".", 1)[-1].lower()
+    return STREAM_TYPE_BY_EXTENSION.get(extension, "application/octet-stream")
+
+
+def clean_vtt(text):
+    """Subtitle cues keep italics, bold and underline only. Any other complete tag is dropped and a stray "<" or ">"
+    (a tag split over two lines) is escaped, so the player can draw the cue as HTML without running anything."""
+    lines = []
+    for line in text.split("\n"):
+        if "-->" not in line:
+            line = re.sub(r"</?[a-zA-Z][^<>]*>", lambda m: m.group(0).lower() if re.fullmatch(r"</?[ibu]>", m.group(0), re.I) else "", line)
+            line = re.sub(r"<(?!/?[ibu]>)", "&lt;", line)
+            line = re.sub(r"(?<!<[ibu])(?<!</[ibu])>", "&gt;", line)
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def read_capped(resp):
+    """Reads a whole body up to STREAM_MAX_BUFFERED_BYTES; None when it is bigger."""
+    body = resp.read(STREAM_MAX_BUFFERED_BYTES + 1)
+    return None if len(body) > STREAM_MAX_BUFFERED_BYTES else body
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Redirects come back as HTTPError 3xx so fetch_upstream checks every new address."""
+
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+_UPSTREAM_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
+def upstream_open(req, timeout):
+    """One upstream request, redirects not followed (tests replace this function)."""
+    return _UPSTREAM_OPENER.open(req, timeout=timeout)
+
+
+def fetch_upstream(target_url, referer, origin, range_header=None, accept=None):
+    """Fetches the target following redirects one by one (each new address must be http/https again).
+    Returns (response, final_url), or (None, url) after too many or a bad redirect. Upstream errors raise HTTPError."""
+    url = target_url
+    for _ in range(STREAM_MAX_REDIRECTS + 1):
+        req = urllib.request.Request(url)
+        req.add_header("User-Agent", USER_AGENT)
+        req.add_header("Referer", referer)
+        if origin:
+            req.add_header("Origin", origin)
+        if range_header:
+            req.add_header("Range", range_header)
+        if accept:
+            req.add_header("Accept", accept)
+        try:
+            return upstream_open(req, STREAM_UPSTREAM_TIMEOUT_S), url
+        except urllib.error.HTTPError as e:
+            location = e.headers.get("Location") if e.headers else None
+            if 300 <= e.code < 400 and location:
+                e.close()
+                url = urllib.parse.urljoin(url, location)
+                if not is_http_url(url):
+                    return None, url
+                continue
+            raise
+    return None, url
+
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
@@ -1379,117 +1475,139 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                       else "episode_mismatch" if mgeb_episode_mismatch[0] else "no_sources")
             self.wfile.write(json.dumps({"success": False, "error": "No direct streams resolved", "reason": reason, "fallback_recommended": True}).encode("utf-8"))
 
+    def send_stream_headers(self, status, content_type):
+        """CORS (casting receivers fetch from another origin) plus the headers that keep any answer from running
+        as a page here. Upstream headers are never copied."""
+        self.send_cors_headers(status, content_type)
+        for name, value in STREAM_SAFETY_HEADERS.items():
+            self.send_header(name, value)
+
+    def send_stream_error(self, status, error, is_head=False):
+        body = json.dumps({"error": error}).encode("utf-8")
+        self.send_stream_headers(status, "application/json")
+        self.end_headers()
+        if not is_head:
+            self.wfile.write(body)
+
     def handle_stream(self, params, is_head=False):
         target_url = params.get("url", [""])[0]
-        if not target_url:
-            self.send_cors_headers(400, "text/plain")
-            self.end_headers()
-            self.wfile.write(b"Missing 'url' query parameter")
+        referer = params.get("referer", [""])[0]
+        origin = params.get("origin", [""])[0]
+
+        # Only web addresses, and no line break that could add a header upstream
+        if not is_http_url(target_url) or re.search(r"[\r\n]", referer + origin):
+            self.send_stream_error(400, "bad_request", is_head)
             return
 
-        referer = params.get("referer", [""])[0]
+        # Custom referer override or automatic provider detection
         if not referer:
             if "dramahot.top" in target_url or "zokoanime.video" in target_url:
-                referer = "https://zokoanime.video/"
+                referer, origin = "https://zokoanime.video/", "https://zokoanime.video"
             elif "playercdn.workers.dev" in target_url or "embedplayer2.xyz" in target_url:
-                referer = "https://embedplayer2.xyz/"
+                referer, origin = "https://embedplayer2.xyz/", "https://embedplayer2.xyz"
+            elif "googlevideo.com" in target_url or "blogger.com" in target_url:
+                referer = "https://www.blogger.com/"
             elif "peliculaplay.com" in target_url:
                 referer = "https://mgeb.top/"
             else:
                 referer = "https://tvzinhaonline.pages.dev/"
-
-        req = urllib.request.Request(target_url)
-        req.add_header("User-Agent", USER_AGENT)
-        req.add_header("Referer", referer)
-        if "zokoanime" in referer:
-            req.add_header("Origin", "https://zokoanime.video")
-
-        if "Range" in self.headers:
-            req.add_header("Range", self.headers["Range"])
-        elif is_head:
-            req.add_header("Range", "bytes=0-0")
+        # The anime host checks Origin together with its Referer (the resolver's probe sends both)
+        if not origin and "zokoanime" in referer:
+            origin = "https://zokoanime.video"
 
         try:
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                content_type = resp.headers.get("Content-Type", "")
-                is_m3u8 = ".m3u8" in target_url or "mpegurl" in content_type.lower()
-
-                if is_m3u8 and resp.status == 200:
-                    raw_playlist = resp.read().decode("utf-8", errors="ignore")
-                    base_url = target_url
-                    host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
-                    proxy_base = f"http://{host_header}/api/stream"
-
-                    rewritten_lines = []
-                    for line in raw_playlist.splitlines():
-                        trimmed = line.strip()
-                        if not trimmed:
-                            rewritten_lines.append(line)
-                            continue
-
-                        if trimmed.startswith("#"):
-                            def replace_uri(m):
-                                sub_uri = m.group(1)
-                                abs_sub = urllib.parse.urljoin(base_url, sub_uri)
-                                proxied = f"{proxy_base}?url={urllib.parse.quote(abs_sub, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
-                                return f'URI="{proxied}"'
-                            rewritten = re.sub(r'URI=["\']([^"\']+)["\']', replace_uri, line)
-                            rewritten_lines.append(rewritten)
-                        else:
-                            abs_url = urllib.parse.urljoin(base_url, trimmed)
-                            proxied = f"{proxy_base}?url={urllib.parse.quote(abs_url, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
-                            rewritten_lines.append(proxied)
-
-                    body = "\n".join(rewritten_lines).encode("utf-8")
-                    self.send_cors_headers(resp.status, "application/vnd.apple.mpegurl; charset=utf-8")
-                    self.send_header("Content-Length", str(len(body)))
-                    self.end_headers()
-                    if not is_head:
-                        self.wfile.write(body)
-                    return
-
-                is_vtt = ".vtt" in target_url or "text/vtt" in content_type.lower()
-                if is_vtt and resp.status == 200:
-                    raw_vtt = resp.read().decode("utf-8", errors="ignore")
-                    # Clean raw formatting tags like <i>, </i>, <b>, </b> from VTT cues
-                    cleaned_vtt = re.sub(r'</?[a-zA-Z][^>]*>', '', raw_vtt)
-                    body = cleaned_vtt.encode("utf-8")
-                    self.send_cors_headers(resp.status, "text/vtt; charset=utf-8")
-                    self.send_header("Content-Length", str(len(body)))
-                    self.end_headers()
-                    if not is_head:
-                        self.wfile.write(body)
-                    return
-
-                # Binary / Segment passthrough
-                self.send_cors_headers(resp.status, content_type)
-                for h in ["Content-Length", "Content-Range", "Accept-Ranges"]:
-                    if h in resp.headers:
-                        self.send_header(h, resp.headers[h])
-                self.end_headers()
-
-                if is_head:
-                    return
-
-                # Stream in 64KB chunks with disconnect tolerance
-                try:
-                    while True:
-                        chunk = resp.read(65536)
-                        if not chunk:
-                            break
-                        self.wfile.write(chunk)
-                except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
-                    pass
+            resp, final_url = fetch_upstream(target_url, referer, origin, self.headers.get("Range"), self.headers.get("Accept"))
         except urllib.error.HTTPError as e:
-            self.send_cors_headers(e.code, "text/plain")
+            # Upstream error: the status is kept (the player retries on it), the host's page is not passed on
+            e.close()
+            self.send_stream_headers(e.code, "text/plain; charset=utf-8")
             self.end_headers()
             if not is_head:
-                self.wfile.write(f"Upstream HTTP Error {e.code}".encode("utf-8"))
+                self.wfile.write(b"upstream_error")
+            return
         except Exception as e:
-            self.send_cors_headers(502, "application/json")
+            print(f"[LocalServer] Stream upstream request failed for {target_url[:120]}: {e}", file=sys.stderr)
+            self.send_stream_error(502, "upstream_failed", is_head)
+            return
+        if resp is None:
+            self.send_stream_error(502, "upstream_failed", is_head)
+            return
+
+        with resp:
+            content_type = (resp.headers.get("Content-Type", "") or "").lower()
+            is_m3u8 = ".m3u8" in target_url or ".m3u8" in final_url or "mpegurl" in content_type
+            is_vtt = ".vtt" in target_url or ".vtt" in final_url or "text/vtt" in content_type
+            is_ok = 200 <= resp.status < 300
+
+            # HLS playlist: rewrite relative and absolute paths (against the final address) so segments route through here
+            if is_m3u8 and is_ok:
+                if is_head:
+                    self.send_stream_headers(resp.status, "application/vnd.apple.mpegurl; charset=utf-8")
+                    self.end_headers()
+                    return
+                raw = read_capped(resp)
+                if raw is None:
+                    self.send_stream_error(502, "upstream_too_large")
+                    return
+                host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
+                proxy_base = f"http://{host_header}/api/stream"
+
+                def proxied(uri):
+                    absolute = urllib.parse.urljoin(final_url, uri)
+                    return f"{proxy_base}?url={urllib.parse.quote(absolute, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
+
+                rewritten_lines = []
+                for line in raw.decode("utf-8", errors="ignore").split("\n"):
+                    trimmed = line.strip()
+                    if not trimmed:
+                        rewritten_lines.append(line)
+                    elif trimmed.startswith("#"):
+                        # URI in tags (e.g., #EXT-X-KEY:METHOD=...,URI="...", #EXT-X-MAP:URI="...")
+                        rewritten_lines.append(re.sub(r'URI=["\']([^"\']+)["\']', lambda m: f'URI="{proxied(m.group(1))}"', line))
+                    else:
+                        rewritten_lines.append(proxied(trimmed))
+                body = "\n".join(rewritten_lines).encode("utf-8")
+                self.send_stream_headers(resp.status, "application/vnd.apple.mpegurl; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+
+            # WebVTT subtitles: only harmless formatting tags reach the player
+            if is_vtt and is_ok:
+                if is_head:
+                    self.send_stream_headers(resp.status, "text/vtt; charset=utf-8")
+                    self.end_headers()
+                    return
+                raw = read_capped(resp)
+                if raw is None:
+                    self.send_stream_error(502, "upstream_too_large")
+                    return
+                body = clean_vtt(raw.decode("utf-8", errors="ignore")).encode("utf-8")
+                self.send_stream_headers(resp.status, "text/vtt; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+
+            # Binary / segment stream (.ts, .m4s, .mp4): built from scratch, only the range headers come from upstream
+            self.send_stream_headers(resp.status, stream_media_type(content_type, final_url))
+            for name in ["Content-Length", "Content-Range", "Accept-Ranges"]:
+                if resp.headers.get(name):
+                    self.send_header(name, resp.headers[name])
             self.end_headers()
-            if not is_head:
-                self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
+            if is_head:
+                return
+
+            # Stream in 64KB chunks with disconnect tolerance
+            try:
+                while True:
+                    chunk = resp.read(65536)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+            except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+                pass
 
 def get_local_ip():
     try:
