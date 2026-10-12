@@ -3,16 +3,16 @@
  * Coordinates core state, modular engines, navigation, and exposes TvzinhaActions
  */
 
-import { store } from './core/state.js?v=20261012_1755';
-import { showToast } from './core/toast.js?v=20261012_1755';
-import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261012_1755';
-import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261012_1755';
-import { runWhenHomeIdle } from './core/activity.js?v=20261012_1755';
-import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal } from './modules/movies.js?v=20261012_1755';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching } from './modules/series.js?v=20261012_1755';
-import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261012_1755';
-import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261012_1755';
-import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261012_1755';
+import { store } from './core/state.js?v=20261012_1827';
+import { showToast } from './core/toast.js?v=20261012_1827';
+import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261012_1827';
+import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261012_1827';
+import { runWhenHomeIdle } from './core/activity.js?v=20261012_1827';
+import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal, resetMoviesViewState } from './modules/movies.js?v=20261012_1827';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261012_1827';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261012_1827';
+import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261012_1827';
+import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261012_1827';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
@@ -154,6 +154,10 @@ async function bootstrapApp() {
     registerViewHook('animes', () => {
         initAnimesView();
     });
+    // Leaving a catalog tab: back to its start page next time (the tab switch already handled the history entry)
+    registerViewHook('moviesLeave', () => resetMoviesViewState({ keepHistory: true }));
+    registerViewHook('seriesLeave', () => resetSeriesViewState({ keepHistory: true }));
+    registerViewHook('animesLeave', () => resetAnimesViewState({ keepHistory: true }));
 
     // Initialize SPA navigation & Smart TV Remote D-Pad controls
     setupSpaNavigation();
