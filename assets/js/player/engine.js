@@ -3,14 +3,14 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261012_1641';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261012_1641';
-import { showToast } from '../core/toast.js?v=20261012_1641';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1641';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261012_1641';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261012_1641';
-import { formatClock } from '../core/resume.js?v=20261012_1641';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261012_1641';
+import { store } from '../core/state.js?v=20261012_1755';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261012_1755';
+import { showToast } from '../core/toast.js?v=20261012_1755';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1755';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261012_1755';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261012_1755';
+import { formatClock } from '../core/resume.js?v=20261012_1755';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261012_1755';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1086,6 +1086,7 @@ function failoverNativeSource(session, reason) {
     if (!isSessionLive(session)) return;
     const resumeAt = currentPlaybackTime(session) || session.resumeAt || 0;
     session.failed.add(session.currentIndex);
+    (session.failReasons || (session.failReasons = {}))[session.currentIndex] = reason;
     const nextIdx = nextPlayableIndex(session, session.autoMode ? null : session.lockedQuality);
     if (nextIdx < 0) {
         console.warn("[PlayerEngine] Todas as fontes diretas falharam.", reason || '');
@@ -1796,6 +1797,12 @@ function installFitSetting(art) {
 function upsertSetting(art, option) {
     if (!art || !art.setting) return;
     try {
+        // Artplayer keeps every panel it drew: a list whose entries changed (a new "Buscar qualidade melhor", a quality
+        // found later) must be drawn again, or the screen keeps the old one
+        const signatures = art.tvzSettingSignatures || (art.tvzSettingSignatures = {});
+        const signature = (option.selector || []).map(item => String(item.html)).join('\u0001');
+        const listChanged = option.name in signatures && signatures[option.name] !== signature;
+        signatures[option.name] = signature;
         art.setting.update(option);
         const list = art.setting.option;
         if (Array.isArray(list)) {
@@ -1804,7 +1811,8 @@ function upsertSetting(art, option) {
                 return i === -1 ? NATIVE_SETTING_ORDER.length : i;
             };
             const sorted = [...list].sort((a, b) => rank(a.name) - rank(b.name));
-            if (sorted.some((item, i) => item !== list[i])) {
+            const reordered = sorted.some((item, i) => item !== list[i]);
+            if (reordered || listChanged) {
                 list.splice(0, list.length, ...sorted);
                 art.setting.destroy();
                 art.setting.render(list);
@@ -1914,13 +1922,15 @@ function refreshQualityMenu(session) {
 
 /**
  * Sources worth measuring in the browser: live MP4s the server left unmeasured, while what plays is below 1080p
- * (HLS cannot be read without hls.js, so those keep the server's word).
+ * (HLS cannot be read without hls.js, so those keep the server's word). A source that only ran out of start time
+ * counts again: the slow host is exactly what the viewer accepts to wait for.
  */
 function qualitySearchCandidates(session) {
     if (session.qualitySearchDone || (activeQuality(session) || 0) >= 1080) return [];
+    const usable = idx => !session.failed.has(idx) || (session.failReasons && session.failReasons[idx] === 'timeout');
     return session.sources
         .map((src, idx) => ({ src, idx }))
-        .filter(({ src, idx }) => idx !== session.currentIndex && !session.failed.has(idx) && src.alive && !src.quality && !isHlsSource(src))
+        .filter(({ src, idx }) => idx !== session.currentIndex && usable(idx) && src.alive && !src.quality && !isHlsSource(src))
         .slice(0, QUALITY_SEARCH_MAX);
 }
 
@@ -1986,6 +1996,7 @@ async function searchBetterQuality(session) {
     session.autoMode = false;
     session.lockedQuality = best.src.quality;
     session.slowStartIndex = best.idx;
+    session.failed.delete(best.idx);
     remountFromMenu(session, best.idx);
 }
 

@@ -3,16 +3,16 @@
  * Coordinates core state, modular engines, navigation, and exposes TvzinhaActions
  */
 
-import { store } from './core/state.js?v=20261012_1641';
-import { showToast } from './core/toast.js?v=20261012_1641';
-import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261012_1641';
-import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261012_1641';
-import { runWhenHomeIdle } from './core/activity.js?v=20261012_1641';
-import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal } from './modules/movies.js?v=20261012_1641';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching } from './modules/series.js?v=20261012_1641';
-import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261012_1641';
-import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261012_1641';
-import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261012_1641';
+import { store } from './core/state.js?v=20261012_1755';
+import { showToast } from './core/toast.js?v=20261012_1755';
+import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261012_1755';
+import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261012_1755';
+import { runWhenHomeIdle } from './core/activity.js?v=20261012_1755';
+import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal } from './modules/movies.js?v=20261012_1755';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching } from './modules/series.js?v=20261012_1755';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261012_1755';
+import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261012_1755';
+import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261012_1755';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
