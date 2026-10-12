@@ -3,14 +3,18 @@
  * Handles view switching, active navigation state, mobile drawer, and player lifecycle/audio teardown
  */
 
-import { store } from '../core/state.js?v=20261012_1755';
-import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261012_1755';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1755';
-import { showToast } from '../core/toast.js?v=20261012_1755';
-import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome } from './historyManager.js?v=20261012_1755';
+import { store } from '../core/state.js?v=20261012_1827';
+import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261012_1827';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1827';
+import { showToast } from '../core/toast.js?v=20261012_1827';
+import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome } from './historyManager.js?v=20261012_1827';
 
 let viewHooks = {
     onTvLeave: null,
+    // Leaving a catalog tab resets it (search, filters, collection), so coming back shows its start page
+    onMoviesLeave: null,
+    onSeriesLeave: null,
+    onAnimesLeave: null,
     onHome: null,
     onMovies: null,
     onSeries: null,
@@ -141,6 +145,11 @@ export function switchAppView(viewName) {
 
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('tvzinha:teardownMedia'));
+    }
+
+    if (previousView && previousView !== viewName && previousView !== 'tv') {
+        const leaveHook = viewHooks[`on${previousView.charAt(0).toUpperCase()}${previousView.slice(1)}Leave`];
+        if (typeof leaveHook === 'function') leaveHook();
     }
 
     if (viewName === 'home') {
