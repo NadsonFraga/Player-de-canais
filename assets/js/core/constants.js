@@ -10,10 +10,10 @@ export const TMDB_IMG_W500 = 'https://image.tmdb.org/t/p/w500';
 export const TMDB_IMG_ORIGINAL = 'https://image.tmdb.org/t/p/original';
 
 // LocalStorage Cache Keys & TTL
-export const TMDB_CACHE_KEY = 'tvzinha_movies_cache_v4';
+export const TMDB_CACHE_KEY = 'tvzinha_movies_cache_v5';
 export const TMDB_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
-export const TMDB_SERIES_CACHE_KEY = 'tvzinha_series_cache_v4';
-export const TMDB_ANIMES_CACHE_KEY = 'tvzinha_animes_cache_v4';
+export const TMDB_SERIES_CACHE_KEY = 'tvzinha_series_cache_v5';
+export const TMDB_ANIMES_CACHE_KEY = 'tvzinha_animes_cache_v5';
 export const WATCH_PROGRESS_KEY = 'tvzinha_watch_progress_v1';
 export const FAVORITES_STORAGE_KEY = 'tvzinha_favorites';
 export const FAVORITE_TEAM_KEY = 'tvzinha_favorite_team';

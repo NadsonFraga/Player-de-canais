@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261010_1539';
+import { store } from '../core/state.js?v=20261012_1342';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,14 +14,15 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261010_1539';
-import { showToast } from '../core/toast.js?v=20261010_1539';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261010_1539';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261010_1539';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261010_1539';
-import { resumeStartTime } from '../core/resume.js?v=20261010_1539';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261010_1539';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261010_1539';
+} from '../core/constants.js?v=20261012_1342';
+import { showToast } from '../core/toast.js?v=20261012_1342';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261012_1342';
+import { buildFeedRows } from '../core/feedRows.js?v=20261012_1342';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261012_1342';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1342';
+import { resumeStartTime } from '../core/resume.js?v=20261012_1342';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261012_1342';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261012_1342';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -270,20 +271,14 @@ export async function fetchSeriesEndpoint(path) {
     return await res.json();
 }
 
-function deduplicateFeedRows(sections) {
-    const seenIds = new Set();
-    const result = {};
-    for (const [key, list] of Object.entries(sections)) {
-        result[key] = [];
-        for (const item of (list || [])) {
-            if (item && item.id && !seenIds.has(item.id)) {
-                seenIds.add(item.id);
-                result[key].push(item);
-            }
-        }
-    }
-    return result;
-}
+/** Page fetcher of a catalog row for buildFeedRows (every row path already has a query string). */
+const feedPages = (path) => (page) => fetchSeriesEndpoint(`${path}&page=${page}`).then(data => data.results || []);
+
+/** Titles already out on `todayStr` (TMDB lists some before their first episode). */
+const isReleasedBy = (todayStr) => (item) => {
+    const date = item.first_air_date || item.release_date;
+    return !date || date <= todayStr;
+};
 
 function renderPaginationControls(containerId, currentPage, totalPages, totalResults, onPageChange) {
     const container = document.getElementById(containerId);
@@ -430,26 +425,13 @@ export async function initSeriesView() {
 export async function loadSeriesFromTmdb() {
     try {
         const todayStr = new Date().toISOString().split('T')[0];
-        const [trendingRes, releasesRes, dramaRes, scifiRes, comedyRes] = await Promise.allSettled([
-            fetchSeriesEndpoint('discover/tv?without_genres=16,10767,10766,10763&sort_by=popularity.desc&vote_count.gte=30'),
-            fetchSeriesEndpoint(`discover/tv?without_genres=16,10767,10766,10763&sort_by=first_air_date.desc&first_air_date.lte=${todayStr}&vote_count.gte=10`),
-            fetchSeriesEndpoint('discover/tv?with_genres=18&without_genres=16,10767,10766,10763&sort_by=vote_average.desc&vote_count.gte=300'),
-            fetchSeriesEndpoint('discover/tv?with_genres=10765&without_genres=16,10767,10766,10763&sort_by=popularity.desc'),
-            fetchSeriesEndpoint('discover/tv?with_genres=35&without_genres=16,10767,10766,10763&sort_by=popularity.desc')
-        ]);
-
-        const filterReleased = (list) => (list || []).filter(s => {
-            const d = s.first_air_date || s.release_date;
-            return !d || d <= todayStr;
-        });
-
-        const seriesData = deduplicateFeedRows({
-            trending: filterReleased(trendingRes.status === 'fulfilled' ? trendingRes.value.results : []),
-            releases: filterReleased(releasesRes.status === 'fulfilled' ? releasesRes.value.results : []),
-            drama: filterReleased(dramaRes.status === 'fulfilled' ? dramaRes.value.results : []),
-            scifi: filterReleased(scifiRes.status === 'fulfilled' ? scifiRes.value.results : []),
-            comedy: filterReleased(comedyRes.status === 'fulfilled' ? comedyRes.value.results : [])
-        });
+        const seriesData = await buildFeedRows({
+            trending: feedPages('discover/tv?without_genres=16,10767,10766,10763&sort_by=popularity.desc&vote_count.gte=30'),
+            releases: feedPages(`discover/tv?without_genres=16,10767,10766,10763&sort_by=first_air_date.desc&first_air_date.lte=${todayStr}&vote_count.gte=10`),
+            drama: feedPages('discover/tv?with_genres=18&without_genres=16,10767,10766,10763&sort_by=vote_average.desc&vote_count.gte=300'),
+            scifi: feedPages('discover/tv?with_genres=10765&without_genres=16,10767,10766,10763&sort_by=popularity.desc'),
+            comedy: feedPages('discover/tv?with_genres=35&without_genres=16,10767,10766,10763&sort_by=popularity.desc')
+        }, isReleasedBy(todayStr));
 
         localStorage.setItem(TMDB_SERIES_CACHE_KEY, JSON.stringify({
             timestamp: Date.now(),
@@ -950,18 +932,28 @@ async function executeFilteredSeriesSearch(page = 1) {
                     params.push(`first_air_date.lte=${parts[1]}-12-31`);
                 }
             }
-            params.push('without_genres=16'); // Exclude animation from standard series explore
+            // The default lists leave animation out; the "Animação" chip lists it, minus the anime (dropped below)
+            if (activeSeriesFilterGenre !== '16') params.push('without_genres=16');
             endpoint = `discover/tv?${params.join('&')}`;
             if (sectionTitle) sectionTitle.textContent = "Catálogo de Séries";
         }
 
+        // "Animação" chip: TMDB cannot leave anime out and about half of each page is anime (dropped below),
+        // so one page here is two TMDB pages
+        const fetchAnimationPage = async () => {
+            const [first, second] = await Promise.all([2 * page - 1, 2 * page].map(n =>
+                fetchSeriesEndpoint(endpoint.replace(/([?&])page=\d+/, `$1page=${n}`)).catch(() => ({ results: [] }))));
+            return { ...first, page, results: [...(first.results || []), ...(second.results || [])], total_pages: Math.ceil((first.total_pages || 1) / 2) };
+        };
         // Text + filter: TMDB's search ignores the filters, so they are applied over the first search pages
         const filterWithText = query && (activeSeriesFilterGenre || activeSeriesFilterYearRange || activeSeriesFilterSort !== 'popularity.desc');
-        const data = filterWithText
+        const data = !query && activeSeriesFilterGenre === '16'
+            ? await fetchAnimationPage()
+            : filterWithText
             ? await filteredSearchPage({
                 key: `tv|${query}|${activeSeriesFilterGenre}|${activeSeriesFilterYearRange}|${activeSeriesFilterSort}`,
                 fetchPage: n => fetchSeriesEndpoint(`search/tv?query=${encodeURIComponent(query)}&page=${n}`),
-                keep: item => !(item.genre_ids || []).includes(16)
+                keep: item => !isAsianAnimation(item)
                     && (!activeSeriesFilterGenre || (item.genre_ids || []).includes(Number(activeSeriesFilterGenre)))
                     && inYearRange(item.first_air_date, activeSeriesFilterYearRange),
                 sort: activeSeriesFilterSort,
@@ -971,9 +963,9 @@ async function executeFilteredSeriesSearch(page = 1) {
             : await fetchSeriesEndpoint(endpoint);
         let results = data.results || [];
 
-        // Exclude animation (genre 16) from series search when text query is used
-        if (query) {
-            results = results.filter(item => !(item.genre_ids && item.genre_ids.includes(16)));
+        // Anime belongs to the Animes tab; western animation (Rick and Morty) stays here
+        if (query || activeSeriesFilterGenre === '16') {
+            results = results.filter(item => !isAsianAnimation(item));
         }
 
         posterGrid.innerHTML = "";
@@ -1039,26 +1031,13 @@ export async function initAnimesView() {
 export async function loadAnimesFromTmdb() {
     try {
         const todayStr = new Date().toISOString().split('T')[0];
-        const [trendingRes, shonenRes, isekaiRes, classicsRes, releasesRes] = await Promise.allSettled([
-            fetchSeriesEndpoint('discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&vote_count.gte=30&without_keywords=256466,157145'),
-            fetchSeriesEndpoint('discover/tv?with_genres=16,10759&without_genres=10762&with_original_language=ja&sort_by=popularity.desc&without_keywords=256466,157145'),
-            fetchSeriesEndpoint('discover/tv?with_genres=16,10765&without_genres=10762&with_original_language=ja&sort_by=popularity.desc&without_keywords=256466,157145'),
-            fetchSeriesEndpoint('discover/tv?with_genres=16&with_original_language=ja&first_air_date.lte=2010-12-31&vote_count.gte=200&sort_by=vote_average.desc&without_keywords=256466,157145'),
-            fetchSeriesEndpoint(`discover/tv?with_genres=16&with_original_language=ja&sort_by=first_air_date.desc&first_air_date.lte=${todayStr}&vote_count.gte=5&without_keywords=256466,157145`)
-        ]);
-
-        const filterReleased = (list) => (list || []).filter(s => {
-            const d = s.first_air_date || s.release_date;
-            return !d || d <= todayStr;
-        });
-
-        const animesData = deduplicateFeedRows({
-            trending: filterReleased(trendingRes.status === 'fulfilled' ? trendingRes.value.results : []),
-            shonen: filterReleased(shonenRes.status === 'fulfilled' ? shonenRes.value.results : []),
-            isekai: filterReleased(isekaiRes.status === 'fulfilled' ? isekaiRes.value.results : []),
-            classics: filterReleased(classicsRes.status === 'fulfilled' ? classicsRes.value.results : []),
-            releases: filterReleased(releasesRes.status === 'fulfilled' ? releasesRes.value.results : [])
-        });
+        const animesData = await buildFeedRows({
+            trending: feedPages('discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&vote_count.gte=30&without_keywords=256466,157145'),
+            shonen: feedPages('discover/tv?with_genres=16,10759&without_genres=10762&with_original_language=ja&sort_by=popularity.desc&without_keywords=256466,157145'),
+            isekai: feedPages('discover/tv?with_genres=16,10765&without_genres=10762&with_original_language=ja&sort_by=popularity.desc&without_keywords=256466,157145'),
+            classics: feedPages('discover/tv?with_genres=16&with_original_language=ja&first_air_date.lte=2010-12-31&vote_count.gte=200&sort_by=vote_average.desc&without_keywords=256466,157145'),
+            releases: feedPages(`discover/tv?with_genres=16&with_original_language=ja&sort_by=first_air_date.desc&first_air_date.lte=${todayStr}&vote_count.gte=5&without_keywords=256466,157145`)
+        }, isReleasedBy(todayStr));
 
         localStorage.setItem(TMDB_ANIMES_CACHE_KEY, JSON.stringify({
             timestamp: Date.now(),
@@ -2827,12 +2806,24 @@ function populateSeriesDrawer() {
  */
 function isAnimeShow(showItem) {
     const looksAnime = item => Boolean(item && (
-        (item.genre_ids && item.genre_ids.includes(16)) ||
-        (Array.isArray(item.genres) && item.genres.some(g => Number(g.id) === 16)) ||
+        isAsianAnimation(item) ||
         item.original_language === 'ja' ||
         (item.origin_country && (item.origin_country.includes('JP') || item.origin_country.includes('Japan')))
     ));
     return looksAnime(showItem) || Boolean(showItem && looksAnime(detailsFor(showItem.id)));
+}
+
+/**
+ * Animation from Japan, Korea or China: what the Animes tab lists. Animation from anywhere else (Rick and Morty,
+ * The Simpsons) is a series. Reads `genre_ids` (catalog items) or `genres` (show details).
+ */
+function isAsianAnimation(item) {
+    if (!item) return false;
+    const genres = item.genre_ids || (Array.isArray(item.genres) ? item.genres.map(g => Number(g.id)) : []);
+    if (!genres.includes(16)) return false;
+    const lang = item.original_language || '';
+    const countries = item.origin_country || [];
+    return lang === 'ja' || lang === 'ko' || lang === 'zh' || countries.includes('JP') || countries.includes('Japan');
 }
 
 /**
