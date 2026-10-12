@@ -1,44 +1,141 @@
 /**
  * Tvzinha Online - Cloudflare Pages Function: /api/stream
- * Edge CORS Proxy for video manifests (.m3u8), segments (.ts/.m4s), MP4 streams, and WebVTT subtitles.
- * Injects required Referer/Origin headers to prevent 403 Forbidden and enables full CORS.
+ * Proxy for video playlists (.m3u8), segments (.ts/.m4s), MP4 streams and WebVTT subtitles: adds the Referer/Origin
+ * the hosts need, keeps CORS open (TV receivers and casting apps fetch from another origin).
+ *
+ * It only ever answers media or data: upstream headers are never copied, a type that is not media becomes
+ * application/octet-stream, and every answer carries nosniff and a sandbox CSP, so nothing it returns can run as a
+ * page on our origin. Mirrored by tools/local_server.py (handle_stream); both are checked offline by
+ * tools/test_stream_proxy.py.
  */
 
+const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+  "Access-Control-Allow-Headers": "Range, Content-Type, Accept, User-Agent, Referer, Origin",
+  "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
+};
+// Whatever the proxy returns must never run as a page here
+const SAFETY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "Content-Security-Policy": "sandbox; default-src 'none'",
+};
+// Waiting for the upstream headers only: a long MP4 body keeps streaming after that
+const UPSTREAM_HEADERS_TIMEOUT_MS = 15000;
+const MAX_REDIRECTS = 5;
+// Playlists and subtitles are read whole to be rewritten; real ones stay well under 1 MB
+const MAX_BUFFERED_BYTES = 5 * 1024 * 1024;
+const MEDIA_TYPE = /^(video\/|audio\/|application\/(mp4|octet-stream)$|binary\/octet-stream$)/i;
+// Hosts disguise segments (".jpeg", text/html): the address decides the type, else plain data
+const TYPE_BY_EXTENSION = { ts: "video/mp2t", mp4: "video/mp4", m4s: "video/mp4", m4v: "video/mp4", aac: "audio/aac", m4a: "audio/mp4", mp3: "audio/mpeg" };
+
 export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-      "Access-Control-Allow-Headers": "Range, Content-Type, Accept, User-Agent, Referer, Origin",
-      "Access-Control-Max-Age": "86400",
-    },
-  });
+  return new Response(null, { status: 204, headers: { ...CORS_HEADERS, "Access-Control-Max-Age": "86400" } });
 }
 
 export async function onRequestHead(context) {
   return onRequestGet(context);
 }
 
+function errorResponse(status, error) {
+  return new Response(JSON.stringify({ error }), { status, headers: { ...CORS_HEADERS, ...SAFETY_HEADERS, "Content-Type": "application/json" } });
+}
+
+function isHttpUrl(value) {
+  try {
+    const url = new URL(value);
+    return (url.protocol === "http:" || url.protocol === "https:") && Boolean(url.hostname);
+  } catch (e) {
+    return false;
+  }
+}
+
+/** Content type of a binary answer: media types as they come, anything else from the address, else plain data. */
+function mediaType(upstreamType, url) {
+  const type = String(upstreamType || "").split(";")[0].trim();
+  if (MEDIA_TYPE.test(type)) return type;
+  const extension = new URL(url).pathname.split(".").pop().toLowerCase();
+  return TYPE_BY_EXTENSION[extension] || "application/octet-stream";
+}
+
+/**
+ * Subtitle cues keep italics, bold and underline only. Any other complete tag is dropped and a stray "<" or ">"
+ * (a tag split over two lines) is escaped, so the player can draw the cue as HTML without running anything.
+ */
+function cleanVtt(text) {
+  return text.split("\n").map(line => {
+    if (line.includes("-->")) return line;
+    return line
+      .replace(/<\/?[a-zA-Z][^<>]*>/g, tag => (/^<\/?[ibu]>$/i.test(tag) ? tag.toLowerCase() : ""))
+      .replace(/<(?!\/?[ibu]>)/g, "&lt;")
+      .replace(/(?<!<[ibu])(?<!<\/[ibu])>/g, "&gt;");
+  }).join("\n");
+}
+
+/** Reads a whole body up to MAX_BUFFERED_BYTES; null when it is bigger. */
+async function readCapped(response) {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.length;
+    if (size > MAX_BUFFERED_BYTES) {
+      reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  const buf = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { buf.set(chunk, offset); offset += chunk.length; }
+  return new TextDecoder().decode(buf);
+}
+
+/**
+ * Fetches the target following redirects one by one (each new address must be http/https again).
+ * Returns { response, url } with the final address, or { response: null } after too many or a bad redirect.
+ */
+async function fetchUpstream(targetUrl, headers) {
+  let url = targetUrl;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), UPSTREAM_HEADERS_TIMEOUT_MS);
+    let response;
+    try {
+      response = await fetch(url, { method: "GET", headers, redirect: "manual", signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+    const location = response.headers.get("location");
+    if (response.status >= 300 && response.status < 400 && location) {
+      if (response.body) response.body.cancel().catch(() => {});
+      const next = new URL(location, url).toString();
+      if (!isHttpUrl(next)) return { response: null, url };
+      url = next;
+      continue;
+    }
+    return { response, url };
+  }
+  return { response: null, url };
+}
+
 export async function onRequestGet(context) {
   const { request } = context;
   const urlObj = new URL(request.url);
-
-  const targetUrl = urlObj.searchParams.get("url");
-  if (!targetUrl) {
-    return new Response(JSON.stringify({ error: "Missing 'url' query parameter" }), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-  }
-
-  // Custom referer override or automatic provider detection
+  const targetUrl = urlObj.searchParams.get("url") || "";
   let customReferer = urlObj.searchParams.get("referer");
   let customOrigin = urlObj.searchParams.get("origin");
 
+  // Only web addresses, and no line break that could add a header upstream
+  if (!isHttpUrl(targetUrl) || /[\r\n]/.test(customReferer || "") || /[\r\n]/.test(customOrigin || "")) {
+    return errorResponse(400, "bad_request");
+  }
+
+  // Custom referer override or automatic provider detection
   if (!customReferer) {
     if (targetUrl.includes("dramahot.top") || targetUrl.includes("zokoanime.video")) {
       customReferer = "https://zokoanime.video/";
@@ -54,97 +151,89 @@ export async function onRequestGet(context) {
       customReferer = "https://tvzinhaonline.pages.dev/";
     }
   }
+  // The anime host checks Origin together with its Referer (the resolver's probe sends both)
+  if (!customOrigin && customReferer.includes("zokoanime")) customOrigin = "https://zokoanime.video";
 
+  const forwardHeaders = new Headers();
+  forwardHeaders.set("User-Agent", USER_AGENT);
+  forwardHeaders.set("Referer", customReferer);
+  if (customOrigin) forwardHeaders.set("Origin", customOrigin);
+  if (request.headers.has("Range")) forwardHeaders.set("Range", request.headers.get("Range"));
+  if (request.headers.has("Accept")) forwardHeaders.set("Accept", request.headers.get("Accept"));
+
+  let upstream;
+  let finalUrl;
   try {
-    const forwardHeaders = new Headers();
-    forwardHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
-    if (customReferer) forwardHeaders.set("Referer", customReferer);
-    if (customOrigin) forwardHeaders.set("Origin", customOrigin);
-
-    if (request.headers.has("Range")) {
-      forwardHeaders.set("Range", request.headers.get("Range"));
-    }
-    if (request.headers.has("Accept")) {
-      forwardHeaders.set("Accept", request.headers.get("Accept"));
-    }
-
-    const upstreamResponse = await fetch(targetUrl, {
-      method: "GET",
-      headers: forwardHeaders,
-      redirect: "follow",
-    });
-
-    const contentType = upstreamResponse.headers.get("content-type") || "";
-    const isM3U8 = targetUrl.includes(".m3u8") || contentType.includes("mpegurl") || contentType.includes("application/x-mpegURL");
-
-    const isHead = request.method === "HEAD";
-
-    // If HLS playlist (.m3u8), rewrite relative & absolute paths so segments route through this proxy
-    if (isM3U8 && upstreamResponse.ok) {
-      const resHeaders = new Headers(upstreamResponse.headers);
-      resHeaders.set("Access-Control-Allow-Origin", "*");
-      resHeaders.set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
-      resHeaders.set("Access-Control-Allow-Headers", "Range, Content-Type, Accept, User-Agent, Referer, Origin");
-      resHeaders.set("Content-Type", "application/vnd.apple.mpegurl; charset=utf-8");
-
-      if (isHead) {
-        return new Response(null, {
-          status: upstreamResponse.status,
-          headers: resHeaders,
-        });
-      }
-
-      const playlistText = await upstreamResponse.text();
-      const baseUrl = new URL(targetUrl);
-      const proxyBase = `${urlObj.origin}${urlObj.pathname}`;
-
-      const rewritten = playlistText.split("\n").map(line => {
-        const trimmed = line.trim();
-        if (!trimmed) return line;
-
-        // Rewrite URI in tags (e.g., #EXT-X-KEY:METHOD=...,URI="...", #EXT-X-MAP:URI="...")
-        if (trimmed.startsWith("#")) {
-          return line.replace(/URI=["']([^"']+)["']/g, (match, uri) => {
-            const absUri = new URL(uri, baseUrl).toString();
-            const proxied = `${proxyBase}?url=${encodeURIComponent(absUri)}&referer=${encodeURIComponent(customReferer || "")}`;
-            return `URI="${proxied}"`;
-          });
-        }
-
-        // Rewrite segment/sub-playlist line
-        try {
-          const absUri = new URL(trimmed, baseUrl).toString();
-          return `${proxyBase}?url=${encodeURIComponent(absUri)}&referer=${encodeURIComponent(customReferer || "")}`;
-        } catch (e) {
-          return line;
-        }
-      }).join("\n");
-
-      return new Response(rewritten, {
-        status: upstreamResponse.status,
-        headers: resHeaders,
-      });
-    }
-
-    // Binary / Segment stream response (.ts, .m4s, .mp4, .vtt)
-    const responseHeaders = new Headers(upstreamResponse.headers);
-    responseHeaders.set("Access-Control-Allow-Origin", "*");
-    responseHeaders.set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
-    responseHeaders.set("Access-Control-Allow-Headers", "Range, Content-Type, Accept, User-Agent, Referer, Origin");
-    responseHeaders.set("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
-
-    return new Response(isHead ? null : upstreamResponse.body, {
-      status: upstreamResponse.status,
-      statusText: upstreamResponse.statusText,
-      headers: responseHeaders,
-    });
+    ({ response: upstream, url: finalUrl } = await fetchUpstream(targetUrl, forwardHeaders));
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Stream proxy failure", message: err.message }), {
-      status: 502,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
+    console.error("[stream] upstream request failed:", targetUrl, err && err.message);
+    return errorResponse(502, "upstream_failed");
+  }
+  if (!upstream) return errorResponse(502, "upstream_failed");
+
+  const isHead = request.method === "HEAD";
+  const dropBody = () => { if (upstream.body) upstream.body.cancel().catch(() => {}); };
+
+  // Upstream error: the status is kept (the player retries on it), the host's page is not passed on
+  if (upstream.status >= 400) {
+    dropBody();
+    return new Response(isHead ? null : "upstream_error", {
+      status: upstream.status,
+      headers: { ...CORS_HEADERS, ...SAFETY_HEADERS, "Content-Type": "text/plain; charset=utf-8" },
     });
   }
+
+  const contentType = (upstream.headers.get("content-type") || "").toLowerCase();
+  const isM3U8 = targetUrl.includes(".m3u8") || finalUrl.includes(".m3u8") || contentType.includes("mpegurl");
+  const isVtt = targetUrl.includes(".vtt") || finalUrl.includes(".vtt") || contentType.includes("text/vtt");
+
+  // HLS playlist: rewrite relative and absolute paths (against the final address) so segments route through here
+  if (isM3U8 && upstream.ok) {
+    const headers = { ...CORS_HEADERS, ...SAFETY_HEADERS, "Content-Type": "application/vnd.apple.mpegurl; charset=utf-8" };
+    if (isHead) {
+      dropBody();
+      return new Response(null, { status: upstream.status, headers });
+    }
+    const playlistText = await readCapped(upstream);
+    if (playlistText === null) return errorResponse(502, "upstream_too_large");
+    const baseUrl = new URL(finalUrl);
+    const proxyBase = `${urlObj.origin}${urlObj.pathname}`;
+    const proxied = (uri) => `${proxyBase}?url=${encodeURIComponent(new URL(uri, baseUrl).toString())}&referer=${encodeURIComponent(customReferer)}`;
+
+    const rewritten = playlistText.split("\n").map(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return line;
+      // URI in tags (e.g., #EXT-X-KEY:METHOD=...,URI="...", #EXT-X-MAP:URI="...")
+      if (trimmed.startsWith("#")) {
+        return line.replace(/URI=["']([^"']+)["']/g, (match, uri) => `URI="${proxied(uri)}"`);
+      }
+      try {
+        return proxied(trimmed);
+      } catch (e) {
+        return line;
+      }
+    }).join("\n");
+    return new Response(rewritten, { status: upstream.status, headers });
+  }
+
+  // WebVTT subtitles: only harmless formatting tags reach the player
+  if (isVtt && upstream.ok) {
+    const headers = { ...CORS_HEADERS, ...SAFETY_HEADERS, "Content-Type": "text/vtt; charset=utf-8" };
+    if (isHead) {
+      dropBody();
+      return new Response(null, { status: upstream.status, headers });
+    }
+    const vttText = await readCapped(upstream);
+    if (vttText === null) return errorResponse(502, "upstream_too_large");
+    return new Response(cleanVtt(vttText), { status: upstream.status, headers });
+  }
+
+  // Binary / segment stream (.ts, .m4s, .mp4): built from scratch, only the range headers come from upstream
+  const headers = new Headers({ ...CORS_HEADERS, ...SAFETY_HEADERS, "Content-Type": mediaType(contentType, finalUrl) });
+  for (const name of ["Content-Length", "Content-Range", "Accept-Ranges"]) {
+    const value = upstream.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  if (isHead) dropBody();
+  return new Response(isHead ? null : upstream.body, { status: upstream.status, headers });
 }
