@@ -43,6 +43,13 @@ Project documentation folder (replaces the former `docs/`). When resuming work, 
 | 2026-10-08 | [skip-segments](features/2026-10-08-skip-segments/) | done (IntroDB as third source still open) |
 | 2026-10-09 | [episode-entry-standard](features/2026-10-09-episode-entry-standard/) | done |
 | 2026-10-09 | [player-continuity](features/2026-10-09-player-continuity/) | done |
+| 2026-10-10 | [cast-and-merged-seasons](features/2026-10-10-cast-and-merged-seasons/) | done (phase 3, automatic cast detection, not started) |
+| 2026-10-10 | [mgeb-source-checks](features/2026-10-10-mgeb-source-checks/) | phase 1 done; phase 2 (P4) open |
+| 2026-10-10 | [stream-proxy-hardening](features/2026-10-10-stream-proxy-hardening/) | done (rest of the security list open; full plan only on the other machine) |
+| 2026-10-12 | [anime-vs-western-animation](features/2026-10-12-anime-vs-western-animation/) | done |
+| 2026-10-12 | [catalog-rows](features/2026-10-12-catalog-rows/) | done |
+| 2026-10-12 | [source-quality](features/2026-10-12-source-quality/) | done |
+| 2026-10-12 | [tab-reset](features/2026-10-12-tab-reset/) | done |
 | 2026-10-13 | [no-swipe-seek](features/2026-10-13-no-swipe-seek/) | done |
 
 Folders before 2026-10-08 were dated from their summaries and commit history; older ones may lack a `summary.md`.

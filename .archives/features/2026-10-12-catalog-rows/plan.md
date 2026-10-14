@@ -1,6 +1,6 @@
 # Plan: catalog rows fill up (Filmes, Séries, Animes carousels)
 
-> Approved by the user on 2026-10-12. Not committed.
+> Approved by the user on 2026-10-12. Shipped to production (commit fabfb0a).
 
 ## Cause
 

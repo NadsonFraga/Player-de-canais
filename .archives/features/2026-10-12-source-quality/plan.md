@@ -1,6 +1,6 @@
 # Plan: "Buscar qualidade melhor" in the quality menu
 
-> Branch `feat/source-quality`. Approved by the user on 2026-10-12 (their idea). Not committed.
+> Branch `feat/source-quality`. Approved by the user on 2026-10-12 (their idea). Shipped to production (merge ebd3362).
 
 ## Why
 

@@ -1,6 +1,6 @@
 # Plan: leaving a catalog tab resets it
 
-> Approved by the user on 2026-10-12, shipped together with `feat/source-quality` (same branch, at the user's request).
+> Approved by the user on 2026-10-12, shipped together with `feat/source-quality` (same branch, at the user's request). In production (merge ebd3362).
 
 ## Problem
 

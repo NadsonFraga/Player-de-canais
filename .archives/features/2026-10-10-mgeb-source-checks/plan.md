@@ -1,6 +1,6 @@
 # Plan: MGEB source checks (P4, P5, P7; helps P1 and P2)
 
-> Status: proposal, waiting for approval. Branch (only if asked): `feat/mgeb-source-checks`.
+> Status: phase 1 (P5 + P7) shipped to production (commit b8b5d84). Phase 2 (P4) approved for later, not started.
 > Files: `functions/api/resolve.js` and `tools/local_server.py` (same logic, kept identical), `assets/js/player/engine.js` (P4 client part only), new `tools/test_mgeb_rules.py`.
 
 ## Measurements (2026-10-10, sequential requests, 2.5 s apart)
