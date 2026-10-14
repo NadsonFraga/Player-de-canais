@@ -43,5 +43,6 @@ Project documentation folder (replaces the former `docs/`). When resuming work, 
 | 2026-10-08 | [skip-segments](features/2026-10-08-skip-segments/) | done (IntroDB as third source still open) |
 | 2026-10-09 | [episode-entry-standard](features/2026-10-09-episode-entry-standard/) | done |
 | 2026-10-09 | [player-continuity](features/2026-10-09-player-continuity/) | done |
+| 2026-10-13 | [no-swipe-seek](features/2026-10-13-no-swipe-seek/) | done |
 
 Folders before 2026-10-08 were dated from their summaries and commit history; older ones may lack a `summary.md`.

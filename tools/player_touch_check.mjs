@@ -126,6 +126,49 @@ await sleep(900);
 t1 = await time();
 check("a single tap does not skip", Math.abs(t1 - t0 - 0.9) < 1.5, `${t0.toFixed(1)} -> ${t1.toFixed(1)}`);
 
+// ---------- a sideways drag over the video does not seek (Android's back gesture starts at the edge and drags inward)
+const swipe = async (fromX, toX, y) => {
+  await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: fromX, y }] });
+  for (let i = 1; i <= 8; i++) {
+    await send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: fromX + (toX - fromX) * i / 8, y }] });
+    await sleep(16);
+  }
+  await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+};
+await sleep(900);
+t0 = await time();
+await swipe(box.x + box.w - 4, box.x + box.w * 0.3, at(0.5).y);
+await sleep(700);
+t1 = await time();
+check("dragging from the right edge to the left does not seek", t1 - t0 > -1 && t1 - t0 < 2.5, `${t0.toFixed(1)} -> ${t1.toFixed(1)}`);
+t0 = await time();
+// (a drag to the right reads as the browser's own back navigation in emulation, so both drags go left)
+await swipe(box.x + box.w * 0.8, box.x + box.w * 0.2, at(0.5).y);
+await sleep(700);
+t1 = await time();
+check("dragging across the middle of the video does not seek", t1 - t0 > -1 && t1 - t0 < 2.5, `${t0.toFixed(1)} -> ${t1.toFixed(1)}`);
+
+// ---------- fullscreen survives the next episode on the phone (the button sets art.fullscreen; userGesture stands for the tap)
+const evaluateTap = async (expr) => {
+  const r = await send("Runtime.evaluate", { expression: `(async () => JSON.stringify(await (${expr})))()`, awaitPromise: true, returnByValue: true, userGesture: true });
+  if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
+  return JSON.parse(r.result.value ?? "null");
+};
+await evaluateTap("(window.artInstance.fullscreen = true, new Promise(r => setTimeout(() => r(true), 1500)))").catch(() => {});
+const fsBefore = await evaluate("(() => { const f = document.fullscreenElement; return f ? f.className : null; })()");
+check("fullscreen on the phone goes to the player stage", /movie-player-stage/.test(fsBefore || ""), JSON.stringify(fsBefore));
+const headerBefore = await evaluate("(document.getElementById('series-player-current-ep') || {}).textContent || ''");
+await evaluateTap("(document.getElementById('btn-series-next-ep').click(), true)");
+const fsNext = await evaluate(`new Promise(resolve => { const before = ${JSON.stringify(headerBefore)}; const t0 = Date.now(); const look = () => {
+  const header = (document.getElementById('series-player-current-ep') || {}).textContent || '';
+  const art = window.artInstance; const f = document.fullscreenElement;
+  if ((header && header !== before && art && art.video && art.video.readyState > 0) || Date.now() - t0 > 45000)
+    resolve({ header: header.slice(0, 40), fullscreen: f ? f.className : null, artSaysFullscreen: Boolean(art && art.fullscreen) });
+  else setTimeout(look, 500); }; look(); })`);
+check("fullscreen on the phone stays on through the next episode",
+  fsNext.header !== headerBefore.slice(0, 40) && /movie-player-stage/.test(fsNext.fullscreen || "") && fsNext.artSaysFullscreen, JSON.stringify(fsNext));
+await evaluate("(document.exitFullscreen ? document.exitFullscreen().catch(() => {}) : null, new Promise(r => setTimeout(() => r(true), 800)))");
+
 // ---------- skip step shared with the keyboard (the arrow keys themselves are checked in player_ui_check.mjs:
 // Artplayer does not enable keyboard shortcuts on phones)
 check("the skip step is 10 s for taps and for the arrow keys", (await evaluate("window.Artplayer.SEEK_STEP")) === 10);
