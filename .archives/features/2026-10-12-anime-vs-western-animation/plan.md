@@ -1,6 +1,6 @@
 # Plan: western animation (Rick and Morty) is missing from the site
 
-> Status: proposal, waiting for approval. Urgent: before the security phases and MGEB Phase 2.
+> Status: shipped to production (commit fabfb0a, together with catalog rows).
 
 ## Cause (checked 2026-10-12)
 
