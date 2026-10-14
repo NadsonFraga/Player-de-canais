@@ -1,6 +1,6 @@
 # Plan: merged TMDB seasons on MGEB (Jujutsu Kaisen) and casting with Web Video Caster
 
-> Status: proposal, waiting for approval. Urgent: placed before the security phases and MGEB Phase 2 (those stay as planned in `2026-10-10-security-hardening/plan.md` and `2026-10-10-mgeb-source-checks/plan.md`).
+> Status: phases 1 (merged seasons) and 2 (cast button) shipped to production (commits b8b5d84, 4223647). Phase 3 (automatic detection, B2) not started. The security plan referenced here was never committed (it lives only on the other machine).
 
 ## 1. Jujutsu Kaisen plays episode 1 on the main player
 
