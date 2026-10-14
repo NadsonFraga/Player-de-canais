@@ -3,14 +3,14 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261012_1827';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261012_1827';
-import { showToast } from '../core/toast.js?v=20261012_1827';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261012_1827';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261012_1827';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261012_1827';
-import { formatClock } from '../core/resume.js?v=20261012_1827';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261012_1827';
+import { store } from '../core/state.js?v=20261014_1156';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261014_1156';
+import { showToast } from '../core/toast.js?v=20261014_1156';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261014_1156';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261014_1156';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261014_1156';
+import { formatClock } from '../core/resume.js?v=20261014_1156';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261014_1156';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -177,6 +177,22 @@ export function installDoubleTapSeek(art) {
             art.toggle();
         }
     });
+}
+
+/**
+ * Mobile only: Artplayer seeks when a finger drags sideways over the video (half the duration per screen width).
+ * Android's back and app-switch gestures start at the screen edge and drag inward over the video in fullscreen, so
+ * they jumped the episode minutes back. Artplayer 5.1.7 has no option for it: its touchmove listener sits on the
+ * video, so the event is stopped on the way down. Double tap, the progress bar and the controls are unaffected.
+ */
+export function installNoSwipeSeek(art) {
+    const player = art && art.template && art.template.$player;
+    const video = art && art.template && art.template.$video;
+    if (!player || !video || art.tvzNoSwipeSeek) return;
+    art.tvzNoSwipeSeek = true;
+    player.addEventListener('touchmove', (event) => {
+        if (event.target === video) event.stopPropagation();
+    }, { capture: true, passive: true });
 }
 
 /**
@@ -1322,6 +1338,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         setupMobileOrientationLock(art);
         installHorizontalVolume(art);
         installDoubleTapSeek(art);
+        installNoSwipeSeek(art);
         const total = session.sources.length;
         setSourceStatus(session, [session.statusNote, total > 1 ? `Conectando à fonte ${index + 1} de ${total}...` : 'Conectando...'].filter(Boolean).join(' '));
 
