@@ -32,76 +32,7 @@
     margin-bottom: 24px;
 }
 
-/* 2. Sleek Minimalist Quick Navigation Strip */
-.home-quick-nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    flex-wrap: wrap;
-    margin: 4px 0 16px 0;
-}
 
-.quick-nav-pill {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: var(--radius-full);
-    padding: 10px 22px;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-secondary);
-    font-family: var(--font-heading);
-    font-size: 0.90rem;
-    font-weight: 600;
-    cursor: pointer;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    transition: all var(--transition-fast);
-}
-
-.quick-nav-pill svg {
-    color: currentColor;
-    opacity: 0.85;
-    transition: transform var(--transition-fast), color var(--transition-fast);
-}
-
-.quick-nav-pill:hover,
-.quick-nav-pill:focus-visible {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.22);
-    color: #ffffff;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-    outline: none;
-}
-
-.quick-nav-pill:hover svg,
-.quick-nav-pill:focus-visible svg {
-    transform: scale(1.1);
-    opacity: 1;
-}
-
-.quick-nav-pill[data-view-target="tv"]:hover {
-    border-color: rgba(52, 211, 153, 0.4);
-    color: #34d399;
-}
-
-.quick-nav-pill[data-view-target="movies"]:hover {
-    border-color: rgba(251, 191, 36, 0.4);
-    color: #fbbf24;
-}
-
-.quick-nav-pill[data-view-target="series"]:hover {
-    border-color: rgba(251, 113, 133, 0.4);
-    color: #fb7185;
-}
-
-.quick-nav-pill[data-view-target="animes"]:hover {
-    border-color: rgba(244, 114, 182, 0.4);
-    color: #f472b6;
-}
 
 /* 3. Continue Watching Progress Bar Enhancement */
 .continue-progress-bar-wrapper {
@@ -795,15 +726,7 @@
         padding: 4px 8px;
     }
 
-    .home-quick-nav {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-    }
 
-    .quick-nav-pill {
-        padding: 10px 14px;
-        font-size: 0.85rem;
-    }
 
     .home-channel-card {
         flex: 0 0 180px;
