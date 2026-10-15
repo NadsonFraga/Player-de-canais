@@ -2,9 +2,7 @@
 
 **Feature Branch:** `feat/home-and-channels-redesign`  
 **Date:** 2026-10-15  
-**Feature Branch:** `feat/home-and-channels-redesign`  
-**Date:** 2026-10-15  
-**Version:** `20261015_1414`  
+**Version:** `20261015_1519`  
 **Status:** Ready for Preview Validation
 
 ---
@@ -16,7 +14,7 @@ All automated verification test suites have executed and passed across Chromium 
 | Suite | Command | Result | Notes |
 |---|---|---|---|
 | Import Integrity | `python tools/check_js.py` | PASS (0 missing imports) | Verified across all ESM modules |
-| Cache Bumper | `python tools/bump_version.py --check` | PASS (`20261015_1414`) | Single unified version string across imports and HTML |
+| Cache Bumper | `python tools/bump_version.py --check` | PASS (`20261015_1519`) | Single unified version string across imports and HTML |
 | Channels Redesign Suite | `node tools/channels_redesign_check.mjs --browser=chrome` | 10/10 PASS | Hero, toolbar, discovery feed, explore grid, drawer, vertical scroll, clean console |
 | Channels Redesign Suite | `node tools/channels_redesign_check.mjs --browser=edge` | 10/10 PASS | Cross-browser validation in Microsoft Edge |
 | Mobile Touch Suite | `node tools/player_touch_check.mjs` | 17/17 PASS | Touch controls, +/-10s double tap, opening skip, card margins, theater mode |

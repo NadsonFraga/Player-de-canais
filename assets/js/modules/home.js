@@ -4,26 +4,26 @@
  * and quick-navigation portals for Movies, Series, Animes, and Live Channels.
  */
 
-import { store } from '../core/state.js?v=20261015_1414';
+import { store } from '../core/state.js?v=20261015_1519';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
     TMDB_CACHE_KEY,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY
-} from '../core/constants.js?v=20261015_1414';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261015_1414';
-import { switchAppView } from '../navigation/router.js?v=20261015_1414';
-import { openMovieDetailsModal, fetchTmdbEndpoint } from './movies.js?v=20261015_1414';
-import { openSeriesModal, fetchSeriesEndpoint } from './series.js?v=20261015_1414';
-import { selectChannelByName } from './channels.js?v=20261015_1414';
-import { getChannelLogoSrc, createLogoBadgeHtml } from '../core/icons.js?v=20261015_1414';
+} from '../core/constants.js?v=20261015_1519';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261015_1519';
+import { switchAppView } from '../navigation/router.js?v=20261015_1519';
+import { openMovieDetailsModal, fetchTmdbEndpoint } from './movies.js?v=20261015_1519';
+import { openSeriesModal, fetchSeriesEndpoint } from './series.js?v=20261015_1519';
+import { selectChannelByName } from './channels.js?v=20261015_1519';
+import { getChannelLogoSrc, createLogoBadgeHtml } from '../core/icons.js?v=20261015_1519';
 
 const TMDB_GENRES = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
     99: "Documentário", 18: "Drama", 10751: "Família", 14: "Fantasia",
     36: "História", 27: "Terror", 10402: "Música", 9648: "Mistério",
-    10749: "Romance", 878: "Ficção", 10770: "Cinema TV",
+    10749: "Romance", 878: "Ficção Científica", 10770: "Cinema TV",
     53: "Thriller", 10752: "Guerra", 37: "Faroeste",
     10759: "Ação & Aventura", 10765: "Sci-Fi & Fantasia", 10768: "Guerra & Política"
 };
@@ -119,7 +119,6 @@ export function initHomeView() {
     }
     isHomeInitialized = true;
 
-    setupQuickNavPills();
     setupRowSeeAllButtons();
     buildHomeHeroShowcase();
     refreshHomeContent();
@@ -141,15 +140,6 @@ export function initHomeView() {
     setTimeout(() => {
         refreshHomeContent();
     }, 3500);
-}
-
-function setupQuickNavPills() {
-    document.querySelectorAll('.home-quick-nav .quick-nav-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-            const targetView = pill.dataset.viewTarget;
-            if (targetView) switchAppView(targetView);
-        });
-    });
 }
 
 function setupRowSeeAllButtons() {
@@ -418,8 +408,8 @@ function showHeroSlide(index) {
     }
 
     if (badgeEl) {
-        badgeEl.textContent = item.categoryLabel;
-        badgeEl.className = `movies-hero-badge ${item.categoryBadgeClass || ''}`;
+        badgeEl.className = "movies-hero-badge";
+        badgeEl.innerHTML = `<span class="cinema-sparkle">✦</span> Destaque`;
     }
 
     if (yearEl) {
@@ -429,24 +419,20 @@ function showHeroSlide(index) {
 
     if (ratingEl) {
         if (item.rating) {
-            ratingEl.innerHTML = `<span class="rating-star">★</span> ${item.rating}`;
+            ratingEl.textContent = `★ ${item.rating}`;
             ratingEl.style.display = 'inline-block';
         } else {
+            ratingEl.textContent = '';
             ratingEl.style.display = 'none';
         }
     }
 
     if (genresEl) {
-        genresEl.innerHTML = '';
         if (Array.isArray(item.genres) && item.genres.length > 0) {
-            item.genres.forEach(g => {
-                const pill = document.createElement('span');
-                pill.className = 'genre-pill';
-                pill.textContent = g;
-                genresEl.appendChild(pill);
-            });
+            genresEl.innerHTML = item.genres.map(g => `<span class="movies-genre-tag">${g}</span>`).join('');
             genresEl.style.display = 'flex';
         } else {
+            genresEl.innerHTML = '';
             genresEl.style.display = 'none';
         }
     }
@@ -517,7 +503,6 @@ function renderHomeChannelsTrack() {
             </div>
             <div class="channel-card-bottom">
                 <h4 class="channel-card-name">${ch.name}</h4>
-                <span class="channel-card-category">${ch.category || 'TV'}</span>
             </div>
         `;
 
@@ -532,6 +517,7 @@ function renderHomeChannelsTrack() {
         fragment.appendChild(card);
     });
 
+    track.appendChild(fragment);
 }
 
 /**
