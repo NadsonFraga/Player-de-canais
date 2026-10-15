@@ -3,16 +3,35 @@
  * Purely DOM-based spatial navigation with Euclidean 2D distance calculation
  */
 
-import { store } from '../core/state.js?v=20261014_1156';
+import { store } from '../core/state.js?v=20261015_1045';
 
 export function setupTvRemoteNavigation() {
     function getFocusableElements() {
         const selector = [
             '#floating-nav-capsule .nav-capsule-item',
+            '#btn-home-hero-watch',
+            '#btn-home-hero-explore',
+            '.quick-nav-pill',
+            '.home-channel-card',
+            '.home-poster-card',
+            '.btn-row-see-all',
             '.home-portal-card',
             '.home-utility-card',
             '.continue-card',
             '.continue-watching-card',
+            '#btn-channels-hero-watch',
+            '#btn-channels-hero-drawer',
+            '.channel-cat-pill',
+            '#channels-spotlight-input',
+            '#btn-toolbar-open-drawer',
+            '#btn-channels-back-feed',
+            '.channel-card-16x9',
+            '#btn-open-drawer-player',
+            '#btn-back-to-channels',
+            '#btn-close-menu',
+            '#btn-reload-player',
+            '#btn-fullscreen-player',
+            '#btn-fav-current',
             '#movies-search-input',
             '#series-search-input',
             '#animes-search-input',
@@ -103,6 +122,13 @@ export function setupTvRemoteNavigation() {
         const key = e.key;
 
         if (key === 'Escape' || key === 'Back' || key === 'BrowserBack') {
+            const drawer = document.getElementById("sidebar");
+            if (drawer && drawer.classList.contains("open")) {
+                e.preventDefault();
+                const closeBtn = document.getElementById("btn-close-menu");
+                if (closeBtn) closeBtn.click();
+                return;
+            }
             if (activeModal) {
                 e.preventDefault();
                 const closeBtn = activeModal.querySelector(".btn-close-modal, #btn-close-movie-modal, #btn-close-series-modal, #btn-close-team-modal");
@@ -143,10 +169,17 @@ export function setupTvRemoteNavigation() {
                     const defaultMovieEl = document.getElementById('btn-hero-watch-movie') || document.querySelector('.movie-poster-card') || focusables[0];
                     if (defaultMovieEl) defaultMovieEl.focus();
                 } else if (currentView === 'tv') {
-                    const defaultPlayerBtn = document.querySelector('.btn-server-option.active') || document.getElementById('btn-fullscreen-player') || focusables[0];
+                    const defaultPlayerBtn = document.querySelector('.btn-server-option.active')
+                        || document.getElementById('btn-channels-hero-watch')
+                        || document.querySelector('.channel-card-16x9')
+                        || document.getElementById('btn-fullscreen-player')
+                        || focusables[0];
                     if (defaultPlayerBtn) defaultPlayerBtn.focus();
                 } else {
-                    const defaultHomeEl = document.querySelector('.nav-capsule-item.active') || focusables[0];
+                    const defaultHomeEl = document.getElementById('btn-home-hero-watch')
+                        || document.querySelector('.quick-nav-pill')
+                        || document.querySelector('.nav-capsule-item.active')
+                        || focusables[0];
                     if (defaultHomeEl) defaultHomeEl.focus();
                 }
                 return;

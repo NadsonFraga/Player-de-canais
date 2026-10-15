@@ -54,7 +54,9 @@
 }
 
 .channel-card-16x9:hover .channel-logo-img-wrapper.logo-lg,
-.quick-card:hover .channel-logo-img-wrapper.logo-lg {
+.channel-card-16x9:focus-visible .channel-logo-img-wrapper.logo-lg,
+.quick-card:hover .channel-logo-img-wrapper.logo-lg,
+.quick-card:focus-visible .channel-logo-img-wrapper.logo-lg {
     border-color: rgba(52, 211, 153, 0.4);
     box-shadow: 0 0 16px rgba(52, 211, 153, 0.2), 0 4px 16px rgba(0, 0, 0, 0.5);
 }
@@ -217,10 +219,12 @@
     transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
 }
 
-.btn-channels-hero-play:hover {
+.btn-channels-hero-play:hover,
+.btn-channels-hero-play:focus-visible {
     background: #4ade80;
     transform: translateY(-2px);
     box-shadow: 0 0 24px rgba(52, 211, 153, 0.4);
+    outline: none;
 }
 
 .btn-channels-hero-drawer {
@@ -239,10 +243,12 @@
     transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
-.btn-channels-hero-drawer:hover {
+.btn-channels-hero-drawer:hover,
+.btn-channels-hero-drawer:focus-visible {
     background: rgba(255, 255, 255, 0.14);
     border-color: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
+    outline: none;
 }
 
 /* Channels Navigation Toolbar (Sticky Pills + Spotlight Search) */
@@ -294,10 +300,12 @@
     transition: all var(--transition-fast);
 }
 
-.channel-cat-pill:hover {
+.channel-cat-pill:hover,
+.channel-cat-pill:focus-visible {
     background: rgba(255, 255, 255, 0.12);
     color: #ffffff;
     border-color: rgba(255, 255, 255, 0.2);
+    outline: none;
 }
 
 .channel-cat-pill.active {
@@ -552,10 +560,13 @@ button.hero-badge:hover,
 }
 
 .channel-card-16x9:hover,
-.quick-card:hover {
+.channel-card-16x9:focus-visible,
+.quick-card:hover,
+.quick-card:focus-visible {
     transform: translateY(-4px) scale(1.02);
-    border-color: rgba(52, 211, 153, 0.4);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7), 0 0 20px rgba(52, 211, 153, 0.15);
+    border-color: rgba(52, 211, 153, 0.55);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7), 0 0 20px rgba(52, 211, 153, 0.2);
+    outline: none;
 }
 
 .channel-card-actions {
