@@ -4,20 +4,20 @@
  * and quick-navigation portals for Movies, Series, Animes, and Live Channels.
  */
 
-import { store } from '../core/state.js?v=20261014_1156';
+import { store } from '../core/state.js?v=20261015_1045';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
     TMDB_CACHE_KEY,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY
-} from '../core/constants.js?v=20261014_1156';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261014_1156';
-import { switchAppView } from '../navigation/router.js?v=20261014_1156';
-import { openMovieDetailsModal } from './movies.js?v=20261014_1156';
-import { openSeriesModal } from './series.js?v=20261014_1156';
-import { selectChannelByName } from './channels.js?v=20261014_1156';
-import { getChannelLogoSrc, createLogoBadgeHtml } from '../core/icons.js?v=20261014_1156';
+} from '../core/constants.js?v=20261015_1045';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261015_1045';
+import { switchAppView } from '../navigation/router.js?v=20261015_1045';
+import { openMovieDetailsModal } from './movies.js?v=20261015_1045';
+import { openSeriesModal } from './series.js?v=20261015_1045';
+import { selectChannelByName } from './channels.js?v=20261015_1045';
+import { getChannelLogoSrc, createLogoBadgeHtml } from '../core/icons.js?v=20261015_1045';
 
 let homeHeroItems = [];
 let currentHomeHeroIndex = 0;

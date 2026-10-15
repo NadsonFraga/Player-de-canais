@@ -155,4 +155,19 @@
 - **Why:** The legacy code locked the browser window scroll when on the TV tab because the previous design used a fixed two-column desktop frame with internal overflow. In the modern redesign, the Channels tab is a full-width catalog page (like Movies and Series) requiring natural vertical page scrolling.
 - **How:** Cleaned up `01-base.css` and `03-channels.css`. Verified in headless Chrome & Edge (10/10 checks passing, `scrollY: 350px` on a 2313px document).
 
+### 2026-10-15 - Phase 4 (Completed)
+- **Smart TV Remote / D-Pad Navigation:**
+  - Updated `getFocusableElements` in `assets/js/navigation/remote.js` to include all new Home & Live Channels interactive elements (`#btn-home-hero-watch`, `.quick-nav-pill`, `.home-channel-card`, `#btn-channels-hero-watch`, `#btn-channels-hero-drawer`, `.channel-cat-pill`, `.channel-card-16x9`, `#btn-toolbar-open-drawer`, `#btn-open-drawer-player`, etc.).
+  - Added TV Remote Escape/Back key handler to close the Quick Channel Drawer (`#sidebar.open`).
+  - Added `:focus-visible` styling in `assets/css/03-channels.css` matching glow and elevation states for TV remotes.
+- **Cache-Busting & Imports:**
+  - Bumped version to `20261015_1045` with `python tools/bump_version.py` across all CSS/JS tags and imports.
+  - Verified 0 missing imports via `python tools/check_js.py`.
+- **Verification Suites:**
+  - `tools/channels_redesign_check.mjs` (Chrome): 10/10 PASS.
+  - `tools/channels_redesign_check.mjs` (Edge): 10/10 PASS.
+  - `tools/player_touch_check.mjs`: 17/17 PASS.
+  - D-pad spatial navigation check (`scratch/test_dpad_tv.mjs`): 100% PASS with 0 console errors.
+
+
 
