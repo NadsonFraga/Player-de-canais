@@ -185,7 +185,32 @@
   - `tools/channels_redesign_check.mjs` (Chrome): 10/10 PASS.
   - `tools/channels_redesign_check.mjs` (Edge): 10/10 PASS.
   - `tools/player_touch_check.mjs`: 17/17 PASS.
-  - D-pad spatial navigation check (`scratch/test_dpad_tv.mjs`): 100% PASS with 0 console errors.
+  - D-pad spatial navigation check (`scratch/test_dpad_tv.mjs`): 100% PASS with 0 console errors.### 2026-10-15 - Phase 5 (Completed)
+- **Edge-to-Edge Hero:** Converted `#home-hero-showcase` to inherit `.movies-hero` class and full-width layout without padding or rounded borders.
+- **Lightened Backdrops:** Reduced gradient opacity and brightened hero filters (`brightness(0.96)`) across Home, Movies, Series, and Animes.
+- **Clearlogos (PNG):** Reused TMDB image fetching to load transparent PNG title logos (`#home-hero-title-logo`), with graceful text fallback.
+- **Backlog Additions:** Added B18 (Buffer hysteresis & 1080p stutter guard) and B19 (Continue watching for movies + delete item).
 
+---
 
+## 6. Phase 6: Standardized Hero Metadata, Feed Reordering & Quick-Nav Cleanup
+
+### Goal
+Fulfill user visual corrections: standardizing hero metadata tags to 100% match Movies/Series heroes, reordering the Home rows so Channels appear below Movies, Series, and Animes, fixing the channel cards track rendering, and removing the redundant quick-nav pill menu.
+
+### Proposed Changes
+1. **Standardize Hero Metadata Bar (`assets/js/modules/home.js`, `index.html`):**
+   - Align `TMDB_GENRES` in `home.js` with `movies.js` (including `878: "Ficção Científica"`).
+   - Badge: Standardize on `<span id="home-hero-badge" class="movies-hero-badge"><span class="cinema-sparkle">✦</span> Destaque</span>` (matching `#movies-hero-badge`).
+   - Genres: Render `<span class="movies-genre-tag">${genreName}</span>` identical to Movies and Series tabs instead of unstyled spans.
+   - Year & Rating: Render standard `.movies-meta-tag` and `.movies-meta-tag.rating` (`★ 8.5`).
+2. **Fix Channels Track & Reorder Home Feed (`index.html`, `assets/js/modules/home.js`):**
+   - Add missing `track.appendChild(fragment)` to `renderHomeChannelsTrack()` so channel cards render properly.
+   - Move `#home-row-channels` in `index.html` below `#home-row-animes`, making the order: Movies -> Series -> Animes -> Channels.
+3. **Remove Redundant Quick-Nav Menu (`index.html`, `assets/css/09-series-animes.css`, `assets/js/modules/home.js`, `assets/js/navigation/remote.js`):**
+   - Remove `<nav class="home-quick-nav">` from `index.html`.
+   - Remove `.home-quick-nav` styles and listeners.
+4. **Verification:**
+   - Automated tests: `check_js.py`, `bump_version.py`, `channels_redesign_check.mjs` (Chrome & Edge), `player_touch_check.mjs`, and D-Pad remote test.
+   - Visual screenshot verification.
 
