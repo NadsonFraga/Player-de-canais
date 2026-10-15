@@ -8,7 +8,10 @@
     "/.github/*",
     "/.git/*",
     "/scratch/*",
+    "/.agents/*",
     "/CLAUDE.md",
+    "/GEMINI.md",
+    "/AGENTS.md",
     "/.gitignore",
     "/_headers",
     "/*%*"

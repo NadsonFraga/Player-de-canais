@@ -26,7 +26,7 @@ for (const allowed of ["/", "/index.html", "/assets/js/main.js", "/assets/css/10
 // Internal folders and files, including the usual ways of dodging a plain prefix check
 const blocked = [
   "/.archives/README.md", "/.archives/history/chat_history_full.jsonl", "/tools/local_server.py", "/docs/CHAT_HISTORY.md",
-  "/.github/workflows/update_matches.yml", "/.git/config", "/scratch/test_batch_subs.py", "/CLAUDE.md", "/.gitignore", "/_headers",
+  "/.github/workflows/update_matches.yml", "/.git/config", "/scratch/test_batch_subs.py", "/CLAUDE.md", "/GEMINI.md", "/AGENTS.md", "/.agents/workflows/agents.md", "/.gitignore", "/_headers",
   "/.ARCHIVES/README.md", "/Tools/local_server.py", "//tools/local_server.py", "/tools", "/.archives",
   "/%2Earchives/README.md", "/%2e%61rchives/README.md", "/tools%2Flocal_server.py", "/tools%5Clocal_server.py", "/%43LAUDE.md", "/.%67ithub/workflows/update_matches.yml", "/%ZZ",
 ];

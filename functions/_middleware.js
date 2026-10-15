@@ -12,8 +12,8 @@
  * Keep BLOCKED_PREFIXES, BLOCKED_FILES and `_routes.json` in sync.
  */
 
-const BLOCKED_PREFIXES = ["/.archives/", "/tools/", "/docs/", "/.github/", "/.git/", "/scratch/"];
-const BLOCKED_FILES = ["/claude.md", "/.gitignore", "/_headers"];
+const BLOCKED_PREFIXES = ["/.archives/", "/tools/", "/docs/", "/.github/", "/.git/", "/scratch/", "/.agents/"];
+const BLOCKED_FILES = ["/claude.md", "/gemini.md", "/agents.md", "/.gitignore", "/_headers"];
 
 /** Normalizes a request path so encoded, upper-case or doubled-slash variants cannot slip past the list. */
 function normalizePath(pathname) {
