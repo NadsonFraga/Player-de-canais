@@ -26,6 +26,10 @@
     --accent-red: #ef4444;
     --accent-red-subtle: rgba(239, 68, 68, 0.15);
     --accent-gold: #fbbf24;
+    --accent-sports: #0ea5e9;
+    --accent-sports-hover: #38bdf8;
+    --accent-sports-glow: rgba(14, 165, 233, 0.25);
+    --accent-sports-subtle: rgba(14, 165, 233, 0.12);
 
     /* Text Colors */
     --text-primary: #f4f4f5;
@@ -87,8 +91,8 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-body.view-tv-active {
-    overflow: hidden;
+body.sidebar-open {
+    overflow: hidden !important;
 }
 
 html.modal-open,
@@ -117,9 +121,9 @@ body.modal-open {
 /* Base Layout */
 .app-layout {
     display: flex;
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
+    flex-direction: column;
+    min-height: 100vh;
+    width: 100%;
     position: relative;
 }
 
