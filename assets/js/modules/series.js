@@ -216,12 +216,25 @@ export function renderHomeContinueWatching() {
         const card = document.createElement("div");
         card.className = "continue-card";
         card.tabIndex = 0;
-        card.setAttribute("role", "button");
         card.setAttribute("aria-label", `Continuar ${item.title} T${item.season}:E${item.episode}`);
 
         const imgUrl = item.backdrop_path
             ? `${TMDB_IMG_W500}${item.backdrop_path}`
             : (item.poster_path ? `${TMDB_IMG_W500}${item.poster_path}` : 'assets/logos/fav/icon-detailed.svg');
+        let progressPct = 0;
+        let timeLabel = 'Retomar agora';
+        if (item.positions) {
+            const posKey = `${item.season}:${item.episode}`;
+            const pos = item.positions[posKey];
+            if (pos && pos.position > 0 && pos.duration > 0) {
+                progressPct = Math.min(100, Math.max(4, Math.round((pos.position / pos.duration) * 100)));
+                const remainingSec = Math.max(0, pos.duration - pos.position);
+                const remainingMin = Math.round(remainingSec / 60);
+                if (remainingMin > 0) {
+                    timeLabel = `Faltam ${remainingMin} min`;
+                }
+            }
+        }
 
         card.innerHTML = `
             <div class="continue-card-media">
@@ -233,11 +246,14 @@ export function renderHomeContinueWatching() {
                         </svg>
                     </div>
                 </div>
+                <div class="continue-progress-bar-wrapper">
+                    <div class="continue-progress-bar-fill" style="width: ${progressPct}%;"></div>
+                </div>
             </div>
             <div class="continue-card-info">
                 <span class="continue-card-title">${item.title}</span>
                 <span class="continue-card-ep">T${item.season}:E${item.episode} • ${item.episodeTitle || 'Episódio ' + item.episode}</span>
-                <span class="continue-card-time">Retomar agora</span>
+                <span class="continue-card-time">${timeLabel}</span>
             </div>
         `;
 

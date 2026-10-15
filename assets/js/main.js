@@ -13,10 +13,10 @@ import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, re
 import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261014_1156';
 import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261014_1156';
 import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261014_1156';
+import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261014_1156';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
-const ADBLOCK_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export function openAdblockModal() {
     const modal = document.getElementById("adblock-modal");
@@ -89,17 +89,6 @@ function setupAdblockModalHandlers() {
 
 function checkAdblockNoticeStatus() {
     setupAdblockModalHandlers();
-    try {
-        const rawTimestamp = localStorage.getItem(ADBLOCK_STORAGE_KEY);
-        if (!rawTimestamp) {
-            setTimeout(() => openAdblockModal(), 600);
-            return;
-        }
-        const lastAck = parseInt(rawTimestamp, 10);
-        if (isNaN(lastAck) || (Date.now() - lastAck > ADBLOCK_EXPIRATION_MS)) {
-            setTimeout(() => openAdblockModal(), 600);
-        }
-    } catch (e) {}
 }
 
 // 1. Expose Frozen Global Actions Bus (window.TvzinhaActions)
@@ -135,6 +124,7 @@ async function bootstrapApp() {
     // Register router view hooks for lazy/on-demand section initialization
     registerViewHook('home', () => {
         renderHomeContinueWatching();
+        refreshHomeContent();
     });
     registerViewHook('tvLeave', () => {
         renderHomeView();
@@ -170,6 +160,9 @@ async function bootstrapApp() {
     renderMatchesSection();
     renderHomeContinueWatching();
 
+    // Initialize modern Home Hub & Streaming Showcase
+    initHomeView();
+
     // Check adblock onboarding notice
     checkAdblockNoticeStatus();
 
@@ -179,10 +172,13 @@ async function bootstrapApp() {
     // Preload TMDB catalogs for instantaneous navigation, but only when the browser is idle on the home screen:
     // opening a channel or a title first must not compete with its stream for bandwidth.
     // Each catalog still loads by itself when its tab is opened (view hooks above).
-    runWhenHomeIdle(() => {
-        initMoviesView().catch(e => console.warn("[Preload] Movies:", e));
-        initSeriesView().catch(e => console.warn("[Preload] Series:", e));
-        initAnimesView().catch(e => console.warn("[Preload] Animes:", e));
+    runWhenHomeIdle(async () => {
+        await Promise.allSettled([
+            initMoviesView().catch(e => console.warn("[Preload] Movies:", e)),
+            initSeriesView().catch(e => console.warn("[Preload] Series:", e)),
+            initAnimesView().catch(e => console.warn("[Preload] Animes:", e))
+        ]);
+        refreshHomeContent();
     });
 
     console.log("[Tvzinha] Application bootstrap complete.");
