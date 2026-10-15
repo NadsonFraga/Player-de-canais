@@ -216,7 +216,7 @@
     height: 100%;
     object-fit: cover;
     object-position: center 20%;
-    filter: brightness(0.88);
+    filter: brightness(0.96);
     transition: opacity 0.5s ease-in-out, transform 0.6s ease-out;
 }
 
@@ -228,15 +228,16 @@
     position: absolute;
     inset: 0;
     background: linear-gradient(180deg, 
-        rgba(8, 8, 8, 0.78) 0%, 
-        rgba(8, 8, 8, 0.35) 18%, 
-        rgba(8, 8, 8, 0.04) 38%, 
-        rgba(8, 8, 8, 0.42) 70%, 
+        rgba(8, 8, 8, 0.45) 0%, 
+        transparent 20%, 
+        transparent 55%, 
+        rgba(8, 8, 8, 0.5) 80%, 
         #080808 100%), 
         linear-gradient(90deg, 
-        rgba(8, 8, 8, 0.92) 0%, 
-        rgba(8, 8, 8, 0.5) 45%, 
-        transparent 100%);
+        rgba(8, 8, 8, 0.82) 0%, 
+        rgba(8, 8, 8, 0.4) 38%, 
+        transparent 75%);
+    pointer-events: none;
 }
 
 .movies-hero-content {
@@ -305,6 +306,10 @@
     background: rgba(255, 255, 255, 0.08);
     padding: 3px 8px;
     border-radius: 4px;
+}
+
+.movies-meta-tag:empty {
+    display: none !important;
 }
 
 .movies-meta-tag.rating {

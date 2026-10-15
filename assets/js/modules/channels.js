@@ -4,11 +4,11 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261015_1045';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261015_1045';
-import { getUiSvg, createLogoBadgeHtml } from '../core/icons.js?v=20261015_1045';
-import { showToast } from '../core/toast.js?v=20261015_1045';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261015_1045';
+import { store } from '../core/state.js?v=20261015_1414';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261015_1414';
+import { getUiSvg, createLogoBadgeHtml } from '../core/icons.js?v=20261015_1414';
+import { showToast } from '../core/toast.js?v=20261015_1414';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261015_1414';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -401,20 +401,15 @@ export function createChannel16x9Card(category, channelName, players) {
     card.innerHTML = `
         <div class="channel-card-glow"></div>
         <div class="channel-card-top">
-            <span class="live-dot-badge"><span class="pulse-dot pulse-emerald"></span> AO VIVO</span>
-            <div class="channel-card-actions">
-                <span class="channel-sources-badge">${optionsCount} font${optionsCount > 1 ? 'es' : 'e'}</span>
-                <button class="btn-card-fav ${isFav ? 'favorited' : ''}" type="button" aria-label="${isFav ? 'Desfavoritar' : 'Favoritar'}">
-                    ${isFav ? getUiSvg('starFilled', 14) : getUiSvg('star', 14)}
-                </button>
-            </div>
+            <button class="btn-card-fav ${isFav ? 'favorited' : ''}" type="button" aria-label="${isFav ? 'Desfavoritar' : 'Favoritar'}">
+                ${isFav ? getUiSvg('starFilled', 14) : getUiSvg('star', 14)}
+            </button>
         </div>
         <div class="channel-card-logo-box">
             ${logoLargeHtml}
         </div>
         <div class="channel-card-bottom">
             <h4 class="channel-card-name" title="${channelName}">${channelName}</h4>
-            <span class="channel-card-category">${category}</span>
         </div>
     `;
 
@@ -531,8 +526,7 @@ export function renderChannelsHero() {
 
     if (titleEl) titleEl.textContent = `${featuredChannel.name} HD`;
     if (metaEl) {
-        const optCount = getChannelOptionsCount(featuredChannel.players);
-        metaEl.textContent = `Transmissão Ao Vivo • ${optCount} Servidor${optCount > 1 ? 'es' : ''} • ${featuredChannel.category}`;
+        metaEl.textContent = `Transmissão Oficial • ${featuredChannel.category || 'Ao Vivo'}`;
     }
 
     if (watchBtn) {

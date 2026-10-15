@@ -111,19 +111,18 @@ async function main() {
   const browser = await launch(browserName);
 
   try {
-    await browser.navigate(`${BASE}/`);
-    await sleep(2500);
+    await browser.navigate(`${BASE}/#tv`);
 
-    // Switch to 'tv' view via nav tab click
-    await browser.evaluate(`(() => {
-      const tabTv = document.getElementById('nav-tab-tv');
-      if (tabTv) {
-        tabTv.click();
-      } else if (window.TvzinhaActions && window.TvzinhaActions.switchView) {
-        window.TvzinhaActions.switchView('tv');
+    // Resilient wait for app initialization and channel cards render
+    await browser.evaluate(`(async () => {
+      for (let i = 0; i < 50; i++) {
+        if (document.querySelectorAll('.channel-card-16x9').length > 0) return true;
+        const tabTv = document.getElementById('nav-tab-tv');
+        if (tabTv) tabTv.click();
+        await new Promise(r => setTimeout(r, 200));
       }
+      return false;
     })()`);
-    await sleep(2000);
 
     // 1. Check #channels-hero
     const heroInfo = await browser.evaluate(`(() => {

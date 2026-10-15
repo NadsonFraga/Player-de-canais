@@ -4,20 +4,29 @@
  * and quick-navigation portals for Movies, Series, Animes, and Live Channels.
  */
 
-import { store } from '../core/state.js?v=20261015_1045';
+import { store } from '../core/state.js?v=20261015_1414';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
     TMDB_CACHE_KEY,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY
-} from '../core/constants.js?v=20261015_1045';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261015_1045';
-import { switchAppView } from '../navigation/router.js?v=20261015_1045';
-import { openMovieDetailsModal } from './movies.js?v=20261015_1045';
-import { openSeriesModal } from './series.js?v=20261015_1045';
-import { selectChannelByName } from './channels.js?v=20261015_1045';
-import { getChannelLogoSrc, createLogoBadgeHtml } from '../core/icons.js?v=20261015_1045';
+} from '../core/constants.js?v=20261015_1414';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261015_1414';
+import { switchAppView } from '../navigation/router.js?v=20261015_1414';
+import { openMovieDetailsModal, fetchTmdbEndpoint } from './movies.js?v=20261015_1414';
+import { openSeriesModal, fetchSeriesEndpoint } from './series.js?v=20261015_1414';
+import { selectChannelByName } from './channels.js?v=20261015_1414';
+import { getChannelLogoSrc, createLogoBadgeHtml } from '../core/icons.js?v=20261015_1414';
+
+const TMDB_GENRES = {
+    28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
+    99: "Documentário", 18: "Drama", 10751: "Família", 14: "Fantasia",
+    36: "História", 27: "Terror", 10402: "Música", 9648: "Mistério",
+    10749: "Romance", 878: "Ficção", 10770: "Cinema TV",
+    53: "Thriller", 10752: "Guerra", 37: "Faroeste",
+    10759: "Ação & Aventura", 10765: "Sci-Fi & Fantasia", 10768: "Guerra & Política"
+};
 
 let homeHeroItems = [];
 let currentHomeHeroIndex = 0;
@@ -59,8 +68,9 @@ const DEFAULT_HERO_HIGHLIGHTS = [
         id: 1022789,
         title: "Divertida Mente 2",
         categoryLabel: "Filmes",
-        categoryBadgeClass: "badge-amber",
-        meta: "2024 • ★ 7.7",
+        year: "2024",
+        rating: "7.7",
+        genres: ["Animação", "Família", "Aventura"],
         overview: "Na mente de Riley, recém-chegada à adolescência, a sala de controle sofre uma demolição para abrir espaço para novas e surpreendentes emoções.",
         backdropUrl: "https://image.tmdb.org/t/p/original/xg27NrXi7EgQxLQVIzGQZfrtlip.jpg",
         targetTab: "movies"
@@ -70,8 +80,9 @@ const DEFAULT_HERO_HIGHLIGHTS = [
         id: 94605,
         title: "Arcane",
         categoryLabel: "Séries",
-        categoryBadgeClass: "badge-ruby",
-        meta: "2021 • ★ 8.8",
+        year: "2021",
+        rating: "8.8",
+        genres: ["Animação", "Sci-Fi", "Ação"],
         overview: "Em meio ao conflito entre as cidades-gêmeas de Piltover e Zaun, duas irmãs lutam em lados opostos de uma guerra entre tecnologias mágicas e crenças incompatíveis.",
         backdropUrl: "https://image.tmdb.org/t/p/original/2wT5nF1gM3pA465t6Y345098k.jpg",
         targetTab: "series"
@@ -81,8 +92,9 @@ const DEFAULT_HERO_HIGHLIGHTS = [
         id: 37854,
         title: "One Piece",
         categoryLabel: "Animes",
-        categoryBadgeClass: "badge-magenta",
-        meta: "1999 • ★ 8.7",
+        year: "1999",
+        rating: "8.7",
+        genres: ["Anime", "Ação", "Aventura"],
         overview: "Monkey D. Luffy e sua tripulação navegam pelos mares mais perigosos em busca do lendário tesouro supremo deixado por Gol D. Roger.",
         backdropUrl: "https://image.tmdb.org/t/p/original/4Mt7RSstvJtk5JouOwhKaMeYSTz.jpg",
         targetTab: "animes"
@@ -92,8 +104,8 @@ const DEFAULT_HERO_HIGHLIGHTS = [
         title: "SporTV HD",
         channelName: "SporTV",
         categoryLabel: "Ao Vivo",
-        categoryBadgeClass: "badge-emerald",
-        meta: "Ao Vivo • 4 Servidores",
+        channelCategory: "Esportes",
+        genres: ["Ao Vivo", "Esportes"],
         overview: "Grandes jogos do futebol brasileiro, campeonatos internacionais e cobertura esportiva 24 horas em alta definição.",
         backdropUrl: "assets/logos/fav/icon-detailed.svg",
         targetTab: "tv"
@@ -176,7 +188,9 @@ function buildHomeHeroShowcase() {
                     title: m.title || m.name,
                     categoryLabel: "Filmes",
                     categoryBadgeClass: "badge-amber",
-                    meta: `${(m.release_date || '').substring(0, 4) || 'Cinema'} • ★ ${m.vote_average ? m.vote_average.toFixed(1) : '8.0'}`,
+                    year: (m.release_date || '').substring(0, 4) || 'Cinema',
+                    rating: m.vote_average ? m.vote_average.toFixed(1) : '',
+                    genres: (m.genre_ids || []).map(id => TMDB_GENRES[id]).filter(Boolean).slice(0, 3),
                     overview: m.overview || "Grande sucesso em cartaz no cinema sob demanda da Tvzinha.",
                     backdropUrl: `${TMDB_IMG_ORIGINAL}${m.backdrop_path}`,
                     targetTab: "movies",
@@ -199,7 +213,9 @@ function buildHomeHeroShowcase() {
                     title: s.name || s.title,
                     categoryLabel: "Séries",
                     categoryBadgeClass: "badge-ruby",
-                    meta: `${(s.first_air_date || '').substring(0, 4) || 'Série'} • ★ ${s.vote_average ? s.vote_average.toFixed(1) : '8.5'}`,
+                    year: (s.first_air_date || '').substring(0, 4) || 'Série',
+                    rating: s.vote_average ? s.vote_average.toFixed(1) : '',
+                    genres: (s.genre_ids || []).map(id => TMDB_GENRES[id]).filter(Boolean).slice(0, 3),
                     overview: s.overview || "Temporadas completas com alta qualidade de reprodução e múltiplos servidores.",
                     backdropUrl: `${TMDB_IMG_ORIGINAL}${s.backdrop_path}`,
                     targetTab: "series",
@@ -222,7 +238,9 @@ function buildHomeHeroShowcase() {
                     title: a.name || a.title,
                     categoryLabel: "Animes",
                     categoryBadgeClass: "badge-magenta",
-                    meta: `${(a.first_air_date || '').substring(0, 4) || 'Anime'} • ★ ${a.vote_average ? a.vote_average.toFixed(1) : '8.6'}`,
+                    year: (a.first_air_date || '').substring(0, 4) || 'Anime',
+                    rating: a.vote_average ? a.vote_average.toFixed(1) : '',
+                    genres: (a.genre_ids || []).map(id => TMDB_GENRES[id]).filter(Boolean).slice(0, 3),
                     overview: a.overview || "Animações japonesas de sucesso com legendas e dublagens de alta fidelidade.",
                     backdropUrl: `${TMDB_IMG_ORIGINAL}${a.backdrop_path}`,
                     targetTab: "animes",
@@ -244,8 +262,11 @@ function buildHomeHeroShowcase() {
                 title: `${featuredChannel.name} HD`,
                 channelName: featuredChannel.name,
                 categoryLabel: "Ao Vivo",
+                channelCategory: featuredChannel.category || "TV",
                 categoryBadgeClass: "badge-emerald",
-                meta: `Transmissão HD • ${featuredChannel.sourcesCount} Servidores`,
+                year: "Ao Vivo",
+                rating: "",
+                genres: [featuredChannel.category || "Ao Vivo"],
                 overview: "Assista à programação ao vivo com alta estabilidade e players nativos sem interrupções.",
                 backdropUrl: featuredChannel.logo || "assets/logos/fav/icon-detailed.svg",
                 targetTab: "tv",
@@ -255,8 +276,70 @@ function buildHomeHeroShowcase() {
     }
 
     homeHeroItems = slides.length >= 2 ? slides : DEFAULT_HERO_HIGHLIGHTS;
+
+    // Concurrent pre-fetch clearlogos for all hero items
+    homeHeroItems.forEach(item => {
+        fetchSlideLogo(item);
+    });
+
     setupHeroControls(homeHeroItems);
     showHeroSlide(0);
+}
+
+/**
+ * Pre-fetches transparent PNG title clearlogos from TMDB
+ */
+function fetchSlideLogo(item) {
+    if (!item || !item.id || item.type === 'channel' || item.logo_url || item.has_no_logo) return;
+
+    const endpoint = item.type === 'movie'
+        ? `movie/${item.id}/images?include_image_language=pt,en,null`
+        : `tv/${item.id}/images?include_image_language=pt,ja,en,null`;
+
+    const fetcher = item.type === 'movie' ? fetchTmdbEndpoint : fetchSeriesEndpoint;
+
+    fetcher(endpoint).then(imgData => {
+        if (imgData && imgData.logos && imgData.logos.length > 0) {
+            const ptLogo = imgData.logos.find(l => l.iso_639_1 === 'pt');
+            const jaLogo = item.type === 'anime' ? imgData.logos.find(l => l.iso_639_1 === 'ja') : null;
+            const enLogo = imgData.logos.find(l => l.iso_639_1 === 'en');
+            const chosenLogo = ptLogo || jaLogo || enLogo || imgData.logos[0];
+            if (chosenLogo && chosenLogo.file_path) {
+                const logoUrl = `${TMDB_IMG_W500}${chosenLogo.file_path}`;
+                item.logo_url = logoUrl;
+                const preImg = new Image();
+                preImg.src = logoUrl;
+                preImg.onload = () => {
+                    item.logo_loaded = true;
+                    if (homeHeroItems[currentHomeHeroIndex] && homeHeroItems[currentHomeHeroIndex].id === item.id) {
+                        applyHeroLogo(item);
+                    }
+                };
+                return;
+            }
+        }
+        item.has_no_logo = true;
+    }).catch(() => {
+        item.has_no_logo = true;
+    });
+}
+
+function applyHeroLogo(item) {
+    const logoEl = document.getElementById("home-hero-title-logo");
+    const titleEl = document.getElementById("home-hero-title");
+    if (!logoEl || !titleEl) return;
+
+    if (item.logo_url) {
+        logoEl.src = item.logo_url;
+        logoEl.alt = item.title;
+        logoEl.classList.remove("hidden");
+        titleEl.classList.add("hidden");
+    } else {
+        logoEl.classList.add("hidden");
+        logoEl.src = "";
+        titleEl.classList.remove("hidden");
+        titleEl.textContent = item.title;
+    }
 }
 
 function setupHeroControls(items) {
@@ -308,8 +391,9 @@ function showHeroSlide(index) {
 
     const backdropEl = document.getElementById("home-hero-backdrop");
     const badgeEl = document.getElementById("home-hero-badge");
-    const metaEl = document.getElementById("home-hero-meta");
-    const titleEl = document.getElementById("home-hero-title");
+    const yearEl = document.getElementById("home-hero-year");
+    const ratingEl = document.getElementById("home-hero-rating");
+    const genresEl = document.getElementById("home-hero-genres");
     const overviewEl = document.getElementById("home-hero-overview");
     const btnWatch = document.getElementById("btn-home-hero-watch");
     const btnWatchLabel = document.getElementById("btn-home-hero-watch-label");
@@ -326,13 +410,47 @@ function showHeroSlide(index) {
         img.src = item.backdropUrl;
     }
 
-    if (badgeEl) {
-        badgeEl.textContent = item.categoryLabel;
-        badgeEl.className = `home-hero-badge category-badge ${item.categoryBadgeClass || ''}`;
+    // Apply transparent clearlogo or graceful fallback to text title
+    applyHeroLogo(item);
+
+    if (!item.logo_url && !item.has_no_logo && item.id && item.type !== 'channel') {
+        fetchSlideLogo(item);
     }
 
-    if (metaEl) metaEl.textContent = item.meta || '';
-    if (titleEl) titleEl.textContent = item.title;
+    if (badgeEl) {
+        badgeEl.textContent = item.categoryLabel;
+        badgeEl.className = `movies-hero-badge ${item.categoryBadgeClass || ''}`;
+    }
+
+    if (yearEl) {
+        yearEl.textContent = item.year || '';
+        yearEl.style.display = item.year ? 'inline-block' : 'none';
+    }
+
+    if (ratingEl) {
+        if (item.rating) {
+            ratingEl.innerHTML = `<span class="rating-star">★</span> ${item.rating}`;
+            ratingEl.style.display = 'inline-block';
+        } else {
+            ratingEl.style.display = 'none';
+        }
+    }
+
+    if (genresEl) {
+        genresEl.innerHTML = '';
+        if (Array.isArray(item.genres) && item.genres.length > 0) {
+            item.genres.forEach(g => {
+                const pill = document.createElement('span');
+                pill.className = 'genre-pill';
+                pill.textContent = g;
+                genresEl.appendChild(pill);
+            });
+            genresEl.style.display = 'flex';
+        } else {
+            genresEl.style.display = 'none';
+        }
+    }
+
     if (overviewEl) overviewEl.textContent = item.overview;
 
     if (btnWatch) {
@@ -394,10 +512,6 @@ function renderHomeChannelsTrack() {
 
         card.innerHTML = `
             <div class="channel-card-glow"></div>
-            <div class="channel-card-top">
-                <span class="live-dot-badge"><span class="pulse-dot"></span> AO VIVO</span>
-                <span class="channel-sources-badge">${ch.sourcesCount} fontes</span>
-            </div>
             <div class="channel-card-logo-box">
                 ${logoHtml}
             </div>
@@ -418,7 +532,6 @@ function renderHomeChannelsTrack() {
         fragment.appendChild(card);
     });
 
-    track.appendChild(fragment);
 }
 
 /**
