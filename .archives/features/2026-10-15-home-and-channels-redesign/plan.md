@@ -109,6 +109,24 @@
 5. Confirm no emojis exist anywhere in modified markup.
 6. Verify Chrome, Edge, and Firefox rendering.
 
+### Phase 5: Architectural Unification, Clean Aesthetics & Rich Visual Polish
+1. **Unify Home Hero with Existing Catalog Heroes (`movies.js`, `series.js`, `index.html`, `06-catalog.css`):**
+   - Refactor Home Hero markup and styles to match `.movies-hero`: full-width screen coverage without restrictive border-radius.
+   - Lighten gradient overlays (`movies-hero-gradient-overlay` and `home-hero-gradient-overlay`) for vibrant, clear backdrops.
+   - Re-use TMDB clearlogo fetching (`fetchTmdbEndpoint` / `fetchSeriesEndpoint`) to display transparent PNG title logos (`#home-hero-title-logo`), with styled text fallback only when unavailable.
+   - Display full metadata bar: Category badge (Filme, Série, Anime, Ao Vivo), release year, star rating (`★ 8.4`), and genre pills.
+   - 4-slide carousel cycle: Featured Movie, Featured Series, Featured Anime, and Featured Live Channel (clean badge, no server count noise).
+2. **De-clutter Live Channel Presentation:**
+   - Remove "Transmissão HD • 7 Servidores" / server count text from hero banners.
+   - Remove repetitive "AO VIVO" badges and "X fontes" chips from every channel card in `channels.js` and `home.js`.
+   - Focus channel card layout on crisp centered logo, clean title, and subtle favorite star.
+3. **Redesign Quick Navigation Strip (`.home-quick-nav`):**
+   - Replace heavy colored square icons with subtle glass frosted capsules (`rgba(255, 255, 255, 0.04)`), inline SVGs, and refined typography.
+4. **Harmonize Continue Watching Header:**
+   - Remove pulsating green dot (`.continue-icon-dot`) and discordant hint font.
+   - Align with standard section header format (`<h3>Continuar Assistindo</h3>` + `<span class="home-row-badge amber">Histórico</span>`).
+5. **Run test verification suites and update preview deployment.**
+
 ---
 
 ## 4. Verification Table

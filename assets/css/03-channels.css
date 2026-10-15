@@ -569,26 +569,63 @@ button.hero-badge:hover,
     outline: none;
 }
 
-.channel-card-actions {
+.channel-card-top {
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: flex-end;
+    width: 100%;
     z-index: 2;
 }
 
-.channel-card-actions .btn-card-fav {
-    padding: 3px;
-    line-height: 1;
+.channel-card-top .btn-card-fav {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-full);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+}
+
+.channel-card-top .btn-card-fav:hover,
+.channel-card-top .btn-card-fav.favorited {
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.4);
+    background: rgba(251, 191, 36, 0.14);
 }
 
 .channel-card-16x9 .channel-card-logo-box,
 .quick-card .channel-card-logo-box {
     width: 100%;
-    height: 48px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2;
+}
+
+.channel-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    z-index: 2;
+}
+
+.channel-card-bottom .channel-card-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 95%;
 }
 
 /* Category Rows */

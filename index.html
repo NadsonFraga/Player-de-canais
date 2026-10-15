@@ -122,16 +122,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261015_1045">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261015_1045">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261015_1045">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261015_1045">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261015_1045">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261015_1045">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261015_1045">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261015_1045">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261015_1045">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261015_1045">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261015_1414">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261015_1414">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261015_1414">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261015_1414">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261015_1414">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261015_1414">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261015_1414">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261015_1414">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261015_1414">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261015_1414">
 </head>
 
 <body>
@@ -191,104 +191,98 @@
 
     <!-- View 0: Home Hub Streaming Showcase -->
     <main id="view-home" class="view-home" aria-label="Central de Início">
-        <div class="home-container">
-            <!-- Dynamic Multi-Universe Hero Showcase -->
-            <section id="home-hero-showcase" class="home-hero-showcase">
-                <div class="home-hero-backdrop-wrapper">
-                    <img id="home-hero-backdrop" src="assets/logos/fav/icon-detailed.svg" alt="Destaque em Exibição" class="home-hero-backdrop">
-                    <div class="home-hero-gradient-overlay"></div>
+        <!-- Dynamic Multi-Universe Hero Showcase (Full Width Edge-to-Edge) -->
+        <section id="home-hero-showcase" class="home-hero-showcase movies-hero">
+            <div class="movies-hero-backdrop-wrapper">
+                <img id="home-hero-backdrop" src="assets/logos/fav/icon-detailed.svg" alt="Destaque em Exibição" class="movies-hero-backdrop">
+                <div class="movies-hero-gradient-overlay"></div>
+            </div>
+            <div class="movies-hero-content">
+                <img id="home-hero-title-logo" src="" alt="Título em Destaque" class="movies-hero-title-logo hidden">
+                <h1 id="home-hero-title" class="movies-hero-title">Tvzinha Online</h1>
+                <div class="movies-hero-meta">
+                    <span id="home-hero-badge" class="movies-hero-badge"><span class="cinema-sparkle">✦</span> Destaque</span>
+                    <span id="home-hero-year" class="movies-meta-tag"></span>
+                    <span id="home-hero-rating" class="movies-meta-tag rating"></span>
+                    <div id="home-hero-genres" class="movies-hero-genres"></div>
                 </div>
-                <div class="home-hero-content">
-                    <div class="home-hero-badge-row">
-                        <span id="home-hero-badge" class="home-hero-badge category-badge badge-amber">Filmes</span>
-                        <span id="home-hero-meta" class="home-hero-meta-tag">Cinema On Demand</span>
-                    </div>
-                    <h1 id="home-hero-title" class="home-hero-title">Tvzinha Online</h1>
-                    <p id="home-hero-overview" class="home-hero-overview">Filmes sob demanda, séries completas, animes consagrados e canais ao vivo em alta definição.</p>
-                    <div class="home-hero-actions">
-                        <button id="btn-home-hero-watch" class="btn-cinema-primary" type="button">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                            </svg>
-                            <span id="btn-home-hero-watch-label">Assistir Agora</span>
-                        </button>
-                        <button id="btn-home-hero-explore" class="btn-cinema-secondary" type="button">
-                            <span id="btn-home-hero-explore-label">Explorar Categoria</span>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                                <polyline points="12 5 19 12 12 19"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Hero Navigation Controls -->
-                <div class="home-hero-nav">
-                    <button id="btn-home-hero-prev" class="btn-hero-nav-arrow" aria-label="Destaque anterior" title="Destaque anterior" type="button">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="15 18 9 12 15 6"></polyline>
+                <p id="home-hero-overview" class="movies-hero-overview">Filmes sob demanda, séries completas, animes consagrados e canais ao vivo em alta definição.</p>
+                <div class="movies-hero-actions">
+                    <button id="btn-home-hero-watch" class="btn-cinema-primary" type="button">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
                         </svg>
+                        <span id="btn-home-hero-watch-label">Assistir Agora</span>
                     </button>
-                    <div id="home-hero-dots" class="hero-dots-container"></div>
-                    <button id="btn-home-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo destaque" title="Próximo destaque" type="button">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="9 18 15 12 9 6"></polyline>
+                    <button id="btn-home-hero-explore" class="btn-cinema-secondary" type="button">
+                        <span id="btn-home-hero-explore-label">Explorar Categoria</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
                         </svg>
                     </button>
                 </div>
-            </section>
+            </div>
 
-            <!-- Compact Quick Navigation Capsule Strip -->
-            <nav class="home-quick-nav" aria-label="Acesso Rápido às Categorias">
-                <button class="quick-nav-pill active-portal" data-view-target="tv" type="button">
-                    <div class="quick-nav-icon tv-accent">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
-                            <polyline points="17 2 12 7 7 2"></polyline>
-                        </svg>
-                    </div>
-                    <span>Canais Ao Vivo</span>
-                    <span class="quick-nav-count">66+</span>
+            <!-- Hero Navigation Controls -->
+            <div class="movies-hero-nav">
+                <button id="btn-home-hero-prev" class="btn-hero-nav-arrow" aria-label="Destaque anterior" title="Destaque anterior" type="button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
                 </button>
-                <button class="quick-nav-pill active-portal" data-view-target="movies" type="button">
-                    <div class="quick-nav-icon movie-accent">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-                            <line x1="7" y1="2" x2="7" y2="22"></line>
-                            <line x1="17" y1="2" x2="17" y2="22"></line>
-                            <line x1="2" y1="12" x2="22" y2="12"></line>
-                        </svg>
-                    </div>
+                <div id="home-hero-dots" class="hero-dots-container"></div>
+                <button id="btn-home-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo destaque" title="Próximo destaque" type="button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <div class="home-container">
+            <!-- Sleek Minimalist Quick Navigation Strip -->
+            <nav class="home-quick-nav" aria-label="Acesso Rápido às Categorias">
+                <button class="quick-nav-pill" data-view-target="tv" type="button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                        <polyline points="17 2 12 7 7 2"></polyline>
+                    </svg>
+                    <span>Canais Ao Vivo</span>
+                </button>
+                <button class="quick-nav-pill" data-view-target="movies" type="button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                        <line x1="7" y1="2" x2="7" y2="22"></line>
+                        <line x1="17" y1="2" x2="17" y2="22"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                    </svg>
                     <span>Filmes</span>
                 </button>
-                <button class="quick-nav-pill active-portal" data-view-target="series" type="button">
-                    <div class="quick-nav-icon series-accent">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-                            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-                            <line x1="6" y1="6" x2="6.01" y2="6"></line>
-                        </svg>
-                    </div>
+                <button class="quick-nav-pill" data-view-target="series" type="button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                        <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                        <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                        <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                    </svg>
                     <span>Séries</span>
                 </button>
-                <button class="quick-nav-pill active-portal" data-view-target="animes" type="button">
-                    <div class="quick-nav-icon anime-accent">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </div>
+                <button class="quick-nav-pill" data-view-target="animes" type="button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
                     <span>Animes</span>
                 </button>
             </nav>
 
-            <!-- Home Continue Watching Rail (Enhanced with Progress Bar) -->
+            <!-- Home Continue Watching Rail (Harmonized Header) -->
             <section id="home-continue-watching-section" class="home-continue-watching-section hidden">
-                <div class="home-section-header">
-                    <div class="continue-watching-title-box">
-                        <span class="continue-icon-dot"></span>
-                        <h2>Continuar Assistindo</h2>
+                <div class="home-row-header">
+                    <div class="home-row-title-box">
+                        <h3>Continuar Assistindo</h3>
+                        <span class="home-row-badge amber">Histórico</span>
                     </div>
-                    <span class="home-section-hint">De onde você parou</span>
                 </div>
                 <div class="continue-watching-carousel-wrapper">
                     <div id="home-continue-watching-track" class="continue-watching-track">
@@ -473,7 +467,7 @@
                                 <span>AO VIVO AGORA</span>
                             </div>
                             <h1 class="channels-hero-title" id="channels-hero-title">SporTV HD</h1>
-                            <p class="channels-hero-meta" id="channels-hero-meta">Transmissão Esportiva • 4 Servidores • Esportes</p>
+                            <p class="channels-hero-meta" id="channels-hero-meta">Transmissão Oficial • Esportes</p>
                             <p class="channels-hero-overview" id="channels-hero-overview">
                                 Cobertura completa de futebol brasileiro e internacional, ligas de elite e eventos esportivos ao vivo com múltiplos servidores de alta estabilidade.
                             </p>
@@ -1992,7 +1986,7 @@
     <script src="https://cdn.jsdelivr.net/npm/artplayer@5.1.7/dist/artplayer.js"></script>
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261015_1045"></script>
+    <script type="module" src="assets/js/main.js?v=20261015_1414"></script>
 </body>
 
 </html>
