@@ -262,7 +262,7 @@ body.is-resizing {
     border-radius: 4px;
 }
 .filter-pills-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(52, 211, 153, 0.6);
+    background: rgba(17, 94, 69, 0.7);
 }
 
 .pill {
@@ -285,20 +285,20 @@ body.is-resizing {
 }
 
 .pill.active {
-    background: #ffffff;
-    border-color: #ffffff;
-    color: #080808;
+    background: #115e45;
+    border-color: #115e45;
+    color: #ffffff;
     font-weight: 700;
-    box-shadow: 0 2px 12px rgba(255, 255, 255, 0.25);
+    box-shadow: 0 2px 10px rgba(17, 94, 69, 0.4);
 }
 
 .pill.pill-adblock {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    color: #34d399;
-    border-color: rgba(16, 185, 129, 0.28);
-    background: rgba(16, 185, 129, 0.08);
+    color: #d1fae5;
+    border-color: rgba(17, 94, 69, 0.5);
+    background: rgba(17, 94, 69, 0.2);
     font-weight: 600;
     transition: all var(--transition-fast);
 }
