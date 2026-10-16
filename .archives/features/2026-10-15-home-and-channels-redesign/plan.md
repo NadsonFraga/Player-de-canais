@@ -290,3 +290,72 @@ Replace the static hardcoded SporTV green banner with a smart, multi-genre rotat
   - `tools/channels_redesign_check.mjs` (Edge): 10/10 PASS.
   - `tools/player_touch_check.mjs`: 17/17 checks PASS.
   - `scratch/test_dpad_tv.mjs`: ALL DPAD CHECKS PASSED.
+
+---
+
+## 9. Phase 9: Unified Dark Forest Design System, Pure Star Icons & Player Cleanup
+
+### Goal
+Establish a single, coherent design standard across the entire Channels tab and TV Player view: eliminating all multiple random colors/tones in favor of an exact two-state system (Normal = Dark Glass / Active = Deep Forest Green `#115e45`), stripping favorite star icons of all surrounding circles/containers, and removing redundant buttons from the player toolbar.
+
+### Proposed Changes
+
+1. **Strict Two-State Unified Design System (Channels & Player Parity):**
+   - **Normal State (Idle/Unselected):**
+     - Dark translucent glass background (`rgba(255, 255, 255, 0.05)` or `var(--bg-surface)`).
+     - Subtle glass border (`rgba(255, 255, 255, 0.10)`).
+     - Secondary muted typography/icon (`#a1a1aa` / `var(--text-secondary)`).
+   - **Hover State:**
+     - Background: `rgba(255, 255, 255, 0.09)`.
+     - Border: `rgba(255, 255, 255, 0.20)`.
+     - Text: `#ffffff`.
+   - **Active/Selected State (Unified Single Dark Pine Tone):**
+     - Background: `#115e45` (deep pine green).
+     - Border: `#115e45` (subtle border `rgba(17, 94, 69, 0.8)`).
+     - Text: `#ffffff` (crisp white typography, high contrast, clean).
+     - Subtle shadow: `0 2px 10px rgba(17, 94, 69, 0.35)`.
+   - **Universal Application:**
+     - Category Pills in Toolbar (`.channel-cat-pill`).
+     - Category Pills in Quick Drawer (`.filter-pills-container .pill`).
+     - Channel list items in Quick Drawer (`.drawer-channel-item.active`).
+     - Player Server selection chips (`.btn-server-option.active` - unifying with the rest of the tab instead of white).
+     - Player header actions and shield badge (`.btn-player-action`, `.player-shield-badge`).
+     - Channels Hero dot indicators and "Assistir" button.
+
+2. **Pure Star Favorite Icons (Cards & Player):**
+   - In `assets/css/03-channels.css`:
+     - Strip `.channel-card-top .btn-card-fav` and `.player-header .btn-card-fav` of all background circles, boxes, borders, and shadows (`background: transparent !important; border: none !important; box-shadow: none !important; padding: 0;`).
+     - Normal state: subtle SVG outline (`fill: none; stroke: rgba(255, 255, 255, 0.45);`).
+     - Hover state: `stroke: #ffffff; transform: scale(1.12);`.
+     - Favorited state: pure warm gold (`fill: #fbbf24; stroke: #fbbf24;`), with zero background or border.
+
+3. **Player Toolbar Cleanup:**
+   - In `assets/js/modules/channels.js` (`renderPlayerView`):
+     - Remove `#btn-open-drawer-player` ("Trocar Canal").
+     - Remove `#btn-fullscreen-player` ("Tela Cheia" - already native inside Artplayer).
+     - Remove `#btn-open-external` ("Nova Aba" - prevents raw m3u8 playlist text downloads).
+     - Keep exclusively `#btn-reload-player` ("Recarregar"), aligned with the unified button design.
+
+4. **Background & Ambient Glows:**
+   - Eliminate all neon emerald (`#34d399`, `rgba(52, 211, 153, ...)`) in `03-channels.css` and `01-base.css`.
+   - Use deep, muted forest/pine ambient gradients (`radial-gradient(circle, rgba(17, 94, 69, 0.18) 0%, transparent 70%)`) and subtle dark vignette, maintaining a deeply dark and cinematic canvas.
+
+5. **Verification & Deployment:**
+   - Run `python tools/check_js.py`.
+   - Run `python tools/bump_version.py`.
+   - Automated tests: `channels_redesign_check.mjs` (Chrome & Edge), `player_touch_check.mjs`, TV Remote D-Pad test.
+   - Capture updated screenshots of channel cards, player toolbar, server chips, and hero.
+
+### Verification Results (Phase 9)
+- `python tools/check_js.py`: 0 missing imports.
+- `python tools/bump_version.py`: Clean version stamp `20261016_1714` verified (`--check`).
+- `channels_redesign_check.mjs`: 10/10 PASS on Chrome, 10/10 PASS on Edge.
+- `player_touch_check.mjs`: 17/17 checks passed.
+- TV Remote D-Pad test (`scratch/test_dpad_tv.mjs`): ALL CHECKS PASSED.
+- Visual inspections:
+  - Hero and Category Pills: Unified deep pine green (`#115e45`), crisp white text, muted ambient gradients.
+  - Favorite Star Button: Stripped of circular containers, borders, and backgrounds across cards and player header.
+  - TV Player Toolbar: Cleaned to retain only "Recarregar" button; removed "Trocar Canal", "Tela Cheia", and "Nova Aba".
+  - Player Server Selection: `.btn-server-option.active` now matches the `#115e45` unified design token instead of contrasting white.
+
+
