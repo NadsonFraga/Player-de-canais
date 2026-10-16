@@ -252,7 +252,41 @@ Eliminate the nested square box div inside 16:9 channel cards, restore high-cont
   - `python tools/check_js.py`: 0 missing imports.
   - `python tools/bump_version.py`: 1 unified version (`20261016_1118`).
   - `tools/channels_redesign_check.mjs` (Chrome): 10/10 PASS.
-  - `tools/channels_redesign_check.mjs` (Edge): 10/10 PASS.
-  - `tools/player_touch_check.mjs`: 17/17 PASS.
   - `scratch/test_dpad_tv.mjs`: 100% PASS (TV Remote D-pad navigation intact).
 
+---
+
+## 8. Phase 8: Dynamic Channels Hero, Quick Drawer PC Scroll & Background Scroll Lock
+
+### Goal
+Replace the static hardcoded SporTV green banner with a smart, multi-genre rotating hero carousel (supporting match-of-the-day / favorite team highlights and top channels), enable smooth horizontal mouse-wheel scrolling for category pills in the quick drawer on PC, and lock the root `html` scroll so the background page cannot scroll and the window scrollbar does not clash with the drawer.
+
+### Proposed Changes
+1. **Root Scroll Lock & Scrollbar De-duplication (`01-base.css`, `03-channels.css`, `channels.js`):**
+   - In `assets/js/modules/channels.js`: `openChannelsDrawer()` and `closeChannelsDrawer()` must add/remove `.sidebar-open` on both `document.documentElement` and `document.body`.
+   - In `assets/css/01-base.css`: add `html.sidebar-open, body.sidebar-open { overflow: hidden !important; overscroll-behavior: none !important; }`.
+   - In `assets/css/03-channels.css`: add `overscroll-behavior: contain;` on `.sidebar.channels-quick-drawer`.
+2. **Horizontal Scrolling for Quick Drawer Category Pills on PC (`02-layout.css`, `channels.js`):**
+   - In `assets/css/02-layout.css`: restore custom 4px horizontal scrollbar on `.filter-pills-container` with subtle thumb (`rgba(255, 255, 255, 0.2)`).
+   - In `assets/js/modules/channels.js`: attach `wheel` event listener to `#filter-pills` converting vertical wheel `deltaY` into smooth horizontal `scrollLeft`.
+3. **Dynamic Multi-Genre Channels Hero Carousel (`channels.js`, `03-channels.css`, `index.html`):**
+   - In `assets/js/modules/channels.js`: implement multi-slide carousel for `#channels-hero` that rotates through top channels across TV Aberta (Globo), Esportes (SporTV/ESPN), Filmes (HBO), and Infantil (Cartoon Network), prioritizing today's match for the user's favorite team if available.
+   - Display official channel logo, dynamic brand glow / gradient, genre tag, live badge, and direct "Assistir Agora" button.
+   - Add slide navigation dots or arrows for manual switching.
+4. **Verification & Deployment:**
+   - Syntax validation: `check_js.py`.
+   - Cache version bump: `bump_version.py`.
+   - Automated tests: `channels_redesign_check.mjs` (Chrome & Edge), `player_touch_check.mjs`, and TV Remote D-Pad test.
+   - Headless screenshots of Channels Hero and open Quick Drawer.
+
+### 2026-10-16 - Phase 8 (Completed)
+- **Root Scroll Lock & Window Scrollbar Fix:** `openChannelsDrawer()` and `closeChannelsDrawer()` toggle `.sidebar-open` on both `html` and `body` with `overflow: hidden !important; overscroll-behavior: none !important;`. The background page is completely stationary when the drawer is open and the browser window scrollbar on the right is hidden so it never overlaps the drawer.
+- **PC Horizontal Scroll for Category Pills:** Added custom 4px horizontal scrollbar on `.filter-pills-container` and mouse `wheel` listener converting vertical wheel deltas into smooth horizontal scrolling.
+- **Dynamic Channels Hero Carousel:** Implemented dynamic rotating carousel for `#channels-hero` cycling through curated high-profile channels (Globo HD, SporTV HD, HBO HD, Cartoon Network HD) plus user favorite channel priority. Displays official channel logo, live badge, genre overview, branded glow, and navigation dots. Pause-on-hover is fully supported.
+- **Verification Numbers:**
+  - `python tools/check_js.py`: 0 missing imports.
+  - `python tools/bump_version.py`: 1 unified version (`20261016_1344`).
+  - `tools/channels_redesign_check.mjs` (Chrome): 10/10 PASS.
+  - `tools/channels_redesign_check.mjs` (Edge): 10/10 PASS.
+  - `tools/player_touch_check.mjs`: 17/17 checks PASS.
+  - `scratch/test_dpad_tv.mjs`: ALL DPAD CHECKS PASSED.
