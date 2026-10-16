@@ -192,25 +192,67 @@
 - **Backlog Additions:** Added B18 (Buffer hysteresis & 1080p stutter guard) and B19 (Continue watching for movies + delete item).
 
 ---
+### 2026-10-15 - Phase 6 (Completed)
+- Standardized Home Hero metadata bar: aligned `TMDB_GENRES` with `movies.js` (including `878: "Ficção Científica"`), badge with sparkle icon, `.movies-genre-tag` pills, and `★ 8.5` rating.
+- Moved `#home-row-channels` in `index.html` below Movies, Series, and Animes.
+- Fixed `renderHomeChannelsTrack`: added `track.appendChild(fragment)`.
+- Removed redundant quick-nav pills menu from markup, CSS, and remote navigation.
+- Verified test suites: 10/10 Chrome, 10/10 Edge, 17/17 Touch, D-pad PASS.
 
-## 6. Phase 6: Standardized Hero Metadata, Feed Reordering & Quick-Nav Cleanup
+---
+
+## 7. Phase 7: Clean Channel Cards Architecture, Dark-Mode Logo Contrast & Curated Featured Channels
 
 ### Goal
-Fulfill user visual corrections: standardizing hero metadata tags to 100% match Movies/Series heroes, reordering the Home rows so Channels appear below Movies, Series, and Animes, fixing the channel cards track rendering, and removing the redundant quick-nav pill menu.
+Eliminate the nested square box div inside 16:9 channel cards, restore high-contrast visibility for dark logos (e.g. SporTV, Premiere) on dark card backgrounds, and curate a diverse selection of featured channels on Home (spanning Open TV, Closed TV, Sports, Kids, and Documentaries/Series 24h instead of sequential duplicates).
 
 ### Proposed Changes
-1. **Standardize Hero Metadata Bar (`assets/js/modules/home.js`, `index.html`):**
-   - Align `TMDB_GENRES` in `home.js` with `movies.js` (including `878: "Ficção Científica"`).
-   - Badge: Standardize on `<span id="home-hero-badge" class="movies-hero-badge"><span class="cinema-sparkle">✦</span> Destaque</span>` (matching `#movies-hero-badge`).
-   - Genres: Render `<span class="movies-genre-tag">${genreName}</span>` identical to Movies and Series tabs instead of unstyled spans.
-   - Year & Rating: Render standard `.movies-meta-tag` and `.movies-meta-tag.rating` (`★ 8.5`).
-2. **Fix Channels Track & Reorder Home Feed (`index.html`, `assets/js/modules/home.js`):**
-   - Add missing `track.appendChild(fragment)` to `renderHomeChannelsTrack()` so channel cards render properly.
-   - Move `#home-row-channels` in `index.html` below `#home-row-animes`, making the order: Movies -> Series -> Animes -> Channels.
-3. **Remove Redundant Quick-Nav Menu (`index.html`, `assets/css/09-series-animes.css`, `assets/js/modules/home.js`, `assets/js/navigation/remote.js`):**
-   - Remove `<nav class="home-quick-nav">` from `index.html`.
-   - Remove `.home-quick-nav` styles and listeners.
-4. **Verification:**
-   - Automated tests: `check_js.py`, `bump_version.py`, `channels_redesign_check.mjs` (Chrome & Edge), `player_touch_check.mjs`, and D-Pad remote test.
-   - Visual screenshot verification.
+
+1. **Clean Card Architecture (No Nested Square Div):**
+   - In `assets/js/core/icons.js`:
+     - Add `createChannelCardLogoHtml(channelName)` specifically for 16:9 cards, emitting `<img src="${imgSrc}" alt="${channelName}" class="channel-card-logo" loading="lazy">` without the `.channel-logo-img-wrapper.logo-lg` square container.
+     - For fallback text when no logo is available, render a clean inline typography badge instead of the square box.
+   - In `assets/js/modules/home.js` (`renderHomeChannelsTrack`) and `assets/js/modules/channels.js` (`createChannel16x9Card`):
+     - Use `createChannelCardLogoHtml(name)` inside `.channel-card-logo-box`.
+   - In `assets/css/09-series-animes.css` and `assets/css/03-channels.css`:
+     - Style `.channel-card-logo-box` as an unconstrained flex container (`height: 54px; width: 100%; display: flex; align-items: center; justify-content: center;`).
+     - Style `.channel-card-logo`: `max-height: 48px; max-width: 135px; width: auto; height: auto; object-fit: contain;`.
+
+2. **High-Contrast Dark-Mode Logo Visibility:**
+   - **SporTV (SporTV, SporTV 2, SporTV 3):**
+     - Provide dark-mode high-contrast assets with crisp white lettering and official red accents on transparent backgrounds (`sportv.png`, `sportv2.png`, `sportv3.png` or `_dark` variants).
+   - **Backdrop Illumination & Drop-Shadow:**
+     - Add subtle radial ambient backdrop to `.channel-card-logo-box::before` (`background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08) 0%, transparent 70%);`).
+     - Apply dual drop-shadow filter to `.channel-card-logo`: `filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35)) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.85));`.
+
+3. **Curated & Diversified Featured Channels Rail on Home:**
+   - Replace sequential `getFlatChannelsList().slice(0, 10)` in `assets/js/modules/home.js` with `getFeaturedChannelsList()`.
+   - Curate ~14-16 high-profile, diverse channels without repetitive siblings:
+     - **TV Aberta:** Globo, SBT, Band, Record, TV Cultura
+     - **Esportes:** SporTV, ESPN, CazéTV, Premiere (single entry each)
+     - **Filmes & Séries Fechados:** HBO, Megapix, TNT
+     - **Infantil / Desenhos:** Cartoon Network, Discovery Kids, Nickelodeon
+     - **Documentários & Variedades:** Discovery Channel, Multishow, GloboNews
+     - **Séries 24h:** Chaves 24h
+   - Guarantee rich diversity across all genres with automatic fallback filling if any channel is temporarily unavailable.
+
+4. **Verification & Deployment:**
+   - Run `python tools/check_js.py`.
+   - Run `python tools/bump_version.py`.
+   - Verify automated suites: `node tools/channels_redesign_check.mjs --browser=chrome` and `--browser=edge`.
+   - Verify touch & D-pad navigation.
+   - Capture headless screenshots of Home and Channels tabs to confirm clean card aesthetics and logo legibility.
+
+### 2026-10-16 - Phase 7 (Completed)
+- **1:1 Square Card Architecture:** Replaced the wide 16:9 double-box cards with clean 1:1 square tiles (`126x126px`, `114x114px` on mobile) on both the Home featured row (`.home-channel-card`) and Channels tab (`.channel-card-16x9`, `.quick-grid`).
+- **Direct Logo Placement:** Added `createChannelCardLogoHtml` in `icons.js` emitting direct `<img>` or `<span>` without any `.channel-logo-img-wrapper.logo-lg` nested square box.
+- **Dark Mode Logo Contrast:** Generated high-contrast dark-mode assets for `sportv_dark.png`, `sportv2_dark.png`, and `sportv3_dark.png` with crisp white lettering and vibrant red accents; added radial backdrop illumination and dual drop-shadow filter.
+- **Curated Home Featured Row:** Implemented `getFeaturedChannelsList()` with balanced multi-genre curation (Globo, SBT, Band, Record, SporTV, ESPN, Premiere, HBO, Cartoon Network, Discovery Kids, etc.) eliminating repetitive consecutive channels.
+- **Verification Numbers:**
+  - `python tools/check_js.py`: 0 missing imports.
+  - `python tools/bump_version.py`: 1 unified version (`20261016_1118`).
+  - `tools/channels_redesign_check.mjs` (Chrome): 10/10 PASS.
+  - `tools/channels_redesign_check.mjs` (Edge): 10/10 PASS.
+  - `tools/player_touch_check.mjs`: 17/17 PASS.
+  - `scratch/test_dpad_tv.mjs`: 100% PASS (TV Remote D-pad navigation intact).
 

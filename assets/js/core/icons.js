@@ -30,9 +30,9 @@ export const CHANNEL_LOGOS = {
     "band": "assets/logos/channels/Band.png",
     "sbt": "assets/logos/channels/sbt.png",
     "record": "assets/logos/channels/record.png",
-    "sportv 3": "assets/logos/channels/sportv3.png",
-    "sportv 2": "assets/logos/channels/sportv2.png",
-    "sportv": "assets/logos/channels/sportv.png",
+    "sportv 3": "assets/logos/channels/sportv3_dark.png",
+    "sportv 2": "assets/logos/channels/sportv2_dark.png",
+    "sportv": "assets/logos/channels/sportv_dark.png",
     "premiere": "assets/logos/channels/premiere.png",
     "prime": "assets/logos/channels/amazonprimevideo.png",
     "cazetv": "assets/logos/channels/cazetv.png",
@@ -62,7 +62,11 @@ export const CHANNEL_LOGOS = {
     "hbo2": "assets/logos/channels/hbo2.png",
     "hboplus": "assets/logos/channels/hboplus.png",
     "hbosignature": "assets/logos/channels/hbosignature.png",
-    "hbofamily": "assets/logos/channels/hbofamily.png"
+    "hbofamily": "assets/logos/channels/hbofamily.png",
+    "tvcultura": "assets/logos/channels/tvcultura.png",
+    "megapix": "assets/logos/channels/megapix.png",
+    "tnt": "assets/logos/channels/tnt.png",
+    "space": "assets/logos/channels/space.png"
 };
 
 export function getChannelLogoSrc(channelName) {
@@ -78,6 +82,10 @@ export function getChannelLogoSrc(channelName) {
     if (name.includes("globo")) return CHANNEL_LOGOS["globo"];
     if (name.includes("sbt")) return CHANNEL_LOGOS["sbt"];
     if (name.includes("record")) return CHANNEL_LOGOS["record"];
+    if (name.includes("cultura")) return CHANNEL_LOGOS["tvcultura"];
+    if (name.includes("megapix")) return CHANNEL_LOGOS["megapix"];
+    if (name.includes("tnt")) return CHANNEL_LOGOS["tnt"];
+    if (name.includes("space")) return CHANNEL_LOGOS["space"];
     if (name.includes("premiere")) return CHANNEL_LOGOS["premiere"];
     if (name.includes("prime") || name.includes("amazon")) return CHANNEL_LOGOS["prime"];
     if (name.includes("caze") || name.includes("cazé")) return CHANNEL_LOGOS["cazetv"];
@@ -125,4 +133,16 @@ export function createLogoBadgeHtml(channelName, size = 'sm') {
             <span>${(channelName || 'TV').slice(0, 3).toUpperCase()}</span>
         </div>
     `;
+}
+
+/**
+ * Creates clean, direct logo HTML for channel cards (no nested wrapper div)
+ */
+export function createChannelCardLogoHtml(channelName) {
+    const imgSrc = getChannelLogoSrc(channelName);
+    if (imgSrc) {
+        return `<img src="${imgSrc}" alt="${channelName}" class="channel-card-logo" loading="lazy">`;
+    }
+    const acronym = (channelName || 'TV').slice(0, 3).toUpperCase();
+    return `<span class="channel-card-logo-fallback">${acronym}</span>`;
 }

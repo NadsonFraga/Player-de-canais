@@ -4,11 +4,11 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261015_1519';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261015_1519';
-import { getUiSvg, createLogoBadgeHtml } from '../core/icons.js?v=20261015_1519';
-import { showToast } from '../core/toast.js?v=20261015_1519';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261015_1519';
+import { store } from '../core/state.js?v=20261016_1118';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261016_1118';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261016_1118';
+import { showToast } from '../core/toast.js?v=20261016_1118';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261016_1118';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -395,7 +395,7 @@ export function createChannel16x9Card(category, channelName, players) {
 
     const isFav = store.isFavorite(channelName, category);
     const optionsCount = getChannelOptionsCount(players);
-    const logoLargeHtml = createLogoBadgeHtml(channelName, 'lg');
+    const logoLargeHtml = createChannelCardLogoHtml(channelName);
     const channelKey = `${category}:${channelName}`;
 
     card.innerHTML = `

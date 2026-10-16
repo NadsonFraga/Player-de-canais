@@ -53,16 +53,11 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
 }
 
-.channel-card-16x9:hover .channel-logo-img-wrapper.logo-lg,
-.channel-card-16x9:focus-visible .channel-logo-img-wrapper.logo-lg,
-.quick-card:hover .channel-logo-img-wrapper.logo-lg,
-.quick-card:focus-visible .channel-logo-img-wrapper.logo-lg {
-    border-color: rgba(52, 211, 153, 0.4);
-    box-shadow: 0 0 16px rgba(52, 211, 153, 0.2), 0 4px 16px rgba(0, 0, 0, 0.5);
-}
-
-.quick-card:hover .channel-logo-img {
-    transform: scale(1.06);
+.channel-card-16x9:hover .channel-card-logo,
+.channel-card-16x9:focus-visible .channel-card-logo,
+.quick-card:hover .channel-card-logo,
+.quick-card:focus-visible .channel-card-logo {
+    transform: scale(1.08);
 }
 
 .channel-logo-fallback {
@@ -533,62 +528,65 @@ button.hero-badge:hover,
 /* Quick Grid & 16:9 Dark Glass Card */
 .quick-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
+    gap: 16px;
 }
 
 .channel-card-16x9,
 .quick-card {
-    aspect-ratio: 16 / 9;
-    background: linear-gradient(135deg, rgba(22, 22, 26, 0.92) 0%, rgba(14, 14, 17, 0.96) 100%);
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(145deg, rgba(28, 28, 34, 0.75) 0%, rgba(16, 16, 20, 0.90) 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    padding: 14px 16px;
+    border-radius: 16px;
+    padding: 12px 10px 10px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    align-items: center;
     position: relative;
     overflow: hidden;
     cursor: pointer;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.24s ease, box-shadow 0.24s ease;
+    box-sizing: border-box;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease, box-shadow 0.22s ease;
 }
 
 .channels-row-scroller .channel-card-16x9 {
-    flex: 0 0 240px;
+    flex: 0 0 126px;
+    height: 126px;
 }
 
 .channel-card-16x9:hover,
 .channel-card-16x9:focus-visible,
 .quick-card:hover,
 .quick-card:focus-visible {
-    transform: translateY(-4px) scale(1.02);
-    border-color: rgba(52, 211, 153, 0.55);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7), 0 0 20px rgba(52, 211, 153, 0.2);
+    transform: translateY(-4px) scale(1.03);
+    border-color: rgba(52, 211, 153, 0.45);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7), 0 0 18px rgba(52, 211, 153, 0.16);
     outline: none;
 }
 
 .channel-card-top {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    width: 100%;
-    z-index: 2;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 3;
 }
 
 .channel-card-top .btn-card-fav {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.10);
     border-radius: var(--radius-full);
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: var(--text-muted);
     transition: all var(--transition-fast);
+    padding: 0;
 }
 
 .channel-card-top .btn-card-fav:hover,
@@ -600,12 +598,33 @@ button.hero-badge:hover,
 
 .channel-card-16x9 .channel-card-logo-box,
 .quick-card .channel-card-logo-box {
+    flex: 1;
     width: 100%;
-    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
     z-index: 2;
+}
+
+.channel-card-16x9 .channel-card-logo-box::before,
+.quick-card .channel-card-logo-box::before {
+    content: '';
+    position: absolute;
+    width: 76px;
+    height: 48px;
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.channel-card-logo {
+    max-height: 48px;
+    max-width: 96px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35)) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.85));
+    transition: transform var(--transition-fast);
 }
 
 .channel-card-bottom {
@@ -617,15 +636,15 @@ button.hero-badge:hover,
 }
 
 .channel-card-bottom .channel-card-name {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
+    font-size: 0.80rem;
+    font-weight: 600;
+    color: #e4e4e7;
+    margin: 4px 0 0;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 95%;
+    max-width: 100%;
 }
 
 /* Category Rows */
