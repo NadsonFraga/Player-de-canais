@@ -4,11 +4,12 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261016_1118';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261016_1118';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261016_1118';
-import { showToast } from '../core/toast.js?v=20261016_1118';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261016_1118';
+import { store } from '../core/state.js?v=20261016_1344';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261016_1344';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261016_1344';
+import { showToast } from '../core/toast.js?v=20261016_1344';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261016_1344';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261016_1344';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -75,6 +76,7 @@ export function openChannelsDrawer() {
     const backdrop = document.getElementById("sidebar-backdrop");
     if (sidebar) sidebar.classList.add("open");
     if (backdrop) backdrop.classList.add("active");
+    document.documentElement.classList.add("sidebar-open");
     document.body.classList.add("sidebar-open");
 }
 
@@ -83,6 +85,7 @@ export function closeChannelsDrawer() {
     const backdrop = document.getElementById("sidebar-backdrop");
     if (sidebar) sidebar.classList.remove("open");
     if (backdrop) backdrop.classList.remove("active");
+    document.documentElement.classList.remove("sidebar-open");
     document.body.classList.remove("sidebar-open");
     document.body.style.overflow = "";
 }
@@ -172,6 +175,17 @@ export function buildCategoryPills() {
     const filterPillsEl = document.getElementById("filter-pills");
     if (!filterPillsEl) return;
     filterPillsEl.innerHTML = "";
+
+    // Allow smooth horizontal scrolling with mouse wheel on desktop
+    if (!filterPillsEl._hasWheelListener) {
+        filterPillsEl._hasWheelListener = true;
+        filterPillsEl.addEventListener("wheel", (e) => {
+            if (e.deltaY !== 0) {
+                e.preventDefault();
+                filterPillsEl.scrollLeft += e.deltaY;
+            }
+        }, { passive: false });
+    }
 
     const channelsData = store.channelsData;
 
@@ -493,6 +507,199 @@ export function renderCategoryRows() {
     container.appendChild(fragment);
 }
 
+let channelsHeroItems = [];
+let currentChannelsHeroIndex = 0;
+let channelsHeroTimer = null;
+
+const BASE_CHANNELS_HERO_SLIDES = [
+    {
+        name: "Globo",
+        category: "TV Aberta",
+        title: "Globo HD",
+        badge: "TV Aberta • Ao Vivo",
+        meta: "Transmissão Oficial • Cobertura Nacional",
+        overview: "A maior rede de televisão aberta do país com programação ao vivo, jornalismo de ponta, novelas e grandes coberturas em alta definição.",
+        glowColor: "rgba(59, 130, 246, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(59, 130, 246, 0.20) 0%, transparent 65%)"
+    },
+    {
+        name: "SporTV",
+        category: "Esportes",
+        title: "SporTV HD",
+        badge: "Esportes • Ao Vivo",
+        meta: "Transmissão Oficial • Canais Globo",
+        overview: "O canal campeão com cobertura completa do futebol brasileiro e internacional, ligas de elite e eventos esportivos com múltiplos servidores.",
+        glowColor: "rgba(52, 211, 153, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(52, 211, 153, 0.20) 0%, transparent 65%)"
+    },
+    {
+        name: "HBO",
+        category: "Filmes & Séries",
+        title: "HBO HD",
+        badge: "Cinema & Séries • Ao Vivo",
+        meta: "Transmissão Oficial • Cinema Premium",
+        overview: "Grandes estreias do cinema mundial, séries consagradas e produções aclamadas transmitidas com qualidade máxima e som cristalino.",
+        glowColor: "rgba(168, 85, 247, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(168, 85, 247, 0.20) 0%, transparent 65%)"
+    },
+    {
+        name: "Cartoon Network",
+        category: "Infantil",
+        title: "Cartoon Network HD",
+        badge: "Infantil • Ao Vivo",
+        meta: "Transmissão Oficial • Desenhos 24h",
+        overview: "O canal número 1 da garotada com os melhores desenhos animados, séries nostálgicas e os maiores sucessos da animação mundial.",
+        glowColor: "rgba(14, 165, 233, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(14, 165, 233, 0.20) 0%, transparent 65%)"
+    }
+];
+
+function buildChannelsHeroSlides() {
+    const channelsData = store.channelsData || {};
+    const slides = [];
+
+    // Helper to find channel players
+    function findChannel(name, cat) {
+        if (channelsData[cat]?.[name]) return { name, category: cat, players: channelsData[cat][name] };
+        for (const [c, chs] of Object.entries(channelsData)) {
+            for (const [n, players] of Object.entries(chs)) {
+                if (n.toLowerCase().includes(name.toLowerCase())) {
+                    return { name: n, category: c, players };
+                }
+            }
+        }
+        return null;
+    }
+
+    // Prioritize user's favorited channel if any
+    const favs = store.favorites || [];
+    if (favs.length > 0) {
+        const [firstFavKey] = favs;
+        const [favCat, favName] = firstFavKey.split(":");
+        const favCh = findChannel(favName, favCat);
+        if (favCh) {
+            slides.push({
+                name: favCh.name,
+                category: favCh.category,
+                title: `${favCh.name} HD`,
+                badge: `Favorito • ${favCh.category}`,
+                meta: `Seu Canal Favorito • Transmissão Direta`,
+                overview: `Acesso rápido ao seu canal favorito com transmissão contínua e múltiplos servidores disponíveis.`,
+                glowColor: "rgba(251, 191, 36, 0.25)",
+                gradient: "radial-gradient(circle at 80% 30%, rgba(251, 191, 36, 0.20) 0%, transparent 65%)",
+                players: favCh.players
+            });
+        }
+    }
+
+    // Populate curated multi-genre slides
+    for (const base of BASE_CHANNELS_HERO_SLIDES) {
+        const ch = findChannel(base.name, base.category);
+        if (ch) {
+            slides.push({
+                ...base,
+                players: ch.players
+            });
+        }
+    }
+
+    return slides.slice(0, 4);
+}
+
+function updateChannelsHeroDisplay(index) {
+    const slide = channelsHeroItems[index];
+    if (!slide) return;
+
+    const titleEl = document.getElementById("channels-hero-title");
+    const metaEl = document.getElementById("channels-hero-meta");
+    const overviewEl = document.getElementById("channels-hero-overview");
+    const badgeTextEl = document.getElementById("channels-hero-badge-text");
+    const logoEl = document.getElementById("channels-hero-logo");
+    const glowEl = document.getElementById("channels-hero-glow");
+    const gradientEl = document.getElementById("channels-hero-gradient");
+    const watchBtn = document.getElementById("btn-channels-hero-watch");
+    const drawerBtn = document.getElementById("btn-channels-hero-drawer");
+
+    if (titleEl) titleEl.textContent = slide.title;
+    if (metaEl) metaEl.textContent = slide.meta;
+    if (overviewEl) overviewEl.textContent = slide.overview;
+    if (badgeTextEl) badgeTextEl.textContent = slide.badge || "AO VIVO AGORA";
+
+    const logoSrc = getChannelLogoSrc(slide.name);
+    if (logoEl) {
+        if (logoSrc) {
+            logoEl.src = logoSrc;
+            logoEl.alt = slide.name;
+            logoEl.style.display = "block";
+        } else {
+            logoEl.style.display = "none";
+        }
+    }
+
+    if (glowEl && slide.glowColor) {
+        glowEl.style.background = `radial-gradient(circle, ${slide.glowColor} 0%, transparent 70%)`;
+    }
+    if (gradientEl && slide.gradient) {
+        gradientEl.style.background = slide.gradient;
+    }
+
+    if (watchBtn) {
+        watchBtn.onclick = () => {
+            selectChannel(slide.category, slide.name, slide.players);
+        };
+    }
+    if (drawerBtn) {
+        drawerBtn.onclick = () => {
+            openChannelsDrawer();
+        };
+    }
+
+    // Update dots
+    const navEl = document.getElementById("channels-hero-nav");
+    if (navEl) {
+        const dots = navEl.querySelectorAll(".channels-hero-dot");
+        dots.forEach((d, idx) => {
+            d.classList.toggle("active", idx === index);
+        });
+    }
+}
+
+function setupChannelsHeroNavDots() {
+    const navEl = document.getElementById("channels-hero-nav");
+    if (!navEl) return;
+    navEl.innerHTML = "";
+
+    channelsHeroItems.forEach((_, idx) => {
+        const dot = document.createElement("button");
+        dot.className = `channels-hero-dot ${idx === currentChannelsHeroIndex ? 'active' : ''}`;
+        dot.type = "button";
+        dot.setAttribute("aria-label", `Slide ${idx + 1}`);
+        dot.onclick = () => {
+            currentChannelsHeroIndex = idx;
+            updateChannelsHeroDisplay(currentChannelsHeroIndex);
+            startChannelsHeroTimer();
+        };
+        navEl.appendChild(dot);
+    });
+}
+
+export function startChannelsHeroTimer() {
+    stopChannelsHeroTimer();
+    channelsHeroTimer = setInterval(() => {
+        if (!isBackgroundMediaAllowed('tv')) return;
+        if (channelsHeroItems.length <= 1) return;
+        currentChannelsHeroIndex = (currentChannelsHeroIndex + 1) % channelsHeroItems.length;
+        updateChannelsHeroDisplay(currentChannelsHeroIndex);
+    }, 7000);
+}
+
+export function stopChannelsHeroTimer() {
+    if (channelsHeroTimer) {
+        clearInterval(channelsHeroTimer);
+        channelsHeroTimer = null;
+    }
+}
+
 /**
  * Renders live headline broadcast hero
  */
@@ -500,45 +707,21 @@ export function renderChannelsHero() {
     const heroEl = document.getElementById("channels-hero");
     if (!heroEl) return;
 
-    const channelsData = store.channelsData || {};
-    let featuredChannel = null;
+    channelsHeroItems = buildChannelsHeroSlides();
+    if (channelsHeroItems.length === 0) return;
 
-    if (channelsData["Esportes"]?.["SporTV"]) {
-        featuredChannel = { name: "SporTV", category: "Esportes", players: channelsData["Esportes"]["SporTV"] };
-    } else if (channelsData["TV Aberta"]?.["Globo"]) {
-        featuredChannel = { name: "Globo", category: "TV Aberta", players: channelsData["TV Aberta"]["Globo"] };
-    } else {
-        for (const [cat, chs] of Object.entries(channelsData)) {
-            const first = Object.keys(chs)[0];
-            if (first) {
-                featuredChannel = { name: first, category: cat, players: chs[first] };
-                break;
-            }
-        }
+    if (currentChannelsHeroIndex >= channelsHeroItems.length) {
+        currentChannelsHeroIndex = 0;
     }
 
-    if (!featuredChannel) return;
+    updateChannelsHeroDisplay(currentChannelsHeroIndex);
+    setupChannelsHeroNavDots();
+    startChannelsHeroTimer();
 
-    const titleEl = document.getElementById("channels-hero-title");
-    const metaEl = document.getElementById("channels-hero-meta");
-    const watchBtn = document.getElementById("btn-channels-hero-watch");
-    const drawerBtn = document.getElementById("btn-channels-hero-drawer");
-
-    if (titleEl) titleEl.textContent = `${featuredChannel.name} HD`;
-    if (metaEl) {
-        metaEl.textContent = `Transmissão Oficial • ${featuredChannel.category || 'Ao Vivo'}`;
-    }
-
-    if (watchBtn) {
-        watchBtn.onclick = () => {
-            selectChannel(featuredChannel.category, featuredChannel.name, featuredChannel.players);
-        };
-    }
-
-    if (drawerBtn) {
-        drawerBtn.onclick = () => {
-            openChannelsDrawer();
-        };
+    if (!heroEl._hasHoverListeners) {
+        heroEl._hasHoverListeners = true;
+        heroEl.addEventListener("mouseenter", () => stopChannelsHeroTimer());
+        heroEl.addEventListener("mouseleave", () => startChannelsHeroTimer());
     }
 }
 
@@ -694,18 +877,21 @@ export function renderHomeView() {
             <!-- Channels Cinematic Hero Showcase -->
             <section class="channels-hero" id="channels-hero">
                 <div class="channels-hero-bg">
-                    <div class="channels-hero-gradient"></div>
-                    <div class="channels-hero-glow"></div>
+                    <div class="channels-hero-gradient" id="channels-hero-gradient"></div>
+                    <div class="channels-hero-glow" id="channels-hero-glow"></div>
                 </div>
                 <div class="channels-hero-content">
                     <div class="channels-hero-badge">
                         <span class="live-dot pulse-emerald"></span>
-                        <span>AO VIVO AGORA</span>
+                        <span id="channels-hero-badge-text">AO VIVO AGORA</span>
                     </div>
-                    <h1 class="channels-hero-title" id="channels-hero-title">SporTV HD</h1>
-                    <p class="channels-hero-meta" id="channels-hero-meta">Transmissão Esportiva • 4 Servidores • Esportes</p>
+                    <div class="channels-hero-brand-box">
+                        <img id="channels-hero-logo" class="channels-hero-logo" src="" alt="" style="display:none;">
+                        <h1 class="channels-hero-title" id="channels-hero-title">Globo HD</h1>
+                    </div>
+                    <p class="channels-hero-meta" id="channels-hero-meta">Transmissão Oficial • TV Aberta</p>
                     <p class="channels-hero-overview" id="channels-hero-overview">
-                        Cobertura completa de futebol brasileiro e internacional, ligas de elite e eventos esportivos ao vivo com múltiplos servidores de alta estabilidade.
+                        A maior rede de televisão aberta do país com programação ao vivo, jornalismo de ponta e entretenimento.
                     </p>
                     <div class="channels-hero-actions">
                         <button class="btn-channels-hero-play" id="btn-channels-hero-watch" type="button">
@@ -723,6 +909,7 @@ export function renderHomeView() {
                         </button>
                     </div>
                 </div>
+                <div class="channels-hero-nav" id="channels-hero-nav"></div>
             </section>
 
             <!-- Channels Navigation Toolbar (Sticky Category Pills + Spotlight Search) -->

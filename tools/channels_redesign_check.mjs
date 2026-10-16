@@ -115,10 +115,10 @@ async function main() {
 
     // Resilient wait for app initialization and channel cards render
     await browser.evaluate(`(async () => {
-      for (let i = 0; i < 50; i++) {
+      const tabTv = document.getElementById('nav-tab-tv');
+      if (location.hash !== '#tv' && tabTv) tabTv.click();
+      for (let i = 0; i < 60; i++) {
         if (document.querySelectorAll('.channel-card-16x9').length > 0) return true;
-        const tabTv = document.getElementById('nav-tab-tv');
-        if (tabTv) tabTv.click();
         await new Promise(r => setTimeout(r, 200));
       }
       return false;
