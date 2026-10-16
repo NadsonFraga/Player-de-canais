@@ -17,11 +17,11 @@
     --primary-glow: rgba(255, 255, 255, 0.18);
     --primary-hover: #e4e4e7;
     --primary-light: #ffffff;
-    --accent-emerald: #ffffff;
-    --accent-emerald-hover: #e4e4e7;
-    --accent-emerald-subtle: rgba(255, 255, 255, 0.08);
-    --accent-emerald-glow: rgba(255, 255, 255, 0.18);
-    --accent-emerald-border: rgba(255, 255, 255, 0.22);
+    --accent-emerald: #115e45;
+    --accent-emerald-hover: #0d4a36;
+    --accent-emerald-subtle: rgba(17, 94, 69, 0.25);
+    --accent-emerald-glow: rgba(17, 94, 69, 0.35);
+    --accent-emerald-border: rgba(17, 94, 69, 0.6);
     --accent-cyan: #ffffff;
     --accent-red: #ef4444;
     --accent-red-subtle: rgba(239, 68, 68, 0.15);

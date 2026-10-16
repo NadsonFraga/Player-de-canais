@@ -4,12 +4,12 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261016_1344';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261016_1344';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261016_1344';
-import { showToast } from '../core/toast.js?v=20261016_1344';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261016_1344';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261016_1344';
+import { store } from '../core/state.js?v=20261016_1714';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261016_1714';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261016_1714';
+import { showToast } from '../core/toast.js?v=20261016_1714';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261016_1714';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261016_1714';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -519,8 +519,8 @@ const BASE_CHANNELS_HERO_SLIDES = [
         badge: "TV Aberta • Ao Vivo",
         meta: "Transmissão Oficial • Cobertura Nacional",
         overview: "A maior rede de televisão aberta do país com programação ao vivo, jornalismo de ponta, novelas e grandes coberturas em alta definição.",
-        glowColor: "rgba(59, 130, 246, 0.25)",
-        gradient: "radial-gradient(circle at 80% 30%, rgba(59, 130, 246, 0.20) 0%, transparent 65%)"
+        glowColor: "rgba(17, 94, 69, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)"
     },
     {
         name: "SporTV",
@@ -529,8 +529,8 @@ const BASE_CHANNELS_HERO_SLIDES = [
         badge: "Esportes • Ao Vivo",
         meta: "Transmissão Oficial • Canais Globo",
         overview: "O canal campeão com cobertura completa do futebol brasileiro e internacional, ligas de elite e eventos esportivos com múltiplos servidores.",
-        glowColor: "rgba(52, 211, 153, 0.25)",
-        gradient: "radial-gradient(circle at 80% 30%, rgba(52, 211, 153, 0.20) 0%, transparent 65%)"
+        glowColor: "rgba(17, 94, 69, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)"
     },
     {
         name: "HBO",
@@ -539,8 +539,8 @@ const BASE_CHANNELS_HERO_SLIDES = [
         badge: "Cinema & Séries • Ao Vivo",
         meta: "Transmissão Oficial • Cinema Premium",
         overview: "Grandes estreias do cinema mundial, séries consagradas e produções aclamadas transmitidas com qualidade máxima e som cristalino.",
-        glowColor: "rgba(168, 85, 247, 0.25)",
-        gradient: "radial-gradient(circle at 80% 30%, rgba(168, 85, 247, 0.20) 0%, transparent 65%)"
+        glowColor: "rgba(17, 94, 69, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)"
     },
     {
         name: "Cartoon Network",
@@ -549,8 +549,8 @@ const BASE_CHANNELS_HERO_SLIDES = [
         badge: "Infantil • Ao Vivo",
         meta: "Transmissão Oficial • Desenhos 24h",
         overview: "O canal número 1 da garotada com os melhores desenhos animados, séries nostálgicas e os maiores sucessos da animação mundial.",
-        glowColor: "rgba(14, 165, 233, 0.25)",
-        gradient: "radial-gradient(circle at 80% 30%, rgba(14, 165, 233, 0.20) 0%, transparent 65%)"
+        glowColor: "rgba(17, 94, 69, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)"
     }
 ];
 
@@ -585,8 +585,8 @@ function buildChannelsHeroSlides() {
                 badge: `Favorito • ${favCh.category}`,
                 meta: `Seu Canal Favorito • Transmissão Direta`,
                 overview: `Acesso rápido ao seu canal favorito com transmissão contínua e múltiplos servidores disponíveis.`,
-                glowColor: "rgba(251, 191, 36, 0.25)",
-                gradient: "radial-gradient(circle at 80% 30%, rgba(251, 191, 36, 0.20) 0%, transparent 65%)",
+                glowColor: "rgba(17, 94, 69, 0.25)",
+                gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)",
                 players: favCh.players
             });
         }
@@ -1215,33 +1215,12 @@ export function renderPlayerView(activeChannel) {
                     </div>
                 </div>
                 <div class="player-toolbar">
-                    <button id="btn-open-drawer-player" class="btn-player-action highlight-action" title="Trocar Canal (Guia Rápido)" type="button">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="9" y1="3" x2="9" y2="21"></line>
-                        </svg>
-                        Trocar Canal
-                    </button>
                     <button id="btn-reload-player" class="btn-player-action" title="Recarregar Transmissão" type="button">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="23 4 23 10 17 10"></polyline>
                             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                         </svg>
                         Recarregar
-                    </button>
-                    <button id="btn-fullscreen-player" class="btn-player-action" title="Tela Cheia" type="button">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                        </svg>
-                        Tela Cheia
-                    </button>
-                    <button id="btn-open-external" class="btn-player-action" title="Abrir em Nova Aba" type="button">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                            <polyline points="15 3 21 3 21 9"></polyline>
-                            <line x1="10" y1="14" x2="21" y2="3"></line>
-                        </svg>
-                        Nova Aba
                     </button>
                 </div>
             </div>
@@ -1360,18 +1339,10 @@ export function renderPlayerView(activeChannel) {
 
     // Toolbar Actions
     const btnReload = document.getElementById("btn-reload-player");
-    const btnFullscreen = document.getElementById("btn-fullscreen-player");
-    const btnExternal = document.getElementById("btn-open-external");
     const btnBackToChannels = document.getElementById("btn-back-to-channels");
-    const btnOpenDrawer = document.getElementById("btn-open-drawer-player");
-    const videoTheater = document.getElementById("video-theater");
 
     if (btnBackToChannels) {
         btnBackToChannels.addEventListener("click", () => renderHomeView());
-    }
-
-    if (btnOpenDrawer) {
-        btnOpenDrawer.addEventListener("click", () => openChannelsDrawer());
     }
 
     if (btnReload) {
@@ -1383,40 +1354,6 @@ export function renderPlayerView(activeChannel) {
                 });
             } else {
                 mountTvContingencyIframe(activeChannel.contingencyUrl);
-            }
-        });
-    }
-
-    if (btnFullscreen && videoTheater) {
-        btnFullscreen.addEventListener("click", () => {
-            if (activeChannel.serverType === 'direct' && window.tvArtInstance && window.tvArtInstance.fullscreen) {
-                window.tvArtInstance.fullscreen.toggle();
-            } else {
-                if (!document.fullscreenElement) {
-                    if (videoTheater.requestFullscreen) videoTheater.requestFullscreen();
-                    else if (videoTheater.webkitRequestFullscreen) videoTheater.webkitRequestFullscreen();
-                } else {
-                    if (document.exitFullscreen) document.exitFullscreen();
-                }
-            }
-        });
-    }
-
-    if (btnExternal) {
-        btnExternal.addEventListener("click", () => {
-            let urlToOpen = "";
-            if (activeChannel.serverType === 'direct') {
-                const src = activeChannel.data.sources[activeChannel.sourceIndex];
-                urlToOpen = src ? src.url : "";
-            } else {
-                urlToOpen = activeChannel.contingencyUrl || "";
-            }
-            if (urlToOpen) {
-                if (window.tvzinhaSafeOpen) {
-                    window.tvzinhaSafeOpen(urlToOpen, "_blank", "noopener,noreferrer");
-                } else {
-                    window.open(urlToOpen, "_blank", "noopener,noreferrer");
-                }
             }
         });
     }
