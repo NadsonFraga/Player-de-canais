@@ -148,63 +148,82 @@
     border-radius: 4px;
 }
 
-/* 5. 16:9 Dark Glass Channel Cards */
+/* 5. 1:1 Square Dark Glass Channel Cards */
 .home-channel-card {
-    flex: 0 0 240px;
-    aspect-ratio: 16 / 9;
-    background: linear-gradient(135deg, rgba(22, 22, 26, 0.9) 0%, rgba(14, 14, 17, 0.95) 100%);
+    flex: 0 0 126px;
+    height: 126px;
+    background: linear-gradient(145deg, rgba(28, 28, 34, 0.75) 0%, rgba(16, 16, 20, 0.90) 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    padding: 16px;
+    border-radius: 16px;
+    padding: 12px 10px 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
+    justify-content: space-between;
     position: relative;
     overflow: hidden;
     cursor: pointer;
     backdrop-filter: blur(12px);
-    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .home-channel-card:hover,
 .home-channel-card:focus-visible {
-    transform: translateY(-4px) scale(1.02);
+    transform: translateY(-4px) scale(1.03);
     border-color: rgba(52, 211, 153, 0.45);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7), 0 0 20px rgba(52, 211, 153, 0.15);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7), 0 0 18px rgba(52, 211, 153, 0.16);
     outline: none;
 }
 
 .channel-card-glow {
     position: absolute;
-    top: -40%;
-    right: -30%;
-    width: 140px;
-    height: 140px;
+    top: -50%;
+    right: -50%;
+    width: 120px;
+    height: 120px;
     background: radial-gradient(circle, rgba(52, 211, 153, 0.12) 0%, transparent 70%);
     pointer-events: none;
 }
 
 .channel-card-logo-box {
+    flex: 1;
     width: 100%;
-    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
     z-index: 2;
 }
 
-.channel-card-logo-box img {
+.channel-card-logo-box::before {
+    content: '';
+    position: absolute;
+    width: 76px;
+    height: 48px;
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.channel-card-logo {
     max-height: 48px;
-    max-width: 130px;
+    max-width: 96px;
+    width: auto;
+    height: auto;
     object-fit: contain;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35)) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.85));
     transition: transform var(--transition-fast);
 }
 
-.home-channel-card:hover .channel-card-logo-box img,
-.home-channel-card:focus-visible .channel-card-logo-box img {
+.channel-card-logo-fallback {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.home-channel-card:hover .channel-card-logo,
+.home-channel-card:focus-visible .channel-card-logo {
     transform: scale(1.08);
 }
 
@@ -217,26 +236,15 @@
 }
 
 .channel-card-name {
-    font-size: 0.90rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
+    font-size: 0.80rem;
+    font-weight: 600;
+    color: #e4e4e7;
+    margin: 4px 0 0;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 90%;
-}
-
-.channel-card-name {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 150px;
+    max-width: 100%;
 }
 
 .channel-card-category {
@@ -729,7 +737,9 @@
 
 
     .home-channel-card {
-        flex: 0 0 180px;
+        flex: 0 0 114px;
+        height: 114px;
+        padding: 10px 8px 8px;
     }
 
     .movies-explore-view {

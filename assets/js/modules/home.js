@@ -4,20 +4,20 @@
  * and quick-navigation portals for Movies, Series, Animes, and Live Channels.
  */
 
-import { store } from '../core/state.js?v=20261015_1519';
+import { store } from '../core/state.js?v=20261016_1118';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
     TMDB_CACHE_KEY,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY
-} from '../core/constants.js?v=20261015_1519';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261015_1519';
-import { switchAppView } from '../navigation/router.js?v=20261015_1519';
-import { openMovieDetailsModal, fetchTmdbEndpoint } from './movies.js?v=20261015_1519';
-import { openSeriesModal, fetchSeriesEndpoint } from './series.js?v=20261015_1519';
-import { selectChannelByName } from './channels.js?v=20261015_1519';
-import { getChannelLogoSrc, createLogoBadgeHtml } from '../core/icons.js?v=20261015_1519';
+} from '../core/constants.js?v=20261016_1118';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261016_1118';
+import { switchAppView } from '../navigation/router.js?v=20261016_1118';
+import { openMovieDetailsModal, fetchTmdbEndpoint } from './movies.js?v=20261016_1118';
+import { openSeriesModal, fetchSeriesEndpoint } from './series.js?v=20261016_1118';
+import { selectChannelByName } from './channels.js?v=20261016_1118';
+import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261016_1118';
 
 const TMDB_GENRES = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -59,6 +59,56 @@ function getFlatChannelsList() {
         });
     });
     return flat;
+}
+
+/**
+ * Returns a curated, diversified list of ~16 featured channels across all categories
+ * (Open TV, Sports, Movies, Kids, Documentaries, News, 24h) avoiding repetitive siblings.
+ */
+function getFeaturedChannelsList() {
+    const flat = getFlatChannelsList();
+    if (flat.length === 0) return [];
+
+    const CURATED_TARGETS = [
+        "globo", "sbt", "band", "record", "cultura",
+        "sportv", "espn", "caze", "premiere",
+        "hbo", "megapix", "tnt", "space",
+        "cartoon", "discovery kids", "nick",
+        "discovery", "globonews", "multishow", "chaves"
+    ];
+
+    const selected = [];
+    const usedNames = new Set();
+
+    // 1. Pick primary matching channel for each curated target
+    for (const target of CURATED_TARGETS) {
+        const match = flat.find(ch => {
+            const n = ch.name.toLowerCase();
+            // Avoid secondary sibling channels (e.g. SporTV 2, Premiere 2) unless primary
+            if (target === 'sportv' && (n.includes('sportv 2') || n.includes('sportv 3') || n.includes('sportv2') || n.includes('sportv3') || n.includes('sportv4'))) return false;
+            if (target === 'premiere' && (n.includes('premiere 2') || n.includes('premiere 3') || n.includes('premiere 4') || n.includes('premiere 5') || n.includes('premiere club'))) return false;
+            if (target === 'espn' && (n.includes('espn 2') || n.includes('espn 3') || n.includes('espn 4') || n.includes('espn 5') || n.includes('extra'))) return false;
+            if (target === 'hbo' && (n.includes('hbo 2') || n.includes('hbo plus') || n.includes('family') || n.includes('signature') || n.includes('pop') || n.includes('mundi') || n.includes('xtreme'))) return false;
+            return n.includes(target) && !usedNames.has(ch.name);
+        });
+        if (match) {
+            selected.push(match);
+            usedNames.add(match.name);
+        }
+    }
+
+    // 2. If fewer than 14 channels matched, fill with other unique channels from diverse categories
+    if (selected.length < 14) {
+        for (const ch of flat) {
+            if (!usedNames.has(ch.name)) {
+                selected.push(ch);
+                usedNames.add(ch.name);
+                if (selected.length >= 16) break;
+            }
+        }
+    }
+
+    return selected;
 }
 
 // Curated high-fidelity fallback highlights (used while TMDB caches load in background)
@@ -478,7 +528,7 @@ function renderHomeChannelsTrack() {
     const track = document.getElementById("home-track-channels");
     if (!track) return;
 
-    const channels = getFlatChannelsList().slice(0, 10);
+    const channels = getFeaturedChannelsList();
     if (channels.length === 0) {
         track.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; padding: 12px;">Carregando canais ao vivo...</p>`;
         return;
@@ -494,7 +544,7 @@ function renderHomeChannelsTrack() {
         card.setAttribute("role", "button");
         card.setAttribute("aria-label", `Canal ${ch.name}`);
 
-        const logoHtml = createLogoBadgeHtml(ch.name, 'lg');
+        const logoHtml = createChannelCardLogoHtml(ch.name);
 
         card.innerHTML = `
             <div class="channel-card-glow"></div>
