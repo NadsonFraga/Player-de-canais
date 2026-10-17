@@ -3,7 +3,7 @@
  * Purely DOM-based spatial navigation with Euclidean 2D distance calculation
  */
 
-import { store } from '../core/state.js?v=20261016_1714';
+import { store } from '../core/state.js?v=20261016_2358';
 
 export function setupTvRemoteNavigation() {
     function getFocusableElements() {
@@ -20,6 +20,8 @@ export function setupTvRemoteNavigation() {
             '.continue-watching-card',
             '#btn-channels-hero-watch',
             '#btn-channels-hero-drawer',
+            '#btn-channels-hero-prev',
+            '#btn-channels-hero-next',
             '.channel-cat-pill',
             '#channels-spotlight-input',
             '#btn-toolbar-open-drawer',

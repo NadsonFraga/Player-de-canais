@@ -3,11 +3,11 @@
  * Fetches and renders match schedule feeds with team crest resolution and custom team picker
  */
 
-import { store } from '../core/state.js?v=20261016_1714';
-import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261016_1714';
-import { getUiSvg } from '../core/icons.js?v=20261016_1714';
-import { showToast } from '../core/toast.js?v=20261016_1714';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261016_1714';
+import { store } from '../core/state.js?v=20261016_2358';
+import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261016_2358';
+import { getUiSvg } from '../core/icons.js?v=20261016_2358';
+import { showToast } from '../core/toast.js?v=20261016_2358';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261016_2358';
 
 let matchesRefreshTimer = null;
 let isTeamModalInitialized = false;
@@ -248,10 +248,6 @@ export async function openTeamSelectModal() {
     if (wasHidden) {
         pushNavLayer('modal-team');
     }
-
-    setTimeout(() => {
-        if (searchInput) searchInput.focus();
-    }, 120);
 }
 
 export function closeTeamSelectModal() {

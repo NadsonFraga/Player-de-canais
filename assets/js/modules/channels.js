@@ -4,12 +4,12 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261016_1714';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261016_1714';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261016_1714';
-import { showToast } from '../core/toast.js?v=20261016_1714';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261016_1714';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261016_1714';
+import { store } from '../core/state.js?v=20261016_2358';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261016_2358';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261016_2358';
+import { showToast } from '../core/toast.js?v=20261016_2358';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261016_2358';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261016_2358';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -655,9 +655,9 @@ function updateChannelsHeroDisplay(index) {
     }
 
     // Update dots
-    const navEl = document.getElementById("channels-hero-nav");
-    if (navEl) {
-        const dots = navEl.querySelectorAll(".channels-hero-dot");
+    const dotsContainer = document.getElementById("channels-hero-dots") || document.getElementById("channels-hero-nav");
+    if (dotsContainer) {
+        const dots = dotsContainer.querySelectorAll(".hero-dot, .channels-hero-dot");
         dots.forEach((d, idx) => {
             d.classList.toggle("active", idx === index);
         });
@@ -665,22 +665,45 @@ function updateChannelsHeroDisplay(index) {
 }
 
 function setupChannelsHeroNavDots() {
-    const navEl = document.getElementById("channels-hero-nav");
-    if (!navEl) return;
-    navEl.innerHTML = "";
+    const dotsContainer = document.getElementById("channels-hero-dots") || document.getElementById("channels-hero-nav");
+    const btnPrev = document.getElementById("btn-channels-hero-prev");
+    const btnNext = document.getElementById("btn-channels-hero-next");
 
-    channelsHeroItems.forEach((_, idx) => {
-        const dot = document.createElement("button");
-        dot.className = `channels-hero-dot ${idx === currentChannelsHeroIndex ? 'active' : ''}`;
-        dot.type = "button";
-        dot.setAttribute("aria-label", `Slide ${idx + 1}`);
-        dot.onclick = () => {
-            currentChannelsHeroIndex = idx;
+    if (dotsContainer) {
+        dotsContainer.innerHTML = "";
+        channelsHeroItems.forEach((_, idx) => {
+            const dot = document.createElement("button");
+            dot.className = `hero-dot ${idx === currentChannelsHeroIndex ? 'active' : ''}`;
+            dot.type = "button";
+            dot.setAttribute("aria-label", `Slide ${idx + 1}`);
+            dot.onclick = () => {
+                currentChannelsHeroIndex = idx;
+                updateChannelsHeroDisplay(currentChannelsHeroIndex);
+                startChannelsHeroTimer();
+            };
+            dotsContainer.appendChild(dot);
+        });
+    }
+
+    if (btnPrev && !btnPrev._hasChannelsClick) {
+        btnPrev._hasChannelsClick = true;
+        btnPrev.onclick = () => {
+            if (channelsHeroItems.length <= 1) return;
+            currentChannelsHeroIndex = (currentChannelsHeroIndex - 1 + channelsHeroItems.length) % channelsHeroItems.length;
             updateChannelsHeroDisplay(currentChannelsHeroIndex);
             startChannelsHeroTimer();
         };
-        navEl.appendChild(dot);
-    });
+    }
+
+    if (btnNext && !btnNext._hasChannelsClick) {
+        btnNext._hasChannelsClick = true;
+        btnNext.onclick = () => {
+            if (channelsHeroItems.length <= 1) return;
+            currentChannelsHeroIndex = (currentChannelsHeroIndex + 1) % channelsHeroItems.length;
+            updateChannelsHeroDisplay(currentChannelsHeroIndex);
+            startChannelsHeroTimer();
+        };
+    }
 }
 
 export function startChannelsHeroTimer() {
@@ -909,42 +932,45 @@ export function renderHomeView() {
                         </button>
                     </div>
                 </div>
-                <div class="channels-hero-nav" id="channels-hero-nav"></div>
+                <div class="movies-hero-nav channels-hero-nav" id="channels-hero-nav">
+                    <button id="btn-channels-hero-prev" class="btn-hero-nav-arrow" aria-label="Canal anterior" title="Canal anterior" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <div id="channels-hero-dots" class="hero-dots-container movies-hero-dots"></div>
+                    <button id="btn-channels-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo canal" title="Próximo canal" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
             </section>
 
-            <!-- Channels Navigation Toolbar (Sticky Category Pills + Spotlight Search) -->
-            <div class="channels-nav-toolbar" id="channels-nav-toolbar">
-                <div class="channels-pills-bar" id="channels-pills-bar">
-                    <button class="channel-cat-pill active" data-category="all" type="button">Todos</button>
-                    <button class="channel-cat-pill" data-category="favs" type="button">
+            <!-- Channels Navigation Toolbar (Category Pills + Spotlight Search) -->
+            <div class="movies-nav-toolbar channels-nav-toolbar" id="channels-nav-toolbar">
+                <nav class="movies-category-pills channels-pills-bar" id="channels-pills-bar" aria-label="Navegar por Canais">
+                    <button class="movie-pill channel-cat-pill active" data-category="all" type="button">Todos</button>
+                    <button class="movie-pill channel-cat-pill" data-category="favs" type="button">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
                         <span>Favoritos</span>
                     </button>
-                    <button class="channel-cat-pill" data-category="Esportes" type="button">Esportes</button>
-                    <button class="channel-cat-pill" data-category="TV Aberta" type="button">TV Aberta</button>
-                    <button class="channel-cat-pill" data-category="Filmes e Séries" type="button">Filmes & Séries</button>
-                    <button class="channel-cat-pill" data-category="Infantil" type="button">Infantil</button>
-                    <button class="channel-cat-pill" data-category="Notícias" type="button">Notícias</button>
-                    <button class="channel-cat-pill" data-category="Variedades" type="button">Variedades</button>
-                </div>
-                <div class="channels-toolbar-actions">
-                    <div class="channels-spotlight-search">
-                        <svg class="spotlight-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input type="text" id="channels-spotlight-input" placeholder="Buscar canal..." autocomplete="off">
-                        <button id="btn-clear-channels-search" class="spotlight-clear hidden" aria-label="Limpar">&times;</button>
-                    </div>
-                    <button id="btn-toolbar-open-drawer" class="btn-toolbar-drawer" title="Abrir Guia Rápido de Canais" type="button">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="9" y1="3" x2="9" y2="21"></line>
-                        </svg>
-                        <span>Guia Rápido</span>
-                    </button>
+                    <button class="movie-pill channel-cat-pill" data-category="Esportes" type="button">Esportes</button>
+                    <button class="movie-pill channel-cat-pill" data-category="TV Aberta" type="button">TV Aberta</button>
+                    <button class="movie-pill channel-cat-pill" data-category="Filmes e Séries" type="button">Filmes & Séries</button>
+                    <button class="movie-pill channel-cat-pill" data-category="Infantil" type="button">Infantil</button>
+                    <button class="movie-pill channel-cat-pill" data-category="Notícias" type="button">Notícias</button>
+                    <button class="movie-pill channel-cat-pill" data-category="Variedades" type="button">Variedades</button>
+                </nav>
+                <div class="spotlight-search-container pills-search-box channels-search-box" id="channels-search-container" title="Clique para buscar canal">
+                    <svg class="spotlight-icon pills-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="channels-spotlight-input" class="spotlight-input pills-search-input" placeholder="Buscar canal..." autocomplete="off">
+                    <button id="btn-clear-channels-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
                 </div>
             </div>
 

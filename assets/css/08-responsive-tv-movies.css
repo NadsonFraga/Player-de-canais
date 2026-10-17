@@ -4,18 +4,7 @@
 @media (max-width: 768px) {
     /* Mobile Header & Pinned Capsule Navigation */
     .mobile-header {
-        display: flex;
-        height: 54px;
-        padding: 8px 14px;
-        background: rgba(12, 12, 15, 0.95);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: none !important;
     }
 
     /* Strictly isolate mobile header and sidebar to channels view only */
@@ -246,7 +235,10 @@
         display: none !important; /* Hide subtitle badge on mobile */
     }
 
-    .btn-carousel-arrow {
+    .btn-carousel-arrow,
+    .matches-carousel-footer,
+    .matches-nav-arrows,
+    .btn-matches-arrow {
         display: none !important; /* Hide desktop arrow buttons on touch mobile */
     }
 
