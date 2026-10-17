@@ -4,11 +4,12 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261014_1156';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261014_1156';
-import { getUiSvg, createLogoBadgeHtml } from '../core/icons.js?v=20261014_1156';
-import { showToast } from '../core/toast.js?v=20261014_1156';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261014_1156';
+import { store } from '../core/state.js?v=20261017_0211';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261017_0211';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261017_0211';
+import { showToast } from '../core/toast.js?v=20261017_0211';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261017_0211';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261017_0211';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -68,15 +69,44 @@ export function normalizeChannelData(raw) {
 }
 
 /**
- * Safely closes the mobile sidebar drawer
+ * Quick Slide-out Channels Drawer Controls
  */
-function closeMobileDrawer() {
+export function openChannelsDrawer() {
+    const sidebar = document.getElementById("sidebar");
+    const backdrop = document.getElementById("sidebar-backdrop");
+    if (sidebar) sidebar.classList.add("open");
+    if (backdrop) backdrop.classList.add("active");
+    document.documentElement.classList.add("sidebar-open");
+    document.body.classList.add("sidebar-open");
+}
+
+export function closeChannelsDrawer() {
     const sidebar = document.getElementById("sidebar");
     const backdrop = document.getElementById("sidebar-backdrop");
     if (sidebar) sidebar.classList.remove("open");
     if (backdrop) backdrop.classList.remove("active");
+    document.documentElement.classList.remove("sidebar-open");
     document.body.classList.remove("sidebar-open");
     document.body.style.overflow = "";
+}
+
+export const closeMobileDrawer = closeChannelsDrawer;
+export const openMobileDrawer = openChannelsDrawer;
+
+function setupDrawerHandlers() {
+    const toggleMenuBtn = document.getElementById("btn-toggle-menu");
+    const mobileDrawerBtn = document.getElementById("btn-mobile-drawer-toggle");
+    const closeMenuBtn = document.getElementById("btn-close-menu");
+    const backdropEl = document.getElementById("sidebar-backdrop");
+
+    if (toggleMenuBtn) toggleMenuBtn.onclick = () => openChannelsDrawer();
+    if (mobileDrawerBtn) mobileDrawerBtn.onclick = () => openChannelsDrawer();
+    if (closeMenuBtn) closeMenuBtn.onclick = () => closeChannelsDrawer();
+    if (backdropEl) backdropEl.onclick = () => closeChannelsDrawer();
+
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeChannelsDrawer();
+    });
 }
 
 /**
@@ -101,10 +131,13 @@ export async function initChannelsCatalog() {
 
     store.setChannelsData(loadedData);
     buildCategoryPills();
-    renderSidebar();
+    setupChannelsToolbar();
+    setupDrawerHandlers();
+    renderChannelsHero();
+    renderCategoryRows();
     renderChannelGridCards();
+    renderSidebar();
     setupSearchHandlers();
-    setupSidebarResizer();
 
     // Setup home button triggers to return to TV Welcome Screen
     const brandHomeBtn = document.getElementById("brand-home");
@@ -123,6 +156,7 @@ export async function initChannelsCatalog() {
         const activeChan = store.activeChannel;
         if (!activeChan) {
             renderChannelGridCards();
+            renderCategoryRows();
         } else {
             const favBtn = document.getElementById("btn-fav-current");
             if (favBtn) {
@@ -141,6 +175,17 @@ export function buildCategoryPills() {
     const filterPillsEl = document.getElementById("filter-pills");
     if (!filterPillsEl) return;
     filterPillsEl.innerHTML = "";
+
+    // Allow smooth horizontal scrolling with mouse wheel on desktop
+    if (!filterPillsEl._hasWheelListener) {
+        filterPillsEl._hasWheelListener = true;
+        filterPillsEl.addEventListener("wheel", (e) => {
+            if (e.deltaY !== 0) {
+                e.preventDefault();
+                filterPillsEl.scrollLeft += e.deltaY;
+            }
+        }, { passive: false });
+    }
 
     const channelsData = store.channelsData;
 
@@ -352,7 +397,424 @@ export function renderSidebar() {
 export const renderChannels = renderSidebar;
 
 /**
- * Renders Channel Visual Grid Cards on the Welcome/Home Screen (#quick-grid)
+/**
+ * Creates a modern 16:9 Dark Glass channel card
+ */
+export function createChannel16x9Card(category, channelName, players) {
+    const card = document.createElement("div");
+    card.className = "channel-card-16x9";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `Assistir canal ${channelName}`);
+
+    const isFav = store.isFavorite(channelName, category);
+    const optionsCount = getChannelOptionsCount(players);
+    const logoLargeHtml = createChannelCardLogoHtml(channelName);
+    const channelKey = `${category}:${channelName}`;
+
+    card.innerHTML = `
+        <div class="channel-card-glow"></div>
+        <div class="channel-card-top">
+            <button class="btn-card-fav ${isFav ? 'favorited' : ''}" type="button" aria-label="${isFav ? 'Desfavoritar' : 'Favoritar'}">
+                ${isFav ? getUiSvg('starFilled', 14) : getUiSvg('star', 14)}
+            </button>
+        </div>
+        <div class="channel-card-logo-box">
+            ${logoLargeHtml}
+        </div>
+        <div class="channel-card-bottom">
+            <h4 class="channel-card-name" title="${channelName}">${channelName}</h4>
+        </div>
+    `;
+
+    const favBtn = card.querySelector(".btn-card-fav");
+    if (favBtn) {
+        favBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const isNowFav = store.toggleFavorite(channelKey);
+            favBtn.className = `btn-card-fav ${isNowFav ? 'favorited' : ''}`;
+            favBtn.innerHTML = isNowFav ? getUiSvg('starFilled', 14) : getUiSvg('star', 14);
+            if (store.activeFilter === "favs") {
+                renderChannelGridCards();
+            }
+            renderSidebar();
+        });
+    }
+
+    card.addEventListener("click", () => {
+        selectChannel(category, channelName, players);
+    });
+
+    card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            selectChannel(category, channelName, players);
+        }
+    });
+
+    return card;
+}
+
+/**
+ * Renders categorized horizontal tracks in the Discovery Feed
+ */
+export function renderCategoryRows() {
+    const container = document.getElementById("channels-category-rows");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const channelsData = store.channelsData || {};
+    const fragment = document.createDocumentFragment();
+
+    Object.entries(channelsData).forEach(([category, channels]) => {
+        const channelList = Object.entries(channels || {});
+        if (channelList.length === 0) return;
+
+        const row = document.createElement("section");
+        row.className = "channels-category-row";
+
+        const iconSvg = getCategoryIcon(category);
+
+        row.innerHTML = `
+            <div class="channels-row-header">
+                <div class="channels-row-title-box">
+                    <span class="channels-row-badge">${iconSvg}</span>
+                    <h3>${category}</h3>
+                    <span class="channels-row-count">${channelList.length} canais</span>
+                </div>
+                <button class="btn-channels-row-see-all" data-category="${category}" type="button">Ver Todos &rarr;</button>
+            </div>
+            <div class="channels-row-scroller" data-category="${category}"></div>
+        `;
+
+        const scroller = row.querySelector(".channels-row-scroller");
+        channelList.forEach(([channelName, players]) => {
+            const card = createChannel16x9Card(category, channelName, players);
+            scroller.appendChild(card);
+        });
+
+        const seeAllBtn = row.querySelector(".btn-channels-row-see-all");
+        if (seeAllBtn) {
+            seeAllBtn.addEventListener("click", () => {
+                setCategoryFilter(category);
+                syncToolbarPills(category);
+            });
+        }
+
+        fragment.appendChild(row);
+    });
+
+    container.appendChild(fragment);
+}
+
+let channelsHeroItems = [];
+let currentChannelsHeroIndex = 0;
+let channelsHeroTimer = null;
+
+const BASE_CHANNELS_HERO_SLIDES = [
+    {
+        name: "Globo",
+        category: "TV Aberta",
+        title: "Globo HD",
+        badge: "TV Aberta • Ao Vivo",
+        meta: "Transmissão Oficial • Cobertura Nacional",
+        overview: "A maior rede de televisão aberta do país com programação ao vivo, jornalismo de ponta, novelas e grandes coberturas em alta definição.",
+        glowColor: "rgba(17, 94, 69, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)"
+    },
+    {
+        name: "SporTV",
+        category: "Esportes",
+        title: "SporTV HD",
+        badge: "Esportes • Ao Vivo",
+        meta: "Transmissão Oficial • Canais Globo",
+        overview: "O canal campeão com cobertura completa do futebol brasileiro e internacional, ligas de elite e eventos esportivos com múltiplos servidores.",
+        glowColor: "rgba(17, 94, 69, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)"
+    },
+    {
+        name: "HBO",
+        category: "Filmes & Séries",
+        title: "HBO HD",
+        badge: "Cinema & Séries • Ao Vivo",
+        meta: "Transmissão Oficial • Cinema Premium",
+        overview: "Grandes estreias do cinema mundial, séries consagradas e produções aclamadas transmitidas com qualidade máxima e som cristalino.",
+        glowColor: "rgba(17, 94, 69, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)"
+    },
+    {
+        name: "Cartoon Network",
+        category: "Infantil",
+        title: "Cartoon Network HD",
+        badge: "Infantil • Ao Vivo",
+        meta: "Transmissão Oficial • Desenhos 24h",
+        overview: "O canal número 1 da garotada com os melhores desenhos animados, séries nostálgicas e os maiores sucessos da animação mundial.",
+        glowColor: "rgba(17, 94, 69, 0.25)",
+        gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)"
+    }
+];
+
+function buildChannelsHeroSlides() {
+    const channelsData = store.channelsData || {};
+    const slides = [];
+
+    // Helper to find channel players
+    function findChannel(name, cat) {
+        if (channelsData[cat]?.[name]) return { name, category: cat, players: channelsData[cat][name] };
+        for (const [c, chs] of Object.entries(channelsData)) {
+            for (const [n, players] of Object.entries(chs)) {
+                if (n.toLowerCase().includes(name.toLowerCase())) {
+                    return { name: n, category: c, players };
+                }
+            }
+        }
+        return null;
+    }
+
+    // Prioritize user's favorited channel if any
+    const favs = store.favorites || [];
+    if (favs.length > 0) {
+        const [firstFavKey] = favs;
+        const [favCat, favName] = firstFavKey.split(":");
+        const favCh = findChannel(favName, favCat);
+        if (favCh) {
+            slides.push({
+                name: favCh.name,
+                category: favCh.category,
+                title: `${favCh.name} HD`,
+                badge: `Favorito • ${favCh.category}`,
+                meta: `Seu Canal Favorito • Transmissão Direta`,
+                overview: `Acesso rápido ao seu canal favorito com transmissão contínua e múltiplos servidores disponíveis.`,
+                glowColor: "rgba(17, 94, 69, 0.25)",
+                gradient: "radial-gradient(circle at 80% 30%, rgba(17, 94, 69, 0.18) 0%, transparent 65%)",
+                players: favCh.players
+            });
+        }
+    }
+
+    // Populate curated multi-genre slides
+    for (const base of BASE_CHANNELS_HERO_SLIDES) {
+        const ch = findChannel(base.name, base.category);
+        if (ch) {
+            slides.push({
+                ...base,
+                players: ch.players
+            });
+        }
+    }
+
+    return slides.slice(0, 4);
+}
+
+function updateChannelsHeroDisplay(index) {
+    const slide = channelsHeroItems[index];
+    if (!slide) return;
+
+    const titleEl = document.getElementById("channels-hero-title");
+    const metaEl = document.getElementById("channels-hero-meta");
+    const overviewEl = document.getElementById("channels-hero-overview");
+    const badgeTextEl = document.getElementById("channels-hero-badge-text");
+    const logoEl = document.getElementById("channels-hero-logo");
+    const glowEl = document.getElementById("channels-hero-glow");
+    const gradientEl = document.getElementById("channels-hero-gradient");
+    const watchBtn = document.getElementById("btn-channels-hero-watch");
+    const drawerBtn = document.getElementById("btn-channels-hero-drawer");
+
+    if (titleEl) titleEl.textContent = slide.title;
+    if (metaEl) metaEl.textContent = slide.meta;
+    if (overviewEl) overviewEl.textContent = slide.overview;
+    if (badgeTextEl) badgeTextEl.textContent = slide.badge || "AO VIVO AGORA";
+
+    const logoSrc = getChannelLogoSrc(slide.name);
+    if (logoEl) {
+        if (logoSrc) {
+            logoEl.src = logoSrc;
+            logoEl.alt = slide.name;
+            logoEl.style.display = "block";
+        } else {
+            logoEl.style.display = "none";
+        }
+    }
+
+    if (glowEl && slide.glowColor) {
+        glowEl.style.background = `radial-gradient(circle, ${slide.glowColor} 0%, transparent 70%)`;
+    }
+    if (gradientEl && slide.gradient) {
+        gradientEl.style.background = slide.gradient;
+    }
+
+    if (watchBtn) {
+        watchBtn.onclick = () => {
+            selectChannel(slide.category, slide.name, slide.players);
+        };
+    }
+    if (drawerBtn) {
+        drawerBtn.onclick = () => {
+            openChannelsDrawer();
+        };
+    }
+
+    // Update dots
+    const dotsContainer = document.getElementById("channels-hero-dots") || document.getElementById("channels-hero-nav");
+    if (dotsContainer) {
+        const dots = dotsContainer.querySelectorAll(".hero-dot, .channels-hero-dot");
+        dots.forEach((d, idx) => {
+            d.classList.toggle("active", idx === index);
+        });
+    }
+}
+
+function setupChannelsHeroNavDots() {
+    const dotsContainer = document.getElementById("channels-hero-dots") || document.getElementById("channels-hero-nav");
+    const btnPrev = document.getElementById("btn-channels-hero-prev");
+    const btnNext = document.getElementById("btn-channels-hero-next");
+
+    if (dotsContainer) {
+        dotsContainer.innerHTML = "";
+        channelsHeroItems.forEach((_, idx) => {
+            const dot = document.createElement("button");
+            dot.className = `hero-dot ${idx === currentChannelsHeroIndex ? 'active' : ''}`;
+            dot.type = "button";
+            dot.setAttribute("aria-label", `Slide ${idx + 1}`);
+            dot.onclick = () => {
+                currentChannelsHeroIndex = idx;
+                updateChannelsHeroDisplay(currentChannelsHeroIndex);
+                startChannelsHeroTimer();
+            };
+            dotsContainer.appendChild(dot);
+        });
+    }
+
+    if (btnPrev && !btnPrev._hasChannelsClick) {
+        btnPrev._hasChannelsClick = true;
+        btnPrev.onclick = () => {
+            if (channelsHeroItems.length <= 1) return;
+            currentChannelsHeroIndex = (currentChannelsHeroIndex - 1 + channelsHeroItems.length) % channelsHeroItems.length;
+            updateChannelsHeroDisplay(currentChannelsHeroIndex);
+            startChannelsHeroTimer();
+        };
+    }
+
+    if (btnNext && !btnNext._hasChannelsClick) {
+        btnNext._hasChannelsClick = true;
+        btnNext.onclick = () => {
+            if (channelsHeroItems.length <= 1) return;
+            currentChannelsHeroIndex = (currentChannelsHeroIndex + 1) % channelsHeroItems.length;
+            updateChannelsHeroDisplay(currentChannelsHeroIndex);
+            startChannelsHeroTimer();
+        };
+    }
+}
+
+export function startChannelsHeroTimer() {
+    stopChannelsHeroTimer();
+    channelsHeroTimer = setInterval(() => {
+        if (!isBackgroundMediaAllowed('tv')) return;
+        if (channelsHeroItems.length <= 1) return;
+        currentChannelsHeroIndex = (currentChannelsHeroIndex + 1) % channelsHeroItems.length;
+        updateChannelsHeroDisplay(currentChannelsHeroIndex);
+    }, 7000);
+}
+
+export function stopChannelsHeroTimer() {
+    if (channelsHeroTimer) {
+        clearInterval(channelsHeroTimer);
+        channelsHeroTimer = null;
+    }
+}
+
+/**
+ * Renders live headline broadcast hero
+ */
+export function renderChannelsHero() {
+    const heroEl = document.getElementById("channels-hero");
+    if (!heroEl) return;
+
+    channelsHeroItems = buildChannelsHeroSlides();
+    if (channelsHeroItems.length === 0) return;
+
+    if (currentChannelsHeroIndex >= channelsHeroItems.length) {
+        currentChannelsHeroIndex = 0;
+    }
+
+    updateChannelsHeroDisplay(currentChannelsHeroIndex);
+    setupChannelsHeroNavDots();
+    startChannelsHeroTimer();
+
+    if (!heroEl._hasHoverListeners) {
+        heroEl._hasHoverListeners = true;
+        heroEl.addEventListener("mouseenter", () => stopChannelsHeroTimer());
+        heroEl.addEventListener("mouseleave", () => startChannelsHeroTimer());
+    }
+}
+
+/**
+ * Wires sticky navigation toolbar pills and spotlight search
+ */
+export function setupChannelsToolbar() {
+    const toolbar = document.getElementById("channels-nav-toolbar");
+    if (!toolbar) return;
+
+    const pills = toolbar.querySelectorAll(".channel-cat-pill");
+    pills.forEach(pill => {
+        pill.onclick = () => {
+            const cat = pill.dataset.category || "all";
+            setCategoryFilter(cat);
+            syncToolbarPills(cat);
+        };
+    });
+
+    const spotlightInput = document.getElementById("channels-spotlight-input");
+    const clearBtn = document.getElementById("btn-clear-channels-search");
+    if (spotlightInput) {
+        spotlightInput.oninput = (e) => {
+            const q = e.target.value.trim().toLowerCase();
+            store.setSearchQuery(q);
+            if (clearBtn) clearBtn.classList.toggle("hidden", q.length === 0);
+            renderChannelGridCards();
+            renderSidebar();
+        };
+    }
+
+    if (clearBtn && spotlightInput) {
+        clearBtn.onclick = () => {
+            spotlightInput.value = "";
+            store.setSearchQuery("");
+            clearBtn.classList.add("hidden");
+            renderChannelGridCards();
+            renderSidebar();
+            spotlightInput.focus();
+        };
+    }
+
+    const openDrawerBtn = document.getElementById("btn-toolbar-open-drawer");
+    if (openDrawerBtn) {
+        openDrawerBtn.onclick = () => openChannelsDrawer();
+    }
+
+    const backFeedBtn = document.getElementById("btn-channels-back-feed");
+    if (backFeedBtn) {
+        backFeedBtn.onclick = () => {
+            setCategoryFilter("all");
+            syncToolbarPills("all");
+            if (spotlightInput) spotlightInput.value = "";
+            if (clearBtn) clearBtn.classList.add("hidden");
+            store.setSearchQuery("");
+            renderChannelGridCards();
+        };
+    }
+}
+
+export function syncToolbarPills(activeCategory) {
+    const pills = document.querySelectorAll("#channels-pills-bar .channel-cat-pill");
+    pills.forEach(p => {
+        const cat = p.dataset.category || "all";
+        p.classList.toggle("active", cat === activeCategory);
+    });
+}
+
+/**
+ * Renders Channel Visual Grid Cards on the Welcome/Explore Screen (#quick-grid)
  */
 export function renderChannelGridCards() {
     const gridEl = document.getElementById("quick-grid");
@@ -381,6 +843,30 @@ export function renderChannelGridCards() {
         });
     });
 
+    const feedEl = document.getElementById("channels-discovery-feed");
+    const exploreEl = document.getElementById("channels-explore-view");
+    const isFiltered = filter !== "all" || q.length > 0;
+
+    if (feedEl && exploreEl) {
+        if (isFiltered) {
+            feedEl.classList.add("hidden");
+            exploreEl.classList.remove("hidden");
+            const titleEl = document.getElementById("channels-explore-title");
+            const countEl = document.getElementById("channels-explore-count");
+            if (titleEl) {
+                if (q) titleEl.textContent = `Resultados para "${q}"`;
+                else if (filter === "favs") titleEl.textContent = "Canais Favoritos";
+                else titleEl.textContent = filter;
+            }
+            if (countEl) {
+                countEl.textContent = `${allChannels.length} canal${allChannels.length === 1 ? '' : 'is'} encontrado${allChannels.length === 1 ? '' : 's'}`;
+            }
+        } else {
+            feedEl.classList.remove("hidden");
+            exploreEl.classList.add("hidden");
+        }
+    }
+
     if (allChannels.length === 0) {
         gridEl.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-muted);">
@@ -391,63 +877,12 @@ export function renderChannelGridCards() {
         return;
     }
 
+    const fragment = document.createDocumentFragment();
     allChannels.forEach(({ category, channelName, players }) => {
-        const card = document.createElement("div");
-        card.className = "quick-card";
-        card.tabIndex = 0;
-        card.setAttribute("role", "button");
-        card.setAttribute("aria-label", `Assistir canal ${channelName}`);
-        
-        card.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                selectChannel(category, channelName, players);
-            }
-        });
-
-        const optionsCount = getChannelOptionsCount(players);
-        const logoLargeHtml = createLogoBadgeHtml(channelName, 'lg');
-        const channelKey = `${category}:${channelName}`;
-        const isFav = store.isFavorite(channelName, category);
-
-        card.innerHTML = `
-            <div class="card-top">
-                <span class="card-category-tag">${category}</span>
-                <button class="btn-card-fav ${isFav ? 'favorited' : ''}" title="${isFav ? 'Remover dos favoritos' : 'Favoritar canal'}">
-                    ${isFav ? getUiSvg('starFilled', 16) : getUiSvg('star', 16)}
-                </button>
-            </div>
-            <div class="card-main-info">
-                ${logoLargeHtml}
-                <div>
-                    <h4 class="card-title">${channelName}</h4>
-                    <span class="card-live"><span class="live-dot"></span> AO VIVO</span>
-                </div>
-            </div>
-            <div class="card-footer">
-                <span>${optionsCount} Servidor${optionsCount > 1 ? "es" : ""}</span>
-                <span class="card-play-action">Assistir &rarr;</span>
-            </div>
-        `;
-
-        // Favorite click
-        const favBtn = card.querySelector(".btn-card-fav");
-        if (favBtn) {
-            favBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                store.toggleFavorite(channelKey);
-                renderChannelGridCards();
-                renderSidebar();
-            });
-        }
-
-        // Card play click
-        card.addEventListener("click", () => {
-            selectChannel(category, channelName, players);
-        });
-
-        gridEl.appendChild(card);
+        const card = createChannel16x9Card(category, channelName, players);
+        fragment.appendChild(card);
     });
+    gridEl.appendChild(fragment);
 }
 
 /**
@@ -461,89 +896,181 @@ export function renderHomeView() {
     if (!contentDisplay) return;
 
     contentDisplay.innerHTML = `
-        <div class="welcome-screen">
-            <div class="welcome-hero">
-                <div class="welcome-hero-text">
-                    <button class="hero-badge hero-badge-btn" id="btn-hero-adblock" title="Como bloquear anúncios e pop-ups dos players" aria-label="Aviso e configuração de Bloqueador de Anúncios">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            <polyline points="9 12 11 14 15 10"></polyline>
-                        </svg>
-                        <span>Sem Anúncios</span>
-                    </button>
-                    <h1 class="hero-title">Escolha um canal para assistir agora</h1>
-                    <p class="hero-subtitle">
-                        Acesse transmissões de alta estabilidade de <strong>TV Aberta</strong> e <strong>Esportes</strong> com múltiplos servidores disponíveis.
+        <div class="welcome-screen" id="channels-welcome-screen">
+            <!-- Channels Cinematic Hero Showcase -->
+            <section class="channels-hero" id="channels-hero">
+                <div class="channels-hero-bg">
+                    <div class="channels-hero-gradient" id="channels-hero-gradient"></div>
+                    <div class="channels-hero-glow" id="channels-hero-glow"></div>
+                </div>
+                <div class="channels-hero-content">
+                    <div class="channels-hero-top-row">
+                        <div class="channels-hero-badge">
+                            <span class="live-dot pulse-emerald"></span>
+                            <span id="channels-hero-badge-text">AO VIVO AGORA</span>
+                        </div>
+                        <div class="movies-hero-nav channels-hero-nav" id="channels-hero-nav">
+                            <button id="btn-channels-hero-prev" class="btn-hero-nav-arrow" aria-label="Canal anterior" title="Canal anterior" type="button">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+                            <div id="channels-hero-dots" class="hero-dots-container movies-hero-dots"></div>
+                            <button id="btn-channels-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo canal" title="Próximo canal" type="button">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="channels-hero-brand-box">
+                        <img id="channels-hero-logo" class="channels-hero-logo" src="" alt="" style="display:none;">
+                        <h1 class="channels-hero-title" id="channels-hero-title">Globo HD</h1>
+                    </div>
+                    <p class="channels-hero-meta" id="channels-hero-meta">Transmissão Oficial • TV Aberta</p>
+                    <p class="channels-hero-overview" id="channels-hero-overview">
+                        A maior rede de televisão aberta do país com programação ao vivo, jornalismo de ponta e entretenimento.
                     </p>
-                </div>
-                <div class="welcome-hero-emblem" aria-hidden="true" title="Tvzinha Online">
-                    <img src="assets/logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="hero-emblem-img">
-                </div>
-            </div>
-
-            <!-- Multi-Team Upcoming Matches Section -->
-            <section class="vasco-matches-section" id="vasco-matches-section">
-                <div class="section-heading" id="matches-section-heading">
-                    <div class="matches-heading-left">
-                        <span class="matches-team-badge" id="matches-team-badge">${getUiSvg('calendar', 18)}</span>
-                        <div>
-                            <h3 id="matches-section-title">Próximos Jogos de Futebol</h3>
-                            <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos de futebol (via ge.globo)</span>
-                        </div>
-                    </div>
-                    <div class="matches-heading-right" id="matches-heading-right">
-                        <button id="btn-change-team" class="btn-change-team" aria-label="Escolher ou trocar time" title="Alterar time favorito">
-                            ${getUiSvg('swap', 15)}
-                            <span id="btn-change-team-label">Escolher Time</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="matches-carousel-wrapper" id="matches-carousel-wrapper">
-                    <div class="matches-grid matches-carousel" id="vasco-matches-grid" tabindex="0" role="region" aria-label="Carrossel de próximos jogos">
-                        <div class="match-card skeleton-match-card">
-                            <div class="skeleton-match-line short"></div>
-                            <div class="skeleton-match-duel"></div>
-                            <div class="skeleton-match-line"></div>
-                        </div>
-                        <div class="match-card skeleton-match-card">
-                            <div class="skeleton-match-line short"></div>
-                            <div class="skeleton-match-duel"></div>
-                            <div class="skeleton-match-line"></div>
-                        </div>
-                        <div class="match-card skeleton-match-card">
-                            <div class="skeleton-match-line short"></div>
-                            <div class="skeleton-match-duel"></div>
-                            <div class="skeleton-match-line"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="matches-carousel-footer" id="matches-carousel-footer">
-                    <div class="matches-nav-arrows" id="matches-nav-arrows">
-                        <button id="btn-matches-prev" class="btn-matches-arrow" aria-label="Jogos anteriores" title="Ver jogos anteriores" disabled>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
+                    <div class="channels-hero-actions">
+                        <button class="btn-channels-hero-play" id="btn-channels-hero-watch" type="button">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
                             </svg>
+                            <span>Assistir Transmissão</span>
                         </button>
-                        <button id="btn-matches-next" class="btn-matches-arrow" aria-label="Próximos jogos" title="Ver mais jogos">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
+                        <button class="btn-channels-hero-drawer" id="btn-channels-hero-drawer" type="button">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
                             </svg>
+                            <span>Guia Rápido de Canais</span>
                         </button>
                     </div>
                 </div>
             </section>
 
-            <!-- Channel Visual Grid with Logos -->
-            <div class="quick-channels-section">
-                <div class="section-heading">
-                    <h3>Todos os Canais</h3>
-                    <span class="section-hint">Clique no card para abrir o player</span>
+            <!-- Channels Navigation Toolbar (Category Pills + Spotlight Search) -->
+            <div class="movies-nav-toolbar channels-nav-toolbar" id="channels-nav-toolbar">
+                <nav class="movies-category-pills channels-pills-bar" id="channels-pills-bar" aria-label="Navegar por Canais">
+                    <button class="movie-pill channel-cat-pill active" data-category="all" type="button">Todos</button>
+                    <button class="movie-pill channel-cat-pill" data-category="favs" type="button">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        <span>Favoritos</span>
+                    </button>
+                    <button class="movie-pill channel-cat-pill" data-category="Esportes" type="button">Esportes</button>
+                    <button class="movie-pill channel-cat-pill" data-category="TV Aberta" type="button">TV Aberta</button>
+                    <button class="movie-pill channel-cat-pill" data-category="Filmes e Séries" type="button">Filmes & Séries</button>
+                    <button class="movie-pill channel-cat-pill" data-category="Infantil" type="button">Infantil</button>
+                    <button class="movie-pill channel-cat-pill" data-category="Notícias" type="button">Notícias</button>
+                    <button class="movie-pill channel-cat-pill" data-category="Variedades" type="button">Variedades</button>
+                </nav>
+                <div class="spotlight-search-container pills-search-box channels-search-box" id="channels-search-container" title="Clique para buscar canal">
+                    <svg class="spotlight-icon pills-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="channels-spotlight-input" class="spotlight-input pills-search-input" placeholder="Buscar canal..." autocomplete="off">
+                    <button id="btn-clear-channels-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
+                </div>
+            </div>
+
+            <!-- Discovery Feed (Categorized Horizontal Rows) -->
+            <div class="channels-discovery-feed" id="channels-discovery-feed">
+                <!-- Multi-Team Upcoming Matches Section -->
+                <section class="vasco-matches-section" id="vasco-matches-section">
+                    <div class="section-heading" id="matches-section-heading">
+                        <div class="matches-heading-left">
+                            <span class="matches-team-badge" id="matches-team-badge">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 id="matches-section-title">Próximos Jogos de Futebol</h3>
+                                <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos de futebol (via ge.globo)</span>
+                            </div>
+                        </div>
+                        <div class="matches-heading-right" id="matches-heading-right">
+                            <button id="btn-change-team" class="btn-change-team" aria-label="Escolher ou trocar time" title="Alterar time favorito">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="17 1 21 5 17 9"></polyline>
+                                    <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                                    <polyline points="7 23 3 19 7 15"></polyline>
+                                    <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                                </svg>
+                                <span id="btn-change-team-label">Escolher Time</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="matches-carousel-wrapper" id="matches-carousel-wrapper">
+                        <div class="matches-grid matches-carousel" id="vasco-matches-grid" tabindex="0" role="region" aria-label="Carrossel de próximos jogos">
+                            <div class="match-card skeleton-match-card">
+                                <div class="skeleton-match-line short"></div>
+                                <div class="skeleton-match-duel"></div>
+                                <div class="skeleton-match-line"></div>
+                            </div>
+                            <div class="match-card skeleton-match-card">
+                                <div class="skeleton-match-line short"></div>
+                                <div class="skeleton-match-duel"></div>
+                                <div class="skeleton-match-line"></div>
+                            </div>
+                            <div class="match-card skeleton-match-card">
+                                <div class="skeleton-match-line short"></div>
+                                <div class="skeleton-match-duel"></div>
+                                <div class="skeleton-match-line"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="matches-carousel-footer" id="matches-carousel-footer">
+                        <div class="matches-nav-arrows" id="matches-nav-arrows">
+                            <button id="btn-matches-prev" class="btn-matches-arrow" aria-label="Jogos anteriores" title="Ver jogos anteriores" disabled>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+                            <button id="btn-matches-next" class="btn-matches-arrow" aria-label="Próximos jogos" title="Ver mais jogos">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Categorized Horizontal Tracks Container -->
+                <div id="channels-category-rows" class="channels-category-rows"></div>
+            </div>
+
+            <!-- Explore Full Grid View (Activated upon Search or Category Filter) -->
+            <div class="channels-explore-view hidden" id="channels-explore-view">
+                <div class="channels-explore-header">
+                    <div>
+                        <h3 id="channels-explore-title">Todos os Canais</h3>
+                        <span class="channels-explore-subtitle" id="channels-explore-count">Exibindo canais disponíveis</span>
+                    </div>
+                    <button id="btn-channels-back-feed" class="btn-channels-secondary" type="button">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Voltar aos Destaques</span>
+                    </button>
                 </div>
                 <div class="quick-grid" id="quick-grid"></div>
             </div>
         </div>
     `;
 
+    setupChannelsToolbar();
+    renderChannelsHero();
+    renderCategoryRows();
     renderChannelGridCards();
     renderSidebar();
 
@@ -558,9 +1085,15 @@ export function renderHomeView() {
  * Searches and selects a channel by name across all categories
  */
 export function selectChannelByName(category, channelName) {
+    if (!channelName && category) {
+        channelName = category;
+        category = null;
+    }
+    if (!channelName) return;
+
     const channelsData = store.channelsData;
     let targetCat = category;
-    let targetData = channelsData[targetCat]?.[channelName];
+    let targetData = targetCat ? channelsData[targetCat]?.[channelName] : null;
 
     if (!targetData) {
         for (const [cat, chs] of Object.entries(channelsData)) {
@@ -690,40 +1223,32 @@ export function renderPlayerView(activeChannel) {
             <!-- Player Header Toolbar -->
             <div class="player-header">
                 <div class="player-info">
+                    <button id="btn-back-to-channels" class="btn-player-back" title="Voltar aos Canais" type="button">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </button>
                     ${logoLargeHtml}
                     <div class="player-title-box">
                         <div style="display:flex;align-items:center;gap:8px;">
                             <h2>${name}</h2>
-                            <button id="btn-fav-current" class="btn-card-fav ${isFav ? 'favorited' : ''}" title="${isFav ? 'Remover dos favoritos' : 'Favoritar canal'}">
+                            <button id="btn-fav-current" class="btn-card-fav ${isFav ? 'favorited' : ''}" title="${isFav ? 'Remover dos favoritos' : 'Favoritar canal'}" type="button">
                                 ${isFav ? getUiSvg('starFilled', 16) : getUiSvg('star', 16)}
                             </button>
                         </div>
                         <span class="channel-category-label">
-                            <span class="live-indicator"><span class="live-dot"></span> AO VIVO</span> &bull; ${category}
+                            <span class="live-indicator"><span class="live-dot pulse-emerald"></span> AO VIVO</span> &bull; ${category}
                         </span>
                     </div>
                 </div>
                 <div class="player-toolbar">
-                    <button id="btn-reload-player" class="btn-player-action" title="Recarregar Transmissão">
+                    <button id="btn-reload-player" class="btn-player-action" title="Recarregar Transmissão" type="button">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="23 4 23 10 17 10"></polyline>
                             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                         </svg>
                         Recarregar
-                    </button>
-                    <button id="btn-fullscreen-player" class="btn-player-action" title="Tela Cheia">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                        </svg>
-                        Tela Cheia
-                    </button>
-                    <button id="btn-open-external" class="btn-player-action" title="Abrir em Nova Aba">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                            <polyline points="15 3 21 3 21 9"></polyline>
-                            <line x1="10" y1="14" x2="21" y2="3"></line>
-                        </svg>
-                        Nova Aba
                     </button>
                 </div>
             </div>
@@ -842,9 +1367,11 @@ export function renderPlayerView(activeChannel) {
 
     // Toolbar Actions
     const btnReload = document.getElementById("btn-reload-player");
-    const btnFullscreen = document.getElementById("btn-fullscreen-player");
-    const btnExternal = document.getElementById("btn-open-external");
-    const videoTheater = document.getElementById("video-theater");
+    const btnBackToChannels = document.getElementById("btn-back-to-channels");
+
+    if (btnBackToChannels) {
+        btnBackToChannels.addEventListener("click", () => renderHomeView());
+    }
 
     if (btnReload) {
         btnReload.addEventListener("click", () => {
@@ -855,40 +1382,6 @@ export function renderPlayerView(activeChannel) {
                 });
             } else {
                 mountTvContingencyIframe(activeChannel.contingencyUrl);
-            }
-        });
-    }
-
-    if (btnFullscreen && videoTheater) {
-        btnFullscreen.addEventListener("click", () => {
-            if (activeChannel.serverType === 'direct' && window.tvArtInstance && window.tvArtInstance.fullscreen) {
-                window.tvArtInstance.fullscreen.toggle();
-            } else {
-                if (!document.fullscreenElement) {
-                    if (videoTheater.requestFullscreen) videoTheater.requestFullscreen();
-                    else if (videoTheater.webkitRequestFullscreen) videoTheater.webkitRequestFullscreen();
-                } else {
-                    if (document.exitFullscreen) document.exitFullscreen();
-                }
-            }
-        });
-    }
-
-    if (btnExternal) {
-        btnExternal.addEventListener("click", () => {
-            let urlToOpen = "";
-            if (activeChannel.serverType === 'direct') {
-                const src = activeChannel.data.sources[activeChannel.sourceIndex];
-                urlToOpen = src ? src.url : "";
-            } else {
-                urlToOpen = activeChannel.contingencyUrl || "";
-            }
-            if (urlToOpen) {
-                if (window.tvzinhaSafeOpen) {
-                    window.tvzinhaSafeOpen(urlToOpen, "_blank", "noopener,noreferrer");
-                } else {
-                    window.open(urlToOpen, "_blank", "noopener,noreferrer");
-                }
             }
         });
     }

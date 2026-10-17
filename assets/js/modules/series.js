@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261014_1156';
+import { store } from '../core/state.js?v=20261017_0211';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,16 +14,16 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261014_1156';
-import { showToast } from '../core/toast.js?v=20261014_1156';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261014_1156';
-import { buildFeedRows } from '../core/feedRows.js?v=20261014_1156';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261014_1156';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261014_1156';
-import { resumeStartTime } from '../core/resume.js?v=20261014_1156';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261014_1156';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261014_1156';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261014_1156';
+} from '../core/constants.js?v=20261017_0211';
+import { showToast } from '../core/toast.js?v=20261017_0211';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261017_0211';
+import { buildFeedRows } from '../core/feedRows.js?v=20261017_0211';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261017_0211';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261017_0211';
+import { resumeStartTime } from '../core/resume.js?v=20261017_0211';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261017_0211';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261017_0211';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261017_0211';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -217,12 +217,25 @@ export function renderHomeContinueWatching() {
         const card = document.createElement("div");
         card.className = "continue-card";
         card.tabIndex = 0;
-        card.setAttribute("role", "button");
         card.setAttribute("aria-label", `Continuar ${item.title} T${item.season}:E${item.episode}`);
 
         const imgUrl = item.backdrop_path
             ? `${TMDB_IMG_W500}${item.backdrop_path}`
             : (item.poster_path ? `${TMDB_IMG_W500}${item.poster_path}` : 'assets/logos/fav/icon-detailed.svg');
+        let progressPct = 0;
+        let timeLabel = 'Retomar agora';
+        if (item.positions) {
+            const posKey = `${item.season}:${item.episode}`;
+            const pos = item.positions[posKey];
+            if (pos && pos.position > 0 && pos.duration > 0) {
+                progressPct = Math.min(100, Math.max(4, Math.round((pos.position / pos.duration) * 100)));
+                const remainingSec = Math.max(0, pos.duration - pos.position);
+                const remainingMin = Math.round(remainingSec / 60);
+                if (remainingMin > 0) {
+                    timeLabel = `Faltam ${remainingMin} min`;
+                }
+            }
+        }
 
         const safeTitle = escapeHtml(item.title || 'Título');
         const safeTitleAttr = escapeAttr(item.title || 'Título');
@@ -241,11 +254,14 @@ export function renderHomeContinueWatching() {
                         </svg>
                     </div>
                 </div>
+                <div class="continue-progress-bar-wrapper">
+                    <div class="continue-progress-bar-fill" style="width: ${progressPct}%;"></div>
+                </div>
             </div>
             <div class="continue-card-info">
                 <span class="continue-card-title">${safeTitle}</span>
                 <span class="continue-card-ep">T${safeSeason}:E${safeEp} • ${safeEpTitle}</span>
-                <span class="continue-card-time">Retomar agora</span>
+                <span class="continue-card-time">${timeLabel}</span>
             </div>
         `;
 

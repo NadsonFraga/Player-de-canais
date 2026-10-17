@@ -556,13 +556,13 @@
     width: 15px;
     height: 15px;
     fill: none;
-    stroke: var(--text-muted);
+    stroke: currentColor;
     stroke-width: 2;
     transition: var(--transition-fast);
 }
 
 .btn-card-fav:hover .star-icon {
-    stroke: var(--text-primary);
+    stroke: #ffffff;
 }
 
 .btn-card-fav.favorited .star-icon {
