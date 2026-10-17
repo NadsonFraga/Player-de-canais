@@ -358,4 +358,102 @@ Establish a single, coherent design standard across the entire Channels tab and 
   - TV Player Toolbar: Cleaned to retain only "Recarregar" button; removed "Trocar Canal", "Tela Cheia", and "Nova Aba".
   - Player Server Selection: `.btn-server-option.active` now matches the `#115e45` unified design token instead of contrasting white.
 
+---
+
+## 10. Phase 10: Mobile Refinements, Catalog Design System Alignment & UX Bugfixes
+
+### Goal
+Eliminate remaining visual inconsistencies between the Channels tab and the catalog standard (Movies/Series/Animes), correct mobile layout bugs, restore uncluttered mobile navigation, prevent unwanted on-screen keyboard trigger in the team picker, and hide unnecessary desktop pagination arrows on touch devices.
+
+### Scope & Technical Strategy
+
+1. **Channels Hero Navigation Standard (`.movies-hero-nav` Parity):**
+   - **Markup (`index.html` inside `#channels-hero`):**
+     Replace the isolated `.channels-hero-nav` div with the full standard `.movies-hero-nav` structure:
+     - Left arrow button: `#btn-channels-hero-prev.btn-hero-nav-arrow` (`<`)
+     - Center dots container: `#channels-hero-dots.movies-hero-dots`
+     - Right arrow button: `#btn-channels-hero-next.btn-hero-nav-arrow` (`>`)
+   - **Logic (`assets/js/modules/channels.js`):**
+     Wire click handlers to `#btn-channels-hero-prev` and `#btn-channels-hero-next` for manual carousel slide switching.
+     Render dots inside `#channels-hero-dots` with `.hero-dot` / `.hero-dot.active`.
+   - **Styles (`assets/css/03-channels.css`):**
+     Remove isolated custom dot CSS; inherit directly from `.movies-hero-nav` and `.btn-hero-nav-arrow` in `06-catalog.css`.
+
+2. **Category & Search Toolbar (Eliminate Floating Box Container):**
+   - **Markup (`index.html`):**
+     Align `#channels-nav-toolbar` with `.movies-nav-toolbar`:
+     - Pilling container: `.movies-category-pills.channels-pills-bar`
+     - Category pills: `.movie-pill.channel-cat-pill` (retaining deep pine active state `#115e45`)
+     - Search container: `.spotlight-search-container.pills-search-box.channels-search-box`
+   - **Styles (`assets/css/03-channels.css` & `08-responsive-tv-movies.css`):**
+     Remove background, border, blur, shadow, and heavy padding from `.channels-nav-toolbar`.
+     Pills and search bar sit cleanly on the page background with `padding: 0 48px; margin-bottom: 34px;` (desktop) and `padding: 0 14px; flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 22px;` (mobile).
+
+3. **Mobile Header Clean-up (Uncluttered Top Navigation):**
+   - **Markup & Styles (`index.html`, `08-responsive-tv-movies.css`, `assets/js/modules/channels.js`):**
+     Remove/hide `.mobile-header` (`#btn-toggle-menu` and `#btn-mobile-drawer-toggle`) on mobile so the Channels tab has an uncluttered top with only the floating central navigation capsule (`#floating-nav-capsule`), exactly like Movies, Series, Animes, and Home.
+     Ensure `setupDrawerHandlers()` defensively guards against absent buttons.
+
+4. **Channels Hero Inset & Action Buttons Overlap Fix:**
+   - **Styles (`assets/css/03-channels.css`):**
+     Ensure `#channels-hero` provides sufficient bottom padding (`padding-bottom: 32px` on desktop, `24px` on mobile) so the action buttons ("Assistir Transmissão", "Guia Rápido de Canais") and dots/nav-arrows never get covered or clipped by the toolbar below.
+
+5. **Team Picker Modal - Remove Automatic Keyboard Autofocus:**
+   - **Logic (`assets/js/modules/sports.js`):**
+     In `openTeamSelectModal()`, remove the automatic `setTimeout(() => { if (searchInput) searchInput.focus(); }, 120);`.
+     The modal will open displaying the club crests without auto-triggering the mobile on-screen keyboard or taking over half the screen. The keyboard only opens if the user explicitly taps the search input.
+
+6. **Matches Pagination Arrows Hidden on Mobile:**
+   - **Styles (`assets/css/04-sports.css` / `08-responsive-tv-movies.css`):**
+     Under `@media (max-width: 768px)`, hide `.matches-carousel-footer` and `.matches-nav-arrows` (`display: none !important;`).
+     On touch mobile devices, users navigate the matches track naturally by swiping horizontally, matching the behavior of all other carousel tracks.
+
+7. **Category Row Header Responsive Layout (Long Titles Fix):**
+   - **Styles (`assets/css/03-channels.css` & `08-responsive-tv-movies.css`):**
+     For `.channels-row-header`: use `display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;`.
+     For `.channels-row-title-box`: allow flexible shrinking and prevent awkward overflow (`min-width: 0; flex: 1; display: flex; align-items: center; gap: 8px;`).
+     For long titles like "Documentários & Variedades": ensure mobile font-size is `1.05rem` with clean line-height, and the count badge ("9 canais") stays inline without being pushed against "Ver Todos &rarr;".
+
+### Impacted Files
+- `index.html`: Update Channels Hero nav markup, toolbar classes, and clean up `.mobile-header`.
+- `assets/js/modules/channels.js`: Wire hero prev/next arrow buttons and handle standard dots.
+- `assets/js/modules/sports.js`: Remove `searchInput.focus()` in `openTeamSelectModal()`.
+- `assets/css/03-channels.css`: Strip `.channels-nav-toolbar` outer box styling, unify pills with `.movie-pill`, fix hero bottom padding, fix row headers.
+- `assets/css/04-sports.css`: Hide `.matches-carousel-footer` on mobile screens (`<=768px`).
+- `assets/css/08-responsive-tv-movies.css`: Hide `.mobile-header`, ensure mobile toolbar behaves like `.movies-nav-toolbar`.
+- `tools/channels_redesign_check.mjs`: Update selectors/assertions if needed for test validation.
+
+### Verification Plan
+- `python tools/check_js.py`: Verify 0 missing imports.
+- `python tools/bump_version.py`: Version bump and check.
+- `node tools/channels_redesign_check.mjs --browser=chrome`: Run full suite.
+- `node tools/channels_redesign_check.mjs --browser=edge`: Run full suite.
+- `node tools/player_touch_check.mjs`: Run touch suite.
+- `node scratch/test_dpad_tv.mjs`: Verify TV remote navigation.
+- Headless inspection at 390px (mobile) and 1280px (desktop):
+  - Hero nav arrows and dots present and functional.
+  - Channels toolbar cleanly rendered without outer box, matching Movies.
+  - Mobile top free of duplicate buttons.
+  - Hero action buttons not clipped or overlapped.
+  - Team picker modal opens without focusing input / opening keyboard.
+  - Matches track has no arrows on mobile.
+  - Category row headers wrap and display harmoniously on mobile.
+
+### 2026-10-16 - Phase 10 (Completed)
+- **Channels Hero Nav Parity:** Replaced isolated custom `.channels-hero-nav` with standard `.movies-hero-nav` architecture in `index.html` and `channels.js` (including `#btn-channels-hero-prev`, `#channels-hero-dots` with `.hero-dot` and deep pine active glow, and `#btn-channels-hero-next`).
+- **Toolbar & Pills Alignment:** Stripped custom outer border/background container from `.channels-nav-toolbar`. Positioned category pills and search box directly on page canvas matching catalog standard (`.movies-nav-toolbar`, `.movie-pill`, `.pills-search-box`).
+- **Mobile Header Cleanup:** Completely hid `.mobile-header` on the Channels tab; mobile top is now completely clean and free, displaying exclusively the central floating navigation capsule.
+- **Hero Overlap Fix:** Added generous bottom padding (`44px`) to `#channels-hero` on mobile, eliminating all clipping or overlapping of action buttons.
+- **Team Picker Autofocus Removal:** Removed automatic `searchInput.focus()` from `openTeamSelectModal()` in `sports.js`. Mobile on-screen keyboard no longer pops up automatically.
+- **Matches Pagination Hidden on Touch:** Hid `.matches-carousel-footer` and `.matches-nav-arrows` on mobile viewports (`<=768px`).
+- **Category Rows Header Overflow:** Refactored `.channels-row-header` and `.channels-row-title-box` with `flex: 1; min-width: 0; white-space: nowrap; text-overflow: ellipsis;` and responsive mobile font size (`1.05rem`), preventing awkward multi-line breakage and spacing collisions.
+- **Verification Results:**
+  - `python tools/check_js.py`: 0 missing imports.
+  - `python tools/bump_version.py`: Clean version stamp `20261016_2358` verified across 13 modules.
+  - `tools/channels_redesign_check.mjs` (Chrome): 10/10 PASS.
+  - `tools/channels_redesign_check.mjs` (Edge): 10/10 PASS.
+  - `tools/player_touch_check.mjs`: 17/17 PASS.
+  - Mobile verification suite: All 7 targeted checks passed at 390px viewport.
+
+
 

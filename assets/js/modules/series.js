@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261016_1714';
+import { store } from '../core/state.js?v=20261016_2358';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,15 +14,15 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261016_1714';
-import { showToast } from '../core/toast.js?v=20261016_1714';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261016_1714';
-import { buildFeedRows } from '../core/feedRows.js?v=20261016_1714';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261016_1714';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261016_1714';
-import { resumeStartTime } from '../core/resume.js?v=20261016_1714';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261016_1714';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261016_1714';
+} from '../core/constants.js?v=20261016_2358';
+import { showToast } from '../core/toast.js?v=20261016_2358';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261016_2358';
+import { buildFeedRows } from '../core/feedRows.js?v=20261016_2358';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261016_2358';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261016_2358';
+import { resumeStartTime } from '../core/resume.js?v=20261016_2358';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261016_2358';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261016_2358';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
