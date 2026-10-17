@@ -4,12 +4,12 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261016_2358';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261016_2358';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261016_2358';
-import { showToast } from '../core/toast.js?v=20261016_2358';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261016_2358';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261016_2358';
+import { store } from '../core/state.js?v=20261017_0107';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261017_0107';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261017_0107';
+import { showToast } from '../core/toast.js?v=20261017_0107';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261017_0107';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261017_0107';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -904,9 +904,24 @@ export function renderHomeView() {
                     <div class="channels-hero-glow" id="channels-hero-glow"></div>
                 </div>
                 <div class="channels-hero-content">
-                    <div class="channels-hero-badge">
-                        <span class="live-dot pulse-emerald"></span>
-                        <span id="channels-hero-badge-text">AO VIVO AGORA</span>
+                    <div class="channels-hero-top-row">
+                        <div class="channels-hero-badge">
+                            <span class="live-dot pulse-emerald"></span>
+                            <span id="channels-hero-badge-text">AO VIVO AGORA</span>
+                        </div>
+                        <div class="movies-hero-nav channels-hero-nav" id="channels-hero-nav">
+                            <button id="btn-channels-hero-prev" class="btn-hero-nav-arrow" aria-label="Canal anterior" title="Canal anterior" type="button">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+                            <div id="channels-hero-dots" class="hero-dots-container movies-hero-dots"></div>
+                            <button id="btn-channels-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo canal" title="Próximo canal" type="button">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="channels-hero-brand-box">
                         <img id="channels-hero-logo" class="channels-hero-logo" src="" alt="" style="display:none;">
@@ -931,19 +946,6 @@ export function renderHomeView() {
                             <span>Guia Rápido de Canais</span>
                         </button>
                     </div>
-                </div>
-                <div class="movies-hero-nav channels-hero-nav" id="channels-hero-nav">
-                    <button id="btn-channels-hero-prev" class="btn-hero-nav-arrow" aria-label="Canal anterior" title="Canal anterior" type="button">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                    </button>
-                    <div id="channels-hero-dots" class="hero-dots-container movies-hero-dots"></div>
-                    <button id="btn-channels-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo canal" title="Próximo canal" type="button">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                    </button>
                 </div>
             </section>
 

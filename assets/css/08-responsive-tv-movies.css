@@ -94,8 +94,9 @@
         font-size: 0.82rem;
     }
 
-    /* Movies View Spacing on Mobile */
-    .view-movies {
+    /* Catalog & Hub Views Spacing on Mobile */
+    .view-movies,
+    .view-home {
         padding-top: 48px; /* Clean spacing for top navigation capsule */
     }
 
