@@ -147,7 +147,7 @@ async function main() {
       const tb = document.getElementById('channels-nav-toolbar');
       const pills = document.querySelectorAll('.channel-cat-pill');
       const search = document.getElementById('channels-spotlight-input');
-      const drawerBtn = document.getElementById('btn-toolbar-open-drawer');
+      const drawerBtn = document.getElementById('btn-channels-hero-drawer') || document.getElementById('btn-toolbar-open-drawer');
       return {
         exists: Boolean(tb),
         pillCount: pills.length,
@@ -228,7 +228,7 @@ async function main() {
 
     // 7. Test Quick Drawer Open & Close
     await browser.evaluate(`(() => {
-      const drawerBtn = document.getElementById('btn-toolbar-open-drawer');
+      const drawerBtn = document.getElementById('btn-channels-hero-drawer') || document.getElementById('btn-toolbar-open-drawer');
       if (drawerBtn) drawerBtn.click();
     })()`);
     await sleep(600);
