@@ -122,16 +122,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261014_1156">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261014_1156">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261014_1156">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261014_1156">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261014_1156">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261014_1156">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261014_1156">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261014_1156">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261014_1156">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261014_1156">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261017_0211">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261017_0211">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261017_0211">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261017_0211">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261017_0211">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261017_0211">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261017_0211">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261017_0211">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261017_0211">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261017_0211">
 </head>
 
 <body>
@@ -189,211 +189,191 @@
         </button>
     </nav>
 
-    <!-- View 0: Home Hub Portal View -->
+    <!-- View 0: Home Hub Streaming Showcase -->
     <main id="view-home" class="view-home" aria-label="Central de Início">
+        <!-- Dynamic Multi-Universe Hero Showcase (Full Width Edge-to-Edge) -->
+        <section id="home-hero-showcase" class="home-hero-showcase movies-hero">
+            <div class="movies-hero-backdrop-wrapper">
+                <img id="home-hero-backdrop" src="assets/logos/fav/icon-detailed.svg" alt="Destaque em Exibição" class="movies-hero-backdrop">
+                <div class="movies-hero-gradient-overlay"></div>
+            </div>
+            <div class="movies-hero-content">
+                <img id="home-hero-title-logo" src="" alt="Título em Destaque" class="movies-hero-title-logo hidden">
+                <h1 id="home-hero-title" class="movies-hero-title">Tvzinha Online</h1>
+                <div class="movies-hero-meta">
+                    <span id="home-hero-badge" class="movies-hero-badge"><span class="cinema-sparkle">✦</span> Destaque</span>
+                    <span id="home-hero-year" class="movies-meta-tag"></span>
+                    <span id="home-hero-rating" class="movies-meta-tag rating"></span>
+                    <div id="home-hero-genres" class="movies-hero-genres"></div>
+                </div>
+                <p id="home-hero-overview" class="movies-hero-overview">Filmes sob demanda, séries completas, animes consagrados e canais ao vivo em alta definição.</p>
+                <div class="movies-hero-actions">
+                    <button id="btn-home-hero-watch" class="btn-cinema-primary" type="button">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <span id="btn-home-hero-watch-label">Assistir Agora</span>
+                    </button>
+                    <button id="btn-home-hero-explore" class="btn-cinema-secondary" type="button">
+                        <span id="btn-home-hero-explore-label">Explorar Categoria</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hero Navigation Controls -->
+            <div class="movies-hero-nav">
+                <button id="btn-home-hero-prev" class="btn-hero-nav-arrow" aria-label="Destaque anterior" title="Destaque anterior" type="button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <div id="home-hero-dots" class="hero-dots-container"></div>
+                <button id="btn-home-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo destaque" title="Próximo destaque" type="button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
         <div class="home-container">
-            <!-- Hero Welcome Header -->
-            <section class="home-hero-card">
-                <div class="home-hero-content">
-                    <div class="home-hero-badge">
-                        <span class="pulse-dot"></span>
-                        <span>Central Multimídia Tvzinha</span>
-                    </div>
-                    <h1 class="home-hero-title">O que você quer assistir hoje?</h1>
-                    <p class="home-hero-subtitle">
-                        Transmissões de TV aberta e fechada em alta definição, catálogo de cinema sob demanda e esportes ao vivo com múltiplos servidores.
-                    </p>
-                </div>
-                <div class="home-hero-emblem" aria-hidden="true">
-                    <img src="assets/logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="home-emblem-img">
-                </div>
-            </section>
-
-            <!-- Main Entertainment Portal Grid -->
-            <section class="home-portals-section">
-                <div class="home-section-header">
-                    <h2>Navegação Rápida</h2>
-                    <span class="home-section-hint">Selecione uma área para entrar</span>
-                </div>
-
-                <div class="home-portals-grid">
-                    <!-- Portal 1: TV Channels -->
-                    <div class="home-portal-card active-portal" data-view-target="tv" tabindex="0" role="button" aria-label="Abrir Canais de TV">
-                        <div class="portal-card-glow"></div>
-                        <div class="portal-header">
-                            <div class="portal-icon-box tv-accent">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
-                                    <polyline points="17 2 12 7 7 2"></polyline>
-                                </svg>
-                            </div>
-                            <span class="portal-badge live-badge">66+ Canais HD</span>
-                        </div>
-                        <div class="portal-body">
-                            <h3>Canais Ao Vivo</h3>
-                            <p>Globo, SBT, Band, Record, SporTV, Premiere, ESPN, Combate, HBO e canais infantis.</p>
-                        </div>
-                        <div class="portal-footer">
-                            <span class="portal-action-btn">Assistir TV Ao Vivo <span>&rarr;</span></span>
-                        </div>
-                    </div>
-
-                    <!-- Portal 2: Movies Catalog -->
-                    <div class="home-portal-card active-portal" data-view-target="movies" tabindex="0" role="button" aria-label="Abrir Catálogo de Filmes">
-                        <div class="portal-card-glow"></div>
-                        <div class="portal-header">
-                            <div class="portal-icon-box movie-accent">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-                                    <line x1="7" y1="2" x2="7" y2="22"></line>
-                                    <line x1="17" y1="2" x2="17" y2="22"></line>
-                                    <line x1="2" y1="12" x2="22" y2="12"></line>
-                                    <line x1="2" y1="7" x2="7" y2="7"></line>
-                                    <line x1="2" y1="17" x2="7" y2="17"></line>
-                                    <line x1="17" y1="17" x2="22" y2="17"></line>
-                                    <line x1="17" y1="7" x2="22" y2="7"></line>
-                                </svg>
-                            </div>
-                            <span class="portal-badge cinema-badge">Cinema On Demand</span>
-                        </div>
-                        <div class="portal-body">
-                            <h3>Filmes sob Demanda</h3>
-                            <p>Lançamentos populares, grandes diretores, estúdios renomados e clássicos mundiais.</p>
-                        </div>
-                        <div class="portal-footer">
-                            <span class="portal-action-btn">Explorar Filmes <span>&rarr;</span></span>
-                        </div>
-                    </div>
-
-                    <!-- Portal 3: Series -->
-                    <div class="home-portal-card active-portal" data-view-target="series" tabindex="0" role="button" aria-label="Abrir Catálogo de Séries de TV">
-                        <div class="portal-card-glow series-glow"></div>
-                        <div class="portal-header">
-                            <div class="portal-icon-box series-accent">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-                                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-                                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
-                                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
-                                </svg>
-                            </div>
-                            <span class="portal-badge series-badge">Séries & Temporadas</span>
-                        </div>
-                        <div class="portal-body">
-                            <h3>Séries de TV</h3>
-                            <p>Temporadas completas, controle ágil de episódios e histórico salvo no navegador.</p>
-                        </div>
-                        <div class="portal-footer">
-                            <span class="portal-action-btn">Explorar Séries <span>&rarr;</span></span>
-                        </div>
-                    </div>
-
-                    <!-- Portal 4: Anime -->
-                    <div class="home-portal-card active-portal" data-view-target="animes" tabindex="0" role="button" aria-label="Abrir Catálogo de Animes Japoneses">
-                        <div class="portal-card-glow anime-glow"></div>
-                        <div class="portal-header">
-                            <div class="portal-icon-box anime-accent">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                </svg>
-                            </div>
-                            <span class="portal-badge anime-badge">Animações Japonesas</span>
-                        </div>
-                        <div class="portal-body">
-                            <h3>Animes</h3>
-                            <p>One Piece, Naruto, Attack on Titan, animes da temporada e clássicos com busca por episódios.</p>
-                        </div>
-                        <div class="portal-footer">
-                            <span class="portal-action-btn">Explorar Animes <span>&rarr;</span></span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Home Continue Watching Rail (Shown when user has watch progress) -->
+            <!-- Home Continue Watching Rail (Harmonized Header) -->
             <section id="home-continue-watching-section" class="home-continue-watching-section hidden">
-                <div class="home-section-header">
-                    <div class="continue-watching-title-box">
-                        <span class="continue-icon-dot"></span>
-                        <h2>Continuar Assistindo</h2>
+                <div class="home-row-header">
+                    <div class="home-row-title-box">
+                        <h3>Continuar Assistindo</h3>
+                        <span class="home-row-badge amber">Histórico</span>
                     </div>
-                    <span class="home-section-hint">De onde você parou</span>
                 </div>
                 <div class="continue-watching-carousel-wrapper">
                     <div id="home-continue-watching-track" class="continue-watching-track">
-                        <!-- Populated dynamically from localStorage -->
+                        <!-- Populated dynamically with progress bars -->
                     </div>
                 </div>
             </section>
 
-            <!-- Utility Shortcuts Row -->
-            <section class="home-utilities-section">
-                <div class="home-utilities-grid">
-                    <button id="btn-home-adblock-shortcut" class="home-utility-card" type="button" aria-label="Aviso e configuração do Bloqueador de Anúncios">
-                        <div class="utility-icon-box">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                <polyline points="9 12 11 14 15 10"></polyline>
-                            </svg>
+            <!-- Dynamic Showcase Rows -->
+            <div id="home-content-rows" class="home-content-rows">
+                <!-- Row: Trending Movies -->
+                <section class="home-feed-row" id="home-row-movies">
+                    <div class="home-row-header">
+                        <div class="home-row-title-box">
+                            <span class="home-row-badge amber">Filmes</span>
+                            <h3>Em Alta no Cinema</h3>
                         </div>
-                        <div class="utility-text-box">
-                            <h4>Dicas de Bloqueador de Anúncios & DNS</h4>
-                            <p>Saiba como assistir aos servidores sem pop-ups no PC, Celular e Smart TV.</p>
-                        </div>
-                    </button>
+                        <button class="btn-row-see-all" data-target-tab="movies" type="button">Explorar Filmes &rarr;</button>
+                    </div>
+                    <div class="home-row-scroller" id="home-track-movies"></div>
+                </section>
 
-                    <button id="btn-home-team-shortcut" class="home-utility-card" type="button" aria-label="Escolher clube de futebol favorito">
-                        <div class="utility-icon-box football-accent">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polygon points="12 6 16.5 9.5 15 14.5 9 14.5 7.5 9.5 12 6"></polygon>
-                            </svg>
+                <!-- Row: Trending Series -->
+                <section class="home-feed-row" id="home-row-series">
+                    <div class="home-row-header">
+                        <div class="home-row-title-box">
+                            <span class="home-row-badge ruby">Séries</span>
+                            <h3>Séries Mais Maratonadas</h3>
                         </div>
-                        <div class="utility-text-box">
-                            <h4>Personalizar Meu Time de Futebol</h4>
-                            <p>Defina seu clube para ver a agenda de jogos e onde assistir na grade de TV.</p>
+                        <button class="btn-row-see-all" data-target-tab="series" type="button">Explorar Séries &rarr;</button>
+                    </div>
+                    <div class="home-row-scroller" id="home-track-series"></div>
+                </section>
+
+                <!-- Row: Top Anime Masterpieces -->
+                <section class="home-feed-row" id="home-row-animes">
+                    <div class="home-row-header">
+                        <div class="home-row-title-box">
+                            <span class="home-row-badge magenta">Animes</span>
+                            <h3>Obras-Primas dos Animes</h3>
                         </div>
+                        <button class="btn-row-see-all" data-target-tab="animes" type="button">Explorar Animes &rarr;</button>
+                    </div>
+                    <div class="home-row-scroller" id="home-track-animes"></div>
+                </section>
+
+                <!-- Row: Live Channels Highlights (Placed below all on-demand catalogs) -->
+                <section class="home-feed-row" id="home-row-channels">
+                    <div class="home-row-header">
+                        <div class="home-row-title-box">
+                            <span class="home-row-badge emerald">Ao Vivo</span>
+                            <h3>Canais em Destaque</h3>
+                        </div>
+                        <button class="btn-row-see-all" data-target-tab="tv" type="button">Ver Todos os Canais &rarr;</button>
+                    </div>
+                    <div class="home-row-scroller" id="home-track-channels"></div>
+                </section>
+            </div>
+
+            <!-- Discreet Utility Strip -->
+            <footer class="home-footer-strip">
+                <div class="home-footer-actions">
+                    <button id="btn-home-adblock-shortcut" class="footer-utility-link" type="button" aria-label="Aviso e configuração do Bloqueador de Anúncios">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <polyline points="9 12 11 14 15 10"></polyline>
+                        </svg>
+                        <span>Dicas de Bloqueador de Anúncios & DNS</span>
+                    </button>
+                    <span class="footer-separator">•</span>
+                    <button id="btn-home-team-shortcut" class="footer-utility-link" type="button" aria-label="Escolher clube de futebol favorito">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="12 6 16.5 9.5 15 14.5 9 14.5 7.5 9.5 12 6"></polygon>
+                        </svg>
+                        <span>Personalizar Meu Clube de Futebol</span>
                     </button>
                 </div>
-            </section>
+                <div class="home-footer-meta">
+                    <span class="brand-tagline">Tvzinha Online • Cinema, Séries e TV em Alta Definição</span>
+                </div>
+            </footer>
         </div>
     </main>
 
     <!-- View 1: TV Channels Application Layout -->
     <div class="app-layout hidden" id="view-tv">
-        <!-- Mobile Top Navigation Bar (Channels Tab Only) -->
-        <header class="mobile-header">
-            <button id="btn-toggle-menu" class="btn-icon" aria-label="Abrir Menu">
+        <!-- Mobile Top Navigation Bar (Channels Tab Only - Deprecated/Hidden) -->
+        <header class="mobile-header" style="display: none !important;">
+            <button id="btn-toggle-menu" class="btn-icon" aria-label="Abrir Guia Rápido" style="display: none !important;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="3" y1="12" x2="21" y2="12"></line>
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
             </button>
-            <div class="mobile-brand" id="mobile-brand-home" style="cursor: pointer;">
+            <div class="mobile-brand" id="mobile-brand-home" style="display: none !important;">
                 <div class="brand-icon-wrapper mobile-brand-icon">
                     <img src="assets/logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="brand-logo-img-header">
                 </div>
                 <span class="brand-title">Tvzinha <span>Online</span></span>
             </div>
+            <button id="btn-mobile-drawer-toggle" class="btn-icon" aria-label="Abrir Guia Rápido" title="Guia Rápido" style="display: none !important;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+            </button>
         </header>
 
-        <!-- Overlay Backdrop for Mobile Menu -->
+        <!-- Overlay Backdrop for Mobile Menu & Quick Drawer -->
         <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
-        <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="sidebar">
-            <div class="sidebar-header">
+        <!-- Channels Quick Drawer (Slide-out Glass Panel) -->
+        <aside id="sidebar" class="sidebar channels-quick-drawer" aria-label="Guia Rápido de Canais">
+            <div class="sidebar-header drawer-header">
                 <div class="brand" id="brand-home" style="cursor: pointer;" title="Tela inicial dos canais">
                     <div class="brand-icon-wrapper">
                         <img src="assets/logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="brand-logo-img-header">
                     </div>
                     <div class="brand-text">
-                        <h2>Tvzinha <span>Online</span></h2>
-                        <span class="brand-tag">HD Stream</span>
+                        <h2>Guia <span>Rápido</span></h2>
+                        <span class="brand-tag">Ao Vivo</span>
                     </div>
                 </div>
-                <button id="btn-close-menu" class="btn-icon close-mobile" aria-label="Fechar Menu">
+                <button id="btn-close-menu" class="btn-icon close-mobile" aria-label="Fechar Guia Rápido">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -401,26 +381,20 @@
                 </button>
             </div>
 
-            <!-- Live Search Box -->
+            <!-- Live Search Box inside Drawer -->
             <div class="search-container">
                 <div class="search-input-wrapper">
                     <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <input type="text" id="search-input" placeholder="Buscar canal ou estado..." autocomplete="off">
+                    <input type="text" id="search-input" placeholder="Filtrar canal no guia..." autocomplete="off">
                     <button id="btn-clear-search" class="btn-clear hidden" aria-label="Limpar busca">&times;</button>
                 </div>
             </div>
 
-            <!-- Category Filter Pills -->
+            <!-- Category Filter Pills inside Drawer -->
             <div class="filter-pills-container" id="filter-pills">
-                <button class="pill pill-adblock" id="btn-sidebar-adblock" title="Como bloquear anúncios e pop-ups dos players">
-                    <svg class="icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        <polyline points="9 12 11 14 15 10"></polyline>
-                    </svg>Sem Anúncios
-                </button>
                 <button class="pill active" data-category="all">Todos</button>
                 <button class="pill" data-category="favs">
                     <svg class="icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -429,9 +403,8 @@
                 </button>
             </div>
 
-            <!-- Channels Accordion / Navigation List -->
+            <!-- Channels Dynamic Navigation List -->
             <nav class="channels-nav" id="channels-list" aria-label="Lista de Canais">
-                <!-- Skeleton Loaders -->
                 <div class="skeleton-wrapper">
                     <div class="skeleton skeleton-category"></div>
                     <div class="skeleton skeleton-channel"></div>
@@ -440,110 +413,180 @@
                     <div class="skeleton skeleton-channel"></div>
                 </div>
             </nav>
-            <!-- Resizer Handle for drag-to-resize -->
-            <div id="sidebar-resizer" class="sidebar-resizer" title="Arraste para redimensionar o menu lateral"></div>
         </aside>
 
-        <!-- Main Content Area -->
-        <main id="main-content" class="main-content">
-            <!-- Dynamic content rendered by the channels module (Welcome or Player View) -->
+        <!-- Main Content Area (Full Width Immersive Catalog) -->
+        <main id="main-content" class="main-content full-width-channels">
             <div id="content-display" class="content-display">
-                <!-- Initial Welcome Screen -->
-                <div class="welcome-screen">
-                    <div class="welcome-hero">
-                        <div class="welcome-hero-text">
-                            <button class="hero-badge hero-badge-btn" id="btn-hero-adblock" title="Como bloquear anúncios e pop-ups dos players" aria-label="Aviso e configuração de Bloqueador de Anúncios">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                    <polyline points="9 12 11 14 15 10"></polyline>
-                                </svg>
-                                <span>Sem Anúncios</span>
-                            </button>
-                            <h1 class="hero-title">Escolha um canal para assistir agora</h1>
-                            <p class="hero-subtitle">
-                                Acesse transmissões de alta estabilidade de <strong>TV Aberta</strong> e <strong>Esportes</strong> com múltiplos servidores disponíveis.
+                <!-- Initial Welcome / Discovery Screen -->
+                <div class="welcome-screen" id="channels-welcome-screen">
+                    <!-- Channels Cinematic Hero Showcase -->
+                    <section class="channels-hero" id="channels-hero">
+                        <div class="channels-hero-bg">
+                            <div class="channels-hero-gradient" id="channels-hero-gradient"></div>
+                            <div class="channels-hero-glow" id="channels-hero-glow"></div>
+                        </div>
+                        <div class="channels-hero-content">
+                            <div class="channels-hero-top-row">
+                                <div class="channels-hero-badge">
+                                    <span class="live-dot pulse-emerald"></span>
+                                    <span id="channels-hero-badge-text">AO VIVO AGORA</span>
+                                </div>
+                                <div class="movies-hero-nav channels-hero-nav" id="channels-hero-nav">
+                                    <button id="btn-channels-hero-prev" class="btn-hero-nav-arrow" aria-label="Canal anterior" title="Canal anterior" type="button">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <div id="channels-hero-dots" class="hero-dots-container movies-hero-dots"></div>
+                                    <button id="btn-channels-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo canal" title="Próximo canal" type="button">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="channels-hero-brand-box">
+                                <img id="channels-hero-logo" class="channels-hero-logo" src="" alt="" style="display:none;">
+                                <h1 class="channels-hero-title" id="channels-hero-title">Globo HD</h1>
+                            </div>
+                            <p class="channels-hero-meta" id="channels-hero-meta">Transmissão Oficial • TV Aberta</p>
+                            <p class="channels-hero-overview" id="channels-hero-overview">
+                                A maior rede de televisão aberta do país com programação ao vivo, jornalismo de ponta e entretenimento.
                             </p>
-                        </div>
-                        <div class="welcome-hero-emblem" aria-hidden="true" title="Tvzinha Online">
-                            <img src="assets/logos/fav/icon-detailed.svg" alt="Tvzinha Logo" class="hero-emblem-img">
-                        </div>
-                    </div>
-
-                    <!-- Multi-Team Upcoming Matches Section -->
-                    <section class="vasco-matches-section" id="vasco-matches-section">
-                        <div class="section-heading" id="matches-section-heading">
-                            <div class="matches-heading-left">
-                                <span class="matches-team-badge" id="matches-team-badge">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                            <div class="channels-hero-actions">
+                                <button class="btn-channels-hero-play" id="btn-channels-hero-watch" type="button">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
                                     </svg>
-                                </span>
-                                <div>
-                                    <h3 id="matches-section-title">Próximos Jogos de Futebol</h3>
-                                    <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos de futebol (via ge.globo)</span>
-                                </div>
-                            </div>
-                            <div class="matches-heading-right" id="matches-heading-right">
-                                <button id="btn-change-team" class="btn-change-team" aria-label="Escolher ou trocar time" title="Alterar time favorito">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="17 1 21 5 17 9"></polyline>
-                                        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-                                        <polyline points="7 23 3 19 7 15"></polyline>
-                                        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-                                    </svg>
-                                    <span id="btn-change-team-label">Escolher Time</span>
+                                    <span>Assistir Transmissão</span>
                                 </button>
-                            </div>
-                        </div>
-
-                        <div class="matches-carousel-wrapper" id="matches-carousel-wrapper">
-                            <div class="matches-grid matches-carousel" id="vasco-matches-grid" tabindex="0" role="region" aria-label="Carrossel de próximos jogos">
-                                <div class="match-card skeleton-match-card">
-                                    <div class="skeleton-match-line short"></div>
-                                    <div class="skeleton-match-duel"></div>
-                                    <div class="skeleton-match-line"></div>
-                                </div>
-                                <div class="match-card skeleton-match-card">
-                                    <div class="skeleton-match-line short"></div>
-                                    <div class="skeleton-match-duel"></div>
-                                    <div class="skeleton-match-line"></div>
-                                </div>
-                                <div class="match-card skeleton-match-card">
-                                    <div class="skeleton-match-line short"></div>
-                                    <div class="skeleton-match-duel"></div>
-                                    <div class="skeleton-match-line"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="matches-carousel-footer" id="matches-carousel-footer">
-                            <div class="matches-nav-arrows" id="matches-nav-arrows">
-                                <button id="btn-matches-prev" class="btn-matches-arrow" aria-label="Jogos anteriores" title="Ver jogos anteriores" disabled>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="15 18 9 12 15 6"></polyline>
+                                <button class="btn-channels-hero-drawer" id="btn-channels-hero-drawer" type="button">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="9" y1="3" x2="9" y2="21"></line>
                                     </svg>
-                                </button>
-                                <button id="btn-matches-next" class="btn-matches-arrow" aria-label="Próximos jogos" title="Ver mais jogos">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="9 18 15 12 9 6"></polyline>
-                                    </svg>
+                                    <span>Guia Rápido de Canais</span>
                                 </button>
                             </div>
                         </div>
                     </section>
 
-                    <!-- Channel Visual Grid with Logos -->
-                    <div class="quick-channels-section">
-                        <div class="section-heading">
-                            <h3>Todos os Canais</h3>
-                            <span class="section-hint">Clique no card para abrir o player</span>
+                    <!-- Channels Navigation Toolbar (Category Pills + Spotlight Search) -->
+                    <div class="movies-nav-toolbar channels-nav-toolbar" id="channels-nav-toolbar">
+                        <nav class="movies-category-pills channels-pills-bar" id="channels-pills-bar" aria-label="Navegar por Canais">
+                            <button class="movie-pill channel-cat-pill active" data-category="all" type="button">Todos</button>
+                            <button class="movie-pill channel-cat-pill" data-category="favs" type="button">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                                <span>Favoritos</span>
+                            </button>
+                            <button class="movie-pill channel-cat-pill" data-category="Esportes" type="button">Esportes</button>
+                            <button class="movie-pill channel-cat-pill" data-category="TV Aberta" type="button">TV Aberta</button>
+                            <button class="movie-pill channel-cat-pill" data-category="Filmes e Séries" type="button">Filmes & Séries</button>
+                            <button class="movie-pill channel-cat-pill" data-category="Infantil" type="button">Infantil</button>
+                            <button class="movie-pill channel-cat-pill" data-category="Notícias" type="button">Notícias</button>
+                            <button class="movie-pill channel-cat-pill" data-category="Variedades" type="button">Variedades</button>
+                        </nav>
+                        <div class="spotlight-search-container pills-search-box channels-search-box" id="channels-search-container" title="Clique para buscar canal">
+                            <svg class="spotlight-icon pills-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <input type="text" id="channels-spotlight-input" class="spotlight-input pills-search-input" placeholder="Buscar canal..." autocomplete="off">
+                            <button id="btn-clear-channels-search" class="spotlight-clear hidden" aria-label="Limpar busca">&times;</button>
                         </div>
-                        <div class="quick-grid" id="quick-grid">
-                            <!-- Populated dynamically with rich cards and logos -->
+                    </div>
+
+                    <!-- Discovery Feed (Categorized Horizontal Rows) -->
+                    <div class="channels-discovery-feed" id="channels-discovery-feed">
+                        <!-- Multi-Team Upcoming Matches Section -->
+                        <section class="vasco-matches-section" id="vasco-matches-section">
+                            <div class="section-heading" id="matches-section-heading">
+                                <div class="matches-heading-left">
+                                    <span class="matches-team-badge" id="matches-team-badge">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <h3 id="matches-section-title">Próximos Jogos de Futebol</h3>
+                                        <span class="section-hint" id="matches-section-hint">Agenda atualizada dos confrontos de futebol (via ge.globo)</span>
+                                    </div>
+                                </div>
+                                <div class="matches-heading-right" id="matches-heading-right">
+                                    <button id="btn-change-team" class="btn-change-team" aria-label="Escolher ou trocar time" title="Alterar time favorito">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="17 1 21 5 17 9"></polyline>
+                                            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                                            <polyline points="7 23 3 19 7 15"></polyline>
+                                            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                                        </svg>
+                                        <span id="btn-change-team-label">Escolher Time</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="matches-carousel-wrapper" id="matches-carousel-wrapper">
+                                <div class="matches-grid matches-carousel" id="vasco-matches-grid" tabindex="0" role="region" aria-label="Carrossel de próximos jogos">
+                                    <div class="match-card skeleton-match-card">
+                                        <div class="skeleton-match-line short"></div>
+                                        <div class="skeleton-match-duel"></div>
+                                        <div class="skeleton-match-line"></div>
+                                    </div>
+                                    <div class="match-card skeleton-match-card">
+                                        <div class="skeleton-match-line short"></div>
+                                        <div class="skeleton-match-duel"></div>
+                                        <div class="skeleton-match-line"></div>
+                                    </div>
+                                    <div class="match-card skeleton-match-card">
+                                        <div class="skeleton-match-line short"></div>
+                                        <div class="skeleton-match-duel"></div>
+                                        <div class="skeleton-match-line"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="matches-carousel-footer" id="matches-carousel-footer">
+                                <div class="matches-nav-arrows" id="matches-nav-arrows">
+                                    <button id="btn-matches-prev" class="btn-matches-arrow" aria-label="Jogos anteriores" title="Ver jogos anteriores" disabled>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <button id="btn-matches-next" class="btn-matches-arrow" aria-label="Próximos jogos" title="Ver mais jogos">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Categorized Horizontal Tracks Container -->
+                        <div id="channels-category-rows" class="channels-category-rows"></div>
+                    </div>
+
+                    <!-- Explore Full Grid View (Activated upon Search or Category Filter) -->
+                    <div class="channels-explore-view hidden" id="channels-explore-view">
+                        <div class="channels-explore-header">
+                            <div>
+                                <h3 id="channels-explore-title">Todos os Canais</h3>
+                                <span class="channels-explore-subtitle" id="channels-explore-count">Exibindo canais disponíveis</span>
+                            </div>
+                            <button id="btn-channels-back-feed" class="btn-channels-secondary" type="button">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
+                                </svg>
+                                <span>Voltar aos Destaques</span>
+                            </button>
                         </div>
+                        <div class="quick-grid" id="quick-grid"></div>
                     </div>
                 </div>
             </div>
@@ -1917,7 +1960,7 @@
     <script src="https://cdn.jsdelivr.net/npm/artplayer@5.1.7/dist/artplayer.js" integrity="sha384-LjKKmyj09xPIr/srcAiLFrPjAMi28Sz1pQNHGLknpHAebKxQXQb/UtuCeMBPbl2P" crossorigin="anonymous"></script>
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261014_1156"></script>
+    <script type="module" src="assets/js/main.js?v=20261017_0211"></script>
 </body>
 
 </html>
