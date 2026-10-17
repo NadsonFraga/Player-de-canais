@@ -52,5 +52,6 @@ Project documentation folder (replaces the former `docs/`). When resuming work, 
 | 2026-10-12 | [tab-reset](features/2026-10-12-tab-reset/) | done |
 | 2026-10-13 | [no-swipe-seek](features/2026-10-13-no-swipe-seek/) | done |
 | 2026-10-14 | [security-hardening](features/2026-10-14-security-hardening/) | done |
+| 2026-10-15 | [home-and-channels-redesign](features/2026-10-15-home-and-channels-redesign/) | done |
 
 Folders before 2026-10-08 were dated from their summaries and commit history; older ones may lack a `summary.md`.
