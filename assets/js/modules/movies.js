@@ -23,6 +23,7 @@ import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261017_0107';
 import { getUiSvg } from '../core/icons.js?v=20261017_0107';
 import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261017_0107';
 import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261017_0107';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261017_0107';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -189,13 +190,19 @@ function createMovieCardElement(movie) {
     const releaseYear = (movie.release_date || '').substring(0, 4) || 'N/A';
     const rating = movie.vote_average ? movie.vote_average.toFixed(1) : '—';
 
+    const safeTitle = escapeHtml(movie.title || 'Sem título');
+    const safeTitleAttr = escapeAttr(movie.title || 'Sem título');
+    const safePoster = escapeAttr(posterUrl);
+    const safeYear = escapeHtml(releaseYear);
+    const safeRating = escapeHtml(rating);
+
     card.innerHTML = `
-        <img class="movie-poster-img" src="${posterUrl}" alt="${movie.title}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
         <div class="movie-poster-overlay">
-            <h4 class="movie-card-title" title="${movie.title}">${movie.title}</h4>
+            <h4 class="movie-card-title" title="${safeTitleAttr}">${safeTitle}</h4>
             <div class="movie-card-meta">
-                <span>${releaseYear}</span>
-                <span class="movie-card-rating">★ ${rating}</span>
+                <span>${safeYear}</span>
+                <span class="movie-card-rating">★ ${safeRating}</span>
             </div>
         </div>
     `;
@@ -421,7 +428,7 @@ function renderHeroBanner(movie) {
     if (genresEl && movie.genre_ids && Array.isArray(movie.genre_ids)) {
         genresEl.innerHTML = movie.genre_ids.slice(0, 3).map(id => {
             const genreName = TMDB_GENRES[id];
-            return genreName ? `<span class="movies-genre-tag">${genreName}</span>` : '';
+            return genreName ? `<span class="movies-genre-tag">${escapeHtml(genreName)}</span>` : '';
         }).join('');
     }
 
@@ -476,10 +483,15 @@ function populateDirectorsTrack(trackId, directors) {
         card.setAttribute("role", "button");
         card.setAttribute("aria-label", `Diretor: ${director.name}`);
 
+        const safeName = escapeHtml(director.name || '');
+        const safeNameAttr = escapeAttr(director.name || '');
+        const safePhoto = escapeAttr(director.photo || 'assets/logos/fav/icon-detailed.svg');
+        const safeKnownFor = escapeHtml(director.knownFor || '');
+
         card.innerHTML = `
-            <img class="director-avatar" src="${director.photo}" alt="${director.name}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
-            <h4 class="director-name">${director.name}</h4>
-            <span class="director-meta">${director.knownFor}</span>
+            <img class="director-avatar" src="${safePhoto}" alt="${safeNameAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+            <h4 class="director-name">${safeName}</h4>
+            <span class="director-meta">${safeKnownFor}</span>
         `;
 
         card.addEventListener("click", () => openCollectionView('director', director));
@@ -509,12 +521,17 @@ function populateStudiosTrack(trackId, studios) {
         card.setAttribute("role", "button");
         card.setAttribute("aria-label", `Estúdio: ${studio.name}`);
 
+        const safeName = escapeHtml(studio.name || '');
+        const safeNameAttr = escapeAttr(studio.name || '');
+        const safeLogo = escapeAttr(studio.logo || '');
+        const safeBadge = escapeHtml(studio.badge || studio.name || '');
+
         card.innerHTML = `
             <div class="studio-logo-wrapper">
-                <img class="studio-logo-img" src="${studio.logo}" alt="${studio.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                <span class="studio-fallback-name" style="display:none;">${studio.badge || studio.name}</span>
+                <img class="studio-logo-img" src="${safeLogo}" alt="${safeNameAttr}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                <span class="studio-fallback-name" style="display:none;">${safeBadge}</span>
             </div>
-            <h4 class="studio-name">${studio.name}</h4>
+            <h4 class="studio-name">${safeName}</h4>
         `;
 
         card.addEventListener("click", () => openCollectionView('studio', studio));
@@ -730,8 +747,8 @@ export async function executeFilteredCatalogSearch(page = 1) {
         } else {
             exploreActiveTags.innerHTML = tags.map(t => `
                 <span class="active-filter-tag">
-                    <span>${t.label}</span>
-                    <button type="button" class="btn-remove-tag" data-tag-type="${t.type}" aria-label="Remover filtro">&times;</button>
+                    <span>${escapeHtml(t.label)}</span>
+                    <button type="button" class="btn-remove-tag" data-tag-type="${escapeAttr(t.type)}" aria-label="Remover filtro">&times;</button>
                 </span>
             `).join('');
 
@@ -1221,9 +1238,10 @@ export function openMovieDetailsModal(movie, autoplayFirstServer = false) {
         MOVIE_SERVERS.forEach((server, idx) => {
             const btn = document.createElement("button");
             btn.className = server.isNative ? "btn-movie-server native-direct" : "btn-movie-server";
+            const safeServerName = escapeHtml(server.name);
             btn.innerHTML = server.isNative 
-                ? `<span>${server.name}</span>`
-                : `<span>${server.name}</span><span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.85;">Reproduzir</span>`;
+                ? `<span>${safeServerName}</span>`
+                : `<span>${safeServerName}</span><span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.85;">Reproduzir</span>`;
             btn.addEventListener("click", () => selectMovieServer(server, btn));
             serversGrid.appendChild(btn);
 
