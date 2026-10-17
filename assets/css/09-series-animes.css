@@ -700,7 +700,7 @@
 /* Mobile Responsive Adjustments */
 @media (max-width: 768px) {
     .view-home {
-        padding: 0 0 44px 0;
+        padding: 48px 0 44px 0;
     }
 
     .home-container {
@@ -709,10 +709,12 @@
     }
 
     .home-hero-showcase {
-        min-height: 420px;
-        max-height: 460px;
-        padding: 56px 18px 22px 18px;
-        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        min-height: 440px;
+        max-height: none;
+        padding: 20px 16px 20px 16px;
+        margin-top: 0 !important;
+        margin-bottom: 16px;
+        border-radius: 0;
     }
 
     .home-hero-title {

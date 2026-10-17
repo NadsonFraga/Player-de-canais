@@ -455,5 +455,22 @@ Eliminate remaining visual inconsistencies between the Channels tab and the cata
   - `tools/player_touch_check.mjs`: 17/17 PASS.
   - Mobile verification suite: All 7 targeted checks passed at 390px viewport.
 
-
-
+### 2026-10-17 - Phase 11 (Completed)
+- **Home Hero Mobile Clearance & Nav Positioning:**
+  - Added `.view-home` to the mobile top spacing rule (`padding-top: 48px;`) in `08-responsive-tv-movies.css` and `09-series-animes.css`.
+  - Unified `#home-hero-showcase` mobile styling with `.movies-hero` (`padding: 20px 16px; margin-top: 0 !important;`).
+  - Hero carousel navigation (`.movies-hero-nav`) now sits comfortably below the floating navigation capsule (`top: 60px` viewport relative), completely visible without being clipped behind the capsule. The backdrop starts at `48px`, preserving full visibility of hero posters and artwork without edge cropping.
+- **Channels Hero Live Badge & Controls Alignment:**
+  - Grouped `.channels-hero-badge` and `.channels-hero-nav` inside a dedicated `.channels-hero-top-row` flex container in both `index.html` and `channels.js`.
+  - On mobile (`<=768px`), both elements align horizontally on the exact same center baseline (`align-items: center; justify-content: space-between; deltaY: 0.007px`), preventing crooked offsets and overlapping on all screen widths. On desktop, `.channels-hero-nav` anchors to the banner's bottom-right as standard.
+- **Pure SVG Star Favorite Button in TV Player:**
+  - Diagnosed and fixed broken CSS syntax block immediately preceding `.btn-card-fav` in `03-channels.css` that caused browsers to drop author styles and fall back to the native OS button appearance (producing an unwanted gray/white border and box).
+  - Explicitly styled `#btn-fav-current` with zero border, zero background, and zero box-shadow (`background: transparent !important; border: none !important; box-shadow: none !important;`).
+  - The TV Player favorite button is now a 100% borderless, pure floating star icon matching channel cards (muted outline when idle, warm gold `#fbbf24` when active).
+- **Verification Results:**
+  - `python tools/check_js.py`: 0 missing imports.
+  - `python tools/bump_version.py --check`: Clean version stamp `20261017_0107` verified across 13 modules.
+  - `tools/channels_redesign_check.mjs` (Chrome): 10/10 PASS.
+  - `tools/channels_redesign_check.mjs` (Edge): 10/10 PASS.
+  - `tools/player_touch_check.mjs`: 17/17 PASS.
+  - Mobile geometry checks (390px): Home hero nav cleared from capsule (`navOverlapsCapsule: false`), Channels hero badge/nav alignment delta: `0.0078px` (`overlaps: false`), Favorite button: `border: 0px`, `background: transparent`.
