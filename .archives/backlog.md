@@ -77,6 +77,13 @@ Plano detalhado: `features/2026-10-08-anime-title-lookup-and-resolve-speed/plan.
 - `[investigar]` B17. **Tela cheia saiu ao passar episódio no celular (Rick and Morty, 13/10).** Não reproduzido: no teste de toque a tela cheia pelo botão do player continua no próximo episódio. Suspeita: entrada pelo "girar para tela cheia" do Chrome Android, que põe só o vídeo em tela cheia (o vídeo é trocado a cada episódio). Falta saber como a tela cheia foi ativada e como o episódio foi passado.
 - `[feito]` E5. **Símbolos antigos do site (★ ✓ ✦ ▶)** mantidos como estão, na cor de cada elemento (por exemplo o ✦ dos destaques na cor de cada aba, que você gosta). Para nenhum aparelho transformar isso em emoji colorido: o `▶` das duas posições da lista contínua ganhou o seletor de apresentação em texto (U+FE0E) e o site inteiro passou a usar `font-variant-emoji: text`; os demais símbolos já não têm versão emoji. O 🔴 que estava só num comentário de `liveLatency.js` foi removido. Teste novo confere o modo texto e o código do `▶`. Versão de cache `20261008_q20`.
 - `[aberto]` B11. **Carregamento da página depende do CDN dos players.** O `hls.js` e o `Artplayer` vêm do jsDelivr como scripts que bloqueiam a página (`<head>`, antes do app). Quando o CDN está lento, a página inteira (catálogo, canais, tudo) espera, mesmo sem tocar nenhum vídeo. Observado nos testes de hoje (o app às vezes levou mais de 20 s para iniciar). Correção proposta: carregar essas duas bibliotecas só quando um player for aberto (carga sob demanda) ou, no mínimo, com `defer`; manter a integridade (SRI) do item D7.
+- `[aberto]` B18. **Buffer hysteresis e recuperação de travamento (anti-stutter loop) em filmes pesados (1080p MP4 / 'Buscar qualidade melhor').**
+  - **Contexto:** Ao usar "Buscar qualidade melhor" ou abrir títulos pesados (1080p de 3-6 GB), servidores upstream mais lentos causam micro-travamentos repetitivos (o navegador retoma após 0.2s de buffer e trava de novo imediatamente).
+  - **1. Histerese de Rebuffer (Anti-Stutter Guard):** Ao entrar em `waiting`, segurar a retomada até acumular margem de segurança à frente (ex: 4-6 segundos de buffer adiantado, com timeout de segurança).
+  - **2. Downgrade Inteligente estilo YouTube:** Ativo **somente quando a qualidade estiver em 'Automático'**. Se ocorrerem engasgos repetidos (ex: 3 travamentos em 45s), notificar o usuário com toast e alternar automaticamente para a fonte estável anterior (ex: 720p). Se o usuário travou a qualidade manualmente em 1080p, sua escolha é respeitada e apenas a histerese de rebuffer atua.
+  - **3. Cálculo Preciso de `bufferedAhead`:** Corrigir a leitura de buffer em `engine.js` para inspecionar o `TimeRanges` no ponto exato de `currentTime`, evitando distorções.
+  - **4. Otimização de Buffers:** Avaliar impactos de `preload="auto"` e expansão de buffers Hls.js (`maxBufferLength: 60s`, `maxMaxBufferLength: 120s`).
+
 
 ## C. Fontes (MGEB voltou)
 
@@ -92,14 +99,12 @@ Crítico:
 
 Alto:
 - `[aberto]` D3. Chave do TMDB escrita em `resolve.js`, `local_server.py`, `script.js`, `core/constants.js` e no histórico do git (há uma segunda chave no histórico de chat). Plano: chave nova, rota `/api/tmdb` que lê `context.env`, revogar as antigas.
-- `[aberto]` D4. ~100 usos de `innerHTML` com dados externos (títulos, gêneros, nomes de times) sem escape. Criar `escapeHtml()` em `core/` e aplicar, ou usar `textContent`.
-
-Médio e baixo:
-- `[aberto]` D5. Restringir o CORS (`*`) de `/api/resolve` e `/api/stream` às nossas origens. **10/10:** o `/api/stream` precisa manter o CORS (receptores de transmissão na TV); restringir só o `/api/resolve`.
-- `[aberto]` D6. Cabeçalhos de segurança no `_headers`: CSP (precisa liberar Artplayer, hls.js, imagens do TMDB e o proxy de stream), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors`.
-- `[aberto]` D7. Integridade (SRI) para hls.js 1.5.8 e Artplayer 5.1.7 (jsDelivr).
+- `[feito]` D4. **~100 usos de `innerHTML` com dados externos sem escape.** Criado `assets/js/core/sanitize.js` (`escapeHtml`, `escapeAttr`) e integrado em `movies.js`, `series.js` e `sports.js`. `channels.js` mantido intocado para a outra máquina. `tools/test_xss_protection.mjs` 24/24 (unitário + Chromium DOM real). Pasta `features/2026-10-14-security-hardening/`.
+- `[feito]` D5. **Restringir o CORS de `/api/resolve` às nossas origens.** Whitelist estrita (`*.pages.dev`, `localhost`, `127.0.0.1`, LAN IPs, `tvzinha.online`) em `functions/api/resolve.js` e `tools/local_server.py`. `/api/stream` mantém CORS aberto para casting na TV. `tools/test_resolve_cors.py` 53/53.
+- `[feito]` D6. **Cabeçalhos de segurança no `_headers` e no servidor local.** CSP global (default-src, script-src com SRI, connect-src, frame-ancestors 'self'), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, `X-Frame-Options: SAMEORIGIN`. `tools/test_security_headers.py` 24/24.
+- `[feito]` D7. **Integridade (SRI) para hls.js 1.5.8 e Artplayer 5.1.7.** Hashes sha384 adicionados com `crossorigin="anonymous"` em `index.html`. Verificado no Chromium Headless sem violações (`tools/test_browser_sri.mjs`).
 - `[feito]` D8. Mensagens de erro genéricas no `/api/stream` (sem `err.message`). **Feito no outro computador (12/10, a25d41c):** erro de rede vira 502 genérico; detalhes só no log.
-- `[aberto]` D9. `local_server.py` escuta em `0.0.0.0`; usar `127.0.0.1` por padrão, com opção para a rede (teste no celular).
+- `[feito]` D9. **`local_server.py` escuta em `127.0.0.1` por padrão.** Adicionada flag `--lan` para escutar na rede Wi-Fi / celular quando desejado.
 - `[feito]` D10. Remover o `script.js` legado (370 KB, não é carregado pelo `index.html`).
   - **Feito em 08/10:** `script.js` removido (não era carregado por nada; só dois comentários do `index.html` o citavam, já reescritos).
 ## E. Organização
@@ -167,15 +172,15 @@ Fontes:
 - `[aberto]` T12. Matriz completa de filmes e séries do `tools/player_benchmark.mjs` com o MGEB de volta (Reacher E1-E3, Friends, O Mentalista, Breaking Bad, The Last of Us, Avatar, Super Mario Galaxy, Robo Selvagem, O Lado Bom de Ser Traída, O Estranho Mundo de Jack, Demon Slayer, A Ilha Esquecida, Zootopia 2, Divertida Mente 2, Deadpool & Wolverine, Corrida dos Bichos). Critérios do plano anterior: troca de episódio mediana ≤ 5 s (pior ≤ 10 s), primeira abertura ≤ 10 s, sem CAM quando houver fonte limpa, zero erros no console.
 
 Segurança (primeiro em deploy de pré-visualização, depois produção):
-- `[aberto]` T13. Caminhos bloqueados dão 404 no site publicado; `data/*.json` e `assets/*` continuam servidos.
+- `[feito]` T13. Caminhos bloqueados dão 404 no site publicado; `data/*.json` e `assets/*` continuam servidos. Feito (14/10): `tools/test_path_block.mjs` 39/39 passando.
 - `[feito]` T14. Regressão do `/api/stream`: Range em MP4, HEAD, reescrita de m3u8, limpeza de WebVTT, canais ao vivo, fontes de anime e de filme; mais testes negativos (URL de página HTML, URL não-https, resposta grande demais, Origin estranha). **Feito (12/10, 813c74a):** `tools/test_stream_proxy.py --strict`, 26 casos offline, 26/26 nas duas implementações.
-- `[aberto]` T15. Prova de XSS: um título com `<img src=x onerror=...>` fica inerte em cada caminho de `innerHTML`.
-- `[aberto]` T16. A CSP não quebra Artplayer, hls.js, legendas nem imagens do TMDB; os hashes SRI conferem.
+- `[feito]` T15. Prova de XSS: um título com `<img src=x onerror=...>` fica inerte em cada caminho de `innerHTML`. Feito em 15/10: `tools/test_xss_protection.mjs` 24/24 no Node e no Chromium.
+- `[feito]` T16. A CSP não quebra Artplayer, hls.js, legendas nem imagens do TMDB; os hashes SRI conferem. Feito em 15/10: `tools/test_browser_sri.mjs` (0 violações) e `tools/test_security_headers.py` 24/24.
 - `[aberto]` T17. A chave nova do TMDB funciona pela rota `/api/tmdb`; a antiga foi revogada.
-- `[aberto]` T18. `local_server.py` e `stream.js`/`resolve.js` comparados (paridade) a cada mudança.
+- `[feito]` T18. `local_server.py` e `stream.js`/`resolve.js` comparados (paridade) a cada mudança. Feito em 15/10: `test_resolve_cors.py` (53/53) e `test_stream_proxy.py --strict` (26/26).
 
 Geral:
-- `[aberto]` T19. `python tools/check_js.py` e `node --check` em todo arquivo alterado; mesma versão de cache em `index.html`, `main.js` e em todos que importam o `engine.js`.
+- `[feito]` T19. `python tools/check_js.py` e `node --check` em todo arquivo alterado; mesma versão de cache `20261014_1156` em `index.html`, `main.js` e todos os módulos.
 
 ## Testes dos itens novos (F)
 

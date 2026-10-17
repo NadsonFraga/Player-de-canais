@@ -15,6 +15,7 @@ import time
 import urllib.parse
 import urllib.request
 import urllib.error
+import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
@@ -1133,6 +1134,33 @@ def fetch_upstream(target_url, referer, origin, range_header=None, accept=None):
     return None, url
 
 
+def is_allowed_origin(origin: str) -> bool:
+    """Checks whether an Origin header is permitted to access /api/resolve (D5)."""
+    if not origin:
+        return True
+    try:
+        parsed = urllib.parse.urlparse(origin)
+        scheme = (parsed.scheme or "").lower()
+        if scheme not in ("http", "https"):
+            return False
+        host = (parsed.hostname or "").lower()
+        if host in ("localhost", "127.0.0.1"):
+            return True
+        if re.match(r"^192\.168\.\d{1,3}\.\d{1,3}$", host):
+            return True
+        if re.match(r"^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$", host):
+            return True
+        if re.match(r"^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$", host):
+            return True
+        if host == "pages.dev" or host.endswith(".pages.dev"):
+            return True
+        if host == "tvzinha.online" or host.endswith(".tvzinha.online"):
+            return True
+        return False
+    except Exception:
+        return False
+
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
@@ -1149,12 +1177,14 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=PROJECT_ROOT, **kwargs)
 
-    def send_cors_headers(self, status=200, content_type="application/json"):
+    def send_cors_headers(self, status=200, content_type="application/json", origin=None):
         self.send_response(status)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        allow_origin = origin if origin else "*"
+        self.send_header("Access-Control-Allow-Origin", allow_origin)
         self.send_header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Range, Content-Type, Accept, User-Agent, Referer, Origin")
         self.send_header("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges")
+        self.send_header("Vary", "Origin")
         if content_type:
             self.send_header("Content-Type", content_type)
 
@@ -1162,10 +1192,25 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
+        already_sent = {h.split(b":", 1)[0].lower() for h in getattr(self, "_headers_buffer", [])}
+        if b"x-content-type-options" not in already_sent:
+            self.send_header("X-Content-Type-Options", "nosniff")
+        if b"referrer-policy" not in already_sent:
+            self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        if b"permissions-policy" not in already_sent:
+            self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()")
+        if b"x-frame-options" not in already_sent:
+            self.send_header("X-Frame-Options", "SAMEORIGIN")
         super().end_headers()
 
     def do_OPTIONS(self):
-        self.send_cors_headers(204, content_type=None)
+        parsed = urllib.parse.urlparse(self.path)
+        origin = self.headers.get("Origin")
+        if parsed.path == "/api/resolve" and not is_allowed_origin(origin):
+            self.send_response(403)
+            self.end_headers()
+            return
+        self.send_cors_headers(204, content_type=None, origin=origin if parsed.path == "/api/resolve" else "*")
         self.send_header("Access-Control-Max-Age", "86400")
         self.end_headers()
 
@@ -1178,7 +1223,13 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             if path == "/api/stream":
                 self.handle_stream(params, is_head=True)
             elif path == "/api/resolve":
-                self.send_cors_headers(200, "application/json; charset=utf-8")
+                origin = self.headers.get("Origin")
+                if not is_allowed_origin(origin):
+                    self.send_response(403)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    return
+                self.send_cors_headers(200, "application/json; charset=utf-8", origin=origin)
                 self.end_headers()
             elif path == "/health":
                 self.send_cors_headers(200, "application/json")
@@ -1199,7 +1250,14 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             params = urllib.parse.parse_qs(parsed.query)
 
             if path == "/api/resolve":
-                self.handle_resolve(params)
+                origin = self.headers.get("Origin")
+                if not is_allowed_origin(origin):
+                    self.send_response(403)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(b'{"success":false,"error":"CORS origin forbidden"}')
+                    return
+                self.handle_resolve(params, origin=origin)
             elif path == "/api/stream":
                 self.handle_stream(params, is_head=False)
             elif path == "/health":
@@ -1226,7 +1284,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             except Exception:
                 pass
 
-    def handle_resolve(self, params):
+    def handle_resolve(self, params, origin=None):
         media_id = params.get("id", [""])[0]
         media_type = params.get("type", ["movie"])[0]
         season = int(params.get("season", ["1"])[0])
@@ -1263,10 +1321,16 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             finally:
                 timings[name] = timings.get(name, 0) + (time.time() - started) * 1000
 
+        if not media_id and not mal_id and not title_param:
+            self.send_cors_headers(400, "application/json; charset=utf-8", origin=origin)
+            self.end_headers()
+            self.wfile.write(b'{"success":false,"error":"Missing required media identifier (id, mal_id, or title)"}')
+            return
+
         if cache_key in RESOLVE_CACHE:
             cached_time, cached_res = RESOLVE_CACHE[cache_key]
             if now - cached_time < 1800:
-                self.send_cors_headers(200, "application/json; charset=utf-8")
+                self.send_cors_headers(200, "application/json; charset=utf-8", origin=origin)
                 self.send_header("Server-Timing", 'cache;desc="hit"')
                 self.end_headers()
                 self.wfile.write(json.dumps(cached_res, ensure_ascii=False).encode("utf-8"))
@@ -1463,12 +1527,12 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         server_timing = ", ".join(f"{k};dur={v:.0f}" for k, v in timings.items())
         if result:
             RESOLVE_CACHE[cache_key] = (now, result)
-            self.send_cors_headers(200, "application/json; charset=utf-8")
+            self.send_cors_headers(200, "application/json; charset=utf-8", origin=origin)
             self.send_header("Server-Timing", server_timing)
             self.end_headers()
             self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
         else:
-            self.send_cors_headers(404, "application/json; charset=utf-8")
+            self.send_cors_headers(404, "application/json; charset=utf-8", origin=origin)
             self.send_header("Server-Timing", server_timing)
             self.end_headers()
             reason = ("anime_not_found" if media_type == "anime" and lang == "sub"
@@ -1621,11 +1685,22 @@ def get_local_ip():
         return "127.0.0.1"
 
 def run():
-    server = ThreadedHTTPServer(("0.0.0.0", PORT), DevAPIHandler)
+    parser = argparse.ArgumentParser(description="Tvzinha Local Development Server")
+    parser.add_argument("--lan", action="store_true", help="Listen on all network interfaces (0.0.0.0) for testing on phones/LAN")
+    parser.add_argument("--port", type=int, default=PORT, help=f"Port to listen on (default: {PORT})")
+    args = parser.parse_args()
+
+    port = args.port
+    host = "0.0.0.0" if args.lan else "127.0.0.1"
+    server = ThreadedHTTPServer((host, port), DevAPIHandler)
     local_ip = get_local_ip()
-    print(f"[Tvzinha Local Server] Running on all interfaces (port {PORT}):")
-    print(f" -> Localhost: http://localhost:{PORT}")
-    print(f" -> Network (Wi-Fi/Mobile): http://{local_ip}:{PORT}")
+    if args.lan:
+        print(f"[Tvzinha Local Server] Running on ALL network interfaces (port {port}):")
+        print(f" -> Localhost: http://localhost:{port}")
+        print(f" -> Network (Wi-Fi/Mobile): http://{local_ip}:{port}")
+    else:
+        print(f"[Tvzinha Local Server] Running on LOCALHOST ONLY (port {port}):")
+        print(f" -> Localhost: http://127.0.0.1:{port} (use --lan to enable phone/network access)")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
