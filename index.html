@@ -122,16 +122,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261016_2358">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261016_2358">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261016_2358">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261016_2358">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261016_2358">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261016_2358">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261016_2358">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261016_2358">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261016_2358">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261016_2358">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261017_0107">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261017_0107">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261017_0107">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261017_0107">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261017_0107">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261017_0107">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261017_0107">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261017_0107">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261017_0107">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261017_0107">
 </head>
 
 <body>
@@ -427,9 +427,24 @@
                             <div class="channels-hero-glow" id="channels-hero-glow"></div>
                         </div>
                         <div class="channels-hero-content">
-                            <div class="channels-hero-badge">
-                                <span class="live-dot pulse-emerald"></span>
-                                <span id="channels-hero-badge-text">AO VIVO AGORA</span>
+                            <div class="channels-hero-top-row">
+                                <div class="channels-hero-badge">
+                                    <span class="live-dot pulse-emerald"></span>
+                                    <span id="channels-hero-badge-text">AO VIVO AGORA</span>
+                                </div>
+                                <div class="movies-hero-nav channels-hero-nav" id="channels-hero-nav">
+                                    <button id="btn-channels-hero-prev" class="btn-hero-nav-arrow" aria-label="Canal anterior" title="Canal anterior" type="button">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <div id="channels-hero-dots" class="hero-dots-container movies-hero-dots"></div>
+                                    <button id="btn-channels-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo canal" title="Próximo canal" type="button">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="channels-hero-brand-box">
                                 <img id="channels-hero-logo" class="channels-hero-logo" src="" alt="" style="display:none;">
@@ -454,19 +469,6 @@
                                     <span>Guia Rápido de Canais</span>
                                 </button>
                             </div>
-                        </div>
-                        <div class="movies-hero-nav channels-hero-nav" id="channels-hero-nav">
-                            <button id="btn-channels-hero-prev" class="btn-hero-nav-arrow" aria-label="Canal anterior" title="Canal anterior" type="button">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
-                            </button>
-                            <div id="channels-hero-dots" class="hero-dots-container movies-hero-dots"></div>
-                            <button id="btn-channels-hero-next" class="btn-hero-nav-arrow" aria-label="Próximo canal" title="Próximo canal" type="button">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <polyline points="9 18 15 12 9 6"></polyline>
-                                </svg>
-                            </button>
                         </div>
                     </section>
 
@@ -1958,7 +1960,7 @@
     <script src="https://cdn.jsdelivr.net/npm/artplayer@5.1.7/dist/artplayer.js"></script>
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261016_2358"></script>
+    <script type="module" src="assets/js/main.js?v=20261017_0107"></script>
 </body>
 
 </html>
