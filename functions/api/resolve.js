@@ -148,16 +148,45 @@ function firstThenMerge(lookups, windowMs) {
   });
 }
 
-export async function onRequestOptions() {
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  try {
+    const url = new URL(origin);
+    const scheme = url.protocol.toLowerCase();
+    if (scheme !== "http:" && scheme !== "https:") return false;
+    const host = url.hostname.toLowerCase();
+    if (host === "localhost" || host === "127.0.0.1") return true;
+    if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+    if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+    if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+    if (host === "pages.dev" || host.endsWith(".pages.dev")) return true;
+    if (host === "tvzinha.online" || host.endsWith(".tvzinha.online")) return true;
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function onRequestOptions(context) {
+  const origin = context && context.request ? context.request.headers.get("Origin") : null;
+  if (!isAllowedOrigin(origin)) {
+    return new Response(null, { status: 403 });
+  }
   return new Response(null, {
     status: 204,
     headers: {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": origin || "*",
       "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
       "Access-Control-Allow-Headers": "Range, Content-Type, Accept, User-Agent, Referer, Origin",
+      "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
       "Access-Control-Max-Age": "86400",
+      "Vary": "Origin",
     },
   });
+}
+
+export async function onRequestHead(context) {
+  return onRequestGet(context);
 }
 
 /**
@@ -1097,6 +1126,18 @@ function normalizeSubtitles(tracks) {
 
 export async function onRequestGet(context) {
   const { request } = context;
+  const origin = request.headers.get("Origin");
+  if (!isAllowedOrigin(origin)) {
+    return new Response(JSON.stringify({ success: false, error: "CORS origin forbidden" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+    });
+  }
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": origin || "*",
+    "Vary": "Origin",
+  };
+
   const urlObj = new URL(request.url);
 
   const id = urlObj.searchParams.get("id");
@@ -1119,7 +1160,7 @@ export async function onRequestGet(context) {
   if (!id && !malId && !titleParam) {
     return new Response(JSON.stringify({ success: false, error: "Missing required media identifier (id, mal_id, or title)" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
 
@@ -1338,7 +1379,7 @@ export async function onRequestGet(context) {
       status: 200,
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*",
+        ...corsHeaders,
         "Cache-Control": "public, max-age=1800",
         "Server-Timing": serverTiming,
       },
@@ -1354,7 +1395,7 @@ export async function onRequestGet(context) {
     status: 404,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
+      ...corsHeaders,
       "Server-Timing": serverTiming,
     },
   });
