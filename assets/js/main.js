@@ -3,17 +3,17 @@
  * Coordinates core state, modular engines, navigation, and exposes TvzinhaActions
  */
 
-import { store } from './core/state.js?v=20261017_0107';
-import { showToast } from './core/toast.js?v=20261017_0107';
-import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261017_0107';
-import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261017_0107';
-import { runWhenHomeIdle } from './core/activity.js?v=20261017_0107';
-import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal, resetMoviesViewState } from './modules/movies.js?v=20261017_0107';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261017_0107';
-import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261017_0107';
-import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261017_0107';
-import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261017_0107';
-import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261017_0107';
+import { store } from './core/state.js?v=20261017_0211';
+import { showToast } from './core/toast.js?v=20261017_0211';
+import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261017_0211';
+import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261017_0211';
+import { runWhenHomeIdle } from './core/activity.js?v=20261017_0211';
+import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal, resetMoviesViewState } from './modules/movies.js?v=20261017_0211';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261017_0211';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261017_0211';
+import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261017_0211';
+import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261017_0211';
+import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261017_0211';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
