@@ -23,6 +23,7 @@ import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261017_0107';
 import { resumeStartTime } from '../core/resume.js?v=20261017_0107';
 import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261017_0107';
 import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261017_0107';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261017_0107';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -236,9 +237,16 @@ export function renderHomeContinueWatching() {
             }
         }
 
+        const safeTitle = escapeHtml(item.title || 'Título');
+        const safeTitleAttr = escapeAttr(item.title || 'Título');
+        const safeImg = escapeAttr(imgUrl);
+        const safeSeason = escapeHtml(item.season);
+        const safeEp = escapeHtml(item.episode);
+        const safeEpTitle = escapeHtml(item.episodeTitle || ('Episódio ' + item.episode));
+
         card.innerHTML = `
             <div class="continue-card-media">
-                <img src="${imgUrl}" alt="${item.title}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+                <img src="${safeImg}" alt="${safeTitleAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
                 <div class="continue-play-overlay">
                     <div class="continue-play-btn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -251,8 +259,8 @@ export function renderHomeContinueWatching() {
                 </div>
             </div>
             <div class="continue-card-info">
-                <span class="continue-card-title">${item.title}</span>
-                <span class="continue-card-ep">T${item.season}:E${item.episode} • ${item.episodeTitle || 'Episódio ' + item.episode}</span>
+                <span class="continue-card-title">${safeTitle}</span>
+                <span class="continue-card-ep">T${safeSeason}:E${safeEp} • ${safeEpTitle}</span>
                 <span class="continue-card-time">${timeLabel}</span>
             </div>
         `;
@@ -389,13 +397,19 @@ function createSeriesCardElement(seriesItem, mediaType = 'tv') {
         ? `${TMDB_IMG_W500}${seriesItem.poster_path}`
         : 'assets/logos/fav/icon-detailed.svg';
 
+    const safeTitle = escapeHtml(title);
+    const safeTitleAttr = escapeAttr(title);
+    const safePoster = escapeAttr(posterUrl);
+    const safeYear = escapeHtml(year);
+    const safeRating = escapeHtml(rating);
+
     card.innerHTML = `
-        <img class="movie-poster-img" src="${posterUrl}" alt="${title}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
         <div class="movie-poster-overlay">
-            <h4 class="movie-card-title" title="${title}">${title}</h4>
+            <h4 class="movie-card-title" title="${safeTitleAttr}">${safeTitle}</h4>
             <div class="movie-card-meta">
-                <span>${year}</span>
-                <span class="movie-card-rating">★ ${rating}</span>
+                <span>${safeYear}</span>
+                <span class="movie-card-rating">★ ${safeRating}</span>
             </div>
         </div>
     `;
@@ -604,7 +618,7 @@ function initHeroSeriesCarousel(seriesItems) {
 
         if (genresEl && item.genre_ids) {
             genresEl.innerHTML = item.genre_ids.slice(0, 2).map(id =>
-                `<span class="movies-genre-tag">${TMDB_GENRES[id] || 'Série'}</span>`
+                `<span class="movies-genre-tag">${escapeHtml(TMDB_GENRES[id] || 'Série')}</span>`
             ).join('');
         }
 
@@ -911,7 +925,7 @@ function updateActiveSeriesFilterTags() {
     tags.forEach(t => {
         const tag = document.createElement("span");
         tag.className = "explore-active-tag";
-        tag.innerHTML = `<span>${t.label}</span><button type="button" aria-label="Remover filtro">&times;</button>`;
+        tag.innerHTML = `<span>${escapeHtml(t.label)}</span><button type="button" aria-label="Remover filtro">&times;</button>`;
         tag.querySelector("button").onclick = t.onRemove;
         container.appendChild(tag);
     });
@@ -1201,7 +1215,7 @@ function initHeroAnimesCarousel(animeItems) {
 
         if (genresEl && item.genre_ids) {
             genresEl.innerHTML = item.genre_ids.slice(0, 2).map(id =>
-                `<span class="movies-genre-tag anime-genre-tag">${TMDB_GENRES[id] || 'Anime'}</span>`
+                `<span class="movies-genre-tag anime-genre-tag">${escapeHtml(TMDB_GENRES[id] || 'Anime')}</span>`
             ).join('');
         }
 
@@ -1503,7 +1517,7 @@ function updateActiveAnimesFilterTags() {
     tags.forEach(t => {
         const tag = document.createElement("span");
         tag.className = "explore-active-tag anime-active-tag";
-        tag.innerHTML = `<span>${t.label}</span><button type="button" aria-label="Remover filtro">&times;</button>`;
+        tag.innerHTML = `<span>${escapeHtml(t.label)}</span><button type="button" aria-label="Remover filtro">&times;</button>`;
         tag.querySelector("button").onclick = t.onRemove;
         container.appendChild(tag);
     });
@@ -1647,9 +1661,10 @@ function renderSeriesServerButtons(showItem) {
         const isCurrentActive = activeSeriesPlaying.server === server.id;
         btn.className = `btn-movie-server ${server.isNative ? 'native-direct' : ''} ${isCurrentActive ? 'active' : ''}`;
         btn.dataset.server = server.id;
+        const safeServerName = escapeHtml(server.name);
         btn.innerHTML = server.isNative
-            ? `<span>${server.name}</span>`
-            : `<span>${server.name}</span><span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.85;">Reproduzir</span>`;
+            ? `<span>${safeServerName}</span>`
+            : `<span>${safeServerName}</span><span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.85;">Reproduzir</span>`;
 
         btn.addEventListener("click", () => {
             document.querySelectorAll("#series-servers-grid .btn-movie-server").forEach(b => b.classList.remove("active"));
@@ -1888,7 +1903,7 @@ export async function openSeriesModal(seriesItem, mediaType = 'tv', options = {}
         }
 
         if (genresEl && details.genres) {
-            genresEl.innerHTML = details.genres.slice(0, 3).map(g => `<span class="movie-modal-genre-tag">${g.name}</span>`).join('');
+            genresEl.innerHTML = details.genres.slice(0, 3).map(g => `<span class="movie-modal-genre-tag">${escapeHtml(g.name)}</span>`).join('');
         }
 
         populateSeasonsSelect(details);
@@ -2041,10 +2056,19 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
         const epAbsolute = regularSeasonsOf(episodeDetails).length > 1 ? absoluteEpisodeOf(episodeDetails, seasonNumber, ep.episode_number) : 0;
         const epAbsoluteLabel = epAbsolute ? `Ep. geral ${epAbsolute}` : '';
 
+        const safeStill = escapeAttr(stillUrl);
+        const safeEpTitle = escapeHtml(epTitle);
+        const safeEpTitleAttr = escapeAttr(epTitle);
+        const safeEpNum = escapeHtml(ep.episode_number);
+        const safeEpDuration = escapeHtml(epDuration);
+        const safeEpAbsoluteLabel = escapeHtml(epAbsoluteLabel);
+        const safeEpOverview = escapeHtml(ep.overview || "Sem descrição disponível.");
+        const safeAirDateYear = escapeHtml(ep.air_date ? ep.air_date.substring(0, 4) : '');
+
         card.innerHTML = `
             <div class="ep-thumbnail-box">
-                <img class="ep-thumbnail-img" src="${stillUrl}" alt="${epTitle}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
-                <span class="ep-number-tag">Ep. ${ep.episode_number}</span>
+                <img class="ep-thumbnail-img" src="${safeStill}" alt="${safeEpTitleAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+                <span class="ep-number-tag">Ep. ${safeEpNum}</span>
                 ${isWatched ? '<span class="ep-watched-tag">Visto</span>' : ''}
                 <div class="ep-play-overlay">
                     <div class="ep-play-icon">
@@ -2055,13 +2079,13 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
                 </div>
             </div>
             <div class="ep-info-box">
-                <h4 class="ep-title" title="${epTitle}">${epTitle}</h4>
+                <h4 class="ep-title" title="${safeEpTitleAttr}">${safeEpTitle}</h4>
                 <div class="ep-meta-row">
-                    <span>${ep.air_date ? ep.air_date.substring(0, 4) : ''}</span>
-                    <span>${epDuration}</span>
-                    ${epAbsoluteLabel ? `<span>${epAbsoluteLabel}</span>` : ''}
+                    <span>${safeAirDateYear}</span>
+                    <span>${safeEpDuration}</span>
+                    ${safeEpAbsoluteLabel ? `<span>${safeEpAbsoluteLabel}</span>` : ''}
                 </div>
-                <p class="ep-overview">${ep.overview || "Sem descrição disponível."}</p>
+                <p class="ep-overview">${safeEpOverview}</p>
             </div>
         `;
 
@@ -2364,10 +2388,15 @@ function renderContinuousChunk(startEp, endEp) {
             ? `${TMDB_IMG_W500}${currentSelectedSeries.backdrop_path}`
             : 'assets/logos/fav/icon-detailed.svg';
 
+        const safeStill = escapeAttr(stillUrl);
+        const safeEpNum = escapeHtml(epNum);
+        const safeSeason = escapeHtml(mapped.season);
+        const safeEpisode = escapeHtml(mapped.episode);
+
         card.innerHTML = `
             <div class="ep-thumbnail-box">
-                <img class="ep-thumbnail-img" src="${stillUrl}" alt="Episódio ${epNum}" loading="lazy">
-                <span class="ep-number-tag">Ep. ${epNum}</span>
+                <img class="ep-thumbnail-img" src="${safeStill}" alt="Episódio ${safeEpNum}" loading="lazy">
+                <span class="ep-number-tag">Ep. ${safeEpNum}</span>
                 <div class="ep-play-overlay">
                     <div class="ep-play-icon">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -2377,9 +2406,9 @@ function renderContinuousChunk(startEp, endEp) {
                 </div>
             </div>
             <div class="ep-info-box">
-                <h4 class="ep-title">Episódio ${epNum}</h4>
+                <h4 class="ep-title">Episódio ${safeEpNum}</h4>
                 <div class="ep-meta-row">
-                    <span>T${mapped.season} • Ep. ${mapped.episode}</span>
+                    <span>T${safeSeason} • Ep. ${safeEpisode}</span>
                     <span>Reproduzir ▶\uFE0E</span>
                 </div>
                 <p class="ep-overview"></p>
@@ -2807,8 +2836,10 @@ function populateSeriesDrawer() {
         const item = document.createElement("button");
         item.type = "button";
         item.className = `drawer-item ${ep.episode_number === activeSeriesPlaying.episodeNumber ? 'active' : ''}`;
+        const safeEpName = escapeHtml(ep.name || 'Episódio');
+        const safeEpNum = escapeHtml(ep.episode_number);
         item.innerHTML = `
-            <span>Ep. ${ep.episode_number} - ${ep.name || 'Episódio'}</span>
+            <span>Ep. ${safeEpNum} - ${safeEpName}</span>
             <span>▶\uFE0E</span>
         `;
         item.addEventListener("click", () => {

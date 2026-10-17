@@ -8,6 +8,7 @@ import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../co
 import { getUiSvg } from '../core/icons.js?v=20261017_0107';
 import { showToast } from '../core/toast.js?v=20261017_0107';
 import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261017_0107';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261017_0107';
 
 let matchesRefreshTimer = null;
 let isTeamModalInitialized = false;
@@ -203,13 +204,17 @@ export async function openTeamSelectModal() {
 
         const checkHtml = isSelected ? `<span class="team-card-check">${getUiSvg('check', 11)}</span>` : '';
         const crestUrl = resolveClientTeamCrest(teamId, teamInfo);
+        const teamName = teamInfo.name || teamId;
+        const safeTeamName = escapeHtml(teamName);
+        const safeTeamNameAttr = escapeAttr(teamName);
+        const safeCrest = escapeAttr(crestUrl);
 
         card.innerHTML = `
             ${checkHtml}
             <div class="team-card-crest-wrapper">
-                <img src="${crestUrl}" alt="${teamInfo.name || teamId}" class="team-card-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
+                <img src="${safeCrest}" alt="${safeTeamNameAttr}" class="team-card-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
             </div>
-            <span class="team-card-name">${teamInfo.name || teamId}</span>
+            <span class="team-card-name">${safeTeamName}</span>
         `;
 
         card.addEventListener("click", () => {
@@ -378,11 +383,12 @@ export async function renderMatchesSection() {
     const teamData = getTeamScheduleData(feed, currentTeamId);
 
     if (!teamData || !teamData.matches || teamData.matches.length === 0) {
+        const safeFallbackName = escapeHtml(teamData?.name || "clube");
         if (titleEl) titleEl.textContent = `Próximos Jogos - ${teamData?.name || "Clube"}`;
         if (gridEl) {
             gridEl.innerHTML = `
                 <div class="match-card" style="grid-column: 1 / -1; text-align: center; padding: 28px 20px;">
-                    <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 6px;">Nenhum jogo agendado para o ${teamData?.name || "clube"} no momento.</p>
+                    <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 6px;">Nenhum jogo agendado para o ${safeFallbackName} no momento.</p>
                     <span style="font-size: 0.82rem; color: var(--text-muted);">Isso ocorre em intervalos de competições, férias ou Data FIFA. A agenda é sincronizada via ge.globo.</span>
                 </div>
             `;
@@ -392,7 +398,9 @@ export async function renderMatchesSection() {
 
     if (badgeEl) {
         const teamCrest = resolveClientTeamCrest(currentTeamId, teamData);
-        badgeEl.innerHTML = `<img src="${teamCrest}" alt="${teamData.name}" class="team-header-crest matches-header-crest" onerror="this.src='${KNOWN_TEAM_CRESTS['brasil']}'">`;
+        const safeTeamCrest = escapeAttr(teamCrest);
+        const safeTeamNameAttr = escapeAttr(teamData.name || '');
+        badgeEl.innerHTML = `<img src="${safeTeamCrest}" alt="${safeTeamNameAttr}" class="team-header-crest matches-header-crest" onerror="this.src='${KNOWN_TEAM_CRESTS['brasil']}'">`;
     }
     if (titleEl) titleEl.textContent = `Próximos Jogos - ${teamData.name}`;
     if (hintEl) hintEl.textContent = `Agenda atualizada do ${teamData.name} (via ge.globo)`;
@@ -417,7 +425,9 @@ export async function renderMatchesSection() {
         let broadcastHtml = "";
         if (broadcastList && broadcastList.length > 0) {
             broadcastHtml = broadcastList.map(src => {
-                return `<button type="button" class="broadcast-pill playable" data-broadcast-name="${src}" title="Buscar canal para ${src}">▶ ${src}</button>`;
+                const safeSrc = escapeHtml(src);
+                const safeSrcAttr = escapeAttr(src);
+                return `<button type="button" class="broadcast-pill playable" data-broadcast-name="${safeSrcAttr}" title="Buscar canal para ${safeSrcAttr}">▶ ${safeSrc}</button>`;
             }).join("");
         } else {
             broadcastHtml = `<span class="broadcast-pill empty">Transmissão a confirmar</span>`;
@@ -433,37 +443,49 @@ export async function renderMatchesSection() {
         } else if (isTomorrow) {
             statusBadgeHtml = `<span class="match-status-badge tomorrow">AMANHÃ</span>`;
         } else if (isFeatured) {
-            statusBadgeHtml = `<span class="match-status-badge featured">${countdownBadge || 'PRÓXIMO JOGO'}</span>`;
+            statusBadgeHtml = `<span class="match-status-badge featured">${escapeHtml(countdownBadge || 'PRÓXIMO JOGO')}</span>`;
         } else if (countdownBadge) {
-            statusBadgeHtml = `<span class="match-status-badge countdown">${countdownBadge}</span>`;
+            statusBadgeHtml = `<span class="match-status-badge countdown">${escapeHtml(countdownBadge)}</span>`;
         }
+
+        const safeChampionship = escapeHtml(match.campeonato || "Futebol");
+        const safeRodada = match.rodada ? ` • ${escapeHtml(match.rodada)}` : "";
+        const safeMandanteNome = escapeHtml(mandanteNome);
+        const safeMandanteNomeAttr = escapeAttr(mandanteNome);
+        const safeMandanteEscudo = escapeAttr(mandanteEscudo);
+        const safeVisitanteNome = escapeHtml(visitanteNome);
+        const safeVisitanteNomeAttr = escapeAttr(visitanteNome);
+        const safeVisitanteEscudo = escapeAttr(visitanteEscudo);
+        const safeDateDay = escapeHtml(dateDayText);
+        const safeDateHour = escapeHtml(match.aoVivo ? 'Em andamento' : timePart);
+        const safeScore = match.placar ? `<span class="duel-score-badge">${escapeHtml(match.placar.mandante)} - ${escapeHtml(match.placar.visitante)}</span>` : `<span class="duel-vs">VS</span>`;
 
         card.innerHTML = `
             <div class="match-top-bar">
-                <span class="championship-badge">${match.campeonato || "Futebol"} ${match.rodada ? `• ${match.rodada}` : ""}</span>
+                <span class="championship-badge">${safeChampionship}${safeRodada}</span>
                 ${statusBadgeHtml}
             </div>
             <div class="match-duel">
                 <div class="duel-team duel-mandante">
                     <div class="duel-badge-wrapper">
-                        <img src="${mandanteEscudo}" alt="${mandanteNome}" class="match-team-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
+                        <img src="${safeMandanteEscudo}" alt="${safeMandanteNomeAttr}" class="match-team-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
                     </div>
-                    <span class="duel-team-name">${mandanteNome}</span>
+                    <span class="duel-team-name">${safeMandanteNome}</span>
                 </div>
                 <div class="duel-vs-box">
                     <div class="duel-vs-circle-wrapper">
-                        ${match.placar ? `<span class="duel-score-badge">${match.placar.mandante} - ${match.placar.visitante}</span>` : `<span class="duel-vs">VS</span>`}
+                        ${safeScore}
                     </div>
                     <div class="duel-date-time">
-                        <span class="duel-date-day">${dateDayText}</span>
-                        <span class="duel-date-hour">${match.aoVivo ? 'Em andamento' : timePart}</span>
+                        <span class="duel-date-day">${safeDateDay}</span>
+                        <span class="duel-date-hour">${safeDateHour}</span>
                     </div>
                 </div>
                 <div class="duel-team duel-visitante">
                     <div class="duel-badge-wrapper">
-                        <img src="${visitanteEscudo}" alt="${visitanteNome}" class="match-team-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
+                        <img src="${safeVisitanteEscudo}" alt="${safeVisitanteNomeAttr}" class="match-team-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
                     </div>
-                    <span class="duel-team-name">${visitanteNome}</span>
+                    <span class="duel-team-name">${safeVisitanteNome}</span>
                 </div>
             </div>
             <div class="match-broadcast-footer">
