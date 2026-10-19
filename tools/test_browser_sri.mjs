@@ -1,6 +1,7 @@
 /**
  * Verifies that index.html loads in a real Chromium browser with SRI and security headers active,
- * confirming window.Hls and window.Artplayer execute without integrity or CSP violations.
+ * confirming window.Hls and window.Artplayer, loaded on demand by ensurePlayerLibs() in engine.js,
+ * execute without integrity or CSP violations.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync } from "node:fs";
@@ -13,9 +14,10 @@ const fs = await import("node:fs");
 const CHROMIUM = fs.existsSync(CHROME) ? CHROME : EDGE;
 const DEBUG_PORT = 9850;
 
-// Start local server in background
-const serverProc = spawn("python", ["tools/local_server.py", "--port", "8787"], { stdio: "ignore" });
-await new Promise(r => setTimeout(r, 800));
+// Reuse a server already on 8787: Windows lets a second one bind the same port, and requests then hit either at random
+const serverRunning = await fetch("http://127.0.0.1:8787/", { signal: AbortSignal.timeout(2000) }).then(() => true, () => false);
+const serverProc = serverRunning ? null : spawn("python", ["tools/local_server.py", "--port", "8787"], { stdio: "ignore" });
+if (serverProc) await new Promise(r => setTimeout(r, 800));
 
 const profile = mkdtempSync(join(tmpdir(), "tvz-sri-"));
 const browserProc = spawn(CHROMIUM, [
@@ -30,7 +32,7 @@ const browserProc = spawn(CHROMIUM, [
 
 const cleanup = () => {
   try { spawnSync("taskkill", ["/PID", String(browserProc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {}
-  try { spawnSync("taskkill", ["/PID", String(serverProc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {}
+  if (serverProc) { try { spawnSync("taskkill", ["/PID", String(serverProc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {} }
 };
 
 try {
@@ -72,6 +74,13 @@ try {
   await send("Page.enable");
   await send("Page.navigate", { url: "http://127.0.0.1:8787/" });
   await new Promise(r => setTimeout(r, 2000));
+
+  // The libraries load on demand (B11): ask the engine for them, as a player would
+  const version = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8").match(/main\.js\?v=([^"]+)/)[1];
+  await send("Runtime.evaluate", {
+    expression: `import('/assets/js/player/engine.js?v=${version}').then(m => m.ensurePlayerLibs()).then(() => true, () => false)`,
+    awaitPromise: true,
+  });
 
   const evalHls = await send("Runtime.evaluate", { expression: "typeof window.Hls" });
   const evalArt = await send("Runtime.evaluate", { expression: "typeof window.Artplayer" });

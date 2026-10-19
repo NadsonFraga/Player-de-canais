@@ -7,7 +7,7 @@
 
 - **Plans:** always paste the complete plan in the chat (not only in the plan file) and stop. Implement only after explicit approval in the chat.
 - **Phases:** in approved multi-phase work (even in auto mode), hard stop at the end of every phase, or before any decision with strong impact on development: report what changed, verification results with numbers, and wait for the go-ahead.
-- **Git:** no commits, pushes, branch creation, merges or deploys unless the user asks for that specific action. Merge feature branches into `master` with `git merge --no-ff` (always a merge commit, so the branch shows in the history graph); never fast-forward.
+- **Git:** no commits, pushes, branch creation, merges or deploys unless the user asks for that specific action. Merge feature branches into `master` with `git merge --no-ff` (always a merge commit, so the branch shows in the history graph); never fast-forward. Commit messages and PR descriptions never carry `Co-Authored-By` trailers or any AI attribution ("Generated with ..."): commits show only the user.
 - **Multi-machine sync:** work alternates between two machines. Always run `git fetch && git pull` before starting any work, and check `git log origin/master` for incoming commits made on the other machine.
 - **Scope:** prefer general fixes over per-host or per-title patches; point fixes only when strictly necessary.
 - **Verification:** test with several titles (movies, series, anime), not just one, in Chrome and Firefox when the player is involved (test scripts take `--browser=chrome|edge|firefox`, Chrome by default; `tools/player_benchmark.mjs`).
