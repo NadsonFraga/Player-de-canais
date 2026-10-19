@@ -28,17 +28,19 @@ App start (DOMContentLoaded), Chrome, local server, jsDelivr held by CDP:
 | +20 s | 20.4 s | 0.3 s |
 | down | 0.4 s (players broken) | 0.4 s (clear error + retry) |
 
-## Manual (for the user, on the preview or localhost)
+## Manual (user, on the preview)
+
+The user reported every item OK on 2026-10-19 ("tudo certo nos testes"). Blocking jsDelivr: DevTools > Rede > request blocking panel (pattern `cdn.jsdelivr.net`, cache disabled), not the right-click menu: the libraries are only requested ~2 s after the start.
 
 | # | Steps | Expected | Result |
 |---|---|---|---|
-| 1 | Open the site (PC, Chrome), wait 5 s, open a channel (Band) | plays as before, no extra wait | |
-| 2 | Open a movie right after the site opens, before 2 s | "Buscando fontes..." then plays normally | |
-| 3 | Series and anime episodes: next/previous, continuous list, resume card | plays as before | |
-| 4 | Phone (LAN IP), 4G: open the site, then a channel and an episode | site opens at once; players as before | |
-| 5 | DevTools > Network > block `cdn.jsdelivr.net`, reload, open a channel | site opens; "Não foi possível carregar o player" with "Tentar de novo" | |
-| 6 | Same as 5, then unblock and click "Tentar de novo" | player opens | |
-| 7 | DevTools > Network throttling "3G", reload, open a movie at once | "Carregando o player..." then, after 8 s if still loading, "Conexão lenta, carregando o player..."; it opens when ready | |
-| 8 | Firefox: items 1 and 3 | same as Chrome | |
-| 9 | Item 7 again (Firefox or Chrome, "Regular 3G"), same movie (Hope: O Primeiro Impacto) | first try (before part 2): libraries OK, then "Todas as fontes diretas falharam". Now: after ~12 s "Conexão lenta, carregando a fonte..." and the movie starts (may take 30-60 s) | libraries OK, sources failed (before part 2) |
-| 10 | Without throttling: a movie, a series episode and an anime episode | they start as fast as before (no extra wait) | |
+| 1 | Open the site (PC, Chrome), wait 5 s, open a channel (Band) | plays as before, no extra wait | OK (user, 2026-10-19) |
+| 2 | Open a movie right after the site opens, before 2 s | "Buscando fontes..." then plays normally | OK (user, 2026-10-19) |
+| 3 | Series and anime episodes: next/previous, continuous list, resume card | plays as before | OK (user, 2026-10-19) |
+| 4 | Phone (LAN IP), 4G: open the site, then a channel and an episode | site opens at once; players as before | OK (user, 2026-10-19) |
+| 5 | DevTools > Network > block `cdn.jsdelivr.net`, reload, open a channel | site opens; "Não foi possível carregar o player" with "Tentar de novo" | OK (user, 2026-10-19) |
+| 6 | Same as 5, then unblock and click "Tentar de novo" | player opens | OK (user, 2026-10-19) |
+| 7 | DevTools > Network throttling "3G", reload, open a movie at once | "Carregando o player..." then, after 8 s if still loading, "Conexão lenta, carregando o player..."; it opens when ready | OK (user, 2026-10-19) |
+| 8 | Firefox: items 1 and 3 | same as Chrome | OK (user, 2026-10-19) |
+| 9 | Item 7 again (Firefox or Chrome, "Regular 3G"), same movie (Hope: O Primeiro Impacto) | first try (before part 2): libraries OK, then "Todas as fontes diretas falharam". Now: after ~12 s "Conexão lenta, carregando a fonte..." and the movie starts (may take 30-60 s) | before part 2: libraries OK, sources failed; after part 2: OK (user, 2026-10-19) |
+| 10 | Without throttling: a movie, a series episode and an anime episode | they start as fast as before (no extra wait) | OK (user, 2026-10-19) |
