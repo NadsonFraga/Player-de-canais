@@ -40,10 +40,12 @@ Final regression after the fixes: `player_ui_check` 45/46 (B21; one earlier run 
 
 ## Manual (user, on the preview)
 
+The user reported the items done on 2026-10-19 ("Feito"). During the tests, "Homem-Aranha: Um Novo Dia" (1080p HD, the 97bf1 source) played without audio on the preview while production had audio; it came back after clearing the browser cache. Checked here in Chrome: audio decoded on both (preview: the playercdnx mirror direct, ~131 kbps at 5 min; production: 97bf1 through the proxy, ~229 kbps), not muted, volume 0.9, and every HLS source of the movie carries AAC audio with the video. Most likely stale cached files from earlier tests; to be reported again, before clearing the cache, if it comes back.
+
 | # | Steps | Expected | Result |
 |---|---|---|---|
-| 1 | Open a series episode (e.g. Reacher), let it play 1 min, skip ahead, next episode | plays, seeks and moves on as before | |
-| 2 | Open an anime on the Player Principal, then on the Player Animes | both play | |
-| 3 | Several movies (MP4 and HLS) | play as before | |
-| 4 | DevTools > Rede, filter `api/stream`, while a series plays | after the start, no new `api/stream` lines; segments come from the host | |
-| 5 | Phone (4G) and Firefox: items 1 and 2 | same | |
+| 1 | Open a series episode (e.g. Reacher), let it play 1 min, skip ahead, next episode | plays, seeks and moves on as before | OK (user, 2026-10-19) |
+| 2 | Open an anime on the Player Principal, then on the Player Animes | both play | OK (user, 2026-10-19) |
+| 3 | Several movies (MP4 and HLS) | play as before | OK (user, 2026-10-19) |
+| 4 | DevTools > Rede, filter `api/stream`, while a series plays | after the start, no new `api/stream` lines; segments come from the host | OK (user, 2026-10-19) |
+| 5 | Phone (4G) and Firefox: items 1 and 2 | same | OK (user, 2026-10-19) |
