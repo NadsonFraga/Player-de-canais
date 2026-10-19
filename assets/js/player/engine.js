@@ -3,14 +3,15 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261019_1242';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1242';
-import { showToast } from '../core/toast.js?v=20261019_1242';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1242';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1242';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1242';
-import { formatClock } from '../core/resume.js?v=20261019_1242';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1242';
+import { store } from '../core/state.js?v=20261019_1409';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1409';
+import { showToast } from '../core/toast.js?v=20261019_1409';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1409';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1409';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1409';
+import { formatClock } from '../core/resume.js?v=20261019_1409';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1409';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261019_1409';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -551,10 +552,10 @@ export function handleAllDirectSourcesFailed(onRetry = null) {
                 <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:14px;">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
                 </svg>
-                <div class="error-overlay-title">Transmissão Direta Instável</div>
+                <div class="error-overlay-title">Player Principal sem resposta</div>
                 <div class="error-overlay-desc">
-                    Os links diretos deste canal estão temporariamente indisponíveis na CDN.
-                    Você pode tentar reconectar ou selecionar manualmente uma opção de <strong>Contingência</strong> no seletor abaixo.
+                    Nenhuma fonte do Player Principal deste canal respondeu agora.
+                    Você pode tentar reconectar ou escolher um <strong>servidor externo</strong> no seletor abaixo.
                 </div>
                 <div class="error-overlay-actions">
                     <button id="btn-retry-direct-channel" class="btn-error-retry">
@@ -574,7 +575,7 @@ export function handleAllDirectSourcesFailed(onRetry = null) {
         }
     }
 
-    showToast("Transmissão direta indisponível. Alterne para a contingência abaixo se desejar.", 4500);
+    showToast("Nenhuma fonte do Player Principal respondeu. Escolha um servidor externo abaixo.", 4500);
 }
 
 /**
@@ -647,7 +648,7 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
 
         if (currentIndex + 1 < sources.length) {
             const nextIndex = currentIndex + 1;
-            showToast(`Alternando para servidor reserva: ${sources[nextIndex].name}...`, 2500);
+            showToast(`Fonte ${currentIndex + 1} não respondeu. Tentando a ${liveSourceLabel(sources[nextIndex], nextIndex)}...`, 2500);
             mountTvDirectStream(channelData, nextIndex, onAllDirectFailed);
         } else {
             console.warn("[TvPlayer] Todas as fontes diretas esgotadas.");
@@ -794,11 +795,11 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
 
         art.setting.add({
             id: 'tv-server-info',
-            name: 'Servidor Ativo',
+            name: 'Fonte ativa',
             width: 250,
-            tooltip: currentSource.name,
+            tooltip: liveSourceLabel(currentSource, currentIndex),
             selector: [
-                { default: true, html: `${currentSource.name} • ${currentSource.cdn || 'CDN 1'}` }
+                { default: true, html: `${liveSourceLabel(currentSource, currentIndex)} • ${currentSource.cdn || 'CDN 1'}` }
             ],
             onSelect: function (item) {
                 return item.html;

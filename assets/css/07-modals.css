@@ -260,6 +260,25 @@
     gap: 10px;
 }
 
+/* "Players" and "Servidores externos" as two groups (core/serverGroups.js), each with its own .movie-servers-grid */
+.movie-servers-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Neutral tag next to a group title: the tab colors stay on the active buttons only */
+.server-group-tag {
+    padding: 1px 7px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 4px;
+    color: #a1a1aa;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
 .btn-movie-server {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.12);

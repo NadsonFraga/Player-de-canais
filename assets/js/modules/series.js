@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261019_1242';
+import { store } from '../core/state.js?v=20261019_1409';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,16 +14,17 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261019_1242';
-import { showToast } from '../core/toast.js?v=20261019_1242';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1242';
-import { buildFeedRows } from '../core/feedRows.js?v=20261019_1242';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1242';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1242';
-import { resumeStartTime } from '../core/resume.js?v=20261019_1242';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1242';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1242';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1242';
+} from '../core/constants.js?v=20261019_1409';
+import { showToast } from '../core/toast.js?v=20261019_1409';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1409';
+import { buildFeedRows } from '../core/feedRows.js?v=20261019_1409';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1409';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1409';
+import { resumeStartTime } from '../core/resume.js?v=20261019_1409';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1409';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1409';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1409';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261019_1409';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -1637,9 +1638,9 @@ async function executeFilteredAnimesSearch(page = 1) {
 // ==========================================
 
 const SERIES_SERVER_OPTIONS = [
-    { id: 'native_direct', name: 'Player Nativo - Sem Anúncios (BETA)', isNative: true },
-    { id: 'native_anime',  name: 'Player Nativo Animes - Sem Anúncios (BETA)', isNative: true, animeOnly: true },
-    { id: 'mgeb',          name: 'Servidor 1 (MGEB - Principal)' },
+    { id: 'native_direct', name: 'Player Principal', isNative: true },
+    { id: 'native_anime',  name: 'Player Animes', isNative: true, animeOnly: true },
+    { id: 'mgeb',          name: 'Servidor 1 (MGEB)' },
     { id: 'superflix',     name: 'Servidor 2 (SuperFlix)' },
     { id: 'myembed',       name: 'Servidor 3 (MyEmbed)' },
     { id: 'warezcdn',      name: 'Servidor 4 (WarezCDN)' },
@@ -1649,13 +1650,12 @@ const SERIES_SERVER_OPTIONS = [
 function renderSeriesServerButtons(showItem) {
     const serversGrid = document.getElementById("series-servers-grid");
     if (!serversGrid) return;
-    serversGrid.innerHTML = "";
 
     const isAnime = isAnimeShow(showItem);
 
     const availableServers = SERIES_SERVER_OPTIONS.filter(s => !s.animeOnly || isAnime);
 
-    availableServers.forEach(server => {
+    renderServerGroups(serversGrid, availableServers, server => {
         const btn = document.createElement("button");
         btn.type = "button";
         const isCurrentActive = activeSeriesPlaying.server === server.id;
@@ -1676,7 +1676,7 @@ function renderSeriesServerButtons(showItem) {
             }
         });
 
-        serversGrid.appendChild(btn);
+        return btn;
     });
 }
 
@@ -2679,6 +2679,8 @@ function startEpisodePlayback(context, options = {}) {
         }
         setLoaderText(seriesLoader, "Buscando fontes...");
         if (seriesLoader) seriesLoader.classList.remove("hidden");
+        // The words the viewer reads (core/serverGroups.js): Player Principal / Player Animes, its fontes, servidores externos
+        const playerName = serverKey === 'native_anime' ? 'Player Animes' : 'Player Principal';
 
         resolveDirectStream(
             buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNumber, activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode)
@@ -2694,14 +2696,14 @@ function startEpisodePlayback(context, options = {}) {
             if (!data || !data.primary_source) {
                 const animeMissing = serverKey === 'native_anime';
                 showToast(animeMissing
-                    ? "Anime não encontrado no player nativo. Tente outro servidor."
-                    : "Fontes diretas indisponíveis para este episódio. Selecione outro servidor abaixo se desejar.");
+                    ? "Anime não encontrado no Player Animes. Tente o Player Principal ou um servidor externo."
+                    : `O ${playerName} não encontrou fontes para este episódio. Escolha outro player ou um servidor externo abaixo.`);
                 if (seriesArt) {
                     seriesArt.innerHTML = `
                         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);">
                             <svg width="44" height="44" fill="none" stroke="#eab308" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
-                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${animeMissing ? 'Anime não encontrado no player nativo' : 'Stream nativo indisponível'}</div>
-                            <div style="font-size:13px;max-width:380px;line-height:1.5;">${animeMissing ? 'Não encontramos este episódio no player nativo de animes. Escolha um dos outros servidores na barra abaixo.' : 'Não encontramos transmissões diretas sem anúncios ativas para este episódio no momento. Por favor, escolha um dos servidores alternativos na barra abaixo.'}</div>
+                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${animeMissing ? 'Anime não encontrado no Player Animes' : `${playerName} sem fontes`}</div>
+                            <div style="font-size:13px;max-width:380px;line-height:1.5;">${animeMissing ? 'Não encontramos este episódio no Player Animes. Escolha o Player Principal ou um servidor externo abaixo.' : `O ${playerName} não encontrou fontes para este episódio no momento. Escolha outro player ou um servidor externo abaixo.`}</div>
                         </div>`;
                     seriesArt.classList.remove("hidden");
                 }
@@ -2752,13 +2754,13 @@ function startEpisodePlayback(context, options = {}) {
                     };
                 },
                 onAllFailed: () => {
-                    showToast("Todas as fontes diretas deste episódio falharam. Selecione outro servidor abaixo se desejar.");
+                    showToast(`Nenhuma fonte do ${playerName} respondeu. Escolha outro player ou um servidor externo abaixo.`);
                     if (seriesArt) {
                         seriesArt.innerHTML = `
                             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);">
                                 <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Falha na reprodução nativa</div>
-                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Os links diretos deste episódio estão temporariamente indisponíveis. Selecione um servidor alternativo (MGEB, Superflix, etc.) abaixo para continuar assistindo.</div>
+                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${playerName} sem resposta</div>
+                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Nenhuma fonte do ${playerName} respondeu para este episódio. Escolha outro player ou um servidor externo abaixo para continuar assistindo.</div>
                             </div>`;
                         seriesArt.classList.remove("hidden");
                     }
@@ -2766,7 +2768,7 @@ function startEpisodePlayback(context, options = {}) {
             });
         }).catch(err => {
             if (seriesLoader) seriesLoader.classList.add("hidden");
-            showToast("Erro ao conectar ao motor de streaming nativo.");
+            showToast(`Não foi possível conectar ao ${playerName}.`);
         });
     } else {
         // Route B: Iframe Alternative Servers
