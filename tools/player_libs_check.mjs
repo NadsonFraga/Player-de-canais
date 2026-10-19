@@ -151,7 +151,8 @@ async function waitFor(b, expr, timeoutMs) {
   return null;
 }
 
-const APP_READY = `location.href.startsWith(${JSON.stringify(BASE)}) && Boolean(window.TvzinhaActions && window.TvzinhaActions.store)`;
+// The start ends with switchAppView('home'), which tears down any media: wait for it (data-app-view) before opening players
+const APP_READY = `location.href.startsWith(${JSON.stringify(BASE)}) && Boolean(window.TvzinhaActions && window.TvzinhaActions.store) && document.body.getAttribute('data-app-view') === 'home'`;
 const LIBS_READY = "typeof window.Hls === 'function' && typeof window.Artplayer === 'function'";
 // A stage outside the app panels: the engine mounts there without the modal visibility checks
 const ADD_STAGE = `(() => { let s = document.getElementById('tvz-libs-stage'); if (!s) { s = document.createElement('div'); s.id = 'tvz-libs-stage';
@@ -198,6 +199,8 @@ if (runs(2)) {
     await b.evaluate(ADD_STAGE);
     await b.evaluate(MOUNT_NATIVE);
     await sleep(1000);
+    // A tab switch resets the TV player; it must not drop a movie or episode waiting for the libraries
+    await b.evaluate("(window.__engine.atomicTvPlayerReset(), true)");
     const waiting = await b.evaluate(STAGE_TEXT);
     check("waiting player shows 'Carregando o player...'", /Carregando o player/.test(waiting), JSON.stringify(waiting.trim()));
     await sleep(8500);
@@ -205,7 +208,7 @@ if (runs(2)) {
     check("after 8 s it says the connection is slow and keeps waiting", /Conexão lenta/.test(slow) && !(await b.evaluate(STAGE_HAS_PLAYER)), JSON.stringify(slow.trim()));
     b.cdn("pass");
     const mounted = await waitFor(b, STAGE_HAS_PLAYER, 20000);
-    check("the player mounts as soon as the libraries arrive", mounted !== null, `${mounted} ms after release`);
+    check("the player mounts as soon as the libraries arrive (a TV reset meanwhile did not drop it)", mounted !== null, `${mounted} ms after release`);
     check("no page errors", (await b.evaluate(ERRORS)).length === 0, JSON.stringify(await b.evaluate(ERRORS)));
   } finally { b.close(); }
 }

@@ -3,14 +3,14 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261019_1120';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1120';
-import { showToast } from '../core/toast.js?v=20261019_1120';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1120';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1120';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1120';
-import { formatClock } from '../core/resume.js?v=20261019_1120';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1120';
+import { store } from '../core/state.js?v=20261019_1125';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1125';
+import { showToast } from '../core/toast.js?v=20261019_1125';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1125';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1125';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1125';
+import { formatClock } from '../core/resume.js?v=20261019_1125';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1125';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -45,8 +45,9 @@ const PLAYER_LIBS = [
 // After this long the loader says the connection is slow. The download itself is never cut: only a real
 // failure reported by the browser (network error, integrity mismatch) shows the error panel.
 const PLAYER_LIBS_SLOW_MS = 8000;
-// Bumped by every TV/native player reset: a mount still waiting for the libraries is dropped when it changes
-let playerMountEpoch = 0;
+// Bumped by the player resets: a mount still waiting for the libraries is dropped when its counter changes.
+// Separate counters: the TV reset also runs on every tab switch and must not drop a waiting movie or episode.
+const mountEpochs = { tv: 0, native: 0 };
 
 export function playerLibsReady() {
     return PLAYER_LIBS.every(lib => lib.ready());
@@ -116,21 +117,22 @@ function renderPlayerLibsError(container, onRetry) {
 }
 
 /**
- * Runs `mount` once the libraries are loaded. Call it right after the player reset: a reset in the meantime
- * (player closed, other channel or episode, tab left) drops the waiting mount.
+ * Runs `mount` once the libraries are loaded. Call it right after the player reset: a reset of the same kind
+ * ('tv' or 'native') in the meantime (player closed, other channel or episode, Canais left) drops the waiting mount.
  */
-function mountWhenPlayerLibsReady(mount, { onSlow, onFailed }) {
-    const epoch = playerMountEpoch;
+function mountWhenPlayerLibsReady(kind, mount, { onSlow, onFailed }) {
+    const epoch = mountEpochs[kind];
+    const current = () => epoch === mountEpochs[kind];
     const slowTimer = setTimeout(() => {
-        if (epoch === playerMountEpoch) onSlow();
+        if (current()) onSlow();
     }, PLAYER_LIBS_SLOW_MS);
     ensurePlayerLibs().then(() => {
         clearTimeout(slowTimer);
-        if (epoch === playerMountEpoch) mount();
+        if (current()) mount();
     }, (err) => {
         clearTimeout(slowTimer);
         console.warn('[PlayerEngine] Bibliotecas do player indisponíveis:', err.message);
-        if (epoch === playerMountEpoch) onFailed();
+        if (current()) onFailed();
     });
 }
 
@@ -309,8 +311,8 @@ export function installNoSwipeSeek(art) {
  * Resets the TV player instances, timers, and containers cleanly
  */
 export function atomicTvPlayerReset() {
-    // Also reached from atomicPlayerReset: any reset cancels a mount waiting for the player libraries
-    playerMountEpoch += 1;
+    // Cancels a TV mount waiting for the player libraries
+    mountEpochs.tv += 1;
     if (typeof window !== 'undefined' && window.tvzinhaSetContingencyState) {
         window.tvzinhaSetContingencyState(false);
     }
@@ -366,6 +368,8 @@ export function atomicTvPlayerReset() {
  * Resets all active players (TV, Movies, Series, Anime) across the application
  */
 export function atomicPlayerReset() {
+    // Cancels a movie/series mount waiting for the player libraries (the TV reset below cancels a TV one)
+    mountEpochs.native += 1;
     reportProgress(activeNativeSession, true);
     // Detach the native session first so events from the instances being destroyed are ignored
     activeNativeSession = null;
@@ -571,7 +575,7 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
             stage.classList.remove("hidden");
         }
         if (waitLoader) waitLoader.classList.remove("hidden");
-        mountWhenPlayerLibsReady(() => {
+        mountWhenPlayerLibsReady('tv', () => {
             setLoaderText(waitLoader, "Carregando transmissão...");
             mountTvDirectStream(channelData, sourceIndex, onAllDirectFailed);
         }, {
@@ -1102,7 +1106,7 @@ export function mountNativePlayer(options) {
         if (!stage) return null;
         stage.classList.remove("hidden");
         stage.innerHTML = `<div class="video-loader-overlay"><div class="spinner"></div><span>Carregando o player...</span></div>`;
-        mountWhenPlayerLibsReady(() => mountNativePlayer(options), {
+        mountWhenPlayerLibsReady('native', () => mountNativePlayer(options), {
             onSlow: () => setLoaderText(stage.querySelector('.video-loader-overlay'), "Conexão lenta, carregando o player..."),
             onFailed: () => renderPlayerLibsError(stage, () => mountNativePlayer(options))
         });
