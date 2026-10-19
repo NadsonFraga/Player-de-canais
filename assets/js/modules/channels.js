@@ -4,12 +4,14 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261019_1242';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261019_1242';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261019_1242';
-import { showToast } from '../core/toast.js?v=20261019_1242';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1242';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261019_1242';
+import { store } from '../core/state.js?v=20261019_1409';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261019_1409';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261019_1409';
+import { showToast } from '../core/toast.js?v=20261019_1409';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1409';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261019_1409';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261019_1409';
+import { escapeHtml } from '../core/sanitize.js?v=20261019_1409';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -1192,8 +1194,8 @@ function updateServerButtonsActiveState(activeChannel) {
         const idx = parseInt(btn.dataset.index, 10);
         const isActive = activeChannel.serverType === 'direct' && activeChannel.sourceIndex === idx;
         btn.classList.toggle("active", isActive);
-        const sourceName = activeChannel.data.sources[idx]?.name || "";
-        btn.innerHTML = `<span>${sourceName}</span>${isActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}`;
+        const sourceLabel = liveSourceLabel(activeChannel.data.sources[idx], idx);
+        btn.innerHTML = `<span>${escapeHtml(sourceLabel)}</span>${isActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}`;
     });
 
     const contButtons = document.querySelectorAll("#contingency-servers-grid .btn-server-option");
@@ -1201,7 +1203,7 @@ function updateServerButtonsActiveState(activeChannel) {
         const name = btn.dataset.name;
         const isActive = activeChannel.serverType === 'contingency' && activeChannel.contingencyName === name;
         btn.classList.toggle("active", isActive);
-        btn.innerHTML = `<span>${name}</span>${isActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}`;
+        btn.innerHTML = `<span>${escapeHtml(name)}</span>${isActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}`;
     });
 }
 
@@ -1276,16 +1278,16 @@ export function renderPlayerView(activeChannel) {
             <div class="server-selector-card">
                 <div class="server-selector-header">
                     <h4>
-                        <span style="display:inline-flex;align-items:center;gap:6px;">${getUiSvg('server', 16)} Opções de Transmissão & Servidores</span>
+                        <span style="display:inline-flex;align-items:center;gap:6px;">${getUiSvg('server', 16)} Players e servidores</span>
                     </h4>
-                    <span class="server-selector-hint">Se a transmissão direta estiver instável, alterne o servidor direto ou selecione uma opção de contingência.</span>
+                    <span class="server-selector-hint">Se a transmissão travar, troque a fonte do Player Principal ou escolha um servidor externo.</span>
                 </div>
                 
                 ${data.sources && data.sources.length > 0 ? `
                     <div class="server-group-block" id="direct-servers-block">
                         <div class="servers-section-title">
-                            <span>Transmissão Direta</span>
-                            <span class="badge-server-native">Nativo • Sem Anúncios</span>
+                            <span>Player Principal</span>
+                            <span class="badge-server-native">Sem anúncios</span>
                         </div>
                         <div class="servers-grid" id="direct-servers-grid"></div>
                     </div>
@@ -1294,8 +1296,8 @@ export function renderPlayerView(activeChannel) {
                 ${data.contingency && Object.keys(data.contingency).length > 0 ? `
                     <div class="server-group-block" id="contingency-servers-block" style="margin-top:14px;">
                         <div class="servers-section-title">
-                            <span>Servidores de Contingência</span>
-                            <span class="badge-server-contingency">Iframe Web</span>
+                            <span>Servidores externos</span>
+                            <span class="badge-server-contingency">Iframe</span>
                         </div>
                         <div class="servers-grid" id="contingency-servers-grid"></div>
                     </div>
@@ -1325,7 +1327,7 @@ export function renderPlayerView(activeChannel) {
             btn.className = `btn-server-option native-server ${isOptionActive ? "active" : ""}`;
             btn.dataset.index = idx;
             btn.innerHTML = `
-                <span>${source.name}</span>
+                <span>${escapeHtml(liveSourceLabel(source, idx))}</span>
                 ${isOptionActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}
             `;
             btn.addEventListener("click", () => {
@@ -1351,7 +1353,7 @@ export function renderPlayerView(activeChannel) {
             btn.className = `btn-server-option contingency-server ${isOptionActive ? "active" : ""}`;
             btn.dataset.name = optName;
             btn.innerHTML = `
-                <span>${optName}</span>
+                <span>${escapeHtml(optName)}</span>
                 ${isOptionActive ? '<span style="font-size:0.75rem;">(Ativo)</span>' : ''}
             `;
             btn.addEventListener("click", () => {

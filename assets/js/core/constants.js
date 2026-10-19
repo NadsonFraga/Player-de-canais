@@ -59,11 +59,11 @@ export const FAMOUS_STUDIOS = [
 
 // Verified Legacy Movie Servers
 export const MOVIE_SERVERS = [
-    { id: 'native_direct', name: 'Player Nativo - Sem Anúncios (BETA)', isNative: true },
-    { id: 'mgeb',      name: 'Servidor 1 (MGEB - Principal)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
+    { id: 'native_direct', name: 'Player Principal', isNative: true },
+    { id: 'mgeb',      name: 'Servidor 1 (MGEB)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
     { id: 'superflix', name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.quest/filme/${id}` },
     { id: 'myembed',   name: 'Servidor 3 (MyEmbed)', buildUrl: (id) => `https://myembed.biz/filme/${id}` },
-    { id: 'vsembed',   name: 'Servidor 4 (VSEmbed - Multi-Áudio)', buildUrl: (id) => `https://vsembed.ru/embed/movie/${id}?ds_lang=pob,pt,en` },
+    { id: 'vsembed',   name: 'Servidor 4 (VSEmbed, multiáudio)', buildUrl: (id) => `https://vsembed.ru/embed/movie/${id}?ds_lang=pob,pt,en` },
     { id: 'embedplay', name: 'Servidor 5 (EmbedPlay)', buildUrl: (id) => `https://www.embedplay.one/filme/${id}` },
     { id: 'fembed',    name: 'Servidor 6 (FEmbed)', buildUrl: (id) => `https://fembed.lol/filme/e/${id}` }
 ];
