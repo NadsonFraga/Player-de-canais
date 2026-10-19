@@ -3,15 +3,15 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261019_1639';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1639';
-import { showToast } from '../core/toast.js?v=20261019_1639';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1639';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1639';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1639';
-import { formatClock } from '../core/resume.js?v=20261019_1639';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1639';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261019_1639';
+import { store } from '../core/state.js?v=20261019_1653';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1653';
+import { showToast } from '../core/toast.js?v=20261019_1653';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1653';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1653';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1653';
+import { formatClock } from '../core/resume.js?v=20261019_1653';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1653';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261019_1653';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1429,6 +1429,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
     let loadingBytes = 0;
     // Fragment bytes already received from this source (HLS), and when the first one arrived: the source's speed
     let doneBytes = 0;
+    let fragsLoaded = 0;
     let firstByteAt = 0;
     let slowNoted = false;
     let verdictLogged = false;
@@ -1462,7 +1463,10 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             if (!firstByteAt) firstByteAt = now;
         }
         const cap = Math.max(limit, hasAlternative ? NATIVE_SLOW_START_CAP_MS : NATIVE_SLOW_START_LAST_CAP_MS);
-        const flowing = elapsed >= limit && lastDataAt > 0 && now - lastDataAt < NATIVE_START_DATA_IDLE_MS && elapsed < cap;
+        // Whole segments arrived but nothing can play (e.g. the audio track never loads): broken, not slow
+        const loadedButUnplayable = fragsLoaded >= 2 && bufferedAhead() === 0;
+        const flowing = elapsed >= limit && lastDataAt > 0 && now - lastDataAt < NATIVE_START_DATA_IDLE_MS && elapsed < cap
+            && !loadedButUnplayable;
         let slowButAlive = false;
         if (flowing) {
             // Whose slowness is it? Only a source about as fast as the viewer's connection is worth waiting for
@@ -1573,6 +1577,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                             const loaded = data && data.frag && data.frag.stats ? data.frag.stats.loaded : 0;
                             if (loaded && !firstByteAt) firstByteAt = Date.now();
                             doneBytes += loaded;
+                            fragsLoaded += 1;
                             loadingFrag = null;
                             loadingBytes = 0;
                             markData();
