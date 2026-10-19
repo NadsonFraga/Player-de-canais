@@ -1,7 +1,7 @@
 # Summary: player libraries on demand (B11) and slow source start
 
 **Branch:** `feat/player-libs-on-demand` · **Dates:** 2026-10-19 · **Version:** `20261019_1242`
-**Status:** approved by the user after manual tests on the preview (all items OK); merge to `master` pending the user's go-ahead.
+**Status:** approved by the user after manual tests on the preview (all items OK); merged to `master` with `--no-ff` on 2026-10-19 and deployed to production.
 
 ## Problem
 
