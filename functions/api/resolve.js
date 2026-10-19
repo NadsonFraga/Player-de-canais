@@ -1311,11 +1311,16 @@ export async function onRequestGet(context) {
         const finalStreamUrl = isDirectMp4
           ? directCleanUrl
           : `${proxyBase}?url=${encodeURIComponent(rawFile)}&referer=${encodeURIComponent(referer)}`;
+        const sourceType = s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4");
+        // Every HLS segment through the proxy is one function call (~450 an hour of video). The player tries the
+        // host first and falls back to the proxy, so hosts that need their Referer still play
+        const directUrl = !isDirectMp4 && sourceType === "hls" && /^https:\/\//i.test(rawFile) ? rawFile : null;
 
         return {
           label: s.label || `Servidor ${idx + 1}`,
-          type: s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4"),
+          type: sourceType,
           stream_url: finalStreamUrl,
+          direct_url: directUrl,
           raw_url: directCleanUrl,
           headers: {
             "Referer": referer,

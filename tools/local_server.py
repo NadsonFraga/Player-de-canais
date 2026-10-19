@@ -1035,6 +1035,9 @@ def normalize_subtitles(tracks: list) -> list:
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
+    # Python's default queue is 5 pending connections; a browser opens more than that at once (modules, styles,
+    # images, video segments) and Windows refuses the rest, so pages failed to load at random
+    request_queue_size = 128
 
 import http.server
 
@@ -1474,11 +1477,16 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         referer = "https://mgeb.top/"
 
                     final_stream_url = direct_clean_url if is_direct_mp4 else f"{proxy_base}?url={urllib.parse.quote(raw_file, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
+                    source_type = s.get("type") or ("hls" if ".m3u8" in raw_file else "mp4")
+                    # Every HLS segment through the proxy is one function call (~450 an hour of video). The player tries
+                    # the host first and falls back to the proxy, so hosts that need their Referer still play
+                    direct_url = raw_file if (not is_direct_mp4 and source_type == "hls" and re.match(r'^https://', raw_file, re.I)) else None
 
                     parsed_sources.append({
                         "label": s.get("label", f"Servidor {idx + 1}"),
-                        "type": s.get("type", "hls" if ".m3u8" in raw_file else "mp4"),
+                        "type": source_type,
                         "stream_url": final_stream_url,
+                        "direct_url": direct_url,
                         "raw_url": direct_clean_url,
                         "headers": {"Referer": referer},
                     })
