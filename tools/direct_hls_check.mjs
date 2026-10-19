@@ -154,7 +154,11 @@ if (runs(1)) {
     await sleep(45000);
     const after = await b.evaluate(COUNTS);
     check("series: plays", started !== null, `${started} ms`);
-    check("series: no /api/stream call after it starts (45 s)", after.proxy - atStart.proxy === 0, `proxy ${atStart.proxy} -> ${after.proxy}`);
+    // A source whose own address failed (e.g. its audio track on a host that wants its Referer) legitimately
+    // plays through the proxy: then the check is that it fell back once, not that the proxy stayed unused
+    const fellBack = b.logs.find(l => /sem o proxy falhou/.test(l));
+    check("series: no /api/stream call after it starts (45 s), unless its source needed the proxy", after.proxy - atStart.proxy === 0 || Boolean(fellBack),
+      `proxy ${atStart.proxy} -> ${after.proxy}${fellBack ? ` (${fellBack.replace(/.*\] /, "").slice(0, 80)})` : ""}`);
     check("series: HLS fetched straight from the host", after.direct > atStart.direct, `host requests ${atStart.direct} -> ${after.direct}`);
   } finally { b.close(); }
 }
@@ -166,8 +170,9 @@ if (runs(2)) {
     const started = await waitFor(b, PLAYING, 90000);
     const counts = await b.evaluate(COUNTS);
     const fellBack = b.logs.find(l => /sem o proxy falhou/.test(l)) || "";
-    const otherSource = b.logs.find(l => /Fonte \d+ falhou/.test(l)) || "";
-    check("blocked host: the same source falls back to the proxy", Boolean(fellBack) && !otherSource, fellBack.replace(/.*\[PlayerEngine\] /, "").slice(0, 110) || JSON.stringify(b.logs.slice(-3)));
+    // The first change must be the same source going to the proxy (another source may follow if that one fails too)
+    const firstChange = b.logs.find(l => /sem o proxy falhou|Fonte \d+ falhou/.test(l)) || "";
+    check("blocked host: the same source falls back to the proxy first", Boolean(fellBack) && firstChange === fellBack, fellBack.replace(/.*\[PlayerEngine\] /, "").slice(0, 110) || JSON.stringify(b.logs.slice(-3)));
     check("blocked host: plays through the proxy", started !== null && counts.proxy > 0, `${started} ms, proxy calls ${counts.proxy}`);
   } finally { b.close(); }
 }

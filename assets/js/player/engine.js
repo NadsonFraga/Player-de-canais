@@ -3,15 +3,15 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261019_1624';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1624';
-import { showToast } from '../core/toast.js?v=20261019_1624';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1624';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1624';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1624';
-import { formatClock } from '../core/resume.js?v=20261019_1624';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1624';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261019_1624';
+import { store } from '../core/state.js?v=20261019_1639';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1639';
+import { showToast } from '../core/toast.js?v=20261019_1639';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1639';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1639';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1639';
+import { formatClock } from '../core/resume.js?v=20261019_1639';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1639';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261019_1639';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1110,6 +1110,17 @@ function normalizeNativeSources({ sources, streamUrl }) {
         .filter(src => src.url);
 }
 
+// Hosts whose own address failed in this visit (they need our proxy): their sources start on the proxy
+const directRefusedHosts = new Set();
+
+function hostOf(url) {
+    try {
+        return new URL(url).host;
+    } catch (e) {
+        return '';
+    }
+}
+
 function isHlsSource(src) {
     if (src.type === 'hls') return true;
     if (src.type === 'mp4') return false;
@@ -1302,6 +1313,8 @@ function failoverNativeSource(session, reason) {
     const current = session.sources[session.currentIndex];
     if (session.viaDirect && current && !current.useProxy) {
         current.useProxy = true;
+        // Other episodes and titles on this host skip the direct try for the rest of the visit
+        directRefusedHosts.add(hostOf(current.directUrl));
         console.warn(`[PlayerEngine] Fonte ${session.currentIndex + 1} sem o proxy falhou (${reason}). Tentando pelo proxy.`);
         mountNativeSource(session, session.currentIndex, { startTime: resumeAt });
         return;
@@ -1365,7 +1378,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
     const isHls = isHlsSource(source);
     // The host's own address when the browser may fetch it (no proxy call per segment); the proxy is the fallback
-    const viaDirect = Boolean(source.directUrl) && !source.useProxy;
+    const viaDirect = Boolean(source.directUrl) && !source.useProxy && !directRefusedHosts.has(hostOf(source.directUrl));
     session.viaDirect = viaDirect;
     let hasStarted = false;
     const mountedAt = Date.now();
@@ -1576,12 +1589,19 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                         });
 
                         hls.on(window.Hls.Events.ERROR, (event, data) => {
-                            if (!data.fatal || !isSessionLive(session, token)) return;
+                            if (!isSessionLive(session, token)) return;
+                            // On the host's own address a network error (a CORS refusal, or a 403 asking for the
+                            // host's Referer, often on a separate audio track) means the proxy is needed: switch at
+                            // the first one instead of waiting ~10 s for hls.js to retry it
+                            if (viaDirect && data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+                                failoverNativeSource(session, data.details);
+                                return;
+                            }
+                            if (!data.fatal) return;
                             switch (data.type) {
                                 case window.Hls.ErrorTypes.NETWORK_ERROR:
-                                    // Manifest errors mean the source is unusable; fragment errors get one retry.
-                                    // On the host's own address any of them means it wants our proxy (its Referer)
-                                    if (viaDirect || (data.details && /manifest|level/i.test(data.details) && !hasStarted)) {
+                                    // Manifest errors mean the source is unusable; fragment errors get one retry
+                                    if (data.details && /manifest|level/i.test(data.details) && !hasStarted) {
                                         failoverNativeSource(session, data.details);
                                     } else {
                                         hls.startLoad();
