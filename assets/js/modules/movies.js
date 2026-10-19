@@ -3,7 +3,7 @@
  * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and modal playback
  */
 
-import { store } from '../core/state.js?v=20261019_1242';
+import { store } from '../core/state.js?v=20261019_1409';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,16 +14,17 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261019_1242';
-import { showToast } from '../core/toast.js?v=20261019_1242';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1242';
-import { buildFeedRows } from '../core/feedRows.js?v=20261019_1242';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1242';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1242';
-import { getUiSvg } from '../core/icons.js?v=20261019_1242';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1242';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1242';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1242';
+} from '../core/constants.js?v=20261019_1409';
+import { showToast } from '../core/toast.js?v=20261019_1409';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1409';
+import { buildFeedRows } from '../core/feedRows.js?v=20261019_1409';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1409';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1409';
+import { getUiSvg } from '../core/icons.js?v=20261019_1409';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1409';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1409';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1409';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261019_1409';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1234,27 +1235,30 @@ export function openMovieDetailsModal(movie, autoplayFirstServer = false) {
 
     const serversGrid = document.getElementById("movie-servers-grid");
     if (serversGrid) {
-        serversGrid.innerHTML = "";
-        MOVIE_SERVERS.forEach((server, idx) => {
+        let firstButton = null;
+        renderServerGroups(serversGrid, MOVIE_SERVERS, (server) => {
             const btn = document.createElement("button");
+            btn.type = "button";
             btn.className = server.isNative ? "btn-movie-server native-direct" : "btn-movie-server";
+            btn.dataset.server = server.id;
             const safeServerName = escapeHtml(server.name);
-            btn.innerHTML = server.isNative 
+            btn.innerHTML = server.isNative
                 ? `<span>${safeServerName}</span>`
                 : `<span>${safeServerName}</span><span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.85;">Reproduzir</span>`;
             btn.addEventListener("click", () => selectMovieServer(server, btn));
-            serversGrid.appendChild(btn);
-
-            if (autoplayFirstServer && idx === 0) {
-                if (pendingMovieAutoplayTimer) clearTimeout(pendingMovieAutoplayTimer);
-                pendingMovieAutoplayTimer = setTimeout(() => {
-                    const currentModal = document.getElementById("movie-modal");
-                    if (currentModal && !currentModal.classList.contains("hidden")) {
-                        selectMovieServer(server, btn);
-                    }
-                }, 150);
-            }
+            if (server === MOVIE_SERVERS[0]) firstButton = btn;
+            return btn;
         });
+
+        if (autoplayFirstServer && firstButton) {
+            if (pendingMovieAutoplayTimer) clearTimeout(pendingMovieAutoplayTimer);
+            pendingMovieAutoplayTimer = setTimeout(() => {
+                const currentModal = document.getElementById("movie-modal");
+                if (currentModal && !currentModal.classList.contains("hidden")) {
+                    selectMovieServer(MOVIE_SERVERS[0], firstButton);
+                }
+            }, 150);
+        }
     }
 
     const wasHidden = modal.classList.contains("hidden");
@@ -1347,13 +1351,13 @@ export function selectMovieServer(server, buttonElement = null) {
             }
             if (movieLoader) movieLoader.classList.add("hidden");
             if (!data || !data.primary_source) {
-                showToast("Fontes diretas indisponíveis para este filme. Selecione outro servidor abaixo se desejar.");
+                showToast("O Player Principal não encontrou fontes para este filme. Escolha um servidor externo abaixo.");
                 if (movieArt) {
                     movieArt.innerHTML = `
                         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);border-radius:12px;">
                             <svg width="44" height="44" fill="none" stroke="#eab308" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
-                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Stream nativo indisponível</div>
-                            <div style="font-size:13px;max-width:380px;line-height:1.5;">Não encontramos transmissões diretas sem anúncios ativas para este título no momento. Por favor, escolha um dos servidores alternativos abaixo.</div>
+                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Player Principal sem fontes</div>
+                            <div style="font-size:13px;max-width:380px;line-height:1.5;">O Player Principal não encontrou fontes para este filme no momento. Escolha um servidor externo abaixo.</div>
                         </div>`;
                     movieArt.classList.remove("hidden");
                 }
@@ -1371,13 +1375,13 @@ export function selectMovieServer(server, buttonElement = null) {
                 poster: backdropUrl,
                 subtitles: data.subtitles || [],
                 onAllFailed: () => {
-                    showToast("Todas as fontes diretas falharam. Selecione outro servidor abaixo se desejar.");
+                    showToast("Nenhuma fonte do Player Principal respondeu. Escolha um servidor externo abaixo.");
                     if (movieArt) {
                         movieArt.innerHTML = `
                             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);border-radius:12px;">
                                 <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Falha na reprodução nativa</div>
-                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Os links diretos deste filme estão temporariamente instáveis. Selecione um servidor alternativo abaixo para continuar assistindo.</div>
+                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">Player Principal sem resposta</div>
+                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Nenhuma fonte do Player Principal respondeu para este filme. Escolha um servidor externo abaixo para continuar assistindo.</div>
                             </div>`;
                         movieArt.classList.remove("hidden");
                     }
@@ -1385,7 +1389,7 @@ export function selectMovieServer(server, buttonElement = null) {
             });
         }).catch(err => {
             if (movieLoader) movieLoader.classList.add("hidden");
-            showToast("Erro ao conectar ao motor de streaming nativo.");
+            showToast("Não foi possível conectar ao Player Principal.");
         });
         return;
     }
