@@ -1,7 +1,7 @@
 # Tests: server groups, naming and card hover
 
 **Date:** 2026-10-19 · **Branch:** `feat/server-groups-and-card-hover` · **Version:** `20261019_1409`
-**Preview:** https://feat-server-groups-and-card-hover.tvzinhaonline.pages.dev
+**Preview:** https://feat-server-groups-and-card.tvzinhaonline.pages.dev (Cloudflare cuts the branch alias at 28 characters)
 
 ## Automated
 
@@ -15,15 +15,17 @@
 
 ## Manual (user, on the preview)
 
+The user reported every item OK on 2026-10-19 ("Considere tudo certo"). During item 3 the player looked smaller with black side bars: measured identical on production and preview (718x404 at a 604 px tall window, 832x468 at 900 px); the stage follows the window height (`100vh - 200px`), and the window was short (DevTools open). Not changed, at the user's request.
+
 | # | Steps | Expected | Result |
 |---|---|---|---|
-| 1 | PC: Filmes, pass the mouse over the first card of a row, then others | the card grows with its rounded corners and border whole, nothing cut flat | |
-| 2 | Same on Séries, Animes, the home screen rows and Canais | same | |
-| 3 | Compare the rows with production | cards, titles and arrows in the same place as before | |
-| 4 | Open a movie | "Escolha um player ou servidor:", group "Players" (Player Principal) and group "Servidores externos" (Servidor 1 (MGEB)...), discreet gray tags, no "BETA" | |
-| 5 | Click Player Principal, then a servidor externo | both play; the active button keeps today's colors | |
-| 6 | Open an anime episode, then a series episode | anime: Player Principal and Player Animes; series: only Player Principal | |
-| 7 | Canais: open Band | "Players e servidores"; block "Player Principal" with "Fonte 1 · SP (Principal)", "Fonte 2 · SP (Backup)"...; block "Servidores externos" | |
-| 8 | Canais: player settings | "Fonte ativa" instead of "Servidor Ativo" | |
-| 9 | Phone | server groups in 2 columns; rows unchanged (no hover on phones) | |
-| 10 | Firefox: items 1, 4 and 7 | same as Chrome | |
+| 1 | PC: Filmes, pass the mouse over the first card of a row, then others | the card grows with its rounded corners and border whole, nothing cut flat | OK (user, 2026-10-19) |
+| 2 | Same on Séries, Animes, the home screen rows and Canais | same | OK (user, 2026-10-19) |
+| 3 | Compare the rows with production | cards, titles and arrows in the same place as before | OK (user, 2026-10-19) |
+| 4 | Open a movie | "Escolha um player ou servidor:", group "Players" (Player Principal) and group "Servidores externos" (Servidor 1 (MGEB)...), discreet gray tags, no "BETA" | OK (user, 2026-10-19) |
+| 5 | Click Player Principal, then a servidor externo | both play; the active button keeps today's colors | OK (user, 2026-10-19) |
+| 6 | Open an anime episode, then a series episode | anime: Player Principal and Player Animes; series: only Player Principal | OK (user, 2026-10-19) |
+| 7 | Canais: open Band | "Players e servidores"; block "Player Principal" with "Fonte 1 · SP (Principal)", "Fonte 2 · SP (Backup)"...; block "Servidores externos" | OK (user, 2026-10-19) |
+| 8 | Canais: player settings | "Fonte ativa" instead of "Servidor Ativo" | OK (user, 2026-10-19) |
+| 9 | Phone | server groups in 2 columns; rows unchanged (no hover on phones) | OK (user, 2026-10-19) |
+| 10 | Firefox: items 1, 4 and 7 | same as Chrome | OK (user, 2026-10-19) |
