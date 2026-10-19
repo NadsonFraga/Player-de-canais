@@ -1,0 +1,51 @@
+# Tests: HLS straight from the host, proxy as fallback (D11)
+
+**Date:** 2026-10-19 · **Branch:** `feat/direct-hls` · **Version:** `20261019_1657`
+**Preview:** https://feat-direct-hls.tvzinhaonline.pages.dev
+
+## Automated
+
+| Suite | Result | Notes |
+|---|---|---|
+| `node --check`, `check_js.py`, `bump_version.py --check` | PASS | |
+| `python tools/test_mgeb_rules.py` | all passed | Python and Node give the same answers |
+| `python tools/test_stream_proxy.py --strict` | 26/26 | production and local |
+| `python tools/test_resolve_cors.py` | 0 failures | |
+| `node tools/player_ui_check.mjs` | 45/46 | first run 42/46 (catalog tab and DBZ S9E31 timing), rerun 45/46: only the old failure (B21) |
+| `node tools/player_touch_check.mjs` | 16/17 or 17/17 | "double tap in the middle" flaky (also on master; Player Animes, not touched); noted in B21 |
+| `node tools/player_libs_check.mjs` | 20/20 | |
+| `node tools/slow_source_check.mjs` | 6/6 | |
+| `node tools/direct_hls_check.mjs` (new) | Chrome 7/7, Firefox 7/7 | series plays with 0 proxy calls after the start (host requests 8 -> 14); with the host's playlist blocked, the same source falls back to the proxy ("Fonte 1 sem o proxy falhou (manifestLoadError). Tentando pelo proxy.") and plays in ~4 s; the Player Animes still goes through the proxy |
+
+Function calls per hour of video (D11 script, 3 min each, local server):
+
+| Title | Before | After |
+|---|---|---|
+| Movies (MP4) | 0 | 0 |
+| Reacher T1E1 (MGEB HLS) | ~450 | **0** (25 requests straight to the host) |
+| Dragon Ball Z T1E1 on the Player Principal (MGEB HLS) | ~340-800 | **0** (21 requests straight to the host) |
+| Dragon Ball Z on the Player Animes | proxy | proxy (its host needs its Referer) |
+| Live channel (Band) | 0 | 0 |
+
+Also fixed: `tools/local_server.py` accepted only 5 pending connections (Python's default); browsers open more at once and Windows refused the rest, which made the app fail to load at random in the browser tests (6 fresh loads: 0/6 ready before, 6/6 in under 1.4 s after).
+
+Time to start playing, Chrome, deployed (4 opens each, 90 s limit):
+
+| Title | Production (before) | Preview (after) |
+|---|---|---|
+| Reacher T1E1 | did not start in 2 of 3; 23.3 s | 17.3 / 19.5 / 19.9 / 21.5 s (source 1 broken audio: direct, then proxy, then source 2 straight from the host) |
+| Breaking Bad T1E1 | 12.2 / 12.2 / 14.9 s, through the proxy | 12.8 / 12.8 / 13.3 / 13.8 s, 0 proxy calls |
+
+Final regression after the fixes: `player_ui_check` 45/46 (B21; one earlier run 44/46: its fixed 15 s wait for the MGEB settings), `player_touch_check` 16/17 (flaky item, B21), `player_libs_check` 20/20, `slow_source_check` 6/6, `direct_hls_check` Chrome 7/7 and Firefox 7/7 (also on the preview after the fixes, Chrome).
+
+## Manual (user, on the preview)
+
+The user reported the items done on 2026-10-19 ("Feito"). During the tests, "Homem-Aranha: Um Novo Dia" (1080p HD, the 97bf1 source) played without audio on the preview while production had audio; it came back after clearing the browser cache. Checked here in Chrome: audio decoded on both (preview: the playercdnx mirror direct, ~131 kbps at 5 min; production: 97bf1 through the proxy, ~229 kbps), not muted, volume 0.9, and every HLS source of the movie carries AAC audio with the video. Most likely stale cached files from earlier tests; to be reported again, before clearing the cache, if it comes back.
+
+| # | Steps | Expected | Result |
+|---|---|---|---|
+| 1 | Open a series episode (e.g. Reacher), let it play 1 min, skip ahead, next episode | plays, seeks and moves on as before | OK (user, 2026-10-19) |
+| 2 | Open an anime on the Player Principal, then on the Player Animes | both play | OK (user, 2026-10-19) |
+| 3 | Several movies (MP4 and HLS) | play as before | OK (user, 2026-10-19) |
+| 4 | DevTools > Rede, filter `api/stream`, while a series plays | after the start, no new `api/stream` lines; segments come from the host | OK (user, 2026-10-19) |
+| 5 | Phone (4G) and Firefox: items 1 and 2 | same | OK (user, 2026-10-19) |
