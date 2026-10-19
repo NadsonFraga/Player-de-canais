@@ -19,6 +19,14 @@ The MGEB HLS host works without the proxy: its playlist and segments answer with
   - Cast ("Transmitir") keeps the proxy address (it adds the Referer for hosts that need it).
 - Dead code: the legacy `fallbackSources` parameter of `mountNativePlayer` (no caller; `streamUrl` stays, the tests use it).
 
+## Found on the preview and fixed in this branch
+
+- On Cloudflare the first Reacher source is another one (97bf1, 1080p, which the local server could not measure): its audio track sits on a host that refuses direct access and also fails through the proxy.
+  - The direct try waited ~10 s of hls.js retries: a network error on the host's own address now moves to the proxy at the first one, and the host is remembered for the rest of the visit.
+  - B20 regression (production): the slow-start wait kept that source up to 90 s because its video segments kept arriving. Two segments arrived with nothing buffered to play now means broken, not slow.
+  - A fatal `audioTrackLoadError` was retried forever, and the video alone could report "can play", stopping the start monitor: production did not start Reacher in 2 of 3 opens. It now fails over like a manifest error.
+- `tools/local_server.py`: request queue 5 -> 128 (Windows refused a browser's parallel connections; the app failed to load at random in the tests).
+
 ## Verification
 
 - `node --check`, `check_js.py`, `bump_version.py --check`; Python/JS parity of the new field.
