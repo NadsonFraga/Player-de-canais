@@ -35,6 +35,18 @@ Two more findings:
 6. `index.html`: the two `<script>` tags are removed. CSP unchanged (`cdn.jsdelivr.net` stays in `script-src`).
 7. Tests: `tools/test_browser_sri.mjs` expected `window.Hls` at page load; it now checks the libraries load through `ensurePlayerLibs()` with SRI and no violation. New `tools/player_libs_check.mjs`: app start with the CDN delayed and down, player opening after an on-demand load, error panel and retry with the CDN down.
 
+## Part 2: slow source start on a slow connection (approved 2026-10-19, same branch)
+
+Found in the user's preview test with Firefox "Regular 3G": the libraries loaded, but the movie ended in "Todas as fontes diretas falharam". The start budgets (since 2026-10-08: HLS 12 s, MP4 20 s, last source 90 s) are shorter than one segment on 3G (1.94 MB at ~94 KB/s is ~21 s), so every live source was dropped as dead. Production behaves the same (B11 does not touch these budgets).
+
+Change (`engine.js`, `mountNativeSource` start monitor):
+- Data signal per source: hls.js fragment byte counters (updated during the download), playlist and fragment loaded events; the media `progress` event only when the browser downloads by itself (MP4, Safari HLS), since with hls.js it keeps firing without data.
+- Past its budget, a source with data arriving at least every 10 s keeps its turn only if the slowness is the viewer's connection: its speed is at least half the viewer's speed (timed jsDelivr library download, else `navigator.connection.downlink`). Much slower than the viewer is a slow host: next source at the normal budget, as before. Viewer speed unknown: keep waiting while data flows. MP4 (no byte counter): wait only when the viewer's connection is slow (< 2 Mbps) or unknown.
+- Caps: 90 s, 180 s for the last source. "Conexão lenta, carregando a fonte..." on the player while waiting.
+- Answered with the user: the first source is the best measured quality (server ranking: alive, matching length, quality, host trust), so waiting on it never trades quality down; starting on a lighter source on slow connections belongs to B18.
+
+Also: `test_browser_sri.mjs` and `test_xss_protection.mjs` reuse a server already on 8787 instead of starting a second one (Windows let both bind; requests hit either at random). New `tools/slow_source_check.mjs`: slow connection, slow host, dead source, data that stops.
+
 ## Out of scope
 
 - Self-hosting the libraries (option (b), not chosen).

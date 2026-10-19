@@ -3,14 +3,14 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261019_1125';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1125';
-import { showToast } from '../core/toast.js?v=20261019_1125';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1125';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1125';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1125';
-import { formatClock } from '../core/resume.js?v=20261019_1125';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1125';
+import { store } from '../core/state.js?v=20261019_1242';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1242';
+import { showToast } from '../core/toast.js?v=20261019_1242';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1242';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1242';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1242';
+import { formatClock } from '../core/resume.js?v=20261019_1242';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1242';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -79,6 +79,27 @@ function loadPlayerLib(lib) {
 /** Loads hls.js and Artplayer once (shared by every caller); rejects only when the browser reports a failure. */
 export function ensurePlayerLibs() {
     return Promise.all(PLAYER_LIBS.map(loadPlayerLib)).then(() => undefined);
+}
+
+/**
+ * The viewer's download speed in bytes/s, or 0 when unknown. First the timed download of the player libraries
+ * (jsDelivr sends Timing-Allow-Origin; nothing to time when they came from the cache), else the browser's own
+ * estimate (Chrome, Edge, Android; capped at 10 Mbps).
+ */
+function viewerBandwidth() {
+    let measured = 0;
+    try {
+        for (const lib of PLAYER_LIBS) {
+            const entry = performance.getEntriesByName(lib.url)[0];
+            const seconds = entry ? (entry.responseEnd - entry.responseStart) / 1000 : 0;
+            if (entry && entry.transferSize > 20000 && seconds > 0) measured = Math.max(measured, entry.transferSize / seconds);
+        }
+    } catch (e) {
+        // Timing is optional
+    }
+    if (measured > 0) return measured;
+    const conn = typeof navigator !== 'undefined' ? navigator.connection : null;
+    return conn && conn.downlink > 0 ? conn.downlink * 1e6 / 8 : 0;
 }
 
 /** Fetches the libraries in the background once the browser is idle, so the first player opens right away. */
@@ -948,6 +969,16 @@ const NATIVE_START_BUDGET_HLS_MS = 12000;
 const NATIVE_START_BUDGET_MP4_MS = 20000;
 // The last remaining source is given up to this long before the error screen
 const NATIVE_START_BUDGET_LAST_SOURCE_MS = 90000;
+// Past its budget, a source still receiving data may only be slow because the viewer's connection is (3G: one 2 MB
+// segment takes ~21 s). It then keeps its turn while bytes keep arriving, at least once per NATIVE_START_DATA_IDLE_MS,
+// up to the caps. A source much slower than the viewer's connection is a slow host instead: next source, as before.
+const NATIVE_START_DATA_IDLE_MS = 10000;
+const NATIVE_SLOW_START_CAP_MS = 90000;
+const NATIVE_SLOW_START_LAST_CAP_MS = 180000;
+// "Much slower": under this share of the viewer's measured speed
+const NATIVE_SLOW_HOST_RATIO = 0.5;
+// Below this the viewer's connection counts as slow (2 Mbps, in bytes/s); used when the source speed is unknown (MP4)
+const SLOW_CONNECTION_BPS = 250000;
 // This much buffered ahead without playback means the source is stuck, not slow
 const NATIVE_STUCK_BUFFER_S = 10;
 const NATIVE_STUCK_GRACE_MS = 3000;
@@ -1365,8 +1396,22 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         return Math.max(0, video.buffered.end(video.buffered.length - 1) - video.currentTime);
     }
 
-    // Start monitor: fail over when the source is stuck (data buffered, no playback)
-    // or over its budget; the last remaining source is allowed to be slow.
+    // Data arriving from this source: playlists, fragment bytes (hls.js updates the loading fragment's byte count
+    // during the download) and media progress events (MP4, Safari's own HLS)
+    let lastDataAt = 0;
+    let loadingFrag = null;
+    let loadingBytes = 0;
+    // Fragment bytes already received from this source (HLS), and when the first one arrived: the source's speed
+    let doneBytes = 0;
+    let firstByteAt = 0;
+    let slowNoted = false;
+    let verdictLogged = false;
+    const markData = () => {
+        if (isSessionLive(session, token)) lastDataAt = Date.now();
+    };
+
+    // Start monitor: fail over when the source is stuck (data buffered, no playback) or over its budget, unless
+    // its data is still arriving (slow connection); the last remaining source is allowed to be slow.
     const budget = isHls ? NATIVE_START_BUDGET_HLS_MS : NATIVE_START_BUDGET_MP4_MS;
     let stuckSince = 0;
     window.cascadeTimer = setInterval(() => {
@@ -1384,7 +1429,36 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         stuckSince = bufferedAhead() >= NATIVE_STUCK_BUFFER_S ? (stuckSince || now) : 0;
         const stuck = stuckSince && now - stuckSince >= NATIVE_STUCK_GRACE_MS;
 
-        if ((stuck && hasAlternative) || elapsed >= limit) {
+        const fragBytes = loadingFrag && loadingFrag.stats ? loadingFrag.stats.loaded : 0;
+        if (fragBytes > loadingBytes) {
+            loadingBytes = fragBytes;
+            lastDataAt = now;
+            if (!firstByteAt) firstByteAt = now;
+        }
+        const cap = Math.max(limit, hasAlternative ? NATIVE_SLOW_START_CAP_MS : NATIVE_SLOW_START_LAST_CAP_MS);
+        const flowing = elapsed >= limit && lastDataAt > 0 && now - lastDataAt < NATIVE_START_DATA_IDLE_MS && elapsed < cap;
+        let slowButAlive = false;
+        if (flowing) {
+            // Whose slowness is it? Only a source about as fast as the viewer's connection is worth waiting for
+            const viewer = viewerBandwidth();
+            const seconds = firstByteAt ? (now - firstByteAt) / 1000 : 0;
+            const sourceRate = seconds >= 2 ? (doneBytes + loadingBytes) / seconds : 0;
+            if (!viewer) slowButAlive = true;
+            else if (sourceRate) slowButAlive = sourceRate >= viewer * NATIVE_SLOW_HOST_RATIO;
+            else slowButAlive = viewer < SLOW_CONNECTION_BPS;
+            if (!verdictLogged) {
+                verdictLogged = true;
+                console.info(`[PlayerEngine] Fonte ${index + 1} após ${Math.round(elapsed / 1000)}s: fonte ${Math.round(sourceRate / 1024)} KB/s, conexão ${Math.round(viewer / 1024)} KB/s (0 = desconhecida). ${slowButAlive ? 'Conexão lenta: aguardando.' : 'Servidor lento: próxima fonte.'}`);
+            }
+            // The last source has nowhere to go: it keeps waiting while data arrives either way
+            if (!hasAlternative) slowButAlive = true;
+        }
+        if (slowButAlive && !slowNoted) {
+            slowNoted = true;
+            setSourceStatus(session, 'Conexão lenta, carregando a fonte...');
+        }
+
+        if ((stuck && hasAlternative) || (elapsed >= limit && !slowButAlive)) {
             clearInterval(window.cascadeTimer);
             console.warn(`[PlayerEngine] Fonte ${index + 1} sem reprodução após ${Math.round(elapsed / 1000)}s (${stuck ? 'travada' : 'tempo esgotado'}).`);
             failoverNativeSource(session, stuck ? 'stuck' : 'timeout');
@@ -1460,8 +1534,25 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                         });
 
                         hls.on(window.Hls.Events.FRAG_BUFFERED, () => {
+                            markData();
                             if (isSessionLive(session, token)) jumpStartGap();
                         });
+
+                        // What the start monitor reads to tell a slow source from a dead one
+                        hls.on(window.Hls.Events.FRAG_LOADING, (event, data) => {
+                            loadingFrag = data && data.frag ? data.frag : null;
+                            loadingBytes = 0;
+                        });
+                        hls.on(window.Hls.Events.FRAG_LOADED, (event, data) => {
+                            const loaded = data && data.frag && data.frag.stats ? data.frag.stats.loaded : 0;
+                            if (loaded && !firstByteAt) firstByteAt = Date.now();
+                            doneBytes += loaded;
+                            loadingFrag = null;
+                            loadingBytes = 0;
+                            markData();
+                        });
+                        [window.Hls.Events.MANIFEST_LOADED, window.Hls.Events.LEVEL_LOADED]
+                            .forEach(name => hls.on(name, markData));
 
                         hls.on(window.Hls.Events.LEVEL_SWITCHED, () => {
                             if (isSessionLive(session, token)) updateQualityIndicators(session);
@@ -1535,6 +1626,9 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         });
 
         art.on('video:progress', () => {
+            // A data signal only when the browser itself downloads (MP4, Safari's HLS): with hls.js the element keeps
+            // firing it while nothing arrives, and the fragment counters above are the signal
+            if (!session.hls) markData();
             if (isSessionLive(session, token)) jumpStartGap();
         });
 

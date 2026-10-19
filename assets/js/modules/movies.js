@@ -3,7 +3,7 @@
  * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and modal playback
  */
 
-import { store } from '../core/state.js?v=20261019_1125';
+import { store } from '../core/state.js?v=20261019_1242';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,16 +14,16 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261019_1125';
-import { showToast } from '../core/toast.js?v=20261019_1125';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1125';
-import { buildFeedRows } from '../core/feedRows.js?v=20261019_1125';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1125';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1125';
-import { getUiSvg } from '../core/icons.js?v=20261019_1125';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1125';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1125';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1125';
+} from '../core/constants.js?v=20261019_1242';
+import { showToast } from '../core/toast.js?v=20261019_1242';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1242';
+import { buildFeedRows } from '../core/feedRows.js?v=20261019_1242';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1242';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1242';
+import { getUiSvg } from '../core/icons.js?v=20261019_1242';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1242';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1242';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1242';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;

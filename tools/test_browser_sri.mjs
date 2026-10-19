@@ -14,9 +14,10 @@ const fs = await import("node:fs");
 const CHROMIUM = fs.existsSync(CHROME) ? CHROME : EDGE;
 const DEBUG_PORT = 9850;
 
-// Start local server in background
-const serverProc = spawn("python", ["tools/local_server.py", "--port", "8787"], { stdio: "ignore" });
-await new Promise(r => setTimeout(r, 800));
+// Reuse a server already on 8787: Windows lets a second one bind the same port, and requests then hit either at random
+const serverRunning = await fetch("http://127.0.0.1:8787/", { signal: AbortSignal.timeout(2000) }).then(() => true, () => false);
+const serverProc = serverRunning ? null : spawn("python", ["tools/local_server.py", "--port", "8787"], { stdio: "ignore" });
+if (serverProc) await new Promise(r => setTimeout(r, 800));
 
 const profile = mkdtempSync(join(tmpdir(), "tvz-sri-"));
 const browserProc = spawn(CHROMIUM, [
@@ -31,7 +32,7 @@ const browserProc = spawn(CHROMIUM, [
 
 const cleanup = () => {
   try { spawnSync("taskkill", ["/PID", String(browserProc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {}
-  try { spawnSync("taskkill", ["/PID", String(serverProc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {}
+  if (serverProc) { try { spawnSync("taskkill", ["/PID", String(serverProc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {} }
 };
 
 try {
