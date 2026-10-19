@@ -930,6 +930,49 @@
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
 }
 
+/* Remove from the rail: a small round "x" in the corner, shown on hover or focus (mouse, remote) and always on touch screens */
+.continue-card {
+    position: relative;
+}
+
+.continue-card-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(9, 9, 11, 0.72);
+    color: #e4e4e7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.continue-card:hover .continue-card-remove,
+.continue-card:focus-within .continue-card-remove {
+    opacity: 1;
+}
+
+.continue-card-remove:hover,
+.continue-card-remove:focus-visible {
+    background: rgba(255, 255, 255, 0.92);
+    color: #09090b;
+    outline: none;
+}
+
+@media (hover: none) {
+    .continue-card-remove {
+        opacity: 1;
+    }
+}
+
 .continue-card-media {
     position: relative;
     width: 100%;
