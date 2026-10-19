@@ -1,6 +1,6 @@
 # Tests: HLS straight from the host, proxy as fallback (D11)
 
-**Date:** 2026-10-19 · **Branch:** `feat/direct-hls` · **Version:** `20261019_1624`
+**Date:** 2026-10-19 · **Branch:** `feat/direct-hls` · **Version:** `20261019_1657`
 **Preview:** https://feat-direct-hls.tvzinhaonline.pages.dev
 
 ## Automated
@@ -28,6 +28,15 @@ Function calls per hour of video (D11 script, 3 min each, local server):
 | Live channel (Band) | 0 | 0 |
 
 Also fixed: `tools/local_server.py` accepted only 5 pending connections (Python's default); browsers open more at once and Windows refused the rest, which made the app fail to load at random in the browser tests (6 fresh loads: 0/6 ready before, 6/6 in under 1.4 s after).
+
+Time to start playing, Chrome, deployed (4 opens each, 90 s limit):
+
+| Title | Production (before) | Preview (after) |
+|---|---|---|
+| Reacher T1E1 | did not start in 2 of 3; 23.3 s | 17.3 / 19.5 / 19.9 / 21.5 s (source 1 broken audio: direct, then proxy, then source 2 straight from the host) |
+| Breaking Bad T1E1 | 12.2 / 12.2 / 14.9 s, through the proxy | 12.8 / 12.8 / 13.3 / 13.8 s, 0 proxy calls |
+
+Final regression after the fixes: `player_ui_check` 45/46 (B21; one earlier run 44/46: its fixed 15 s wait for the MGEB settings), `player_touch_check` 16/17 (flaky item, B21), `player_libs_check` 20/20, `slow_source_check` 6/6, `direct_hls_check` Chrome 7/7 and Firefox 7/7 (also on the preview after the fixes, Chrome).
 
 ## Manual (user, on the preview)
 
