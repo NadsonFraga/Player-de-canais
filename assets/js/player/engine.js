@@ -3,15 +3,15 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261019_1409';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1409';
-import { showToast } from '../core/toast.js?v=20261019_1409';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1409';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1409';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1409';
-import { formatClock } from '../core/resume.js?v=20261019_1409';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1409';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261019_1409';
+import { store } from '../core/state.js?v=20261019_1624';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1624';
+import { showToast } from '../core/toast.js?v=20261019_1624';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1624';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1624';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1624';
+import { formatClock } from '../core/resume.js?v=20261019_1624';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1624';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261019_1624';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1081,13 +1081,11 @@ function qualityText(quality) {
 }
 
 /**
- * Normalizes the sources accepted by mountNativePlayer: the new `sources` list,
- * or the legacy `streamUrl` + `fallbackSources` pair (objects or plain URLs).
+ * Normalizes the sources accepted by mountNativePlayer: the `sources` list (objects or plain URLs), or a single
+ * `streamUrl`. `directUrl` is the host's own address when the browser may fetch it without our proxy.
  */
-function normalizeNativeSources({ sources, streamUrl, fallbackSources = [] }) {
-    const list = Array.isArray(sources) && sources.length
-        ? sources
-        : [streamUrl, ...(Array.isArray(fallbackSources) ? fallbackSources : [])];
+function normalizeNativeSources({ sources, streamUrl }) {
+    const list = Array.isArray(sources) && sources.length ? sources : [streamUrl];
     return list
         .filter(Boolean)
         .map(src => {
@@ -1098,6 +1096,9 @@ function normalizeNativeSources({ sources, streamUrl, fallbackSources = [] }) {
                 : (obj.quality ? [obj.quality] : []);
             return {
                 url,
+                directUrl: obj.direct_url || '',
+                // Set once the direct address failed: the source plays through the proxy from then on
+                useProxy: false,
                 type: obj.type || '',
                 kind: obj.kind || 'unknown',
                 label: obj.label || '',
@@ -1121,7 +1122,7 @@ function isHlsSource(src) {
 
 /**
  * Mounts native Artplayer for Movies, Series and Anime.
- * Accepts `sources` (ranked list from /api/resolve) or the legacy `streamUrl` + `fallbackSources`.
+ * Accepts `sources` (ranked list from /api/resolve) or a single `streamUrl`.
  * `onNearEnd` runs once when NATIVE_NEAR_END_S or less is left (also right away on short videos),
  * e.g. to prefetch the next episode while its links are still fresh.
  * `getNextUp` returns { title, play } or null; when set, the last seconds show an
@@ -1145,8 +1146,8 @@ export function mountNativePlayer(options) {
         return null;
     }
 
-    const { containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null, aniskip = null, tvskip = null, noRecap = false, onProgress = null, resumeNotice = false } = options;
-    const normalized = normalizeNativeSources({ sources, streamUrl, fallbackSources });
+    const { containerId, streamUrl, sources, title, poster, subtitles = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null, aniskip = null, tvskip = null, noRecap = false, onProgress = null, resumeNotice = false } = options;
+    const normalized = normalizeNativeSources({ sources, streamUrl });
     if (normalized.length === 0) {
         atomicPlayerReset();
         if (typeof onAllFailed === 'function') onAllFailed();
@@ -1297,6 +1298,14 @@ function currentPlaybackTime(session) {
 function failoverNativeSource(session, reason) {
     if (!isSessionLive(session)) return;
     const resumeAt = currentPlaybackTime(session) || session.resumeAt || 0;
+    // The host's own address failed: the same source through our proxy first, from the same time
+    const current = session.sources[session.currentIndex];
+    if (session.viaDirect && current && !current.useProxy) {
+        current.useProxy = true;
+        console.warn(`[PlayerEngine] Fonte ${session.currentIndex + 1} sem o proxy falhou (${reason}). Tentando pelo proxy.`);
+        mountNativeSource(session, session.currentIndex, { startTime: resumeAt });
+        return;
+    }
     session.failed.add(session.currentIndex);
     (session.failReasons || (session.failReasons = {}))[session.currentIndex] = reason;
     const nextIdx = nextPlayableIndex(session, session.autoMode ? null : session.lockedQuality);
@@ -1355,6 +1364,9 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
     container.classList.remove("hidden");
 
     const isHls = isHlsSource(source);
+    // The host's own address when the browser may fetch it (no proxy call per segment); the proxy is the fallback
+    const viaDirect = Boolean(source.directUrl) && !source.useProxy;
+    session.viaDirect = viaDirect;
     let hasStarted = false;
     const mountedAt = Date.now();
 
@@ -1479,7 +1491,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
     try {
         const art = new window.Artplayer({
             container: `#${session.containerId}`,
-            url: source.url,
+            url: viaDirect ? source.directUrl : source.url,
             type: isHls ? 'm3u8' : 'mp4',
             title: session.title || 'Tvzinha Cinema',
             poster: session.poster || '',
@@ -1567,8 +1579,9 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                             if (!data.fatal || !isSessionLive(session, token)) return;
                             switch (data.type) {
                                 case window.Hls.ErrorTypes.NETWORK_ERROR:
-                                    // Manifest errors mean the source is unusable; fragment errors get one retry
-                                    if (data.details && /manifest|level/i.test(data.details) && !hasStarted) {
+                                    // Manifest errors mean the source is unusable; fragment errors get one retry.
+                                    // On the host's own address any of them means it wants our proxy (its Referer)
+                                    if (viaDirect || (data.details && /manifest|level/i.test(data.details) && !hasStarted)) {
                                         failoverNativeSource(session, data.details);
                                     } else {
                                         hls.startLoad();
