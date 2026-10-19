@@ -1,6 +1,7 @@
 /**
  * Verifies that index.html loads in a real Chromium browser with SRI and security headers active,
- * confirming window.Hls and window.Artplayer execute without integrity or CSP violations.
+ * confirming window.Hls and window.Artplayer, loaded on demand by ensurePlayerLibs() in engine.js,
+ * execute without integrity or CSP violations.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync } from "node:fs";
@@ -72,6 +73,13 @@ try {
   await send("Page.enable");
   await send("Page.navigate", { url: "http://127.0.0.1:8787/" });
   await new Promise(r => setTimeout(r, 2000));
+
+  // The libraries load on demand (B11): ask the engine for them, as a player would
+  const version = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8").match(/main\.js\?v=([^"]+)/)[1];
+  await send("Runtime.evaluate", {
+    expression: `import('/assets/js/player/engine.js?v=${version}').then(m => m.ensurePlayerLibs()).then(() => true, () => false)`,
+    awaitPromise: true,
+  });
 
   const evalHls = await send("Runtime.evaluate", { expression: "typeof window.Hls" });
   const evalArt = await send("Runtime.evaluate", { expression: "typeof window.Artplayer" });

@@ -3,14 +3,14 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261017_0211';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261017_0211';
-import { showToast } from '../core/toast.js?v=20261017_0211';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261017_0211';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261017_0211';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261017_0211';
-import { formatClock } from '../core/resume.js?v=20261017_0211';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261017_0211';
+import { store } from '../core/state.js?v=20261019_1120';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261019_1120';
+import { showToast } from '../core/toast.js?v=20261019_1120';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1120';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261019_1120';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261019_1120';
+import { formatClock } from '../core/resume.js?v=20261019_1120';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261019_1120';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -22,6 +22,116 @@ if (typeof window !== 'undefined') {
     window.hlsInstance = null;
     window.cascadeTimer = null;
     window.activeAniSkipData = null;
+}
+
+/* ---------- Player libraries (hls.js + Artplayer), loaded on demand ---------- */
+
+// Same files and Subresource Integrity hashes as the old <script> tags (D7); the CSP allows cdn.jsdelivr.net.
+// They used to block the whole app while the CDN was slow; now only a player waits for them.
+const PLAYER_LIBS = [
+    {
+        url: 'https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js',
+        integrity: 'sha384-xLhS5rbIdhv65H3GLX+caQgMSiEK/Hkw8Z6HITolgRxvXs0omcbeYD639tkJ2Wu6',
+        ready: () => typeof window.Hls === 'function',
+        pending: null
+    },
+    {
+        url: 'https://cdn.jsdelivr.net/npm/artplayer@5.1.7/dist/artplayer.js',
+        integrity: 'sha384-LjKKmyj09xPIr/srcAiLFrPjAMi28Sz1pQNHGLknpHAebKxQXQb/UtuCeMBPbl2P',
+        ready: () => typeof window.Artplayer === 'function',
+        pending: null
+    }
+];
+// After this long the loader says the connection is slow. The download itself is never cut: only a real
+// failure reported by the browser (network error, integrity mismatch) shows the error panel.
+const PLAYER_LIBS_SLOW_MS = 8000;
+// Bumped by every TV/native player reset: a mount still waiting for the libraries is dropped when it changes
+let playerMountEpoch = 0;
+
+export function playerLibsReady() {
+    return PLAYER_LIBS.every(lib => lib.ready());
+}
+
+function loadPlayerLib(lib) {
+    if (lib.ready()) return Promise.resolve();
+    if (!lib.pending) {
+        lib.pending = new Promise((resolve, reject) => {
+            const tag = document.createElement('script');
+            tag.src = lib.url;
+            tag.integrity = lib.integrity;
+            tag.crossOrigin = 'anonymous';
+            tag.onload = () => (lib.ready() ? resolve() : reject(new Error(`biblioteca sem efeito: ${lib.url}`)));
+            tag.onerror = () => {
+                tag.remove();
+                reject(new Error(`falha ao baixar ${lib.url}`));
+            };
+            document.head.appendChild(tag);
+        }).catch(err => {
+            // A retry starts a fresh download
+            lib.pending = null;
+            throw err;
+        });
+    }
+    return lib.pending;
+}
+
+/** Loads hls.js and Artplayer once (shared by every caller); rejects only when the browser reports a failure. */
+export function ensurePlayerLibs() {
+    return Promise.all(PLAYER_LIBS.map(loadPlayerLib)).then(() => undefined);
+}
+
+/** Fetches the libraries in the background once the browser is idle, so the first player opens right away. */
+export function preloadPlayerLibs(delayMs = 2000) {
+    const run = () => ensurePlayerLibs().catch(err => console.warn('[PlayerEngine] Pré-carga do player falhou:', err.message));
+    const schedule = typeof window.requestIdleCallback === 'function'
+        ? () => window.requestIdleCallback(run, { timeout: 5000 })
+        : run;
+    setTimeout(schedule, delayMs);
+}
+
+/** "Não foi possível carregar o player" with a retry button, inside a player stage. */
+function renderPlayerLibsError(container, onRetry) {
+    if (!container) return;
+    container.classList.remove('hidden');
+    container.innerHTML = `
+        <div class="channel-direct-error-overlay">
+            <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:14px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+            <div class="error-overlay-title">Não foi possível carregar o player</div>
+            <div class="error-overlay-desc">Verifique a conexão com a internet e tente de novo.</div>
+            <div class="error-overlay-actions">
+                <button type="button" class="btn-error-retry">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    Tentar de novo
+                </button>
+            </div>
+        </div>
+    `;
+    const retry = container.querySelector('.btn-error-retry');
+    if (retry && typeof onRetry === 'function') retry.addEventListener('click', onRetry);
+}
+
+/**
+ * Runs `mount` once the libraries are loaded. Call it right after the player reset: a reset in the meantime
+ * (player closed, other channel or episode, tab left) drops the waiting mount.
+ */
+function mountWhenPlayerLibsReady(mount, { onSlow, onFailed }) {
+    const epoch = playerMountEpoch;
+    const slowTimer = setTimeout(() => {
+        if (epoch === playerMountEpoch) onSlow();
+    }, PLAYER_LIBS_SLOW_MS);
+    ensurePlayerLibs().then(() => {
+        clearTimeout(slowTimer);
+        if (epoch === playerMountEpoch) mount();
+    }, (err) => {
+        clearTimeout(slowTimer);
+        console.warn('[PlayerEngine] Bibliotecas do player indisponíveis:', err.message);
+        if (epoch === playerMountEpoch) onFailed();
+    });
 }
 
 /**
@@ -199,6 +309,8 @@ export function installNoSwipeSeek(art) {
  * Resets the TV player instances, timers, and containers cleanly
  */
 export function atomicTvPlayerReset() {
+    // Also reached from atomicPlayerReset: any reset cancels a mount waiting for the player libraries
+    playerMountEpoch += 1;
     if (typeof window !== 'undefined' && window.tvzinhaSetContingencyState) {
         window.tvzinhaSetContingencyState(false);
     }
@@ -444,6 +556,37 @@ export function handleAllDirectSourcesFailed(onRetry = null) {
  * Mounts a TV channel using direct HLS stream via Artplayer + Hls.js
  */
 export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFailed = null) {
+    if (!playerLibsReady()) {
+        // The 12 s source watchdog only starts once the libraries are here, so a slow connection never drops good sources
+        atomicTvPlayerReset();
+        const waitLoader = document.getElementById("video-loader");
+        const stage = document.getElementById("tv-artplayer-container");
+        const waitIframe = document.getElementById("stream-iframe");
+        if (waitIframe) {
+            waitIframe.src = "";
+            waitIframe.classList.add("hidden");
+        }
+        if (stage) {
+            stage.innerHTML = "";
+            stage.classList.remove("hidden");
+        }
+        if (waitLoader) waitLoader.classList.remove("hidden");
+        mountWhenPlayerLibsReady(() => {
+            setLoaderText(waitLoader, "Carregando transmissão...");
+            mountTvDirectStream(channelData, sourceIndex, onAllDirectFailed);
+        }, {
+            onSlow: () => setLoaderText(waitLoader, "Conexão lenta, carregando o player..."),
+            onFailed: () => {
+                if (waitLoader) {
+                    waitLoader.classList.add("hidden");
+                    setLoaderText(waitLoader, "Carregando transmissão...");
+                }
+                renderPlayerLibsError(stage, () => mountTvDirectStream(channelData, sourceIndex, onAllDirectFailed));
+            }
+        });
+        return;
+    }
+
     atomicTvPlayerReset();
 
     const tvContainer = document.getElementById("tv-artplayer-container");
@@ -738,6 +881,8 @@ const resolveCache = new Map();
  * Resolves direct media stream via local or remote proxy API
  */
 export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', original_title = '', year = '', season_name = '', mal_id = null, imdb_id = null, absolute_episode = '', total_episodes = '', aniskip_only = false }) {
+    // The player libraries download while the sources are looked up
+    if (!aniskip_only) ensurePlayerLibs().catch(() => { /* the mount shows the error */ });
     const params = new URLSearchParams();
     if (id) params.set("id", id);
     if (type) params.set("type", type);
@@ -949,7 +1094,22 @@ function isHlsSource(src) {
  * length is known; `tvskip` ({ tmdbId, imdbId, season, episode } in TMDB numbering) does the same from the series
  * bases, which for an anime only fill the parts AniSkip lacks. `noRecap` (first episode of a show) drops any recap.
  */
-export function mountNativePlayer({ containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null, aniskip = null, tvskip = null, noRecap = false, onProgress = null, resumeNotice = false }) {
+export function mountNativePlayer(options) {
+    if (!playerLibsReady()) {
+        // The source start budget only runs once the libraries are here, so a slow connection never drops good sources
+        atomicPlayerReset();
+        const stage = document.getElementById(options.containerId);
+        if (!stage) return null;
+        stage.classList.remove("hidden");
+        stage.innerHTML = `<div class="video-loader-overlay"><div class="spinner"></div><span>Carregando o player...</span></div>`;
+        mountWhenPlayerLibsReady(() => mountNativePlayer(options), {
+            onSlow: () => setLoaderText(stage.querySelector('.video-loader-overlay'), "Conexão lenta, carregando o player..."),
+            onFailed: () => renderPlayerLibsError(stage, () => mountNativePlayer(options))
+        });
+        return null;
+    }
+
+    const { containerId, streamUrl, sources, title, poster, subtitles = [], fallbackSources = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null, aniskip = null, tvskip = null, noRecap = false, onProgress = null, resumeNotice = false } = options;
     const normalized = normalizeNativeSources({ sources, streamUrl, fallbackSources });
     if (normalized.length === 0) {
         atomicPlayerReset();
