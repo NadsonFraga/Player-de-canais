@@ -148,6 +148,22 @@
     border-radius: 4px;
 }
 
+/* Room for the hover zoom of the cards (desktop): a horizontal scroller also clips vertically, and a zoomed card grows
+   ~12 px up and ~5 px to each side, plus its shadow, so its top and the first card's side were cut flat. Padding inside
+   the scroller, cancelled by equal negative margins, so cards, titles and arrows stay exactly where they were. */
+@media (hover: hover) and (pointer: fine) and (min-width: 769px) {
+    .movies-carousel-track {
+        padding: 14px 10px 24px;
+        margin: -8px -6px -8px;
+    }
+
+    .home-row-scroller,
+    .channels-row-scroller {
+        padding: 14px 10px 24px;
+        margin: -14px -10px -12px;
+    }
+}
+
 /* 5. 1:1 Square Dark Glass Channel Cards */
 .home-channel-card {
     flex: 0 0 126px;
