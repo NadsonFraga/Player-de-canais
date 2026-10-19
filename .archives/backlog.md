@@ -1,6 +1,6 @@
 # Fila de Trabalho (alterações e testes)
 
-> **Atualizado em:** 2026-10-14
+> **Atualizado em:** 2026-10-19
 > **Status:** documento vivo. Nada daqui está aprovado para implementação, exceto o que estiver marcado como feito.
 > **Regras** (`CLAUDE.md`): mostrar o plano no chat, esperar aprovação, parar ao fim de cada fase, nenhuma operação git sem pedido, preferir correções gerais a remendos por título, testar vários títulos no Chrome e no Firefox.
 
@@ -75,18 +75,17 @@ Plano detalhado: `features/2026-10-08-anime-title-lookup-and-resolve-speed/plan.
 - `[feito]` B15. **Rótulo do pulo de 10 s sem emoji** (regra do projeto): trocados os símbolos `⏪`/`⏩` por setas de contorno (SVG, mesmo estilo dos ícones do site) mais o texto "- 10 s" / "+ 10 s", como no exemplo do YouTube. Detalhe técnico: o Artplayer pinta de branco todo SVG dentro do player, por isso o ícone leva `fill: none` no CSS.
 - `[feito]` B16. **Arrastar o dedo sobre o vídeo não muda mais o tempo (celular)** (13/10, deploy 14/10). O Artplayer 5.1.7 avançava ou voltava ao arrastar de lado sobre o vídeo (meia duração por largura de tela), e os gestos do Android em tela cheia (voltar, trocar de app) voltavam minutos do episódio. Desligado em `installNoSwipeSeek` (`engine.js`); toque duplo, barra e cards seguem iguais. `player_touch_check.mjs` 17/17 (sem a correção: 8,9 s -> 0 s). Pasta: `features/2026-10-13-no-swipe-seek/`.
 - `[investigar]` B17. **Tela cheia saiu ao passar episódio no celular (Rick and Morty, 13/10).** Não reproduzido: no teste de toque a tela cheia pelo botão do player continua no próximo episódio. Suspeita: entrada pelo "girar para tela cheia" do Chrome Android, que põe só o vídeo em tela cheia (o vídeo é trocado a cada episódio). Falta saber como a tela cheia foi ativada e como o episódio foi passado.
-- `[aberto]` B18. **Hysteresis de buffer e proteção contra engasgos em MP4s pesados ("Buscar qualidade melhor").** Em conexões instáveis ou servidores lentos de MP4 de alta taxa de bits (1080p), o buffer à frente oscila e gera travamentos repetitivos. Proposta: medição precisa de `bufferedAhead`, histerese ao entrar em `waiting` (acumular 4s-6s antes de despausar), rebaixamento automático para resolução intermediária estritamente quando a opção "Automático" estiver selecionada (como no YouTube), e ajuste fino do buffer de HLS (`maxBufferLength: 30`, `maxMaxBufferLength: 60`).
 - `[aberto]` B19. **Continuar Assistindo: suporte a Filmes e botão/opção de remover item.**
   - **Filmes:** Atualmente apenas episódios de Séries e Animes salvam progresso e alimentam a trilha `home-continue-watching-section`. Estender o salvamento de progresso de `movies.js` (ao pausar/sair do player de filme) no `localStorage` sob o formato compatível com o rail.
   - **Ação de Remover:** Adicionar um botão discreto de exclusão (`X` / remover) em cada card de "Continuar Assistindo", permitindo limpar títulos da lista sem precisar assisti-los até o fim.
 - `[feito]` E5. **Símbolos antigos do site (★ ✓ ✦ ▶)** mantidos como estão, na cor de cada elemento (por exemplo o ✦ dos destaques na cor de cada aba, que você gosta). Para nenhum aparelho transformar isso em emoji colorido: o `▶` das duas posições da lista contínua ganhou o seletor de apresentação em texto (U+FE0E) e o site inteiro passou a usar `font-variant-emoji: text`; os demais símbolos já não têm versão emoji. O 🔴 que estava só num comentário de `liveLatency.js` foi removido. Teste novo confere o modo texto e o código do `▶`. Versão de cache `20261008_q20`.
-- `[aberto]` B11. **Carregamento da página depende do CDN dos players.** O `hls.js` e o `Artplayer` vêm do jsDelivr como scripts que bloqueiam a página (`<head>`, antes do app). Quando o CDN está lento, a página inteira (catálogo, canais, tudo) espera, mesmo sem tocar nenhum vídeo. Observado nos testes de hoje (o app às vezes levou mais de 20 s para iniciar). Correção proposta: carregar essas duas bibliotecas só quando um player for aberto (carga sob demanda) ou, no mínimo, com `defer`; manter a integridade (SRI) do item D7.
+- `[impl]` B11. **Carregamento da página depende do CDN dos players.** **Implementado em 19/10 no branch `feat/player-libs-on-demand` (em pré-visualização, aguardando testes manuais):** bibliotecas carregadas sob demanda por `ensurePlayerLibs()` (`engine.js`), com a mesma SRI, pré-carga em tempo ocioso, sem limite de tempo que derrube (aviso de conexão lenta aos 8 s) e erro claro com "Tentar de novo" quando o CDN falha. Medido antes: o app atrasava exatamente o atraso do CDN (+20 s no CDN = app em 20,4 s). `defer` sozinho não resolveria (scripts `defer` e módulos rodam em ordem). Pasta `features/2026-10-19-player-libs-on-demand/`. Texto original: O `hls.js` e o `Artplayer` vêm do jsDelivr como scripts que bloqueiam a página (`<head>`, antes do app). Quando o CDN está lento, a página inteira (catálogo, canais, tudo) espera, mesmo sem tocar nenhum vídeo. Observado nos testes de hoje (o app às vezes levou mais de 20 s para iniciar). Correção proposta: carregar essas duas bibliotecas só quando um player for aberto (carga sob demanda) ou, no mínimo, com `defer`; manter a integridade (SRI) do item D7.
 - `[aberto]` B18. **Buffer hysteresis e recuperação de travamento (anti-stutter loop) em filmes pesados (1080p MP4 / 'Buscar qualidade melhor').**
   - **Contexto:** Ao usar "Buscar qualidade melhor" ou abrir títulos pesados (1080p de 3-6 GB), servidores upstream mais lentos causam micro-travamentos repetitivos (o navegador retoma após 0.2s de buffer e trava de novo imediatamente).
   - **1. Histerese de Rebuffer (Anti-Stutter Guard):** Ao entrar em `waiting`, segurar a retomada até acumular margem de segurança à frente (ex: 4-6 segundos de buffer adiantado, com timeout de segurança).
   - **2. Downgrade Inteligente estilo YouTube:** Ativo **somente quando a qualidade estiver em 'Automático'**. Se ocorrerem engasgos repetidos (ex: 3 travamentos em 45s), notificar o usuário com toast e alternar automaticamente para a fonte estável anterior (ex: 720p). Se o usuário travou a qualidade manualmente em 1080p, sua escolha é respeitada e apenas a histerese de rebuffer atua.
   - **3. Cálculo Preciso de `bufferedAhead`:** Corrigir a leitura de buffer em `engine.js` para inspecionar o `TimeRanges` no ponto exato de `currentTime`, evitando distorções.
-  - **4. Otimização de Buffers:** Avaliar impactos de `preload="auto"` e expansão de buffers Hls.js (`maxBufferLength: 60s`, `maxMaxBufferLength: 120s`).
+  - **4. Otimização de Buffers:** Avaliar impactos de `preload="auto"` e expansão de buffers Hls.js. Duas propostas registradas, a decidir por medição: `maxBufferLength: 30` / `maxMaxBufferLength: 60` ou `60` / `120` (s).
 
 
 ## C. Fontes (MGEB voltou)
@@ -122,9 +121,21 @@ Alto:
 
 ## F. Itens novos (08/10, relatados nos seus testes)
 
-Ordem sugerida: F1 (crítico, você decidiu deixar na fila geral) → F2 e F3 (investigação) → F6 e F7 (funcionalidades grandes, pedem plano próprio). F4 e F5 já foram feitos.
+Ordem sugerida: F2 e F3 (investigação) → F7 (funcionalidade grande, pede plano próprio). F1 saiu dos urgentes (19/10) e entra junto da frente futura de novas fontes diretas. F4, F5 e F6 já foram feitos.
 
-- `[crítico]` F1. **Canais "não estão ao vivo" (testado na Globo).** Investigado hoje, sem alterar código:
+- `[aberto]` F1. **Canais "não estão ao vivo" (testado na Globo).** **Adiado em 19/10 por decisão sua:** sai dos urgentes e entra na frente futura de **buscar novas fontes diretas para os canais**, quando o `canais.json` e a troca de fontes serão revistos juntos.
+  - **Medição de 19/10** (134 fontes diretas, duas leituras com 45 s e 90 s de intervalo, duas rodadas ~3 min uma da outra):
+    - A Globo **voltou a avançar** (4 fontes, 4-5 segmentos em 52 s): o congelamento de 08/10 era temporário na origem.
+    - 112 fontes (57 canais) avançam normalmente.
+    - **22 fontes (9 canais) mortas:** Prime Video (as 6), Disney+, Max, Comedy Central, Nickelodeon, Nick Jr., MTV, Premiere 6 e CazéTV "Sinal 2" (o "Sinal 1" funciona). Playlist idêntica por mais de 4 min e segmentos respondendo **404** (controle: Band, Globo e SporTV dão 200 no mesmo teste); não é cache (anti-cache igual, Cloudflare `DYNAMIC`). Todos marcados `ONLINE`.
+    - "Principal" e "Backup" são a mesma origem (mesmo `slug`) em dois CDNs: morrem juntos.
+    - O `canais.json` não muda desde 05/10 e **não existe rotina que o gere**; o campo `status` não é lido pela interface.
+  - **Defeitos do player encontrados** (`engine.js`, `mountTvDirectStream`):
+    - Fonte morta antes de começar: 12 s por fonte até trocar (Prime Video: ~72 s até a tela de erro) e **não abre a contingência sozinho**, só mostra um aviso.
+    - Fonte que morre durante a reprodução (caso Globo): a cascata é desligada depois que o vídeo começa (`if (isStreamWorking) return;`) e o erro de rede fatal chama `hls.startLoad()` sem limite. O player trava em silêncio com o selo "AO VIVO" aceso.
+  - **Proposta para quando for retomado:** vigia do avanço da playlist durante toda a reprodução (parada por ~3 × a duração do segmento ou 404 seguidos = fonte morta, mesmo depois de começar); limite no `startLoad()`; pular fontes com o mesmo `slug` quando uma morrer; contingência automática ou manual ao fim das diretas; selo "AO VIVO" só com a playlist avançando; ferramenta `tools/live_health_check.py` (base: script da medição de 19/10).
+  - **Decisões pendentes:** abrir a contingência sozinho ou manter o botão manual; o que fazer com os canais mortos (só a proteção do player, abrir direto na contingência ou esconder); verificação de saúde manual ou rotina automática.
+  - **Investigação original (08/10, sem alterar código):**
   - **Medição (08/10, 15:49-15:51):** as 4 fontes cadastradas da Globo (SP principal, SP reserva, RJ principal, RJ reserva) devolvem sempre a **mesma playlist**: sequência 5271 (SP) e 5210 (RJ), igual em leituras com mais de 75 s de intervalo. Um HLS ao vivo avança a cada ~12 s. Band, SBT e Record avançam normalmente (cerca de 6 segmentos por 40 s). Lendo a fonte **direto da origem**, sem passar pelo nosso proxy, o resultado é o mesmo: o congelamento está na origem, não no proxy nem no player.
   - **Falha de desenho do app:** o `data/canais.json` marca a Globo como `ONLINE` e o player toca em silêncio um conteúdo repetido, sem perceber que a playlist não anda.
   - Correção proposta (geral, vale para qualquer canal): (a) o player vigia o avanço da sequência da playlist; se não avançar em ~3 × a duração do segmento (cerca de 36 s), marca a fonte como parada e troca para a próxima fonte e, por fim, para a opção de contingência (iframe), com aviso na tela; (b) a rotina que gera `canais.json` passa a comparar duas leituras e gravar `PARADA` em vez de `ONLINE`; (c) conferir se a contingência da Globo (iframes) está ao vivo e preferi-la automaticamente quando as fontes diretas estiverem paradas; (d) o selo "Ao vivo" só aparece quando a playlist realmente avança.
@@ -188,7 +199,7 @@ Geral:
 
 ## Testes dos itens novos (F)
 
-- `[aberto]` T20. **Canais ao vivo (F1):** para cada canal da lista, ler a playlist duas vezes com 40 s de intervalo e exigir que a sequência avance; depois do conserto, abrir a Globo no navegador, ver o aviso de fonte parada e a troca automática; conferir que Band, SBT e Record continuam sem falso alarme.
+- `[aberto]` T20. **Canais ao vivo (F1, adiado com o F1):** para cada canal da lista, ler a playlist duas vezes com 40 s de intervalo e exigir que a sequência avance; depois do conserto, abrir a Globo no navegador, ver o aviso de fonte parada e a troca automática; conferir que Band, SBT e Record continuam sem falso alarme.
 - `[aberto]` T21. **Cadeia de entradas (F2):** Diário de uma Apotecária (episódios 1, 24, 25, 48, 60), Attack on Titan "Final Season", e conferir cada episódio tocado com o nome do episódio no TMDB; repetir nos dois players.
 - `[aberto]` T22. **Áudio (F3):** Initial D e mais 3 títulos dublados/legendados; listar o idioma e a taxa de bits do áudio de cada fonte disponível.
 - `[feito]` T23. **Cabeçalho (F4):** o "Ep. geral" aparece no player em desktop e no celular, sem estourar a largura.
@@ -235,5 +246,5 @@ Não commitado. Arquivos alterados: `functions/api/resolve.js`, `tools/local_ser
 - `[feito]` G3. **Fileiras do catálogo completas** (20 títulos por fileira). Pasta `features/2026-10-12-catalog-rows/`.
 - `[feito]` G4. **"Buscar qualidade melhor"** no menu de qualidade. Pasta `features/2026-10-12-source-quality/`.
 - `[feito]` G5. **Sair de uma aba do catálogo volta à página inicial dela.** Pasta `features/2026-10-12-tab-reset/`.
-- `[aberto]` G6. **Plano de segurança do outro computador** (`features/2026-10-10-security-hardening/plan.md`) nunca foi commitado: commitar a partir daquela máquina antes de seguir com D4-D9.
+- `[feito]` G6. **Plano de segurança do outro computador** (`features/2026-10-10-security-hardening/plan.md`): commitado em 14/10 (`8f62ddb`); D4-D9 entregues e mergeados no `master` em 17/10 (`20d01b3`). Resumo em `features/2026-10-14-security-hardening/`.
 
