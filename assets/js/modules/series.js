@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261019_1120';
+import { store } from '../core/state.js?v=20261019_1125';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,16 +14,16 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261019_1120';
-import { showToast } from '../core/toast.js?v=20261019_1120';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1120';
-import { buildFeedRows } from '../core/feedRows.js?v=20261019_1120';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1120';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1120';
-import { resumeStartTime } from '../core/resume.js?v=20261019_1120';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1120';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1120';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1120';
+} from '../core/constants.js?v=20261019_1125';
+import { showToast } from '../core/toast.js?v=20261019_1125';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1125';
+import { buildFeedRows } from '../core/feedRows.js?v=20261019_1125';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1125';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1125';
+import { resumeStartTime } from '../core/resume.js?v=20261019_1125';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1125';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1125';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1125';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
