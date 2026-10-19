@@ -3,12 +3,12 @@
  * Fetches and renders match schedule feeds with team crest resolution and custom team picker
  */
 
-import { store } from '../core/state.js?v=20261017_0211';
-import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261017_0211';
-import { getUiSvg } from '../core/icons.js?v=20261017_0211';
-import { showToast } from '../core/toast.js?v=20261017_0211';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261017_0211';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261017_0211';
+import { store } from '../core/state.js?v=20261019_1242';
+import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261019_1242';
+import { getUiSvg } from '../core/icons.js?v=20261019_1242';
+import { showToast } from '../core/toast.js?v=20261019_1242';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261019_1242';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1242';
 
 let matchesRefreshTimer = null;
 let isTeamModalInitialized = false;
