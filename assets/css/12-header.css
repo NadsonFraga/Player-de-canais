@@ -345,6 +345,15 @@
     width: 100%;
 }
 
+/* Long names show whole (up to three lines) instead of being cut */
+.search-title-grid .movie-card-title {
+    white-space: normal;
+    text-overflow: clip;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
 .search-person-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
