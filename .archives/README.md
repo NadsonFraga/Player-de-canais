@@ -57,6 +57,8 @@ Project documentation folder (replaces the former `docs/`). When resuming work, 
 | 2026-10-19 | [server-groups-and-card-hover](features/2026-10-19-server-groups-and-card-hover/) | done |
 | 2026-10-19 | [direct-hls](features/2026-10-19-direct-hls/) | done (D11) |
 | 2026-10-19 | [continue-movies](features/2026-10-19-continue-movies/) | done (B19) |
-| 2026-10-20 | [tmdb-key](features/2026-10-20-tmdb-key/) | done (D3; new key after the merge) |
+| 2026-10-20 | [tmdb-key](features/2026-10-20-tmdb-key/) | done (D3; new key applied in production) |
+| 2026-10-20 | [tmdb-credits](features/2026-10-20-tmdb-credits/) | done |
+| 2026-10-20 | [site-footer](features/2026-10-20-site-footer/) | done |
 
 Folders before 2026-10-08 were dated from their summaries and commit history; older ones may lack a `summary.md`.
