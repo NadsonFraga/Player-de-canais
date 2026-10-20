@@ -416,10 +416,26 @@
     text-overflow: ellipsis;
 }
 
-/* --- Phones: the tools move to a second, smaller pill under the tabs --- */
+/* The phone's single menu button: computers keep the three icons */
+.nav-mobile-more,
+.nav-more-divider {
+    display: none;
+}
+
+/* --- Phones: one round button at the right of the pill; the whole pill tucks away on scroll --- */
 @media (max-width: 768px) {
-    .nav-tools-divider {
+    .nav-tools-divider,
+    .nav-capsule-tools {
         display: none;
+    }
+
+    .nav-more-divider {
+        display: block;
+        margin: 0 2px;
+    }
+
+    .nav-mobile-more {
+        display: inline-flex;
     }
 
     .nav-capsule-item.nav-capsule-brand {
@@ -431,55 +447,24 @@
         height: 24px;
     }
 
-    .nav-capsule-tools {
-        position: absolute;
-        top: calc(100% + 6px);
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 3px 6px;
-        gap: 4px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        background: rgba(14, 14, 18, 0.94);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-        box-shadow: 0 4px 22px rgba(0, 0, 0, 0.6);
-        transition: opacity 0.25s ease, transform 0.25s ease;
+    .nav-tool {
+        width: 32px;
+        height: 32px;
     }
 
-    /* Tucked away while scrolling down, back when scrolling up */
-    body.nav-tools-tucked .nav-capsule-tools {
+    /* Tucked away while scrolling down, back when scrolling up (pill and its menu button together) */
+    body.nav-tucked .floating-nav-capsule {
+        transform: translate(-50%, -80px);
         opacity: 0;
-        transform: translate(-50%, -12px);
         pointer-events: none;
     }
 
-    .nav-tool {
-        width: 34px;
-        height: 34px;
-    }
-
-    /* Canais: its content starts under both pills */
-    body[data-app-view="tv"] #main-content {
-        padding-top: 104px;
-    }
-
-    /* The banner dots sit under the tools pill instead of behind it */
-    .movies-hero-nav {
-        top: 46px;
-    }
-
-    /* Menus open centered under the tools pill */
-    .nav-menu-wrap {
-        position: static;
-    }
-
-    .nav-menu {
-        top: calc(100% + 10px);
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        width: min(320px, calc(100vw - 24px));
+    /* The menu opens under the pill, aligned to its right end */
+    .nav-mobile-more .nav-menu {
+        top: calc(100% + 12px);
+        right: -6px;
+        left: auto;
+        width: min(300px, calc(100vw - 24px));
         animation: none;
     }
 

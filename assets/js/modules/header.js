@@ -1,23 +1,24 @@
 /**
  * TVZINHA ONLINE - Header tools: global search, profile menu and settings menu (the icons after the tabs in the
- * pill). Phones show them in a second, smaller pill under the tabs, tucked away while the page scrolls down.
+ * pill). Phones have one round button at the right of the pill with a single menu holding all of it, and the whole
+ * pill tucks away while the page scrolls down (it comes back scrolling up).
  *
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261020_1714';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1714';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1714';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1714';
-import { showToast } from '../core/toast.js?v=20261020_1714';
-import { syncPageLock } from '../core/activity.js?v=20261020_1714';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1714';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1714';
-import { switchAppView } from '../navigation/router.js?v=20261020_1714';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1714';
-import { isAnimeShow } from './series.js?v=20261020_1714';
-import { selectChannelByName } from './channels.js?v=20261020_1714';
-import { openLegalSection } from './footer.js?v=20261020_1714';
+import { store } from '../core/state.js?v=20261020_1724';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1724';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1724';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1724';
+import { showToast } from '../core/toast.js?v=20261020_1724';
+import { syncPageLock } from '../core/activity.js?v=20261020_1724';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1724';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1724';
+import { switchAppView } from '../navigation/router.js?v=20261020_1724';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1724';
+import { isAnimeShow } from './series.js?v=20261020_1724';
+import { selectChannelByName } from './channels.js?v=20261020_1724';
+import { openLegalSection } from './footer.js?v=20261020_1724';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -47,7 +48,7 @@ function openMenu(menuId) {
     menu.classList.remove('hidden');
     menuButton(menuId)?.setAttribute('aria-expanded', 'true');
     // The pill stays visible while a menu is open (phones tuck it away on scroll)
-    document.body.classList.remove('nav-tools-tucked');
+    document.body.classList.remove('nav-tucked');
     if (!openMenuId) pushNavLayer('menu');
     openMenuId = menuId;
     menu.querySelector('.nav-menu-item:not([aria-disabled="true"])')?.focus({ preventScroll: true });
@@ -298,7 +299,7 @@ export function setupHeader() {
     tools.dataset.ready = '1';
 
     document.getElementById('btn-nav-search')?.addEventListener('click', openSearch);
-    ['nav-profile-menu', 'nav-settings-menu'].forEach(menuId => {
+    ['nav-profile-menu', 'nav-settings-menu', 'nav-mobile-menu'].forEach(menuId => {
         menuButton(menuId)?.addEventListener('click', (e) => {
             e.stopPropagation();
             if (openMenuId === menuId) closeMenu();
@@ -306,19 +307,22 @@ export function setupHeader() {
         });
     });
 
-    // Menu items
-    document.getElementById('nav-profile-menu')?.addEventListener('click', (e) => {
+    // Menu items (the same actions in the computer menus and in the phone's single menu)
+    document.querySelectorAll('#floating-nav-capsule .nav-menu').forEach(menu => menu.addEventListener('click', (e) => {
+        const legal = e.target.closest('[data-menu-legal]');
+        if (legal) {
+            closeMenuThen(() => openLegalSection(legal.dataset.menuLegal));
+            return;
+        }
         const item = e.target.closest('[data-menu-action]');
         if (!item) return;
-        if (item.dataset.menuAction === 'continue') goToContinueWatching();
-        else if (item.dataset.menuAction === 'account') showToast('A conta chega em breve. Por enquanto, tudo fica salvo neste aparelho.');
-    });
-    document.getElementById('nav-settings-menu')?.addEventListener('click', (e) => {
-        const legal = e.target.closest('[data-menu-legal]');
-        if (legal) closeMenuThen(() => openLegalSection(legal.dataset.menuLegal));
+        const action = item.dataset.menuAction;
+        if (action === 'continue') goToContinueWatching();
+        else if (action === 'search') closeMenuThen(openSearch);
+        else if (action === 'account') showToast('A conta chega em breve. Por enquanto, tudo fica salvo neste aparelho.');
         // The tips open through the footer's button (main.js handles it), after the menu's history step lands
-        else if (e.target.closest('#btn-menu-adblock')) closeMenuThen(() => document.getElementById('btn-footer-adblock')?.click());
-    });
+        else if (action === 'adblock') closeMenuThen(() => document.getElementById('btn-footer-adblock')?.click());
+    }));
 
     // A click outside closes the menu; Esc closes it and gives the focus back to its button
     document.addEventListener('click', (e) => {
@@ -384,10 +388,10 @@ export function setupHeader() {
         }
     });
 
-    // Phones: the tools pill tucks away while scrolling down and comes back when scrolling up (and on a tab switch)
+    // Phones: the pill tucks away while scrolling down and comes back when scrolling up (and on a tab switch)
     let lastY = 0;
     new MutationObserver(() => {
-        document.body.classList.remove('nav-tools-tucked');
+        document.body.classList.remove('nav-tucked');
         lastY = 0;
     }).observe(document.body, { attributes: true, attributeFilter: ['data-app-view'] });
     document.addEventListener('scroll', (e) => {
@@ -395,8 +399,8 @@ export function setupHeader() {
         if (!target || (target !== document.scrollingElement && target.id !== 'title-page')) return;
         const y = target.scrollTop;
         if (openMenuId) return;
-        if (y > lastY + 6 && y > 80) document.body.classList.add('nav-tools-tucked');
-        else if (y < lastY - 6 || y <= 80) document.body.classList.remove('nav-tools-tucked');
+        if (y > lastY + 6 && y > 80) document.body.classList.add('nav-tucked');
+        else if (y < lastY - 6 || y <= 80) document.body.classList.remove('nav-tucked');
         lastY = y;
     }, { capture: true, passive: true });
 }
