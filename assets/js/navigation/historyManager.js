@@ -3,7 +3,7 @@
  * Implements strict hierarchical back navigation across all tabs, searches, modals, drawers, and active media.
  */
 
-import { store } from '../core/state.js?v=20261020_1634';
+import { store } from '../core/state.js?v=20261020_1704';
 
 let navigationDepth = 0;
 let isProgrammaticBack = false;
@@ -179,7 +179,25 @@ export function handleBackButton() {
         }
     }
 
-    // LAYER 2: Panels over the page (the trailer and the legal panel can open over the title page)
+    // LAYER 2: Panels over the page (menus, search, the trailer and the legal panel can open over the title page)
+    // 2.0 Header menus (profile, settings) and the global search
+    const openMenu = document.querySelector("#floating-nav-capsule .nav-menu:not(.hidden)");
+    if (openMenu) {
+        const menuButton = document.querySelector(`[aria-controls="${openMenu.id}"]`);
+        if (menuButton) {
+            menuButton.click();
+            return true;
+        }
+    }
+    const searchOverlay = document.getElementById("search-overlay");
+    if (searchOverlay && !searchOverlay.classList.contains("hidden")) {
+        const btnCloseSearch = document.getElementById("btn-close-search");
+        if (btnCloseSearch) {
+            btnCloseSearch.click();
+            return true;
+        }
+    }
+
     // 2.1 Trailer player (title page)
     const trailerModal = document.getElementById("trailer-modal");
     if (trailerModal && !trailerModal.classList.contains("hidden")) {
