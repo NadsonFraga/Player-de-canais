@@ -6,19 +6,19 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261020_1816';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1816';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1816';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1816';
-import { showToast } from '../core/toast.js?v=20261020_1816';
-import { syncPageLock } from '../core/activity.js?v=20261020_1816';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1816';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1816';
-import { switchAppView } from '../navigation/router.js?v=20261020_1816';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1816';
-import { isAnimeShow } from './series.js?v=20261020_1816';
-import { selectChannelByName } from './channels.js?v=20261020_1816';
-import { openLegalSection } from './footer.js?v=20261020_1816';
+import { store } from '../core/state.js?v=20261020_1857';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1857';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1857';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1857';
+import { showToast } from '../core/toast.js?v=20261020_1857';
+import { syncPageLock } from '../core/activity.js?v=20261020_1857';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1857';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1857';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1857';
+import { isAnimeShow } from './series.js?v=20261020_1857';
+import { selectChannelByName } from './channels.js?v=20261020_1857';
+import { openLegalSection } from './footer.js?v=20261020_1857';
+import { openCollection } from './collection.js?v=20261020_1857';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -65,29 +65,6 @@ export function closeMenu({ keepHistory = false } = {}) {
 /** Closes the menu, then runs `action` once its history step has landed (so a new layer is not the one undone). */
 function closeMenuThen(action) {
     runNavBatch(() => closeMenu(), action);
-}
-
-function goToContinueWatching() {
-    const go = () => {
-        const show = () => {
-            const section = document.getElementById('home-continue-watching-section');
-            if (section && !section.classList.contains('hidden')) {
-                section.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                showToast('Nada em andamento por enquanto. Comece um filme ou episódio e ele aparece aqui.');
-            }
-        };
-        if (isTitlePageOpen()) {
-            switchAppView('home');
-            setTimeout(show, 600);
-        } else if (store.currentView !== 'home') {
-            switchAppView('home');
-            setTimeout(show, 400);
-        } else {
-            show();
-        }
-    };
-    closeMenuThen(go);
 }
 
 // --- Global search ---
@@ -315,7 +292,8 @@ export function setupHeader() {
         const item = e.target.closest('[data-menu-action]');
         if (!item) return;
         const action = item.dataset.menuAction;
-        if (action === 'continue') goToContinueWatching();
+        if (action === 'collection') closeMenuThen(() => openCollection());
+        else if (action === 'continue') closeMenuThen(() => openCollection('watching'));
         else if (action === 'search') closeMenuThen(openSearch);
         else if (action === 'account') showToast('A conta chega em breve. Por enquanto, tudo fica salvo neste aparelho.');
         // The tips open through the footer's button (main.js handles it), after the menu's history step lands
