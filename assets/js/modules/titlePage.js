@@ -13,16 +13,16 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261020_1520';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1520';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1520';
-import { showToast } from '../core/toast.js?v=20261020_1520';
-import { syncPageLock } from '../core/activity.js?v=20261020_1520';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1520';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1520';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1520';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1520';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1520';
+} from '../core/constants.js?v=20261020_1556';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1556';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1556';
+import { showToast } from '../core/toast.js?v=20261020_1556';
+import { syncPageLock } from '../core/activity.js?v=20261020_1556';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1556';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1556';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1556';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1556';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1556';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -32,11 +32,13 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261020_1520';
+} from './series.js?v=20261020_1556';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
 const PLACEHOLDER = 'assets/logos/fav/icon-detailed.svg';
+// The top of the page waits at most this long for its pictures, then shows anyway (slow connections)
+const REVEAL_WAIT_MS = 2000;
 
 const STATUS_PT = {
     'Released': 'Lançado',
@@ -213,6 +215,7 @@ function render(entry, options) {
     const detail = document.getElementById('title-detail');
     const list = document.getElementById('title-list');
     if (entry.type === 'list') {
+        setLoading(false);
         detail.classList.add('hidden');
         list.classList.remove('hidden');
         el.classList.remove('theme-anime');
@@ -222,13 +225,34 @@ function render(entry, options) {
     list.classList.add('hidden');
     detail.classList.remove('hidden');
     el.classList.toggle('theme-anime', entry.kind === 'anime');
+    setLoading(true);
     renderTitleShell(entry);
-    loadDetails(entry).then(details => {
+    const started = Date.now();
+    loadDetails(entry).then(async details => {
         if (token !== renderToken) return;
         entry.details = details;
         if (details) renderTitleDetails(entry);
+        await picturesReady(['title-backdrop', 'title-logo'], Math.max(0, REVEAL_WAIT_MS - (Date.now() - started)));
+        if (token !== renderToken) return;
+        setLoading(false);
         startRequestedPlayback(entry, options);
     });
+}
+
+/** While the top is not ready it stays invisible (its space kept) and a ring shows (after a short delay, in CSS). */
+function setLoading(on) {
+    document.getElementById('title-detail')?.classList.toggle('is-loading', on);
+    document.getElementById('title-loading')?.classList.toggle('hidden', !on);
+}
+
+/** Resolves when the visible pictures among `ids` are decoded, or after `maxWaitMs`. */
+function picturesReady(ids, maxWaitMs) {
+    const pictures = ids
+        .map(id => document.getElementById(id))
+        .filter(img => img && !img.classList.contains('hidden') && img.getAttribute('src'));
+    if (pictures.length === 0) return Promise.resolve();
+    const decoded = Promise.all(pictures.map(img => (typeof img.decode === 'function' ? img.decode() : Promise.resolve()).catch(() => null)));
+    return Promise.race([decoded, new Promise(resolve => setTimeout(resolve, maxWaitMs))]);
 }
 
 async function loadDetails(entry) {
@@ -362,6 +386,17 @@ function renderTitleDetails(entry) {
     renderCast(entry, details);
     renderCollection(entry, details);
     renderRecommendations(entry, details);
+    updateRowArrows();
+}
+
+/** A row that fits on screen needs no arrows. */
+function updateRowArrows() {
+    requestAnimationFrame(() => {
+        document.querySelectorAll('#title-page .title-row').forEach(row => {
+            const arrows = row.parentElement && row.parentElement.querySelector('.title-row-arrows');
+            if (arrows) arrows.classList.toggle('is-idle', row.scrollWidth <= row.clientWidth + 2);
+        });
+    });
 }
 
 /** Title logo: Portuguese, then English, then Japanese (animes; often dark, so it comes after English). */
@@ -496,7 +531,7 @@ function renderCompanies(entry, details) {
     const companies = (details.production_companies || []).filter(c => c.logo_path).slice(0, 6);
     box.innerHTML = companies.map(c =>
         `<button type="button" class="title-company" data-company-id="${escapeAttr(c.id)}" data-company-name="${escapeAttr(c.name)}" data-company-logo="${escapeAttr(c.logo_path)}" title="${escapeAttr(c.name)}" aria-label="Títulos de ${escapeAttr(c.name)}">
-            <img src="${escapeAttr(TMDB_IMG_W185 + c.logo_path)}" alt="${escapeAttr(c.name)}" loading="lazy">
+            <img class="fade-in" src="${escapeAttr(TMDB_IMG_W185 + c.logo_path)}" alt="${escapeAttr(c.name)}" loading="lazy">
         </button>`
     ).join('');
 }
@@ -661,11 +696,11 @@ function renderTrailers(details) {
     const videos = ((details.videos && details.videos.results) || [])
         .filter(v => v.site === 'YouTube' && /^[\w-]{6,20}$/.test(v.key || '') && (v.type === 'Trailer' || v.type === 'Teaser'))
         .sort((a, b) => rank(a) - rank(b))
-        .slice(0, 6);
+        .slice(0, 10);
     row.innerHTML = videos.map(v => `
         <button type="button" class="title-trailer-card" data-video-key="${escapeAttr(v.key)}" data-video-name="${escapeAttr(v.name || 'Trailer')}">
             <span class="title-trailer-thumb">
-                <img src="https://i.ytimg.com/vi/${escapeAttr(v.key)}/mqdefault.jpg" alt="" loading="lazy">
+                <img class="fade-in" src="https://i.ytimg.com/vi/${escapeAttr(v.key)}/mqdefault.jpg" alt="" loading="lazy">
                 <span class="title-trailer-play" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"></polygon></svg></span>
             </span>
             <span class="title-trailer-name">${escapeHtml(v.name || 'Trailer')}</span>
@@ -680,16 +715,14 @@ function renderCast(entry, details) {
     const cast = entry.kind === 'movie'
         ? ((details.credits && details.credits.cast) || []).map(c => ({ ...c, role: c.character }))
         : ((details.aggregate_credits && details.aggregate_credits.cast) || []).map(c => ({ ...c, role: c.roles && c.roles[0] ? c.roles[0].character : '' }));
-    const people = cast.slice(0, 12);
+    const people = cast.slice(0, 20);
     grid.innerHTML = people.map(p => `
-        <button type="button" class="title-cast-card" data-person-id="${escapeAttr(p.id)}" data-person-name="${escapeAttr(p.name)}" data-person-photo="${escapeAttr(p.profile_path || '')}">
+        <button type="button" class="title-cast-card" data-person-id="${escapeAttr(p.id)}" data-person-name="${escapeAttr(p.name)}" data-person-photo="${escapeAttr(p.profile_path || '')}" title="${escapeAttr(p.role ? `${p.name} (${p.role})` : p.name)}">
             ${p.profile_path
-                ? `<img class="title-cast-photo" src="${escapeAttr(TMDB_IMG_W185 + p.profile_path)}" alt="" loading="lazy">`
-                : `<span class="title-cast-photo is-empty" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg></span>`}
-            <span class="title-cast-text">
-                <span class="title-cast-name">${escapeHtml(p.name)}</span>
-                <span class="title-cast-role">${escapeHtml(p.role || '')}</span>
-            </span>
+                ? `<img class="title-cast-photo fade-in" src="${escapeAttr(TMDB_IMG_W185 + p.profile_path)}" alt="" loading="lazy">`
+                : `<span class="title-cast-photo is-empty" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg></span>`}
+            <span class="title-cast-name">${escapeHtml(p.name)}</span>
+            <span class="title-cast-role">${escapeHtml(p.role || '')}</span>
         </button>`).join('');
     section.classList.toggle('hidden', people.length === 0);
 }
@@ -714,16 +747,19 @@ async function renderCollection(entry, details) {
         .filter(p => p.poster_path)
         .sort((a, b) => String(a.release_date || '9999').localeCompare(String(b.release_date || '9999')));
     if (parts.length < 2) return;
-    setText('title-collection-heading', `Parte da coleção ${data.name || collection.name || ''}`.trim());
+    // TMDB names them "Vingadores: Coleção"; the heading already says it
+    const collectionName = String(data.name || collection.name || '').replace(/\s*[-:–]?\s*Cole[cç][aã]o$/i, '').trim();
+    setText('title-collection-heading', collectionName ? `Parte da coleção ${collectionName}` : 'Coleção');
     fillCards(grid, parts.map(p => ({ kind: 'movie', item: p, current: Number(p.id) === Number(details.id) })));
     section.classList.remove('hidden');
+    updateRowArrows();
 }
 
 function renderRecommendations(entry, details) {
     const section = document.getElementById('title-recs-section');
     const grid = document.getElementById('title-recs');
     if (!section || !grid) return;
-    const results = ((details.recommendations && details.recommendations.results) || []).filter(r => r.poster_path).slice(0, 12);
+    const results = ((details.recommendations && details.recommendations.results) || []).filter(r => r.poster_path).slice(0, 20);
     fillCards(grid, results.map(r => ({ kind: entry.kind === 'movie' ? 'movie' : kindOfTvItem(r), item: r })));
     section.classList.toggle('hidden', results.length === 0);
 }
@@ -743,7 +779,7 @@ function fillCards(grid, cards) {
         const poster = item.poster_path ? `${TMDB_IMG_W500}${item.poster_path}` : PLACEHOLDER;
         const score = item.vote_average ? Number(item.vote_average).toFixed(1) : '';
         card.innerHTML = `
-            <img class="movie-poster-img" src="${escapeAttr(poster)}" alt="${escapeAttr(name)}" loading="lazy" onerror="this.src='${PLACEHOLDER}'">
+            <img class="movie-poster-img fade-in" src="${escapeAttr(poster)}" alt="${escapeAttr(name)}" loading="lazy" onerror="this.src='${PLACEHOLDER}'">
             <div class="movie-poster-overlay">
                 <h4 class="movie-card-title" title="${escapeAttr(name)}">${escapeHtml(name)}</h4>
                 <div class="movie-card-meta">
@@ -968,8 +1004,22 @@ export function setupTitlePage() {
         });
     }
 
-    // Delegated: people, companies, trailers
+    // Pictures marked .fade-in show once loaded (or failed: their fallback takes the place)
+    const markLoaded = (e) => {
+        if (e.target && e.target.classList && e.target.classList.contains('fade-in')) e.target.classList.add('is-loaded');
+    };
+    el.addEventListener('load', markLoaded, true);
+    el.addEventListener('error', markLoaded, true);
+
+    // Delegated: row arrows, people, companies, trailers
     el.addEventListener('click', (e) => {
+        const arrow = e.target.closest('[data-row]');
+        if (arrow) {
+            const row = document.getElementById(arrow.dataset.row);
+            if (row) row.scrollBy({ left: Number(arrow.dataset.dir) * Math.max(240, row.clientWidth * 0.8), behavior: 'smooth' });
+            return;
+        }
+
         const panel = document.getElementById('title-rate-panel');
         if (panel && !panel.classList.contains('hidden') && !e.target.closest('.title-rate-wrap')) closeRatePanel();
 
@@ -1009,5 +1059,8 @@ export function setupTitlePage() {
         if (isTitlePageOpen() && current && current.type === 'title') renderActions(current);
     };
     window.addEventListener('tvzinha:playerClosed', refresh);
+    window.addEventListener('resize', () => {
+        if (isTitlePageOpen()) updateRowArrows();
+    });
     window.addEventListener(PROGRESS_EVENT, refresh);
 }

@@ -122,17 +122,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261020_1520">
-    <link rel="stylesheet" href="assets/css/11-title-page.css?v=20261020_1520">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261020_1556">
+    <link rel="stylesheet" href="assets/css/11-title-page.css?v=20261020_1556">
 </head>
 
 <body>
@@ -1750,6 +1750,10 @@
     <section id="title-page" class="title-page hidden" aria-labelledby="title-page-name" tabindex="-1">
         <button id="btn-title-back" class="title-page-back" type="button" title="Voltar" aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
 
+        <div id="title-loading" class="title-loading hidden" role="status" aria-label="Carregando">
+            <span class="title-loading-ring" aria-hidden="true"></span>
+        </div>
+
         <div id="title-detail" class="title-detail">
             <div class="title-hero">
                 <div class="title-hero-backdrop" aria-hidden="true">
@@ -1869,23 +1873,47 @@
                 </section>
 
                 <section id="title-trailers-section" class="title-section hidden" aria-labelledby="title-trailers-heading">
-                    <h2 id="title-trailers-heading" class="title-section-heading">Trailers</h2>
-                    <div id="title-trailers" class="title-trailers"></div>
+                    <div class="title-row-head">
+                        <h2 id="title-trailers-heading" class="title-section-heading">Trailers</h2>
+                        <div class="title-row-arrows">
+                            <button class="btn-carousel-arrow" type="button" data-row="title-trailers" data-dir="-1" aria-label="Voltar trailers"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                            <button class="btn-carousel-arrow" type="button" data-row="title-trailers" data-dir="1" aria-label="Avançar trailers"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                        </div>
+                    </div>
+                    <div id="title-trailers" class="title-row title-row-trailers"></div>
                 </section>
 
                 <section id="title-cast-section" class="title-section hidden" aria-labelledby="title-cast-heading">
-                    <h2 id="title-cast-heading" class="title-section-heading">Elenco</h2>
-                    <div id="title-cast" class="title-cast"></div>
+                    <div class="title-row-head">
+                        <h2 id="title-cast-heading" class="title-section-heading">Elenco</h2>
+                        <div class="title-row-arrows">
+                            <button class="btn-carousel-arrow" type="button" data-row="title-cast" data-dir="-1" aria-label="Voltar elenco"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                            <button class="btn-carousel-arrow" type="button" data-row="title-cast" data-dir="1" aria-label="Avançar elenco"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                        </div>
+                    </div>
+                    <div id="title-cast" class="title-row title-row-cast"></div>
                 </section>
 
                 <section id="title-collection-section" class="title-section hidden" aria-labelledby="title-collection-heading">
-                    <h2 id="title-collection-heading" class="title-section-heading"></h2>
-                    <div id="title-collection" class="title-card-grid"></div>
+                    <div class="title-row-head">
+                        <h2 id="title-collection-heading" class="title-section-heading"></h2>
+                        <div class="title-row-arrows">
+                            <button class="btn-carousel-arrow" type="button" data-row="title-collection" data-dir="-1" aria-label="Voltar coleção"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                            <button class="btn-carousel-arrow" type="button" data-row="title-collection" data-dir="1" aria-label="Avançar coleção"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                        </div>
+                    </div>
+                    <div id="title-collection" class="title-row title-row-posters"></div>
                 </section>
 
                 <section id="title-recs-section" class="title-section hidden" aria-labelledby="title-recs-heading">
-                    <h2 id="title-recs-heading" class="title-section-heading">Você pode gostar</h2>
-                    <div id="title-recs" class="title-card-grid"></div>
+                    <div class="title-row-head">
+                        <h2 id="title-recs-heading" class="title-section-heading">Você pode gostar</h2>
+                        <div class="title-row-arrows">
+                            <button class="btn-carousel-arrow" type="button" data-row="title-recs" data-dir="-1" aria-label="Voltar recomendações"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                            <button class="btn-carousel-arrow" type="button" data-row="title-recs" data-dir="1" aria-label="Avançar recomendações"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                        </div>
+                    </div>
+                    <div id="title-recs" class="title-row title-row-posters"></div>
                 </section>
             </div>
         </div>
@@ -2059,7 +2087,7 @@
     <!-- Streaming Engine V3: Hls.js & Artplayer load on demand with Subresource Integrity (D7, B11), see ensurePlayerLibs() in engine.js -->
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261020_1520"></script>
+    <script type="module" src="assets/js/main.js?v=20261020_1556"></script>
 </body>
 
 </html>
