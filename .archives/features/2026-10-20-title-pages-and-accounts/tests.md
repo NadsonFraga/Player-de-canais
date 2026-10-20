@@ -49,7 +49,18 @@ Fixed during the phase: a tab switch right after Back could be undone by the gro
 
 ### Automated
 
-Filled in at the end of the phase.
+Version `20261020_1704`, commit `42c7180`, merged into `staging` as `52163e1`.
+
+| Check | Result |
+|---|---|
+| `node --check`, `check_js.py`, `bump_version.py --check`, tag balance of `index.html` | PASS |
+| `header_check.mjs` (new): brand, Esportes, tool order, menus and Back, Privacidade and tips from the menu, "/" shortcut, one request per search, category filter without a new request, result opens the title page, channels first and opening, phone tools pill (under the tabs, tucks on scroll, clear of the title page back button) | 21/21 Chrome, 21/21 Firefox, 21/21 against staging |
+| `title_page_check.mjs` | 28/28 |
+| `tab_reset_check.mjs` | all passed |
+| `channels_redesign_check.mjs` | 10/10 |
+| `player_touch_check.mjs` | 17/17 |
+| `player_ui_check.mjs` | 43/46: "Escolha um canal" (B21), DBZ T9E31 fixed waits (B21, now failing more often), and once "opening movies right after the app starts" (start-up race, noted in B21) |
+| `check_deployment.py` on staging | ALL PASSED |
 
 ### Manual (user, on staging)
 
