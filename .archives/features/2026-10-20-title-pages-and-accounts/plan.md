@@ -78,6 +78,15 @@ Data: one request per page through `/api/tmdb`, with `append_to_response` (movie
 - Search (F11): an overlay over the page, results while typing (short pause so TMDB is not flooded), category selector (Tudo, Filmes, Séries, Animes, Canais, Pessoas); a result opens the title page.
 - Gear menu, grouped: Coleção and Continuar assistindo; player preferences; ad-block and DNS tips; Privacidade and Termos. Account items come in phase 4.
 
+### Phase 2 decisions (user, 2026-10-20)
+
+- The "Início" tab leaves the pill: the brand icon (TV, no name) takes you home.
+- Order of the icons after the tabs: search, profile, settings.
+- Phones: the tab icons stay in the pill; search, profile and settings go in a second, smaller pill right under it (user's suggestion, "fluid and nice"): it hides while scrolling down and comes back when scrolling up. Shown to the user on staging; if it does not look good, the fallback is the three icons inside the main pill.
+- Profile before the account exists: a neutral line avatar; its menu has "Continuar assistindo" and "Entrar ou criar conta" (marked em breve); Coleção joins in phase 3.
+- Settings menu: Continuar assistindo, ad-block and DNS tips, Privacidade, Termos de uso, DMCA.
+- Global search: overlay, results from 2 letters after a 0.35 s pause, categories Tudo, Filmes, Séries, Animes, Canais, Pessoas; one /api/tmdb call per search (channels searched locally); the tab searches with filters stay.
+
 ## Phase 3: Coleção (`feat/collection`)
 
 - New "Coleção" screen (from the avatar and gear menus) with tabs: Assistindo (from the watch progress), Quero assistir, Assistidos, Avaliados, Canais favoritos; filter Filmes / Séries / Animes.
