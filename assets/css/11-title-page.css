@@ -1130,17 +1130,12 @@
 }
 
 @media (max-width: 768px) {
-    /* On the top-left corner of the picture, under the pill; to the top edge once the pill tucks away */
+    /* On the top-left corner of the picture, under the pill */
     .title-page-back {
         top: 76px;
         left: 12px;
         width: 42px;
         height: 42px;
-        transition: top 0.25s ease, background var(--transition-fast), border-color var(--transition-fast);
-    }
-
-    body.nav-tucked .title-page-back {
-        top: 12px;
     }
 
     /* Phones: a dark band holds the pill (as on the catalog tabs); the picture starts under it */
