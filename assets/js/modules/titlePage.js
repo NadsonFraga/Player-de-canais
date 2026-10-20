@@ -13,16 +13,16 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261020_1634';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1634';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1634';
-import { showToast } from '../core/toast.js?v=20261020_1634';
-import { syncPageLock } from '../core/activity.js?v=20261020_1634';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1634';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1634';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1634';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1634';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1634';
+} from '../core/constants.js?v=20261020_1704';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1704';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1704';
+import { showToast } from '../core/toast.js?v=20261020_1704';
+import { syncPageLock } from '../core/activity.js?v=20261020_1704';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1704';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1704';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1704';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1704';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1704';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -32,7 +32,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261020_1634';
+} from './series.js?v=20261020_1704';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
@@ -751,8 +751,8 @@ function renderRecommendations(entry, details) {
     section.classList.toggle('hidden', results.length === 0);
 }
 
-/** Poster cards (the catalog's look); a click opens that title here. */
-function fillCards(grid, cards) {
+/** Poster cards (the catalog's look); a click opens that title here, or runs `options.onOpen(kind, item)`. */
+export function fillCards(grid, cards, options = {}) {
     grid.innerHTML = '';
     const fragment = document.createDocumentFragment();
     cards.forEach(({ kind, item, current: isCurrent }) => {
@@ -779,7 +779,8 @@ function fillCards(grid, cards) {
                 page()?.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
-            openTitle(kind, item);
+            if (typeof options.onOpen === 'function') options.onOpen(kind, item);
+            else openTitle(kind, item);
         };
         card.addEventListener('click', open);
         card.addEventListener('keydown', (e) => {
@@ -794,6 +795,11 @@ function fillCards(grid, cards) {
 }
 
 // --- Lists: a person's or a company's titles ---
+
+/** A person's titles on the page (search results use it too). */
+export function openPersonTitles(person) {
+    openPersonList(person);
+}
 
 function openPersonList(person) {
     showEntry({ type: 'list', list: { kind: 'person', ...person }, item: { id: person.id }, scroll: 0 });
