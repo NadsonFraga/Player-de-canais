@@ -171,9 +171,9 @@ try {
     return b.evaluate(SNAPSHOT(show.id));
   };
   const count = () => b.evaluate("window.__resolves.length");
-  const reset = () => b.evaluate("(window.__s.stopSeriesPlayer(), window.__s.closeSeriesModal(), new Promise(r => setTimeout(() => r(true), 400)))");
+  const reset = () => b.evaluate("(window.__s.stopSeriesPlayer(), window.TvzinhaActions.closeTitle(), new Promise(r => setTimeout(() => r(true), 400)))");
   const openDetails = async (show) => {
-    await b.evaluate(`(window.__s.openSeriesModal({ id: ${show.id}, name: ${JSON.stringify(show.name)} }, '${show.anime ? "anime" : "tv"}'), true)`);
+    await b.evaluate(`(window.TvzinhaActions.openTitle('${show.anime ? "anime" : "tv"}', { id: ${show.id}, name: ${JSON.stringify(show.name)} }), true)`);
     for (let i = 0; i < 40; i++) {
       if (await b.evaluate("document.querySelectorAll('#series-season-select option').length > 0")) break;
       await sleep(250);
@@ -194,11 +194,11 @@ try {
     await b.evaluate("(document.querySelector('#home-continue-watching-section .continue-card')?.click(), true)");
     paths["continuar assistindo"] = await waitForOpen(show, before);
 
-    // 2. details button "Continuar" (reads the history saved by path 1)
+    // 2. title page button "Continuar" (reads the history saved by path 1)
     await reset();
     await openDetails(show);
     before = await count();
-    await b.evaluate("(document.getElementById('btn-series-modal-direct-play').click(), true)");
+    await b.evaluate("(document.getElementById('btn-title-play').click(), true)");
     paths["botao dos detalhes"] = await waitForOpen(show, before);
 
     // 3. season list
@@ -270,7 +270,7 @@ try {
   }
   // Real playback (stub removed): skip markers reach the progress bar for a series and for an anime resumed from
   // the "Continuar assistindo" card. No recap in a first episode.
-  await b.evaluate("(window.fetch = window.__realFetch, window.__s.stopSeriesPlayer(), window.__s.closeSeriesModal(), true)");
+  await b.evaluate("(window.fetch = window.__realFetch, window.__s.stopSeriesPlayer(), window.TvzinhaActions.closeTitle(), true)");
   const markers = async (label, open, expected) => {
     await b.evaluate("(window.__s.stopSeriesPlayer(), new Promise(r => setTimeout(() => r(true), 1500)))");
     await b.evaluate(open);

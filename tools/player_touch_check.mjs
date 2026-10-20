@@ -71,7 +71,7 @@ const APP_VERSION = (await import('node:fs')).readFileSync(new URL('../index.htm
 await evaluate(`import('/assets/js/modules/series.js?v=${APP_VERSION}').then(m => { window.__series = m; return true; })`);
 await evaluate("(window.TvzinhaActions.switchView('animes'), true)");
 await sleep(1500);
-await evaluate(`window.__series.openSeriesModal({ id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, 'tv', { autoPlaySeason: 9, autoPlayEpisode: 31 }).then(() => true)`);
+await evaluate(`(window.TvzinhaActions.openTitle('anime', { id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, { episode: { season: 9, episode: 31 } }), true)`);
 await sleep(6000);
 await evaluate("(document.querySelector('[data-server=\"native_anime\"]')?.click(), true)");
 const playing = await waitFor("window.artInstance && window.artInstance.duration > 100 && !window.artInstance.video.paused && window.artInstance.currentTime > 2");
@@ -173,23 +173,23 @@ await evaluate("(document.exitFullscreen ? document.exitFullscreen().catch(() =>
 // Artplayer does not enable keyboard shortcuts on phones)
 check("the skip step is 10 s for taps and for the arrow keys", (await evaluate("window.Artplayer.SEEK_STEP")) === 10);
 
-// ---------- the same gap on all four sides of the modal cards
+// ---------- the player pages and the title page fill the screen (the same gap, none, on every side)
 const gaps = (selector) => evaluate(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { left: Math.round(r.left), right: Math.round(innerWidth - r.right), top: Math.round(r.top), bottom: Math.round(innerHeight - r.bottom) }; })()`);
 const even = (g) => Math.max(g.left, g.right, g.top, g.bottom) - Math.min(g.left, g.right, g.top, g.bottom) <= 1;
 const playerGaps = await gaps("#series-player-view .movie-modal-card");
-check("player card has the same gap on every side", even(playerGaps), JSON.stringify(playerGaps));
+check("series player page fills the screen", even(playerGaps) && playerGaps.left === 0, JSON.stringify(playerGaps));
 
 await evaluate("(document.getElementById('btn-close-series-player').click(), true)");
 await sleep(1200);
-const detailsGaps = await gaps("#series-modal .movie-modal-card");
-check("series details card has the same gap on every side", even(detailsGaps), JSON.stringify(detailsGaps));
+const detailsGaps = await gaps("#title-page");
+check("title page fills the screen", even(detailsGaps) && detailsGaps.left === 0, JSON.stringify(detailsGaps));
 
 await evaluate("(window.TvzinhaActions.switchView('movies'), true)");
 await sleep(1500);
 await evaluate("(window.TvzinhaActions.openMovie({ id: 1022789, title: 'Divertida Mente 2', backdrop_path: null, poster_path: null, overview: '' }, true), true)");
 await sleep(5000);
-const movieGaps = await gaps("#movie-modal .movie-modal-card");
-check("movie card has the same gap on every side", even(movieGaps), JSON.stringify(movieGaps));
+const movieGaps = await gaps("#movie-player-view .movie-modal-card");
+check("movie player page fills the screen", even(movieGaps) && movieGaps.left === 0, JSON.stringify(movieGaps));
 
 console.log(`\n${results.filter(Boolean).length}/${results.length} checks passed`);
 try { ws.close(); } catch {}

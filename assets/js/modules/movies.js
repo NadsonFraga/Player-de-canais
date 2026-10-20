@@ -1,9 +1,9 @@
 /**
  * TVZINHA ONLINE - Movies Catalog & Cinema Module (TMDB Engine)
- * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and modal playback
+ * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and the movie player page
+ * (a title opens on the title page, modules/titlePage.js; its Assistir button calls playMovie here)
  */
 
-import { store } from '../core/state.js?v=20261020_1352';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
@@ -12,20 +12,21 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261020_1352';
-import { showToast } from '../core/toast.js?v=20261020_1352';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1352';
-import { buildFeedRows } from '../core/feedRows.js?v=20261020_1352';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261020_1352';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1352';
-import { getUiSvg } from '../core/icons.js?v=20261020_1352';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1352';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1352';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1352';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1352';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1352';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261020_1352';
-import { resumeStartTime } from '../core/resume.js?v=20261020_1352';
+} from '../core/constants.js?v=20261020_1520';
+import { showToast } from '../core/toast.js?v=20261020_1520';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1520';
+import { buildFeedRows } from '../core/feedRows.js?v=20261020_1520';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1520';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1520';
+import { getUiSvg } from '../core/icons.js?v=20261020_1520';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1520';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1520';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1520';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1520';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1520';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261020_1520';
+import { resumeStartTime } from '../core/resume.js?v=20261020_1520';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1520';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -35,15 +36,11 @@ let movieSearchDebounceTimer = null;
 
 let moviePlaybackSessionId = 0;
 let pendingMovieIframeTimer = null;
-let pendingMovieAutoplayTimer = null;
+let isMoviePlayerSetup = false;
 
 if (typeof window !== 'undefined') {
     window.addEventListener('tvzinha:teardownMedia', () => {
         moviePlaybackSessionId++;
-        if (pendingMovieAutoplayTimer) {
-            clearTimeout(pendingMovieAutoplayTimer);
-            pendingMovieAutoplayTimer = null;
-        }
         if (pendingMovieIframeTimer) {
             clearTimeout(pendingMovieIframeTimer);
             pendingMovieIframeTimer = null;
@@ -104,7 +101,7 @@ export async function initMoviesView() {
     isMoviesInitialized = true;
 
     setupMoviesSearchAndFilters();
-    setupMovieModal();
+    setupMoviePlayer();
     setupMoviesCarouselNavigation();
 
     // Check local cache
@@ -205,11 +202,11 @@ function createMovieCardElement(movie) {
         </div>
     `;
 
-    card.addEventListener("click", () => openMovieDetailsModal(movie));
+    card.addEventListener("click", () => openTitle('movie', movie));
     card.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            openMovieDetailsModal(movie);
+            openTitle('movie', movie);
         }
     });
 
@@ -431,7 +428,7 @@ function renderHeroBanner(movie) {
     }
 
     if (btnWatch) {
-        btnWatch.onclick = () => openMovieDetailsModal(movie, true);
+        btnWatch.onclick = () => openTitle('movie', movie, { play: true });
     }
 }
 
@@ -1134,105 +1131,50 @@ export function closeCollectionView({ keepHistory = false } = {}) {
     }
 }
 
-export function setupMovieModal() {
-    const modal = document.getElementById("movie-modal");
-    const btnClose = document.getElementById("btn-close-movie-modal");
+function moviePlayerView() {
+    return document.getElementById("movie-player-view");
+}
+
+export function isMoviePlayerOpen() {
+    const view = moviePlayerView();
+    return Boolean(view) && !view.classList.contains("hidden");
+}
+
+/** Player buttons, wired once (a movie can play from Início before the Filmes tab was opened). */
+export function setupMoviePlayer() {
+    if (isMoviePlayerSetup) return;
+    isMoviePlayerSetup = true;
     const btnReload = document.getElementById("btn-reload-movie-player");
     const btnClosePlayer = document.getElementById("btn-close-movie-player");
     const btnExitPlayer = document.getElementById("btn-exit-movie-player");
 
-    if (btnClose) {
-        btnClose.addEventListener("click", () => closeMovieDetailsModal());
-    }
-
-    if (modal) {
-        modal.addEventListener("click", (e) => {
-            if (e.target === modal) closeMovieDetailsModal();
-        });
-    }
-
     if (btnReload) {
         btnReload.addEventListener("click", () => {
             if (activeMovieServer && currentSelectedMovie) {
-                selectMovieServer(activeMovieServer);
+                selectMovieServer(activeMovieServer, document.querySelector(`#movie-servers-grid .btn-movie-server[data-server="${activeMovieServer.id}"]`));
             }
         });
     }
 
-    // X: leave to the Filmes catalog. The (hidden) back-to-details step runs first so the player's history
-    // layer is popped before the modal's own.
-    if (btnExitPlayer) {
-        btnExitPlayer.addEventListener("click", () => {
-            runNavBatch(() => {
-                if (btnClosePlayer) btnClosePlayer.click();
-                closeMovieDetailsModal();
-            });
-            // The grouped history step settles a moment later; changing tabs before that would mix with it
-            setTimeout(() => {
-                if (window.TvzinhaActions && store.currentView !== 'movies') {
-                    window.TvzinhaActions.switchView('movies');
-                }
-            }, 150);
-        });
-    }
+    // Back: to the movie's title page
+    if (btnClosePlayer) btnClosePlayer.addEventListener("click", () => stopMoviePlayer());
 
-    if (btnClosePlayer) {
-        btnClosePlayer.addEventListener("click", () => {
-            const modalCard = document.querySelector(".movie-modal-card");
-            const playerContainer = document.getElementById("movie-modal-player-container");
-            const wasPlaying = (modalCard && modalCard.classList.contains("is-playing")) || (playerContainer && !playerContainer.classList.contains("hidden"));
-
-            atomicPlayerReset();
-            removeMovieIframe();
-            const backdropBox = document.getElementById("movie-modal-backdrop-box");
-
-            if (playerContainer) playerContainer.classList.add("hidden");
-            if (backdropBox) backdropBox.classList.remove("hidden");
-            leaveStageFullscreen();
-            if (modalCard) modalCard.classList.remove("is-playing");
-            document.querySelectorAll(".btn-movie-server").forEach(btn => btn.classList.remove("active"));
-            activeMovieServer = null;
-
-            if (wasPlaying) {
-                popNavLayer();
-            }
-        });
-    }
+    // X: out of the player and the title page, to the Filmes catalog
+    if (btnExitPlayer) btnExitPlayer.addEventListener("click", () => exitTitleTo('movies'));
 }
 
-export function openMovieDetailsModal(movie, autoplayFirstServer = false) {
+/** Opens the movie player page over the title page and starts the Player Principal. */
+export function playMovie(movie) {
+    if (!movie || movie.id == null) return;
+    setupMoviePlayer();
+    const view = moviePlayerView();
+    if (!view) return;
     currentSelectedMovie = movie;
-    const modal = document.getElementById("movie-modal");
-    if (!modal) return;
+    activeMovieServer = null;
 
-    removeMovieIframe();
-    const playerContainer = document.getElementById("movie-modal-player-container");
-    const backdropBox = document.getElementById("movie-modal-backdrop-box");
-    const modalCard = document.querySelector(".movie-modal-card");
-    if (playerContainer) playerContainer.classList.add("hidden");
-    if (backdropBox) backdropBox.classList.remove("hidden");
-    leaveStageFullscreen();
-    if (modalCard) modalCard.classList.remove("is-playing");
-
-    const backdropImg = document.getElementById("movie-modal-backdrop-img");
-    const titleEl = document.getElementById("movie-modal-title");
-    const yearEl = document.getElementById("movie-modal-year");
-    const ratingEl = document.getElementById("movie-modal-rating");
-    const overviewEl = document.getElementById("movie-modal-overview");
-
-    const backdropUrl = movie.backdrop_path
-        ? `${TMDB_IMG_ORIGINAL}${movie.backdrop_path}`
-        : (movie.poster_path ? `${TMDB_IMG_W500}${movie.poster_path}` : '');
-
-    if (backdropImg) backdropImg.src = backdropUrl;
-    if (titleEl) titleEl.textContent = movie.title;
-    if (yearEl) yearEl.textContent = (movie.release_date || '').substring(0, 4) || 'Cinema';
-    if (ratingEl) ratingEl.textContent = `★ ${movie.vote_average ? movie.vote_average.toFixed(1) : '8.0'}`;
-    if (overviewEl) overviewEl.textContent = movie.overview || "Sinopse não disponível em português.";
-
+    let firstButton = null;
     const serversGrid = document.getElementById("movie-servers-grid");
     if (serversGrid) {
-        let firstButton = null;
         renderServerGroups(serversGrid, MOVIE_SERVERS, (server) => {
             const btn = document.createElement("button");
             btn.type = "button";
@@ -1246,50 +1188,42 @@ export function openMovieDetailsModal(movie, autoplayFirstServer = false) {
             if (server === MOVIE_SERVERS[0]) firstButton = btn;
             return btn;
         });
-
-        if (autoplayFirstServer && firstButton) {
-            if (pendingMovieAutoplayTimer) clearTimeout(pendingMovieAutoplayTimer);
-            pendingMovieAutoplayTimer = setTimeout(() => {
-                const currentModal = document.getElementById("movie-modal");
-                if (currentModal && !currentModal.classList.contains("hidden")) {
-                    selectMovieServer(MOVIE_SERVERS[0], firstButton);
-                }
-            }, 150);
-        }
     }
 
-    const wasHidden = modal.classList.contains("hidden");
-    modal.classList.remove("hidden");
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-    document.documentElement.classList.add("modal-open");
-    document.body.classList.add("modal-open");
-    if (wasHidden) {
-        pushNavLayer('modal-movie', { id: movie.id });
-    }
+    const wasHidden = view.classList.contains("hidden");
+    view.classList.remove("hidden");
+    syncPageLock();
+    if (wasHidden) pushNavLayer('player-movie', { id: movie.id });
+    selectMovieServer(MOVIE_SERVERS[0], firstButton);
 }
 
-export function closeMovieDetailsModal() {
+/** Closes the movie player; the title page under it stays. */
+export function stopMoviePlayer() {
     moviePlaybackSessionId++;
     leaveStageFullscreen();
-    if (pendingMovieAutoplayTimer) {
-        clearTimeout(pendingMovieAutoplayTimer);
-        pendingMovieAutoplayTimer = null;
-    }
     if (pendingMovieIframeTimer) {
         clearTimeout(pendingMovieIframeTimer);
         pendingMovieIframeTimer = null;
     }
     atomicPlayerReset();
-    const modal = document.getElementById("movie-modal");
-    const wasOpen = modal && !modal.classList.contains("hidden");
-    if (modal) modal.classList.add("hidden");
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
-    document.documentElement.classList.remove("modal-open");
-    document.body.classList.remove("modal-open");
+    removeMovieIframe();
+    setPlaybackActiveState(false);
+    const movieArt = document.getElementById("movie-artplayer-container");
+    if (movieArt) {
+        movieArt.innerHTML = "";
+        movieArt.classList.add("hidden");
+    }
+    const movieLoader = document.getElementById("movie-player-loader");
+    if (movieLoader) movieLoader.classList.add("hidden");
+    document.querySelectorAll("#movie-servers-grid .btn-movie-server").forEach(btn => btn.classList.remove("active"));
+    activeMovieServer = null;
+    const view = moviePlayerView();
+    const wasOpen = Boolean(view) && !view.classList.contains("hidden");
+    if (view) view.classList.add("hidden");
+    syncPageLock();
     if (wasOpen) {
         popNavLayer();
+        window.dispatchEvent(new CustomEvent('tvzinha:playerClosed'));
     }
 }
 
@@ -1299,10 +1233,6 @@ export function selectMovieServer(server, buttonElement = null) {
     if (pendingMovieIframeTimer) {
         clearTimeout(pendingMovieIframeTimer);
         pendingMovieIframeTimer = null;
-    }
-    if (pendingMovieAutoplayTimer) {
-        clearTimeout(pendingMovieAutoplayTimer);
-        pendingMovieAutoplayTimer = null;
     }
     activeMovieServer = server;
     // Opened with any server: it enters "Continuar assistindo" (only the Player Principal can tell the time)
@@ -1314,23 +1244,13 @@ export function selectMovieServer(server, buttonElement = null) {
         buttonElement.classList.add("active");
     }
 
-    const playerContainer = document.getElementById("movie-modal-player-container");
-    const backdropBox = document.getElementById("movie-modal-backdrop-box");
     const serverTitle = document.getElementById("movie-player-server-title");
     const movieArt = document.getElementById("movie-artplayer-container");
-    const modalCard = document.querySelector(".movie-modal-card");
     const movieLoader = document.getElementById("movie-player-loader");
-    const wasPlaying = (modalCard && modalCard.classList.contains("is-playing")) || (playerContainer && !playerContainer.classList.contains("hidden"));
 
     if (serverTitle) {
         serverTitle.textContent = currentSelectedMovie.title || server.name;
         serverTitle.title = currentSelectedMovie.title || server.name;
-    }
-    if (backdropBox) backdropBox.classList.add("hidden");
-    if (playerContainer) playerContainer.classList.remove("hidden");
-    if (modalCard) modalCard.classList.add("is-playing");
-    if (!wasPlaying) {
-        pushNavLayer('player-movie');
     }
 
     if (server.isNative) {
@@ -1344,9 +1264,8 @@ export function selectMovieServer(server, buttonElement = null) {
             title: currentSelectedMovie.title,
             imdb_id: currentSelectedMovie.imdb_id || null
         }).then(data => {
-            const currentModal = document.getElementById("movie-modal");
-            if (currentSessionId !== moviePlaybackSessionId || !currentModal || currentModal.classList.contains("hidden")) {
-                console.warn("[Movies] Abortando montagem nativa: reprodução cancelada ou modal fechado.");
+            if (currentSessionId !== moviePlaybackSessionId || !isMoviePlayerOpen()) {
+                console.warn("[Movies] Abortando montagem nativa: reprodução cancelada ou player fechado.");
                 return;
             }
             if (movieLoader) movieLoader.classList.add("hidden");
@@ -1414,9 +1333,8 @@ export function selectMovieServer(server, buttonElement = null) {
 
         const embedUrl = server.buildUrl(currentSelectedMovie.id);
         pendingMovieIframeTimer = setTimeout(() => {
-            const currentModal = document.getElementById("movie-modal");
-            if (currentSessionId !== moviePlaybackSessionId || !currentModal || currentModal.classList.contains("hidden")) {
-                console.warn("[Movies] Abortando carregamento de iframe: modal fechado antes de montar.");
+            if (currentSessionId !== moviePlaybackSessionId || !isMoviePlayerOpen()) {
+                console.warn("[Movies] Abortando carregamento de iframe: player fechado antes de montar.");
                 return;
             }
             iframe.src = embedUrl;

@@ -6,6 +6,8 @@
 // TMDB Movies & Series Engine (reads go through /api/tmdb, which holds the key: see core/tmdb.js)
 export const TMDB_IMG_W500 = 'https://image.tmdb.org/t/p/w500';
 export const TMDB_IMG_ORIGINAL = 'https://image.tmdb.org/t/p/original';
+export const TMDB_IMG_W185 = 'https://image.tmdb.org/t/p/w185';
+export const TMDB_IMG_W1280 = 'https://image.tmdb.org/t/p/w1280';
 
 // LocalStorage Cache Keys & TTL
 export const TMDB_CACHE_KEY = 'tvzinha_movies_cache_v5';
@@ -13,6 +15,8 @@ export const TMDB_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 export const TMDB_SERIES_CACHE_KEY = 'tvzinha_series_cache_v5';
 export const TMDB_ANIMES_CACHE_KEY = 'tvzinha_animes_cache_v5';
 export const WATCH_PROGRESS_KEY = 'tvzinha_watch_progress_v1';
+// Quero assistir, Assistido and ratings per title (core/library.js)
+export const LIBRARY_KEY = 'tvzinha_library_v1';
 export const FAVORITES_STORAGE_KEY = 'tvzinha_favorites';
 export const FAVORITE_TEAM_KEY = 'tvzinha_favorite_team';
 

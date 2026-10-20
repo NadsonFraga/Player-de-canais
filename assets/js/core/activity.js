@@ -3,16 +3,25 @@
  * Carousels and catalog preloading must not download images while nobody can see them
  * (another tab, a player or detail panel on top, or the browser tab hidden).
  */
-import { store } from './state.js?v=20261020_1352';
+import { store } from './state.js?v=20261020_1520';
 
-// Panels that cover the whole page while a title is detailed or playing
-const COVERING_PANELS = ['movie-modal', 'series-modal', 'series-player-view'];
+// Panels that cover the whole page while a title is shown or playing
+const COVERING_PANELS = ['title-page', 'movie-player-view', 'series-player-view'];
 
 export function isPageCovered() {
     return COVERING_PANELS.some(id => {
         const panel = document.getElementById(id);
         return Boolean(panel) && !panel.classList.contains('hidden');
     });
+}
+
+/** Locks the page scroll while a covering panel is open (each panel scrolls by itself) and frees it after. */
+export function syncPageLock() {
+    const covered = isPageCovered();
+    document.documentElement.style.overflow = covered ? "hidden" : "";
+    document.body.style.overflow = covered ? "hidden" : "";
+    document.documentElement.classList.toggle("modal-open", covered);
+    document.body.classList.toggle("modal-open", covered);
 }
 
 /** True when the carousel of `viewName` ('movies', 'series', 'animes') is on screen and may load its next slide. */
