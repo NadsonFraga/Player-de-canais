@@ -1,6 +1,6 @@
 # Plan: title pages, new header, Coleção and accounts (big feature)
 
-> **Status:** proposed on 2026-10-20, waiting for the user's approval. Nothing is implemented.
+> **Status:** proposed on 2026-10-20; decisions answered the same day (below). Waiting for the go-ahead to start phase 1.
 > Replaces the separate backlog items F10 (Coleção and header), F11 (global search) and G7 (account); the 2026-10-19 draft in `features/2026-10-19-user-accounts-and-cloud-sync/plan.md` is reference only.
 > References: FlyStream (title page, header pill, search overlay, settings menu), 7Movies and Stremio (Coleção tabs), Trakt and Letterboxd (ratings 1 to 10).
 
@@ -73,8 +73,8 @@ Data: one request per page through `/api/tmdb`, with `append_to_response` (movie
 
 ## Phase 2: new header and global search (`feat/new-header`)
 
-- One pill: brand icon (goes to Início), Canais, Filmes, Séries, Animes, Esportes ("em breve"), a thin divider, profile avatar, search, gear. Phones: icons only, as today.
-- Avatar: until the account exists, a default avatar with a menu (Coleção, Entrar / Criar conta marked "em breve").
+- One pill: brand icon only, no name (goes to Início), Canais, Filmes, Séries, Animes, Esportes ("em breve"), a thin divider, profile avatar, search, gear. Phones: icons only, as today.
+- Avatar: until the account exists, a default avatar with a menu (Coleção, Entrar / Criar conta marked "em breve"). Profiles (Netflix style) come with the account in phase 4.
 - Search (F11): an overlay over the page, results while typing (short pause so TMDB is not flooded), category selector (Tudo, Filmes, Séries, Animes, Canais, Pessoas); a result opens the title page.
 - Gear menu, grouped: Coleção and Continuar assistindo; player preferences; ad-block and DNS tips; Privacidade and Termos. Account items come in phase 4.
 
@@ -91,17 +91,18 @@ Gets its **own detailed plan before any code** (security and data), built on the
 - Cloudflare D1 database; a separate database for previews; local mirror in `tools/local_server.py`.
 - Sync per item using the per-field change times from phase 1, merged on the server; removals and "Começar do início" propagate.
 - What syncs: library (Quero assistir, Assistidos, notas), watch progress, channel favorites, preferences.
-- Avatar menu: Entrar / Criar conta, Sair, and the profile screen (and profiles, if chosen).
+- Profiles per account (Netflix style): profile picker screen, create, rename and remove profiles; each profile has its own library, progress and favorites.
+- Avatar menu: Entrar / Criar conta, Sair, Trocar perfil.
 - Rewrite Privacidade and Termos (what the account stores, where, how to delete it).
 
 ## Out of this feature (later)
 
 Trakt and AniList (send Quero assistir, Assistidos, notas and progress; import), IMDb and Rotten Tomatoes scores (needs another service, OMDb or MDBList, with its own key), background trailer, Google sign-in, TV sign-in with a code.
 
-## Decisions for the user
+## Decisions (user, 2026-10-20)
 
-1. Brand inside the pill (FlyStream) instead of logo and name on the left (the 7Movies choice of 2026-10-19)?
-2. Netflix-style profiles (Usuário 1, Usuário 2 in the same account): with the account in phase 4, or not at all? The library from phase 1 is ready for it either way.
-3. Trailers: small player inside the site (recommended) or open YouTube in a new tab?
-4. Mark as Assistido automatically at the end (recommended) or only by the button?
-5. Link per title in the address bar (`?filme=ID`, recommended)?
+1. Brand inside the pill, icon only (no name), replacing the 7Movies layout chosen on 2026-10-19.
+2. Netflix-style profiles: yes, in phase 4 with the account (each account has its own profiles). The phase 1 library must allow a profile id later.
+3. Trailers: small player inside the site (youtube-nocookie) with an "Abrir no YouTube" link; when a video refuses embedding (YouTube errors 101/150/153) or the embed gives trouble, open YouTube in a new tab instead.
+4. Reaching the end marks the title as Assistido automatically.
+5. The address shows the open title (`?filme=ID`, `?serie=ID`, `?anime=ID`).
