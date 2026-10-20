@@ -52,12 +52,8 @@
         transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .nav-capsule-badge {
-        display: none !important; /* Hide 'Em Breve' badge text to keep capsule compact on mobile */
-    }
-
     /* On mobile/tablet screens (<=768px), inactive tabs display sleek icons while active tab expands with label */
-    .nav-capsule-item:not(.active) span:not(.nav-capsule-badge) {
+    .nav-capsule-item:not(.active) span {
         display: none !important;
     }
 

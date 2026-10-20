@@ -42,3 +42,26 @@ Fixed during the phase: a tab switch right after Back could be undone by the gro
 | 12 | Phone (Chrome Android): items 1, 6, 7 and the phone's Back button | Layout fits the screen; Back closes player, then page | |
 | 13 | Firefox: items 1, 6 and 7 | Same as Chrome | |
 | 14 | The banner "Assistir Agora" on Início, Filmes, Séries and Animes | Always opens the title page (decided on 2026-10-20: same behavior everywhere); a live channel on the Início banner still opens the channel | |
+
+## Phase 2: new header and global search (`feat/new-header` -> `staging`)
+
+**Date:** 2026-10-20 · **Staging:** https://staging.tvzinhaonline.pages.dev
+
+### Automated
+
+Filled in at the end of the phase.
+
+### Manual (user, on staging)
+
+| # | Steps | Expected | Result |
+|---|---|---|---|
+| 1 | Look at the pill on the computer | TV icon (no "Início" tab), Canais, Filmes, Séries, Animes, Esportes dimmed with no badge, then search, profile, settings; everything centered | |
+| 2 | Click the TV icon from another tab; click Esportes | Goes to Início; Esportes shows "em breve" and stays | |
+| 3 | Profile icon | Menu: Visitante, "Continuar assistindo" (goes to the row on Início), "Entrar ou criar conta" (em breve) | |
+| 4 | Settings icon | Menu: ad-block tips, Privacidade, Termos de uso, DMCA; each opens its panel | |
+| 5 | Search icon, or "/" on the keyboard | Search opens with the cursor in the field; results while typing; Tudo / Filmes / Séries / Animes / Canais / Pessoas | |
+| 6 | Search a movie, a series, an anime, a person ("Tom Hanks") and a channel ("globo", "espn") | Each kind shows; a title opens its page; a person opens their titles; a channel opens the channel | |
+| 7 | Back (or Esc) with a menu or the search open | Closes it and nothing else | |
+| 8 | Phone: the pill | Tab icons in the pill; search, profile and settings in a smaller pill under it; it hides while scrolling down and comes back scrolling up | |
+| 9 | Phone: the menus, the search, Canais and a title page | Menus open centered; search fills the screen; nothing covered (banner dots, Canais top, title page back button) | |
+| 10 | Firefox: items 1, 5 and 6 | Same as Chrome | |

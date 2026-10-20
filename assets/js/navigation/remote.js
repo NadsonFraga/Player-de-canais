@@ -3,13 +3,20 @@
  * Purely DOM-based spatial navigation with Euclidean 2D distance calculation
  */
 
-import { store } from '../core/state.js?v=20261020_1634';
-import { handleBackButton } from './historyManager.js?v=20261020_1634';
+import { store } from '../core/state.js?v=20261020_1704';
+import { handleBackButton } from './historyManager.js?v=20261020_1704';
 
 export function setupTvRemoteNavigation() {
     function getFocusableElements() {
         const selector = [
             '#floating-nav-capsule .nav-capsule-item',
+            '#floating-nav-capsule .nav-tool',
+            '.nav-menu:not(.hidden) .nav-menu-item',
+            '#global-search-input',
+            '#btn-close-search',
+            '.search-kind',
+            '.search-channel',
+            '.search-person',
             '#btn-home-hero-watch',
             '#btn-home-hero-explore',
             '.home-channel-card',
@@ -137,6 +144,13 @@ export function setupTvRemoteNavigation() {
         const key = e.key;
 
         if (key === 'Escape' || key === 'Back' || key === 'BrowserBack') {
+            // Global search: the same step as the Back button
+            const searchOverlay = document.getElementById("search-overlay");
+            if (searchOverlay && !searchOverlay.classList.contains("hidden") && !e.defaultPrevented) {
+                e.preventDefault();
+                handleBackButton();
+                return;
+            }
             // Title page and its trailer (no player over them): the same step as the Back button
             const titlePage = document.getElementById("title-page");
             const playerOpen = ["movie-player-view", "series-player-view"].some(id => {
