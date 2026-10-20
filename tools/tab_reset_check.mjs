@@ -155,9 +155,9 @@ try {
   await switchTo(b, "series");
   await search(b, "series", "friends");
   await b.evaluate(`import('/assets/js/modules/series.js?v=${VERSION}').then(m => { window.__s = m; return true; })`);
-  await b.evaluate("(window.__s.openSeriesModal({ id: 1668, name: 'Friends' }, 'tv'), true)");
+  await b.evaluate("(window.TvzinhaActions.openTitle('tv', { id: 1668, name: 'Friends' }), true)");
   await sleep(2500);
-  await b.evaluate("(document.getElementById('btn-close-series-modal').click(), true)");
+  await b.evaluate("(document.getElementById('btn-title-back').click(), true)");
   await sleep(1200);
   const inside = await b.evaluate(`({ explore: ${visible("series-explore-view")}, query: ${value("series-explore-search-input")} })`);
   check("inside a tab: opening a title from the search and closing it keeps the search", inside.explore && inside.query === "friends", JSON.stringify(inside));

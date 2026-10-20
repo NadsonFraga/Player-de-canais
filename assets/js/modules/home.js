@@ -4,20 +4,21 @@
  * and quick-navigation portals for Movies, Series, Animes, and Live Channels.
  */
 
-import { store } from '../core/state.js?v=20261020_1352';
+import { store } from '../core/state.js?v=20261020_1520';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
     TMDB_CACHE_KEY,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY
-} from '../core/constants.js?v=20261020_1352';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261020_1352';
-import { switchAppView } from '../navigation/router.js?v=20261020_1352';
-import { openMovieDetailsModal, fetchTmdbEndpoint } from './movies.js?v=20261020_1352';
-import { openSeriesModal, fetchSeriesEndpoint } from './series.js?v=20261020_1352';
-import { selectChannelByName } from './channels.js?v=20261020_1352';
-import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261020_1352';
+} from '../core/constants.js?v=20261020_1520';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261020_1520';
+import { switchAppView } from '../navigation/router.js?v=20261020_1520';
+import { fetchTmdbEndpoint } from './movies.js?v=20261020_1520';
+import { fetchSeriesEndpoint } from './series.js?v=20261020_1520';
+import { openTitle } from './titlePage.js?v=20261020_1520';
+import { selectChannelByName } from './channels.js?v=20261020_1520';
+import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261020_1520';
 
 const TMDB_GENRES = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -492,9 +493,9 @@ function showHeroSlide(index) {
     if (btnWatch) {
         btnWatch.onclick = () => {
             if (item.type === 'movie' && item.raw) {
-                openMovieDetailsModal(item.raw);
+                openTitle('movie', item.raw);
             } else if ((item.type === 'series' || item.type === 'anime') && item.raw) {
-                openSeriesModal(item.raw, item.type === 'anime' ? 'anime' : 'tv');
+                openTitle(item.type === 'anime' ? 'anime' : 'tv', item.raw);
             } else if (item.type === 'channel' && item.channelName) {
                 selectChannelByName(item.channelName);
             } else {
@@ -596,7 +597,7 @@ function renderHomeMoviesTrack() {
                 year: (m.release_date || '').substring(0, 4) || 'Cinema',
                 rating: m.vote_average ? m.vote_average.toFixed(1) : '—',
                 posterPath: m.poster_path,
-                onClick: () => openMovieDetailsModal(m)
+                onClick: () => openTitle('movie', m)
             });
             fragment.appendChild(card);
         });
@@ -630,7 +631,7 @@ function renderHomeSeriesTrack() {
                 year: (s.first_air_date || '').substring(0, 4) || 'Série',
                 rating: s.vote_average ? s.vote_average.toFixed(1) : '—',
                 posterPath: s.poster_path,
-                onClick: () => openSeriesModal(s, 'tv')
+                onClick: () => openTitle('tv', s)
             });
             fragment.appendChild(card);
         });
@@ -664,7 +665,7 @@ function renderHomeAnimesTrack() {
                 year: (a.first_air_date || '').substring(0, 4) || 'Anime',
                 rating: a.vote_average ? a.vote_average.toFixed(1) : '—',
                 posterPath: a.poster_path,
-                onClick: () => openSeriesModal(a, 'anime')
+                onClick: () => openTitle('anime', a)
             });
             fragment.appendChild(card);
         });

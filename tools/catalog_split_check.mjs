@@ -139,7 +139,7 @@ const openShow = (id, name) => `(async () => {
   }
   if (window.artInstance) window.artInstance.pause();
   const header = (document.getElementById('series-player-current-ep') || {}).textContent || '';
-  window.__s.stopSeriesPlayer(); window.__s.closeSeriesModal();
+  window.__s.stopSeriesPlayer(); window.TvzinhaActions.closeTitle();
   await new Promise(r => setTimeout(r, 600));
   return { servers: [...new Set(servers)], started, header };
 })()`;

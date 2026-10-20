@@ -1376,18 +1376,8 @@ body[data-app-view="tv"] .site-footer {
 }
 
 /* ==========================================================================
-   3. SERIES MODAL & CLEAN EPISODE SELECTOR (MATCHING MOVIES MODAL)
+   3. EPISODE SELECTOR (title page, modules/titlePage.js)
    ========================================================================== */
-.series-modal-card {
-    max-width: 840px;
-}
-
-.seasons-badge {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.18);
-    color: #e4e4e7;
-}
-
 /* Clean Season Bar aligned with Movies Modal */
 .series-season-bar-clean {
     display: flex;
@@ -1452,13 +1442,16 @@ body[data-app-view="tv"] .site-footer {
 }
 
 .custom-select-wrapper::after {
-    content: "▼";
+    /* Line chevron drawn with borders (no glyph) */
+    content: "";
     position: absolute;
-    right: 12px;
+    right: 14px;
     top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.65rem;
-    color: var(--text-muted);
+    width: 6px;
+    height: 6px;
+    border-right: 1.6px solid var(--text-secondary);
+    border-bottom: 1.6px solid var(--text-secondary);
+    transform: translateY(-70%) rotate(45deg);
     pointer-events: none;
 }
 
@@ -1503,12 +1496,6 @@ body[data-app-view="tv"] .site-footer {
     border-color: rgba(255, 255, 255, 0.22);
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.series-modal-card.theme-anime .btn-mode-switch.active {
-    background: rgba(217, 70, 239, 0.22);
-    border-color: rgba(217, 70, 239, 0.5);
-    color: #f5d0fe;
 }
 
 .season-total-count {
