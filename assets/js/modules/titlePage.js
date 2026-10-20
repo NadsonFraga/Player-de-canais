@@ -13,16 +13,16 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261020_1714';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1714';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1714';
-import { showToast } from '../core/toast.js?v=20261020_1714';
-import { syncPageLock } from '../core/activity.js?v=20261020_1714';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1714';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1714';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1714';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1714';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1714';
+} from '../core/constants.js?v=20261020_1724';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1724';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1724';
+import { showToast } from '../core/toast.js?v=20261020_1724';
+import { syncPageLock } from '../core/activity.js?v=20261020_1724';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1724';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1724';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1724';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1724';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1724';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -32,7 +32,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261020_1714';
+} from './series.js?v=20261020_1724';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
@@ -533,6 +533,22 @@ function formatClock(seconds) {
     return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}`;
 }
 
+function localToday() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Not out yet: a release (or first episode) date after today, or no date at all (announced). */
+function isUpcomingTitle(item) {
+    const date = String(item.release_date || item.first_air_date || '');
+    return !date || date > localToday();
+}
+
+function upcomingPlayLabel(item) {
+    const date = formatDate(item.release_date || item.first_air_date);
+    return date ? `Em breve · estreia em ${date}` : 'Em breve';
+}
+
 function playLabel(entry) {
     const id = entry.item.id;
     if (entry.kind === 'movie') {
@@ -546,7 +562,14 @@ function playLabel(entry) {
 }
 
 function renderActions(entry) {
-    setText('title-play-label', playLabel(entry));
+    // Only known once the details are in (a catalog item may lack its date): until then it reads Assistir
+    const upcoming = Boolean(entry.details) && isUpcomingTitle(fullItem(entry));
+    const playButton = document.getElementById('btn-title-play');
+    if (playButton) {
+        playButton.classList.toggle('is-upcoming', upcoming);
+        playButton.setAttribute('aria-disabled', String(upcoming));
+    }
+    setText('title-play-label', upcoming ? upcomingPlayLabel(fullItem(entry)) : playLabel(entry));
     const state = getLibraryState(entry.kind, entry.item.id);
     const watchlist = document.getElementById('btn-title-watchlist');
     if (watchlist) {
@@ -594,6 +617,7 @@ function play(entry, target = null) {
 
 function startRequestedPlayback(entry, options) {
     if (!options || current !== entry) return;
+    if (entry.details && isUpcomingTitle(fullItem(entry))) return;
     if (options.episode) play(entry, options.episode);
     else if (options.play) play(entry);
 }
@@ -757,7 +781,8 @@ export function fillCards(grid, cards, options = {}) {
     const fragment = document.createDocumentFragment();
     cards.forEach(({ kind, item, current: isCurrent }) => {
         const card = document.createElement('div');
-        card.className = `movie-poster-card title-card${isCurrent ? ' is-current' : ''}`;
+        const upcoming = isUpcomingTitle(item);
+        card.className = `movie-poster-card title-card${isCurrent ? ' is-current' : ''}${upcoming ? ' is-upcoming' : ''}`;
         card.tabIndex = 0;
         card.setAttribute('role', 'button');
         const name = titleText(item) || 'Título';
@@ -773,7 +798,8 @@ export function fillCards(grid, cards, options = {}) {
                     <span>${escapeHtml(year || kindLabel(kind))}</span>
                     ${score ? `<span class="movie-card-rating">★ ${escapeHtml(score)}</span>` : ''}
                 </div>
-            </div>`;
+            </div>
+            ${upcoming ? '<span class="title-card-soon">Em breve</span>' : ''}`;
         const open = () => {
             if (isCurrent) {
                 page()?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -957,8 +983,13 @@ export function setupTitlePage() {
     });
 
     document.getElementById('btn-title-back')?.addEventListener('click', titleBack);
-    document.getElementById('btn-title-play')?.addEventListener('click', () => {
-        if (current && current.type === 'title') play(current);
+    document.getElementById('btn-title-play')?.addEventListener('click', (e) => {
+        if (!current || current.type !== 'title') return;
+        if (e.currentTarget.classList.contains('is-upcoming')) {
+            showToast('Este título ainda não estreou.');
+            return;
+        }
+        play(current);
     });
     document.getElementById('btn-title-watchlist')?.addEventListener('click', () => libraryToggle('watchlist'));
     document.getElementById('btn-title-watched')?.addEventListener('click', () => libraryToggle('watched'));
