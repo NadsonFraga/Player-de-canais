@@ -321,20 +321,38 @@ body[data-app-view="tv"] .site-footer {
     display: flex;
     flex-direction: column;
     gap: 9px;
-    max-width: 560px;
+    min-width: 0;
 }
 
+/* Logo, name and tagline on one line: "Tvzinha Online - Filmes, séries..." */
 .site-footer-logo {
-    display: inline-flex;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 9px;
+    gap: 4px 9px;
+    margin-bottom: 4px;
     color: #ffffff;
     font-size: 1rem;
     font-weight: 600;
 }
 
+.site-footer-logo img {
+    flex-shrink: 0;
+}
+
+.site-footer-name {
+    font-weight: 700;
+}
+
+.site-footer-tagline::before {
+    content: "-";
+    margin-right: 9px;
+    color: rgba(255, 255, 255, 0.42);
+}
+
 .site-footer-brand p {
     margin: 0;
+    max-width: 560px;
     line-height: 1.55;
 }
 
@@ -469,6 +487,16 @@ body[data-app-view="tv"] .site-footer {
     .site-footer-main {
         flex-direction: column;
         gap: 24px;
+    }
+
+    /* The tagline gets its own line under the name, without the dash */
+    .site-footer-tagline {
+        flex-basis: 100%;
+        font-size: 0.92rem;
+    }
+
+    .site-footer-tagline::before {
+        content: none;
     }
 
     .site-footer-columns {
