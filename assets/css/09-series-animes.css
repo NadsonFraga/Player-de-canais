@@ -356,7 +356,6 @@ body[data-app-view="tv"] .site-footer {
     line-height: 1.55;
 }
 
-.site-footer-note,
 .site-footer-credits {
     font-size: 0.74rem;
 }
@@ -367,7 +366,7 @@ body[data-app-view="tv"] .site-footer {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
-    margin-top: 6px;
+    margin-top: 10px;
 }
 
 /* TMDB attribution (their API terms): their official logo, unmodified */
