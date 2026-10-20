@@ -263,18 +263,25 @@
 .title-rate-stars {
     display: flex;
     justify-content: center;
+}
+
+/* Five stars with halves (core/rateStars.js): the title page and the "Gostou? Avalie" card */
+.rate-stars {
+    --star-size: 36px;
+    display: flex;
+    justify-content: center;
     gap: 4px;
 }
 
-.title-rate-star {
+.rate-star {
     position: relative;
-    width: 36px;
-    height: 36px;
+    width: var(--star-size);
+    height: var(--star-size);
     color: var(--accent-gold);
 }
 
-.title-rate-outline,
-.title-rate-fill {
+.rate-star-outline,
+.rate-star-fill {
     position: absolute;
     top: 0;
     left: 0;
@@ -283,22 +290,22 @@
     pointer-events: none;
 }
 
-.title-rate-outline {
+.rate-star-outline {
     width: 100%;
     color: rgba(255, 255, 255, 0.4);
 }
 
-.title-rate-fill {
+.rate-star-fill {
     width: var(--fill, 0%);
 }
 
-.title-rate-star .title-star-svg {
-    width: 36px;
-    height: 36px;
+.rate-star .star-svg {
+    width: var(--star-size);
+    height: var(--star-size);
     display: block;
 }
 
-.title-rate-half {
+.rate-star-half {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -310,15 +317,15 @@
     z-index: 1;
 }
 
-.title-rate-half.left {
+.rate-star-half.left {
     left: 0;
 }
 
-.title-rate-half.right {
+.rate-star-half.right {
     right: 0;
 }
 
-.title-rate-half:focus-visible {
+.rate-star-half:focus-visible {
     outline: 2px solid #ffffff;
     outline-offset: -2px;
     border-radius: 4px;

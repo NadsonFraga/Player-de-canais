@@ -13,16 +13,17 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261020_1816';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1816';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1816';
-import { showToast } from '../core/toast.js?v=20261020_1816';
-import { syncPageLock } from '../core/activity.js?v=20261020_1816';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1816';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1816';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1816';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1816';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1816';
+} from '../core/constants.js?v=20261020_1857';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1857';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1857';
+import { showToast } from '../core/toast.js?v=20261020_1857';
+import { syncPageLock } from '../core/activity.js?v=20261020_1857';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1857';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1857';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261020_1857';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1857';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1857';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1857';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -32,7 +33,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261020_1816';
+} from './series.js?v=20261020_1857';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
@@ -594,11 +595,6 @@ function renderActions(entry) {
     }
 }
 
-/** 1 to 10 shown as stars with halves: 7 -> "3,5". */
-function formatStars(value) {
-    return (Number(value) / 2).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
-}
-
 function play(entry, target = null) {
     const item = fullItem(entry);
     if (entry.kind === 'movie') {
@@ -637,50 +633,34 @@ function libraryToggle(field) {
     renderActions(entry);
 }
 
-// --- Rating: 5 stars with halves (1 to 10) ---
+// --- Rating: 5 stars with halves (1 to 10), core/rateStars.js ---
 
-function starSvg(filled) {
-    return `<svg class="title-star-svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><polygon points="12 2.5 14.9 8.6 21.5 9.4 16.6 13.9 17.9 20.5 12 17.2 6.1 20.5 7.4 13.9 2.5 9.4 9.1 8.6"></polygon></svg>`;
-}
+let rateStars = null;
 
-function buildRateStars() {
+function ensureRateStars() {
+    if (rateStars) return rateStars;
     const box = document.getElementById('title-rate-stars');
-    if (!box || box.childElementCount > 0) return;
-    for (let star = 1; star <= 5; star++) {
-        const wrap = document.createElement('span');
-        wrap.className = 'title-rate-star';
-        wrap.dataset.star = String(star);
-        wrap.innerHTML = `
-            <span class="title-rate-outline">${starSvg(false)}</span>
-            <span class="title-rate-fill">${starSvg(true)}</span>
-            <button type="button" class="title-rate-half left" data-value="${star * 2 - 1}" aria-label="Nota ${formatStars(star * 2 - 1)}"></button>
-            <button type="button" class="title-rate-half right" data-value="${star * 2}" aria-label="Nota ${formatStars(star * 2)}"></button>`;
-        box.appendChild(wrap);
-    }
-}
-
-/** Fills the stars for `value` (1 to 10); 0 empties them. */
-function paintStars(value) {
-    document.querySelectorAll('#title-rate-stars .title-rate-star').forEach(wrap => {
-        const star = Number(wrap.dataset.star);
-        const fill = value >= star * 2 ? 100 : value === star * 2 - 1 ? 50 : 0;
-        wrap.style.setProperty('--fill', `${fill}%`);
+    if (!box) return null;
+    rateStars = createRateStars({
+        onPick: (value) => saveRating(value),
+        onPreview: (value) => setText('title-rate-hint', value ? `${formatStars(value)} de 5 estrelas` : 'Escolha de meia a cinco estrelas')
     });
-    setText('title-rate-hint', value ? `${formatStars(value)} de 5 estrelas` : 'Escolha de meia a cinco estrelas');
+    box.appendChild(rateStars.element);
+    return rateStars;
 }
 
 function openRatePanel() {
     if (!current || current.type !== 'title') return;
-    buildRateStars();
+    const stars = ensureRateStars();
     const panel = document.getElementById('title-rate-panel');
     const button = document.getElementById('btn-title-rate');
-    if (!panel || !button) return;
+    if (!panel || !button || !stars) return;
     const value = getLibraryState(current.kind, current.item.id).rating || 0;
-    paintStars(value);
+    stars.setValue(value);
     document.getElementById('btn-title-rate-clear')?.classList.toggle('hidden', !value);
     panel.classList.remove('hidden');
     button.setAttribute('aria-expanded', 'true');
-    panel.querySelector(`.title-rate-half[data-value="${value || 6}"]`)?.focus({ preventScroll: true });
+    stars.focus();
 }
 
 function closeRatePanel() {
@@ -775,13 +755,18 @@ function renderRecommendations(entry, details) {
     section.classList.toggle('hidden', results.length === 0);
 }
 
-/** Poster cards (the catalog's look); a click opens that title here, or runs `options.onOpen(kind, item)`. */
+/**
+ * Poster cards (the catalog's look); a click opens that title here, or runs `options.onOpen(kind, item, card)`.
+ * `options.decorate(cardElement, card)` adds extras to each card (the Coleção: progress, score, remove button);
+ * `options.noUpcoming` skips the "Em breve" tag (cards whose item has no date, like the Coleção's).
+ */
 export function fillCards(grid, cards, options = {}) {
     grid.innerHTML = '';
     const fragment = document.createDocumentFragment();
-    cards.forEach(({ kind, item, current: isCurrent }) => {
+    cards.forEach((cardDef) => {
+        const { kind, item, current: isCurrent } = cardDef;
         const card = document.createElement('div');
-        const upcoming = isUpcomingTitle(item);
+        const upcoming = !options.noUpcoming && isUpcomingTitle(item);
         card.className = `movie-poster-card title-card${isCurrent ? ' is-current' : ''}${upcoming ? ' is-upcoming' : ''}`;
         card.tabIndex = 0;
         card.setAttribute('role', 'button');
@@ -805,16 +790,18 @@ export function fillCards(grid, cards, options = {}) {
                 page()?.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
-            if (typeof options.onOpen === 'function') options.onOpen(kind, item);
+            if (typeof options.onOpen === 'function') options.onOpen(kind, item, cardDef);
             else openTitle(kind, item);
         };
         card.addEventListener('click', open);
         card.addEventListener('keydown', (e) => {
+            if (e.target !== card) return;
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 open();
             }
         });
+        if (typeof options.decorate === 'function') options.decorate(card, cardDef);
         fragment.appendChild(card);
     });
     grid.appendChild(fragment);
@@ -1008,25 +995,6 @@ export function setupTitlePage() {
         more.textContent = expanded ? 'Ler menos' : 'Ler mais';
     });
     document.getElementById('btn-title-list-more')?.addEventListener('click', loadMoreList);
-
-    const stars = document.getElementById('title-rate-stars');
-    if (stars) {
-        stars.addEventListener('click', (e) => {
-            const half = e.target.closest('.title-rate-half');
-            if (half) saveRating(Number(half.dataset.value));
-        });
-        stars.addEventListener('mouseover', (e) => {
-            const half = e.target.closest('.title-rate-half');
-            if (half) paintStars(Number(half.dataset.value));
-        });
-        stars.addEventListener('focusin', (e) => {
-            const half = e.target.closest('.title-rate-half');
-            if (half) paintStars(Number(half.dataset.value));
-        });
-        stars.addEventListener('mouseleave', () => {
-            if (current && current.type === 'title') paintStars(getLibraryState(current.kind, current.item.id).rating || 0);
-        });
-    }
 
     // Pictures marked .fade-in show once loaded (or failed: their fallback takes the place)
     const markLoaded = (e) => {

@@ -1,0 +1,301 @@
+/* ==========================================================================
+   COLEÇÃO (modules/collection.js) and the "Gostou? Avalie" card in the players
+   (modules/ratePrompt.js). Neutral colors, line icons only.
+   ========================================================================== */
+
+.view-collection {
+    min-height: 100vh;
+}
+
+.collection-wrap {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 110px 48px 24px;
+    box-sizing: border-box;
+}
+
+.collection-header {
+    margin-bottom: 22px;
+}
+
+.collection-heading {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.collection-sub {
+    margin: 4px 0 0;
+    font-size: 0.86rem;
+    color: var(--text-secondary);
+}
+
+.collection-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 16px;
+}
+
+.collection-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.collection-tab {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px 12px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.collection-tab:hover,
+.collection-tab:focus-visible {
+    color: #ffffff;
+    outline: none;
+}
+
+.collection-tab.active {
+    color: #ffffff;
+    border-bottom-color: #ffffff;
+}
+
+.collection-count {
+    min-width: 20px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #e4e4e7;
+    text-align: center;
+}
+
+.collection-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.collection-filter {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: none;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.collection-filter:hover,
+.collection-filter:focus-visible {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.32);
+    outline: none;
+}
+
+.collection-filter.active {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #09090b;
+}
+
+.collection-empty {
+    margin: 0;
+    padding: 50px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+/* Extras on the poster cards: remove button, score, progress */
+.collection-grid .movie-poster-card {
+    position: relative;
+}
+
+.collection-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(9, 9, 11, 0.78);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+
+.collection-remove:hover,
+.collection-remove:focus-visible {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.85);
+    outline: none;
+}
+
+.collection-score {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(9, 9, 11, 0.82);
+    border: 1px solid rgba(251, 191, 36, 0.5);
+    color: #ffffff;
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.collection-score svg {
+    color: var(--accent-gold);
+}
+
+.collection-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.collection-progress span {
+    display: block;
+    height: 100%;
+    background: #ffffff;
+}
+
+/* Favorite channels */
+.collection-channel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+}
+
+.collection-channel-wrap {
+    position: relative;
+}
+
+.collection-channel {
+    width: 100%;
+    padding-right: 48px;
+}
+
+.collection-channel-wrap .collection-remove {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* --- "Gostou? Avalie" in the player stage --- */
+.rate-prompt {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 60;
+    width: min(300px, calc(100% - 32px));
+    padding: 16px 16px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(14, 14, 18, 0.94);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+    text-align: center;
+    animation: nav-menu-in 0.2s ease-out;
+}
+
+.rate-prompt-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.rate-prompt-hint {
+    margin: 4px 0 10px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.rate-prompt .rate-stars {
+    --star-size: 34px;
+}
+
+.rate-prompt-skip {
+    margin-top: 10px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: none;
+    color: #e4e4e7;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rate-prompt-skip:hover,
+.rate-prompt-skip:focus-visible {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    outline: none;
+}
+
+@media (max-width: 768px) {
+    .collection-wrap {
+        padding: 72px 16px 16px;
+    }
+
+    .collection-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .collection-channel-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rate-prompt {
+        top: 10px;
+        right: 10px;
+        padding: 12px 12px 10px;
+    }
+
+    .rate-prompt .rate-stars {
+        --star-size: 30px;
+    }
+}
+
+@media (max-width: 420px) {
+    .collection-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
