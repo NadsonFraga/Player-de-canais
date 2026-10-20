@@ -6,19 +6,19 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261020_1734';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1734';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1734';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1734';
-import { showToast } from '../core/toast.js?v=20261020_1734';
-import { syncPageLock } from '../core/activity.js?v=20261020_1734';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1734';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1734';
-import { switchAppView } from '../navigation/router.js?v=20261020_1734';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1734';
-import { isAnimeShow } from './series.js?v=20261020_1734';
-import { selectChannelByName } from './channels.js?v=20261020_1734';
-import { openLegalSection } from './footer.js?v=20261020_1734';
+import { store } from '../core/state.js?v=20261020_1751';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1751';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1751';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1751';
+import { showToast } from '../core/toast.js?v=20261020_1751';
+import { syncPageLock } from '../core/activity.js?v=20261020_1751';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1751';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1751';
+import { switchAppView } from '../navigation/router.js?v=20261020_1751';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1751';
+import { isAnimeShow } from './series.js?v=20261020_1751';
+import { selectChannelByName } from './channels.js?v=20261020_1751';
+import { openLegalSection } from './footer.js?v=20261020_1751';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -388,19 +388,29 @@ export function setupHeader() {
         }
     });
 
-    // Phones: the pill tucks away while scrolling down and comes back when scrolling up (and on a tab switch)
-    let lastY = 0;
-    new MutationObserver(() => {
+    // Phones: the pill tucks away while the person scrolls down and comes back when they scroll up. A new screen
+    // (tab switch, title page opened, stacked or closed) or a jump of the scroll shows it at once, without sliding.
+    const lastY = new WeakMap();
+    const showNow = () => {
+        if (!document.body.classList.contains('nav-tucked')) return;
+        document.body.classList.add('nav-instant');
         document.body.classList.remove('nav-tucked');
-        lastY = 0;
-    }).observe(document.body, { attributes: true, attributeFilter: ['data-app-view'] });
+        requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove('nav-instant')));
+    };
+    new MutationObserver(showNow).observe(document.body, { attributes: true, attributeFilter: ['data-app-view'] });
+    const titlePage = document.getElementById('title-page');
+    if (titlePage) new MutationObserver(showNow).observe(titlePage, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('popstate', showNow);
     document.addEventListener('scroll', (e) => {
         const target = e.target === document ? document.scrollingElement : e.target;
         if (!target || (target !== document.scrollingElement && target.id !== 'title-page')) return;
+        // Each scrolling area keeps its own last position (the catalog and the title page scroll separately)
         const y = target.scrollTop;
+        const before = lastY.has(target) ? lastY.get(target) : y;
+        lastY.set(target, y);
         if (openMenuId) return;
-        if (y > lastY + 6 && y > 80) document.body.classList.add('nav-tucked');
-        else if (y < lastY - 6 || y <= 80) document.body.classList.remove('nav-tucked');
-        lastY = y;
+        if (Math.abs(y - before) > 400 || y <= 90) showNow();
+        else if (y > before + 10) document.body.classList.add('nav-tucked');
+        else if (y < before - 10) document.body.classList.remove('nav-tucked');
     }, { capture: true, passive: true });
 }
