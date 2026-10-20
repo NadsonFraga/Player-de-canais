@@ -13,16 +13,16 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261020_1556';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1556';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1556';
-import { showToast } from '../core/toast.js?v=20261020_1556';
-import { syncPageLock } from '../core/activity.js?v=20261020_1556';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1556';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1556';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1556';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1556';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1556';
+} from '../core/constants.js?v=20261020_1621';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1621';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1621';
+import { showToast } from '../core/toast.js?v=20261020_1621';
+import { syncPageLock } from '../core/activity.js?v=20261020_1621';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1621';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1621';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1621';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1621';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1621';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -32,7 +32,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261020_1556';
+} from './series.js?v=20261020_1621';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
@@ -482,16 +482,6 @@ function formatDate(isoDate) {
     return new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
 }
 
-function languageName(code) {
-    if (!code) return '';
-    try {
-        const name = new Intl.DisplayNames(['pt-BR'], { type: 'language' }).of(code);
-        return name ? name.charAt(0).toUpperCase() + name.slice(1) : code.toUpperCase();
-    } catch (e) {
-        return code.toUpperCase();
-    }
-}
-
 /** Clock time the movie ends if it starts now ("16:38"). */
 function endsAt(minutes) {
     const end = new Date(Date.now() + Number(minutes) * 60000);
@@ -505,14 +495,11 @@ function renderFacts(entry, details) {
     const originalTitle = details.original_title || details.original_name;
     if (originalTitle && originalTitle !== (details.title || details.name)) rows.push(['Título original', originalTitle]);
     if (details.status) rows.push(['Situação', STATUS_PT[details.status] || details.status]);
-    if (details.original_language) rows.push(['Idioma original', languageName(details.original_language)]);
     if (entry.kind === 'movie') {
         if (details.release_date) rows.push(['Lançamento', formatDate(details.release_date)]);
         if (details.runtime) rows.push(['Duração', `${formatRuntime(details.runtime)} · termina às ${endsAt(details.runtime)}`]);
     } else {
         if (details.first_air_date) rows.push(['Estreia', formatDate(details.first_air_date)]);
-        const networks = (details.networks || []).map(n => n.name).filter(Boolean);
-        if (networks.length) rows.push(['Emissora', networks.slice(0, 2).join(', ')]);
         const next = details.next_episode_to_air;
         if (next && next.air_date) rows.push(['Próximo episódio', `${formatDate(next.air_date)} · T${next.season_number}:E${next.episode_number}`]);
         const runtime = Array.isArray(details.episode_run_time) ? details.episode_run_time[0] : null;
