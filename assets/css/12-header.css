@@ -453,6 +453,16 @@
     }
 
     /* Tucked away while scrolling down, back when scrolling up (pill and its menu button together) */
+    .floating-nav-capsule {
+        transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    /* A new screen shows the pill at once (no sliding in) */
+    body.nav-instant .floating-nav-capsule,
+    body.nav-instant .title-page-back {
+        transition: none !important;
+    }
+
     body.nav-tucked .floating-nav-capsule {
         transform: translate(-50%, -80px);
         opacity: 0;
