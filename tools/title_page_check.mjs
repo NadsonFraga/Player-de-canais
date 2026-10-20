@@ -155,7 +155,7 @@ try {
   await b.evaluate("(document.getElementById('btn-title-watchlist').click(), document.getElementById('btn-title-watched').click(), true)");
   await b.evaluate("(document.getElementById('btn-title-rate').click(), true)");
   const panelOpen = await b.evaluate(visible("title-rate-panel"));
-  await b.evaluate("(document.querySelector('#title-rate-stars .title-rate-half[data-value=\"7\"]').click(), true)");
+  await b.evaluate("(document.querySelector('#title-rate-stars .rate-star-half[data-value=\"7\"]').click(), true)");
   const lib = await b.evaluate("JSON.parse(localStorage.getItem('tvzinha_library_v1') || '{}').items?.['movie:1022789'] || null");
   check("Quero assistir, Assistido and rating 3,5 saved", Boolean(lib && lib.watchlist?.on && lib.watched?.on && lib.rating?.value === 7 && panelOpen), JSON.stringify(lib && { w: lib.watchlist, s: lib.watched, r: lib.rating }));
   const rateLabel = await b.evaluate("document.getElementById('title-rate-value').textContent");

@@ -3,21 +3,22 @@
  * Coordinates core state, modular engines, navigation, and exposes TvzinhaActions
  */
 
-import { store } from './core/state.js?v=20261020_1816';
-import { showToast } from './core/toast.js?v=20261020_1816';
-import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261020_1816';
-import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261020_1816';
-import { runWhenHomeIdle } from './core/activity.js?v=20261020_1816';
-import { initMoviesView, resetMoviesViewState } from './modules/movies.js?v=20261020_1816';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261020_1816';
-import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261020_1816';
-import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261020_1816';
-import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261020_1816';
-import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261020_1816';
-import { preloadPlayerLibs } from './player/engine.js?v=20261020_1816';
-import { setupSiteFooter } from './modules/footer.js?v=20261020_1816';
-import { setupTitlePage, openTitle, titleBack, closeTitlePage, readTitleFromAddress } from './modules/titlePage.js?v=20261020_1816';
-import { setupHeader, openSearch } from './modules/header.js?v=20261020_1816';
+import { store } from './core/state.js?v=20261020_1857';
+import { showToast } from './core/toast.js?v=20261020_1857';
+import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261020_1857';
+import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261020_1857';
+import { runWhenHomeIdle } from './core/activity.js?v=20261020_1857';
+import { initMoviesView, resetMoviesViewState } from './modules/movies.js?v=20261020_1857';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261020_1857';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261020_1857';
+import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261020_1857';
+import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261020_1857';
+import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261020_1857';
+import { preloadPlayerLibs } from './player/engine.js?v=20261020_1857';
+import { setupSiteFooter } from './modules/footer.js?v=20261020_1857';
+import { setupTitlePage, openTitle, titleBack, closeTitlePage, readTitleFromAddress } from './modules/titlePage.js?v=20261020_1857';
+import { setupHeader, openSearch } from './modules/header.js?v=20261020_1857';
+import { setupCollection, renderCollection, openCollection } from './modules/collection.js?v=20261020_1857';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
@@ -104,6 +105,7 @@ Object.defineProperty(window, 'TvzinhaActions', {
         titleBack: titleBack,
         closeTitle: closeTitlePage,
         openSearch: openSearch,
+        openCollection: openCollection,
         openMovie: (movie, play = false) => openTitle('movie', movie, { play }),
         closeMovie: closeTitlePage,
         playEpisode: playSeriesEpisode,
@@ -156,6 +158,7 @@ async function bootstrapApp() {
     registerViewHook('animes', () => {
         initAnimesView();
     });
+    registerViewHook('collection', () => renderCollection());
     // Leaving a catalog tab: back to its start page next time (the tab switch already handled the history entry)
     registerViewHook('moviesLeave', () => resetMoviesViewState({ keepHistory: true }));
     registerViewHook('seriesLeave', () => resetSeriesViewState({ keepHistory: true }));
@@ -177,6 +180,7 @@ async function bootstrapApp() {
     setupSiteFooter();
     setupTitlePage();
     setupHeader();
+    setupCollection();
 
     // Check adblock onboarding notice
     checkAdblockNoticeStatus();

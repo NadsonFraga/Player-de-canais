@@ -237,7 +237,7 @@ try {
   check("phone: one row with the menu button, nothing under the pill", phone.toolsHidden && phone.moreInPill && phone.inside && !phone.sideScroll, JSON.stringify(phone));
   await b.evaluate("(document.getElementById('btn-nav-more').click(), true)");
   const menuItems = await b.evaluate("[...document.querySelectorAll('#nav-mobile-menu .nav-menu-item')].map(i => i.dataset.menuAction || i.dataset.menuLegal).join(',')");
-  check("phone: the menu holds search, continue, account, tips and the legal panels", menuItems === "search,continue,account,adblock,privacy,terms,dmca", menuItems);
+  check("phone: the menu holds search, the Coleção, continue, account, tips and the legal panels", menuItems === "search,collection,continue,account,adblock,privacy,terms,dmca", menuItems);
   await b.shot("header-phone-menu.png");
   await b.evaluate("(document.querySelector('#nav-mobile-menu [data-menu-action=\"search\"]').click(), true)");
   const phoneSearch = await waitFor(b, `${SEARCH_OPEN} && !(${visible("nav-mobile-menu")})`, 4000);
