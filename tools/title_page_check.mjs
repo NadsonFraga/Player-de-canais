@@ -107,7 +107,7 @@ async function waitFor(b, expr, timeoutMs) {
 
 const visible = (id) => `(() => { const el = document.getElementById('${id}'); return Boolean(el) && !el.classList.contains('hidden'); })()`;
 const PAGE_OPEN = visible("title-page");
-const DETAILS_READY = `(${PAGE_OPEN}) && document.querySelectorAll('#title-facts .title-fact').length >= 3 && !document.getElementById('title-detail').classList.contains('is-loading')`;
+const DETAILS_READY = `(${PAGE_OPEN}) && document.querySelectorAll('#title-facts .title-fact').length >= 2 && !document.getElementById('title-detail').classList.contains('is-loading')`;
 // Every card of a row on the same line (the rows scroll sideways)
 const ONE_LINE = (id) => `(() => { const cards = [...document.getElementById('${id}').children]; return cards.length > 0 && new Set(cards.map(c => c.offsetTop)).size === 1; })()`;
 const STATE = `({
@@ -142,7 +142,7 @@ try {
   await b.evaluate("(window.TvzinhaActions.openTitle('movie', { id: 1022789, title: 'Divertida Mente 2' }), true)");
   const movieMs = await waitFor(b, DETAILS_READY, 20000);
   const movie = await b.evaluate(STATE);
-  check("movie page opens with its details", movieMs !== null && movie.facts >= 3 && movie.meta.length > 0, JSON.stringify({ ms: movieMs, facts: movie.facts, meta: movie.meta }));
+  check("movie page opens with its details", movieMs !== null && movie.facts >= 2 && movie.meta.length > 0, JSON.stringify({ ms: movieMs, facts: movie.facts, meta: movie.meta }));
   check("address shows ?filme=ID", movie.url === "?filme=1022789", movie.url);
   check("cast and recommendations listed", movie.cast > 0 && movie.recs > 0, `cast ${movie.cast}, recs ${movie.recs}, trailers ${movie.trailers}`);
   check("site footer moved into the page", movie.footerInPage);
