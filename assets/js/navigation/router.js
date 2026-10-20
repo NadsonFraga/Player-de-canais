@@ -3,11 +3,11 @@
  * Handles view switching, active navigation state, mobile drawer, and player lifecycle/audio teardown
  */
 
-import { store } from '../core/state.js?v=20261020_1816';
-import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261020_1816';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1816';
-import { showToast } from '../core/toast.js?v=20261020_1816';
-import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome, whenNavSettled } from './historyManager.js?v=20261020_1816';
+import { store } from '../core/state.js?v=20261020_1857';
+import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261020_1857';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1857';
+import { showToast } from '../core/toast.js?v=20261020_1857';
+import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome, whenNavSettled } from './historyManager.js?v=20261020_1857';
 
 let viewHooks = {
     onTvLeave: null,
@@ -19,7 +19,9 @@ let viewHooks = {
     onMovies: null,
     onSeries: null,
     onAnimes: null,
-    onTv: null
+    onTv: null,
+    // Coleção: a view with no tab in the pill (opened from the profile menu)
+    onCollection: null
 };
 
 /**
@@ -179,6 +181,7 @@ export function switchAppView(viewName) {
     const viewMovies = document.getElementById("view-movies");
     const viewSeries = document.getElementById("view-series");
     const viewAnimes = document.getElementById("view-animes");
+    const viewCollection = document.getElementById("view-collection");
 
     const tabHome = document.getElementById("nav-tab-home");
     const tabTv = document.getElementById("nav-tab-tv");
@@ -187,7 +190,7 @@ export function switchAppView(viewName) {
     const tabAnimes = document.getElementById("nav-tab-animes");
     const tabSports = document.getElementById("nav-tab-sports");
 
-    const allViews = [viewHome, viewTv, viewMovies, viewSeries, viewAnimes];
+    const allViews = [viewHome, viewTv, viewMovies, viewSeries, viewAnimes, viewCollection];
     allViews.forEach(v => {
         if (v) v.classList.add("hidden");
     });
@@ -219,6 +222,10 @@ export function switchAppView(viewName) {
         if (viewAnimes) viewAnimes.classList.remove("hidden");
         if (tabAnimes) tabAnimes.classList.add("active");
         if (typeof viewHooks.onAnimes === 'function') viewHooks.onAnimes();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (viewName === 'collection') {
+        if (viewCollection) viewCollection.classList.remove("hidden");
+        if (typeof viewHooks.onCollection === 'function') viewHooks.onCollection();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
         // Default: 'tv'

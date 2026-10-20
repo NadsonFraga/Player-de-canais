@@ -11,20 +11,21 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261020_1816';
-import { showToast } from '../core/toast.js?v=20261020_1816';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1816';
-import { buildFeedRows } from '../core/feedRows.js?v=20261020_1816';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1816';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1816';
-import { resumeStartTime } from '../core/resume.js?v=20261020_1816';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1816';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1816';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1816';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1816';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1816';
-import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1816';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1816';
+} from '../core/constants.js?v=20261020_1857';
+import { showToast } from '../core/toast.js?v=20261020_1857';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1857';
+import { buildFeedRows } from '../core/feedRows.js?v=20261020_1857';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1857';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1857';
+import { resumeStartTime } from '../core/resume.js?v=20261020_1857';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1857';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1857';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1857';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1857';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1857';
+import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1857';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1857';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261020_1857';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -189,6 +190,19 @@ function saveEpisodePosition(context, server, { position, duration, inEnding }) 
     } catch (e) {
         // Resume is optional
     }
+}
+
+/** The last episode of a show that has ended (TMDB says Ended or Canceled): finishing it finishes the show. */
+function isFinalEpisode(context) {
+    const details = context && context.details;
+    if (!details || !['Ended', 'Canceled'].includes(details.status)) return false;
+    return context.totalEpisodes > 0 && Number(context.absolute) >= context.totalEpisodes;
+}
+
+/** The show is over: Assistido, off "Continuar assistindo", and the "Gostou? Avalie" card in the player. */
+function finishShow(context) {
+    hideFromContinueWatching(String(context.tmdbId));
+    titleFinished({ kind: context.isAnime ? 'anime' : 'tv', item: context.show, stage: document.querySelector('#series-player-view .series-theater-stage') });
 }
 
 /** Time label and bar of a saved position ({ position, duration }). */
@@ -2684,7 +2698,10 @@ function startEpisodePlayback(context, options = {}) {
                 containerId: "series-artplayer-container",
                 startTime: resumeAt,
                 resumeNotice: !options.keepPosition,
-                onProgress: (info) => saveEpisodePosition(context, serverKey, info),
+                onProgress: (info) => {
+                    saveEpisodePosition(context, serverKey, info);
+                    if (reachedEnd(info) && isFinalEpisode(context)) finishShow(context);
+                },
                 sources: [data.primary_source, ...(data.fallback_sources || [])],
                 title: `${showName} • T${seasonNumber}:E${episodeNumber}`,
                 poster: backdropUrl,
