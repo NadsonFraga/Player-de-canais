@@ -3,7 +3,7 @@
  * Handles movies discovery, TMDB pagination, search filters, masters/studios sections, and modal playback
  */
 
-import { store } from '../core/state.js?v=20261020_1337';
+import { store } from '../core/state.js?v=20261020_1345';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
@@ -12,20 +12,20 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261020_1337';
-import { showToast } from '../core/toast.js?v=20261020_1337';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1337';
-import { buildFeedRows } from '../core/feedRows.js?v=20261020_1337';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261020_1337';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1337';
-import { getUiSvg } from '../core/icons.js?v=20261020_1337';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1337';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1337';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1337';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1337';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1337';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261020_1337';
-import { resumeStartTime } from '../core/resume.js?v=20261020_1337';
+} from '../core/constants.js?v=20261020_1345';
+import { showToast } from '../core/toast.js?v=20261020_1345';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1345';
+import { buildFeedRows } from '../core/feedRows.js?v=20261020_1345';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261020_1345';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1345';
+import { getUiSvg } from '../core/icons.js?v=20261020_1345';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1345';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1345';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1345';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1345';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1345';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261020_1345';
+import { resumeStartTime } from '../core/resume.js?v=20261020_1345';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
