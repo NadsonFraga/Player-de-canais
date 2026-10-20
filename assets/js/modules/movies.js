@@ -12,21 +12,21 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261020_1621';
-import { showToast } from '../core/toast.js?v=20261020_1621';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1621';
-import { buildFeedRows } from '../core/feedRows.js?v=20261020_1621';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1621';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1621';
-import { getUiSvg } from '../core/icons.js?v=20261020_1621';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1621';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1621';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1621';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1621';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1621';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261020_1621';
-import { resumeStartTime } from '../core/resume.js?v=20261020_1621';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1621';
+} from '../core/constants.js?v=20261020_1634';
+import { showToast } from '../core/toast.js?v=20261020_1634';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1634';
+import { buildFeedRows } from '../core/feedRows.js?v=20261020_1634';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1634';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1634';
+import { getUiSvg } from '../core/icons.js?v=20261020_1634';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1634';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1634';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1634';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1634';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1634';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261020_1634';
+import { resumeStartTime } from '../core/resume.js?v=20261020_1634';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1634';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -428,7 +428,8 @@ function renderHeroBanner(movie) {
     }
 
     if (btnWatch) {
-        btnWatch.onclick = () => openTitle('movie', movie, { play: true });
+        // Same everywhere: "Assistir Agora" opens the title page (Assistir there starts the player)
+        btnWatch.onclick = () => openTitle('movie', movie);
     }
 }
 
