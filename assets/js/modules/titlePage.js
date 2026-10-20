@@ -13,16 +13,16 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261020_1734';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1734';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1734';
-import { showToast } from '../core/toast.js?v=20261020_1734';
-import { syncPageLock } from '../core/activity.js?v=20261020_1734';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1734';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1734';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1734';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1734';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1734';
+} from '../core/constants.js?v=20261020_1751';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1751';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1751';
+import { showToast } from '../core/toast.js?v=20261020_1751';
+import { syncPageLock } from '../core/activity.js?v=20261020_1751';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261020_1751';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1751';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1751';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261020_1751';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261020_1751';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -32,7 +32,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261020_1734';
+} from './series.js?v=20261020_1751';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
