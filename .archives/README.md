@@ -56,5 +56,6 @@ Project documentation folder (replaces the former `docs/`). When resuming work, 
 | 2026-10-19 | [player-libs-on-demand](features/2026-10-19-player-libs-on-demand/) | done (B11 + slow source start) |
 | 2026-10-19 | [server-groups-and-card-hover](features/2026-10-19-server-groups-and-card-hover/) | done |
 | 2026-10-19 | [direct-hls](features/2026-10-19-direct-hls/) | done (D11) |
+| 2026-10-19 | [continue-movies](features/2026-10-19-continue-movies/) | done (B19) |
 
 Folders before 2026-10-08 were dated from their summaries and commit history; older ones may lack a `summary.md`.
