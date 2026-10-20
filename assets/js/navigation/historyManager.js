@@ -3,13 +3,16 @@
  * Implements strict hierarchical back navigation across all tabs, searches, modals, drawers, and active media.
  */
 
-import { store } from '../core/state.js?v=20261020_1352';
+import { store } from '../core/state.js?v=20261020_1520';
 
 let navigationDepth = 0;
 let isProgrammaticBack = false;
 let isHandlingPopState = false;
 let navBatchDepth = 0;
 let batchedPops = 0;
+// Runs once our own grouped history step has landed (see runNavBatch)
+let afterBatchSettled = null;
+let afterBatchTimer = null;
 
 let switchAppViewFn = null;
 let closeMobileMenuFn = null;
@@ -18,13 +21,15 @@ let closeMobileMenuFn = null;
  * Pushes a new navigation layer into the browser history stack.
  * @param {string} layerType - Type of layer (e.g. 'tab', 'explore', 'modal', 'player', 'drawer')
  * @param {Object} metadata - Optional metadata (e.g. { view: 'movies', id: 123 })
+ * @param {string} url - Optional address for this layer (the title page: "?filme=123"); kept as it is when empty
  */
-export function pushNavLayer(layerType, metadata = {}) {
+export function pushNavLayer(layerType, metadata = {}, url = '') {
     navigationDepth++;
     try {
         window.history.pushState(
             { depth: navigationDepth, layer: layerType, ...metadata },
-            ''
+            '',
+            url || undefined
         );
     } catch (e) {
         console.warn('[HistoryManager] pushState failed:', e);
@@ -39,9 +44,11 @@ export function pushNavLayer(layerType, metadata = {}) {
  */
 export function replaceNavLayer(layerType, metadata = {}) {
     try {
+        // A tab has no address of its own: drop a title's "?filme=123"
         window.history.replaceState(
             { depth: navigationDepth, layer: layerType, ...metadata },
-            ''
+            '',
+            window.location.pathname
         );
     } catch (e) {
         console.warn('[HistoryManager] replaceState failed:', e);
@@ -53,12 +60,13 @@ export function replaceNavLayer(layerType, metadata = {}) {
  * If already handling a native popstate event (mobile back button), this is a no-op to prevent duplicate history pops.
  */
 export function popNavLayer() {
-    if (isHandlingPopState) {
+    if (navBatchDepth > 0) {
+        // Inside runNavBatch: only count it, the browser history moves once at the end. A batch never runs inside
+        // the Back handler, so it counts even in the short window after a popstate (a tab switch right after Back).
+        if (navigationDepth - batchedPops > 0) batchedPops++;
         return;
     }
-    if (navBatchDepth > 0) {
-        // Inside runNavBatch: only count it, the browser history moves once at the end
-        if (navigationDepth - batchedPops > 0) batchedPops++;
+    if (isHandlingPopState) {
         return;
     }
     if (navigationDepth > 0) {
@@ -77,9 +85,12 @@ export function popNavLayer() {
  * back ONCE by that many entries. Separate history.back() calls in the same tick produce several popstate events,
  * and the flag that marks a back as "ours" covers only the first: the next one is treated as the user's Back button
  * and the app jumps to Home.
+ * `onSettled` runs once the browser has moved back (its popstate arrived), or right away when nothing moved. A new
+ * history entry (a tab switch) must wait for it: pushed before the step lands, it would be the one undone.
  */
-export function runNavBatch(closeSteps) {
+export function runNavBatch(closeSteps, onSettled = null) {
     navBatchDepth++;
+    let moved = false;
     try {
         closeSteps();
     } finally {
@@ -91,11 +102,42 @@ export function runNavBatch(closeSteps) {
             isProgrammaticBack = true;
             try {
                 window.history.go(-steps);
+                moved = true;
             } catch (e) {
                 isProgrammaticBack = false;
             }
         }
     }
+    if (typeof onSettled !== 'function') return;
+    if (!moved) {
+        onSettled();
+        return;
+    }
+    afterBatchSettled = onSettled;
+    clearTimeout(afterBatchTimer);
+    // Safety net: some browsers skip the popstate of a history.go() that lands on the same document state
+    afterBatchTimer = setTimeout(runAfterBatchSettled, 1500);
+}
+
+/**
+ * While a grouped history step is still landing, queues `callback` after it and returns true; returns false when
+ * nothing is pending (the caller goes on at once).
+ */
+export function whenNavSettled(callback) {
+    if (!afterBatchSettled) return false;
+    const previous = afterBatchSettled;
+    afterBatchSettled = () => {
+        previous();
+        callback();
+    };
+    return true;
+}
+
+function runAfterBatchSettled() {
+    clearTimeout(afterBatchTimer);
+    const callback = afterBatchSettled;
+    afterBatchSettled = null;
+    if (callback) callback();
 }
 
 /**
@@ -107,7 +149,7 @@ export function resetNavToHome() {
     isProgrammaticBack = false;
     isHandlingPopState = false;
     try {
-        window.history.replaceState({ depth: 0, layer: 'home', view: 'home' }, '');
+        window.history.replaceState({ depth: 0, layer: 'home', view: 'home' }, '', window.location.pathname);
     } catch (e) {}
 }
 
@@ -116,7 +158,7 @@ export function resetNavToHome() {
  * @returns {boolean} True if an active layer was handled and closed, False if already at root Home.
  */
 export function handleBackButton() {
-    // LAYER 1: Active Video Player (Top Priority)
+    // LAYER 1: Active Video Player (Top Priority), over the title page
     // 1.1 Active Series / Animes Player
     const seriesPlayerView = document.getElementById("series-player-view");
     if (seriesPlayerView && !seriesPlayerView.classList.contains("hidden")) {
@@ -128,13 +170,8 @@ export function handleBackButton() {
     }
 
     // 1.2 Active Movie Player
-    const movieModal = document.getElementById("movie-modal");
-    const moviePlayerContainer = document.getElementById("movie-modal-player-container");
-    const isMoviePlaying = movieModal && !movieModal.classList.contains("hidden") && (
-        Boolean(document.querySelector(".movie-modal-card.is-playing")) ||
-        (moviePlayerContainer && !moviePlayerContainer.classList.contains("hidden"))
-    );
-    if (isMoviePlaying) {
+    const moviePlayerView = document.getElementById("movie-player-view");
+    if (moviePlayerView && !moviePlayerView.classList.contains("hidden")) {
         const btnCloseMoviePlayer = document.getElementById("btn-close-movie-player");
         if (btnCloseMoviePlayer) {
             btnCloseMoviePlayer.click();
@@ -142,22 +179,13 @@ export function handleBackButton() {
         }
     }
 
-    // LAYER 2: Details Modals & Generic App Modals
-    // 2.1 Series / Animes Details Modal
-    const seriesModal = document.getElementById("series-modal");
-    if (seriesModal && !seriesModal.classList.contains("hidden")) {
-        const btnCloseSeriesModal = document.getElementById("btn-close-series-modal");
-        if (btnCloseSeriesModal) {
-            btnCloseSeriesModal.click();
-            return true;
-        }
-    }
-
-    // 2.2 Movie Details Modal
-    if (movieModal && !movieModal.classList.contains("hidden")) {
-        const btnCloseMovieModal = document.getElementById("btn-close-movie-modal");
-        if (btnCloseMovieModal) {
-            btnCloseMovieModal.click();
+    // LAYER 2: Panels over the page (the trailer and the legal panel can open over the title page)
+    // 2.1 Trailer player (title page)
+    const trailerModal = document.getElementById("trailer-modal");
+    if (trailerModal && !trailerModal.classList.contains("hidden")) {
+        const btnCloseTrailer = document.getElementById("btn-close-trailer");
+        if (btnCloseTrailer) {
+            btnCloseTrailer.click();
             return true;
         }
     }
@@ -188,6 +216,16 @@ export function handleBackButton() {
         const btnCloseLegal = document.getElementById("btn-close-legal-modal");
         if (btnCloseLegal) {
             btnCloseLegal.click();
+            return true;
+        }
+    }
+
+    // 2.6 Title page (movie, series or anime; a stacked title or list goes back to the one before)
+    const titlePage = document.getElementById("title-page");
+    if (titlePage && !titlePage.classList.contains("hidden")) {
+        const btnTitleBack = document.getElementById("btn-title-back");
+        if (btnTitleBack) {
+            btnTitleBack.click();
             return true;
         }
     }
@@ -268,6 +306,7 @@ export function handleBackButton() {
 function onPopState(event) {
     if (isProgrammaticBack) {
         isProgrammaticBack = false;
+        if (afterBatchSettled) setTimeout(runAfterBatchSettled, 0);
         return;
     }
 

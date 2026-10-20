@@ -1,10 +1,9 @@
 /**
  * TVZINHA ONLINE - Series & Animes Module (ESM)
  * Comprehensive TMDB Series and Animes Showcase, Discovery Filters,
- * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
+ * Dual-Mode Episode Navigator (Seasons & Continuous Arcs, shown on the title page), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261020_1352';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
@@ -12,20 +11,20 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261020_1352';
-import { showToast } from '../core/toast.js?v=20261020_1352';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1352';
-import { buildFeedRows } from '../core/feedRows.js?v=20261020_1352';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261020_1352';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1352';
-import { resumeStartTime } from '../core/resume.js?v=20261020_1352';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1352';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1352';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1352';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1352';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1352';
-import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1352';
-import { openMovieDetailsModal } from './movies.js?v=20261020_1352';
+} from '../core/constants.js?v=20261020_1520';
+import { showToast } from '../core/toast.js?v=20261020_1520';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1520';
+import { buildFeedRows } from '../core/feedRows.js?v=20261020_1520';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1520';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1520';
+import { resumeStartTime } from '../core/resume.js?v=20261020_1520';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1520';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1520';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1520';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1520';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1520';
+import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1520';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1520';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -76,15 +75,10 @@ let activeSeriesPlaying = {
 
 let seriesPlaybackSessionId = 0;
 let pendingSeriesIframeTimer = null;
-let pendingSeriesAutoplayTimer = null;
 
 if (typeof window !== 'undefined') {
     window.addEventListener('tvzinha:teardownMedia', () => {
         seriesPlaybackSessionId++;
-        if (pendingSeriesAutoplayTimer) {
-            clearTimeout(pendingSeriesAutoplayTimer);
-            pendingSeriesAutoplayTimer = null;
-        }
         if (pendingSeriesIframeTimer) {
             clearTimeout(pendingSeriesIframeTimer);
             pendingSeriesIframeTimer = null;
@@ -282,12 +276,11 @@ export function renderHomeContinueWatching() {
         const resumeAction = () => {
             if (isMovie) {
                 // Opens and plays it; the player starts where it stopped
-                openMovieDetailsModal({ id: item.id, title: item.title, poster_path: item.poster_path, backdrop_path: item.backdrop_path }, true);
+                openTitle('movie', { id: item.id, title: item.title, poster_path: item.poster_path, backdrop_path: item.backdrop_path }, { play: true });
                 return;
             }
-            openSeriesModal({ id: item.id, name: item.title, poster_path: item.poster_path, backdrop_path: item.backdrop_path }, item.mediaType || 'tv', {
-                autoPlaySeason: item.season,
-                autoPlayEpisode: item.episode
+            openTitle(item.mediaType === 'anime' ? 'anime' : 'tv', { id: item.id, name: item.title, poster_path: item.poster_path, backdrop_path: item.backdrop_path }, {
+                episode: { season: item.season, episode: item.episode }
             });
         };
 
@@ -439,11 +432,12 @@ function createSeriesCardElement(seriesItem, mediaType = 'tv') {
         </div>
     `;
 
-    card.addEventListener("click", () => openSeriesModal(seriesItem, mediaType));
+    const kind = mediaType === 'anime' ? 'anime' : 'tv';
+    card.addEventListener("click", () => openTitle(kind, seriesItem));
     card.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            openSeriesModal(seriesItem, mediaType);
+            openTitle(kind, seriesItem);
         }
     });
 
@@ -648,7 +642,7 @@ function initHeroSeriesCarousel(seriesItems) {
         }
 
         if (btnWatch) {
-            btnWatch.onclick = () => openSeriesModal(item, 'tv');
+            btnWatch.onclick = () => openTitle('tv', item);
         }
 
         if (dotsContainer) {
@@ -1245,7 +1239,7 @@ function initHeroAnimesCarousel(animeItems) {
         }
 
         if (btnWatch) {
-            btnWatch.onclick = () => openSeriesModal(item, 'anime');
+            btnWatch.onclick = () => openTitle('anime', item);
         }
 
         if (dotsContainer) {
@@ -1708,17 +1702,8 @@ export function setupSeriesModalHandlers() {
     if (isSeriesModalHandlersInitialized) return;
     isSeriesModalHandlersInitialized = true;
 
-    const modal = document.getElementById("series-modal");
-    const btnClose = document.getElementById("btn-close-series-modal");
     const btnReload = document.getElementById("btn-reload-series-player");
     const btnClosePlayer = document.getElementById("btn-close-series-player");
-
-    if (btnClose) btnClose.addEventListener("click", closeSeriesModal);
-    if (modal) {
-        modal.addEventListener("click", (e) => {
-            if (e.target === modal) closeSeriesModal();
-        });
-    }
 
     if (btnReload) {
         btnReload.addEventListener("click", () => {
@@ -1785,26 +1770,6 @@ export function setupSeriesModalHandlers() {
         btnCloseDrawer.addEventListener("click", () => drawer.classList.add("hidden"));
     }
 
-    const theaterView = document.getElementById("series-player-view");
-    if (theaterView) {
-        theaterView.addEventListener("click", (e) => {
-            if (e.target === theaterView) stopSeriesPlayer();
-        });
-    }
-
-    const directPlayBtn = document.getElementById("btn-series-modal-direct-play");
-    if (directPlayBtn) {
-        directPlayBtn.addEventListener("click", () => {
-            if (!currentSelectedSeries) return;
-            const progress = getStoredWatchProgress()[currentSelectedSeries.id];
-            if (progress && progress.season && progress.episode) {
-                openEpisode(currentSelectedSeries, { season: progress.season, episode: progress.episode });
-            } else {
-                openEpisode(currentSelectedSeries, { season: 1, episode: 1 });
-            }
-        });
-    }
-
     const btnModeArcs = document.getElementById("btn-mode-arcs");
     const btnModeContinuous = document.getElementById("btn-mode-continuous");
     const arcsPanel = document.getElementById("series-arcs-panel");
@@ -1847,66 +1812,23 @@ export function setupSeriesModalHandlers() {
     }
 }
 
-export async function openSeriesModal(seriesItem, mediaType = 'tv', options = {}) {
+/**
+ * Fills the episodes section of the title page (season list, arcs and continuous modes) for a show whose details
+ * are loaded. `initialSeason`: the season to show first (the one in progress), else the first one.
+ */
+export function showSeriesEpisodes(seriesItem, mediaType, details, initialSeason = null) {
     setupSeriesModalHandlers();
     currentSelectedSeries = seriesItem;
-    const modal = document.getElementById("series-modal");
-    if (!modal) return;
-
-    stopSeriesPlayer();
+    currentSeriesDetails = details;
+    rememberShowDetails(details);
 
     const quickSearchInput = document.getElementById("series-quick-ep-search");
     if (quickSearchInput) quickSearchInput.value = "";
-
-    const backdropImg = document.getElementById("series-modal-backdrop-img");
-    const titleEl = document.getElementById("series-modal-title");
-    const yearEl = document.getElementById("series-modal-year");
-    const ratingEl = document.getElementById("series-modal-rating");
-    const seasonsCountEl = document.getElementById("series-modal-seasons-count");
-    const overviewEl = document.getElementById("series-modal-overview");
-    const genresEl = document.getElementById("series-modal-genres");
-
-    const backdropUrl = seriesItem.backdrop_path
-        ? `${TMDB_IMG_ORIGINAL}${seriesItem.backdrop_path}`
-        : (seriesItem.poster_path ? `${TMDB_IMG_W500}${seriesItem.poster_path}` : '');
-
-    if (backdropImg) backdropImg.src = backdropUrl;
-    const title = seriesItem.name || seriesItem.title || 'Título';
-    if (titleEl) titleEl.textContent = title;
-    if (yearEl) yearEl.textContent = (seriesItem.first_air_date || seriesItem.release_date || '').substring(0, 4) || 'Série';
-    if (ratingEl) ratingEl.textContent = `★ ${seriesItem.vote_average ? seriesItem.vote_average.toFixed(1) : '8.0'}`;
-    if (overviewEl) overviewEl.textContent = seriesItem.overview || "Sinopse não disponível em português.";
-
-    const directPlayLabel = document.getElementById("series-modal-direct-play-label");
-    const progress = getStoredWatchProgress()[seriesItem.id];
-    if (directPlayLabel) {
-        if (progress && progress.season && progress.episode) {
-            directPlayLabel.textContent = `Continuar T${progress.season}:E${progress.episode}`;
-        } else {
-            directPlayLabel.textContent = "Assistir Agora (T1:E1)";
-        }
-    }
-
-    const wasHidden = modal.classList.contains("hidden");
-    modal.classList.remove("hidden");
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-    document.documentElement.classList.add("modal-open");
-    document.body.classList.add("modal-open");
-    if (wasHidden) {
-        pushNavLayer('modal-series', { id: seriesItem.id });
-    }
 
     const btnModeArcs = document.getElementById("btn-mode-arcs");
     const btnModeContinuous = document.getElementById("btn-mode-continuous");
     const arcsPanel = document.getElementById("series-arcs-panel");
     const continuousPanel = document.getElementById("series-continuous-panel");
-    const modalCard = modal.querySelector(".series-modal-card");
-
-    if (modalCard) {
-        modalCard.classList.toggle("theme-anime", mediaType === 'anime');
-    }
-
     if (btnModeArcs && btnModeContinuous) {
         btnModeArcs.classList.add("active");
         btnModeContinuous.classList.remove("active");
@@ -1914,77 +1836,22 @@ export async function openSeriesModal(seriesItem, mediaType = 'tv', options = {}
     if (arcsPanel) arcsPanel.classList.remove("hidden");
     if (continuousPanel) continuousPanel.classList.add("hidden");
 
-    try {
-        // external_ids brings the IMDb id (SkipDB) in the same request
-        const details = await fetchSeriesEndpoint(`tv/${seriesItem.id}?append_to_response=external_ids`);
-        currentSeriesDetails = details;
-        rememberShowDetails(details);
-
-        if (seasonsCountEl) {
-            const totalSeasons = details.number_of_seasons || 1;
-            const totalEpisodes = details.number_of_episodes || '';
-            seasonsCountEl.textContent = `${totalSeasons} ${totalSeasons === 1 ? 'Temporada' : 'Temporadas'} ${totalEpisodes ? '• ' + totalEpisodes + ' eps' : ''}`;
-        }
-
-        if (genresEl && details.genres) {
-            genresEl.innerHTML = details.genres.slice(0, 3).map(g => `<span class="movie-modal-genre-tag">${escapeHtml(g.name)}</span>`).join('');
-        }
-
-        populateSeasonsSelect(details);
-
-        if (options.autoPlaySeason && options.autoPlayEpisode) {
-            if (pendingSeriesAutoplayTimer) clearTimeout(pendingSeriesAutoplayTimer);
-            pendingSeriesAutoplayTimer = setTimeout(() => {
-                const modal = document.getElementById("series-modal");
-                if (modal && !modal.classList.contains("hidden")) {
-                    openEpisode(seriesItem, { season: options.autoPlaySeason, episode: options.autoPlayEpisode });
-                }
-            }, 300);
-        }
-    } catch (err) {
-        console.error("[Series] Erro ao carregar detalhes completos:", err);
-    }
+    populateSeasonsSelect(details, initialSeason);
 }
 
-export function closeSeriesModal() {
-    seriesPlaybackSessionId++;
-    if (pendingSeriesIframeTimer) {
-        clearTimeout(pendingSeriesIframeTimer);
-        pendingSeriesIframeTimer = null;
-    }
-    if (pendingSeriesAutoplayTimer) {
-        clearTimeout(pendingSeriesAutoplayTimer);
-        pendingSeriesAutoplayTimer = null;
-    }
-    setPlaybackActiveState(false);
-    atomicPlayerReset();
-    removeSeriesIframe();
-
-    const modal = document.getElementById("series-modal");
-    const theaterView = document.getElementById("series-player-view");
-    const seriesLoader = document.getElementById("series-theater-loader");
-    const drawer = document.getElementById("series-player-drawer");
-
-    const wasOpen = modal && !modal.classList.contains("hidden");
-    if (seriesLoader) seriesLoader.classList.add("hidden");
-    if (theaterView) theaterView.classList.add("hidden");
-    if (drawer) drawer.classList.add("hidden");
-    if (modal) modal.classList.add("hidden");
-    if (wasOpen) {
-        popNavLayer();
-    }
-
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
-    document.documentElement.classList.remove("modal-open");
-    document.body.classList.remove("modal-open");
+/** The title page left this show: its episode lists go with it. */
+export function clearSeriesEpisodes() {
     const quickSearchInput = document.getElementById("series-quick-ep-search");
     if (quickSearchInput) quickSearchInput.value = "";
+    ["series-episodes-grid", "series-continuous-grid", "series-chunks-container"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = "";
+    });
     currentSelectedSeries = null;
     currentSeriesDetails = null;
 }
 
-function populateSeasonsSelect(details) {
+function populateSeasonsSelect(details, initialSeasonNumber = null) {
     const select = document.getElementById("series-season-select");
     if (!select) return;
 
@@ -1995,18 +1862,20 @@ function populateSeasonsSelect(details) {
         seasons.push({ season_number: 1, name: "Temporada 1", episode_count: details.number_of_episodes || 12 });
     }
 
-    seasons.forEach((season, idx) => {
+    const initialSeason = seasons.some(s => s.season_number === Number(initialSeasonNumber))
+        ? Number(initialSeasonNumber)
+        : seasons[0].season_number;
+    seasons.forEach(season => {
         const opt = document.createElement("option");
         opt.value = season.season_number;
         opt.textContent = season.name || `Temporada ${season.season_number}`;
         if (season.episode_count) {
             opt.textContent += ` (${season.episode_count} eps)`;
         }
-        if (idx === 0) opt.selected = true;
+        if (season.season_number === initialSeason) opt.selected = true;
         select.appendChild(opt);
     });
 
-    const initialSeason = seasons[0].season_number;
     loadSeasonEpisodes(details.id, initialSeason);
 
     select.onchange = () => {
@@ -2176,13 +2045,17 @@ function rememberShowDetails(details) {
     if (details && details.id != null) showDetailsById.set(Number(details.id), details);
 }
 
-/** Show details with external_ids, loaded once per show. */
-async function loadShowDetails(showId) {
+// One request per show for everything: the title page (cast, trailers, ratings, logo...) and the episode context
+// (external_ids for SkipDB). Same address every time, so the edge cache and this module share it.
+const SHOW_DETAILS_APPEND = 'append_to_response=external_ids,aggregate_credits,videos,recommendations,content_ratings,images&include_image_language=pt,ja,en,null&include_video_language=pt,en,ja,null';
+
+/** Show details (see SHOW_DETAILS_APPEND), loaded once per show. */
+export async function loadShowDetails(showId) {
     const known = detailsFor(showId);
     if (known) return known;
     const id = Number(showId);
     if (!showDetailsRequests.has(id)) {
-        showDetailsRequests.set(id, fetchSeriesEndpoint(`tv/${id}?append_to_response=external_ids`)
+        showDetailsRequests.set(id, fetchSeriesEndpoint(`tv/${id}?${SHOW_DETAILS_APPEND}`)
             .then(details => { rememberShowDetails(details); return details; })
             .catch(() => null)
             .finally(() => showDetailsRequests.delete(id)));
@@ -2579,10 +2452,6 @@ function startEpisodePlayback(context, options = {}) {
         clearTimeout(pendingSeriesIframeTimer);
         pendingSeriesIframeTimer = null;
     }
-    if (pendingSeriesAutoplayTimer) {
-        clearTimeout(pendingSeriesAutoplayTimer);
-        pendingSeriesAutoplayTimer = null;
-    }
 
     activeSeriesPlaying.show = showItem;
     activeSeriesPlaying.seasonNumber = Number(seasonNumber);
@@ -2590,18 +2459,13 @@ function startEpisodePlayback(context, options = {}) {
     activeSeriesPlaying.absoluteEpisodeNumber = absoluteEpNumber || (epData && epData.absoluteEpisode) || null;
     activeSeriesPlaying.episodeData = epData;
 
-    const detailsModal = document.getElementById("series-modal");
     const theaterView = document.getElementById("series-player-view");
     const currentEpTitle = document.getElementById("series-player-current-ep");
     const btnPrev = document.getElementById("btn-series-prev-ep");
 
-    if (detailsModal) detailsModal.classList.add("hidden");
     const wasTheaterHidden = theaterView && theaterView.classList.contains("hidden");
     if (theaterView) theaterView.classList.remove("hidden");
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-    document.documentElement.classList.add("modal-open");
-    document.body.classList.add("modal-open");
+    syncPageLock();
     if (wasTheaterHidden) {
         pushNavLayer('player-series');
     }
@@ -2882,7 +2746,7 @@ function populateSeriesDrawer() {
  * Anime or not, from the catalog item or, when the item is thin (the "Continuar assistindo" card only keeps id and
  * name), from the show details loaded for it (`genres` instead of `genre_ids`).
  */
-function isAnimeShow(showItem) {
+export function isAnimeShow(showItem) {
     const looksAnime = item => Boolean(item && (
         isAsianAnimation(item) ||
         item.original_language === 'ja' ||
@@ -2904,23 +2768,14 @@ function isAsianAnimation(item) {
     return lang === 'ja' || lang === 'ko' || lang === 'zh' || countries.includes('JP') || countries.includes('Japan');
 }
 
-/**
- * Closes the player and the details panel, then shows the catalog tab of this kind.
- * The player is stopped first so its history layer is popped before the details layer.
- */
+/** Closes the player and the title page, then shows the catalog tab of this kind (Animes or Séries). */
 function exitSeriesToCatalog() {
-    const target = isAnimeShow(activeSeriesPlaying.show || currentSelectedSeries) ? 'animes' : 'series';
-    runNavBatch(() => {
-        stopSeriesPlayer();
-        closeSeriesModal();
-    });
-    // The grouped history step settles a moment later; changing tabs before that would mix with it.
-    // Only needed when the title was opened from another tab (for example Home).
-    setTimeout(() => {
-        if (window.TvzinhaActions && store.currentView !== target) {
-            window.TvzinhaActions.switchView(target);
-        }
-    }, 150);
+    exitTitleTo(isAnimeShow(activeSeriesPlaying.show || currentSelectedSeries) ? 'animes' : 'series');
+}
+
+export function isSeriesPlayerOpen() {
+    const view = document.getElementById("series-player-view");
+    return Boolean(view) && !view.classList.contains("hidden");
 }
 
 export function stopSeriesPlayer() {
@@ -2929,10 +2784,6 @@ export function stopSeriesPlayer() {
     if (pendingSeriesIframeTimer) {
         clearTimeout(pendingSeriesIframeTimer);
         pendingSeriesIframeTimer = null;
-    }
-    if (pendingSeriesAutoplayTimer) {
-        clearTimeout(pendingSeriesAutoplayTimer);
-        pendingSeriesAutoplayTimer = null;
     }
     setPlaybackActiveState(false);
     atomicPlayerReset();
@@ -2945,21 +2796,9 @@ export function stopSeriesPlayer() {
     if (seriesLoader) seriesLoader.classList.add("hidden");
     if (theaterView) theaterView.classList.add("hidden");
     if (drawer) drawer.classList.add("hidden");
+    syncPageLock();
     if (wasTheaterOpen) {
         popNavLayer();
-    }
-
-    const detailsModal = document.getElementById("series-modal");
-    if (detailsModal && currentSelectedSeries) {
-        detailsModal.classList.remove("hidden");
-        document.documentElement.style.overflow = "hidden";
-        document.body.style.overflow = "hidden";
-        document.documentElement.classList.add("modal-open");
-        document.body.classList.add("modal-open");
-    } else {
-        document.documentElement.style.overflow = "";
-        document.body.style.overflow = "";
-        document.documentElement.classList.remove("modal-open");
-        document.body.classList.remove("modal-open");
+        window.dispatchEvent(new CustomEvent('tvzinha:playerClosed'));
     }
 }

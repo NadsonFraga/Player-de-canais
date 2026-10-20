@@ -3,11 +3,11 @@
  * Handles view switching, active navigation state, mobile drawer, and player lifecycle/audio teardown
  */
 
-import { store } from '../core/state.js?v=20261020_1352';
-import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261020_1352';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1352';
-import { showToast } from '../core/toast.js?v=20261020_1352';
-import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome } from './historyManager.js?v=20261020_1352';
+import { store } from '../core/state.js?v=20261020_1520';
+import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261020_1520';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1520';
+import { showToast } from '../core/toast.js?v=20261020_1520';
+import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome, whenNavSettled } from './historyManager.js?v=20261020_1520';
 
 let viewHooks = {
     onTvLeave: null,
@@ -36,6 +36,14 @@ export function registerViewHook(viewName, callback) {
     viewHooks[key] = callback;
 }
 
+// Set by the title page: a tab switch while it is open leaves the page first and switches afterwards
+let viewSwitchGuard = null;
+
+/** `guard(viewName)` returns true when it took over the switch (it calls switchAppView again later). */
+export function setViewSwitchGuard(guard) {
+    viewSwitchGuard = typeof guard === 'function' ? guard : null;
+}
+
 export function teardownAllMedia() {
     atomicPlayerReset();
     setPlaybackActiveState(false);
@@ -43,10 +51,8 @@ export function teardownAllMedia() {
     if (movieIframe) movieIframe.remove();
     const seriesIframe = document.getElementById("series-modal-iframe");
     if (seriesIframe) seriesIframe.remove();
-    const movieModal = document.getElementById("movie-modal");
-    if (movieModal) movieModal.classList.add("hidden");
-    const seriesModal = document.getElementById("series-modal");
-    if (seriesModal) seriesModal.classList.add("hidden");
+    const moviePlayer = document.getElementById("movie-player-view");
+    if (moviePlayer) moviePlayer.classList.add("hidden");
     const seriesTheater = document.getElementById("series-player-view");
     if (seriesTheater) seriesTheater.classList.add("hidden");
     document.documentElement.style.overflow = "";
@@ -92,6 +98,10 @@ export function switchAppView(viewName) {
         return;
     }
 
+    if (viewSwitchGuard && viewSwitchGuard(viewName)) return;
+    // A grouped Back (closing a player and the title page) still landing: switch after it, or its step undoes ours
+    if (whenNavSettled(() => switchAppView(viewName))) return;
+
     const previousView = store.currentView;
 
     // Synchronize History Stack
@@ -120,8 +130,8 @@ export function switchAppView(viewName) {
     if (viewName !== 'movies') {
         const movieIframe = document.getElementById("movie-modal-iframe");
         if (movieIframe) movieIframe.remove();
-        const movieModal = document.getElementById("movie-modal");
-        if (movieModal) movieModal.classList.add("hidden");
+        const moviePlayer = document.getElementById("movie-player-view");
+        if (moviePlayer) moviePlayer.classList.add("hidden");
         const movieArt = document.getElementById("movie-artplayer-container");
         if (movieArt) {
             movieArt.innerHTML = "";
@@ -132,8 +142,6 @@ export function switchAppView(viewName) {
     if (viewName !== 'series' && viewName !== 'animes') {
         const seriesIframe = document.getElementById("series-modal-iframe");
         if (seriesIframe) seriesIframe.remove();
-        const seriesModal = document.getElementById("series-modal");
-        if (seriesModal) seriesModal.classList.add("hidden");
         const seriesTheater = document.getElementById("series-player-view");
         if (seriesTheater) seriesTheater.classList.add("hidden");
         const seriesArt = document.getElementById("series-artplayer-container");
@@ -155,9 +163,9 @@ export function switchAppView(viewName) {
     if (viewName === 'home') {
         teardownAllMedia();
     } else {
-        const isMovieModalActive = !document.getElementById("movie-modal")?.classList.contains("hidden");
+        const isMoviePlayerActive = !document.getElementById("movie-player-view")?.classList.contains("hidden");
         const isSeriesPlayerActive = !document.getElementById("series-player-view")?.classList.contains("hidden");
-        if (!isMovieModalActive && !isSeriesPlayerActive) {
+        if (!isMoviePlayerActive && !isSeriesPlayerActive) {
             setPlaybackActiveState(false);
             document.documentElement.style.overflow = "";
             document.body.style.overflow = "";

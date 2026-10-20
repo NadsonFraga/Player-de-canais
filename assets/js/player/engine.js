@@ -3,15 +3,15 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261020_1352';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261020_1352';
-import { showToast } from '../core/toast.js?v=20261020_1352';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1352';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261020_1352';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261020_1352';
-import { formatClock } from '../core/resume.js?v=20261020_1352';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261020_1352';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261020_1352';
+import { store } from '../core/state.js?v=20261020_1520';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261020_1520';
+import { showToast } from '../core/toast.js?v=20261020_1520';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1520';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261020_1520';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261020_1520';
+import { formatClock } from '../core/resume.js?v=20261020_1520';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261020_1520';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261020_1520';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -438,7 +438,7 @@ export function atomicPlayerReset() {
     }
 
     // Comprehensive DOM media sweep: force silence and detonate any orphan media elements
-    const mediaElements = document.querySelectorAll("#movie-modal video, #movie-modal audio, #movie-modal iframe, #series-player-view video, #series-player-view audio, #series-player-view iframe, #series-modal iframe, #movie-artplayer-container video, #series-artplayer-container video");
+    const mediaElements = document.querySelectorAll("#movie-player-view video, #movie-player-view audio, #movie-player-view iframe, #series-player-view video, #series-player-view audio, #series-player-view iframe, #movie-artplayer-container video, #series-artplayer-container video");
     mediaElements.forEach(el => {
         try {
             if (el.tagName === "VIDEO" || el.tagName === "AUDIO") {
@@ -1358,9 +1358,9 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
     // Strict Modal Visibility Check: Abort instantly if user closed the modal before resolution completed
     if (session.containerId === "movie-artplayer-container") {
-        const movieModal = document.getElementById("movie-modal");
-        if (!movieModal || movieModal.classList.contains("hidden")) {
-            console.warn("[PlayerEngine] Aborting mountNativePlayer: movie modal is closed/hidden.");
+        const moviePlayer = document.getElementById("movie-player-view");
+        if (!moviePlayer || moviePlayer.classList.contains("hidden")) {
+            console.warn("[PlayerEngine] Aborting mountNativePlayer: movie player view is closed/hidden.");
             activeNativeSession = null;
             return null;
         }
