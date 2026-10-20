@@ -6,19 +6,19 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261020_1808';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1808';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1808';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1808';
-import { showToast } from '../core/toast.js?v=20261020_1808';
-import { syncPageLock } from '../core/activity.js?v=20261020_1808';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1808';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1808';
-import { switchAppView } from '../navigation/router.js?v=20261020_1808';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1808';
-import { isAnimeShow } from './series.js?v=20261020_1808';
-import { selectChannelByName } from './channels.js?v=20261020_1808';
-import { openLegalSection } from './footer.js?v=20261020_1808';
+import { store } from '../core/state.js?v=20261020_1813';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1813';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1813';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1813';
+import { showToast } from '../core/toast.js?v=20261020_1813';
+import { syncPageLock } from '../core/activity.js?v=20261020_1813';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1813';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1813';
+import { switchAppView } from '../navigation/router.js?v=20261020_1813';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1813';
+import { isAnimeShow } from './series.js?v=20261020_1813';
+import { selectChannelByName } from './channels.js?v=20261020_1813';
+import { openLegalSection } from './footer.js?v=20261020_1813';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
