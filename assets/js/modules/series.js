@@ -11,20 +11,20 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261020_1714';
-import { showToast } from '../core/toast.js?v=20261020_1714';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1714';
-import { buildFeedRows } from '../core/feedRows.js?v=20261020_1714';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1714';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1714';
-import { resumeStartTime } from '../core/resume.js?v=20261020_1714';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1714';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1714';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1714';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1714';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1714';
-import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1714';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1714';
+} from '../core/constants.js?v=20261020_1724';
+import { showToast } from '../core/toast.js?v=20261020_1724';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1724';
+import { buildFeedRows } from '../core/feedRows.js?v=20261020_1724';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1724';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1724';
+import { resumeStartTime } from '../core/resume.js?v=20261020_1724';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1724';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1724';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1724';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1724';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1724';
+import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1724';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1724';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {

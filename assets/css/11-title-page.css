@@ -771,6 +771,44 @@
     width: 100%;
 }
 
+/* Not out yet: dimmed with a tag, like the episodes; it still opens its page (trailers, details) */
+.title-card.is-upcoming .movie-poster-img {
+    /* filter, not opacity: the fade-in already drives the opacity */
+    filter: brightness(0.5) saturate(0.7);
+}
+
+.title-card-soon {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(9, 9, 11, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.title-play.is-upcoming {
+    background: rgba(255, 255, 255, 0.14);
+    color: #e4e4e7;
+    box-shadow: none;
+    cursor: default;
+}
+
+.title-play.is-upcoming:hover {
+    transform: none;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.title-play.is-upcoming svg {
+    display: none;
+}
+
 .title-card.is-current {
     outline: 2px solid rgba(255, 255, 255, 0.65);
     outline-offset: -2px;
@@ -1093,7 +1131,7 @@
 
 @media (max-width: 768px) {
     .title-page-back {
-        top: 74px;
+        top: 58px;
         left: 12px;
         width: 42px;
         height: 42px;
