@@ -63,10 +63,9 @@ def test_node_origins():
     failures = 0
     print("\n== Node isAllowedOrigin (functions/api/resolve.js)")
     node_script = r"""
-    import { readFileSync } from "node:fs";
-    const file = process.argv[1];
-    const code = readFileSync(file, "utf8");
-    const m = await import("data:text/javascript;base64," + Buffer.from(code + "\nexport { isAllowedOrigin };\n").toString("base64"));
+    import { pathToFileURL } from "node:url";
+    // resolve.js exports isAllowedOrigin (functions/api/tmdb.js uses it too)
+    const m = await import(pathToFileURL(process.argv[1]).href);
     const cases = JSON.parse(process.argv[2]);
     const results = cases.map(([origin]) => m.isAllowedOrigin(origin));
     console.log(JSON.stringify(results));

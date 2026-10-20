@@ -78,7 +78,7 @@ for (const view of ["movies", "series", "animes"]) {
   await evaluate("(window.TvzinhaActions.closeAdblockModal && window.TvzinhaActions.closeAdblockModal(), true)").catch(() => {});
   await evaluate(`(() => { const b = [...document.querySelectorAll('[data-view]')].find(el => el.getAttribute('data-view') === ${JSON.stringify(view)} && el.offsetParent !== null); if (b) b.click(); return true; })()`);
   await sleep(7000);
-  const early = await evaluate(`(() => ({ view: window.TvzinhaActions.store.currentView, tmdb: performance.getEntriesByType('resource').filter(e => e.name.includes('api.themoviedb.org')).length, imgs: document.images.length }))()`);
+  const early = await evaluate(`(() => ({ view: window.TvzinhaActions.store.currentView, tmdb: performance.getEntriesByType('resource').filter(e => e.name.includes('api.themoviedb.org') || e.name.includes('/api/tmdb')).length, imgs: document.images.length }))()`);
   check(`opening ${view} right after the app starts loads its catalog`, early.view === view && early.tmdb > 0 && early.imgs > 150, JSON.stringify(early));
 }
 // clearing the storage also brings the adblock notice back (it opens a moment after the page loads): close it again
