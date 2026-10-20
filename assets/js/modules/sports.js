@@ -3,12 +3,12 @@
  * Fetches and renders match schedule feeds with team crest resolution and custom team picker
  */
 
-import { store } from '../core/state.js?v=20261020_1243';
-import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261020_1243';
-import { getUiSvg } from '../core/icons.js?v=20261020_1243';
-import { showToast } from '../core/toast.js?v=20261020_1243';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1243';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1243';
+import { store } from '../core/state.js?v=20261020_1311';
+import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261020_1311';
+import { getUiSvg } from '../core/icons.js?v=20261020_1311';
+import { showToast } from '../core/toast.js?v=20261020_1311';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1311';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1311';
 
 let matchesRefreshTimer = null;
 let isTeamModalInitialized = false;
@@ -123,7 +123,7 @@ export function setupTeamSelectModal() {
 
     // Delegated click for change team buttons
     document.addEventListener("click", (e) => {
-        const btn = e.target.closest("#btn-change-team, #btn-home-team-shortcut");
+        const btn = e.target.closest("#btn-change-team");
         if (btn) {
             e.preventDefault();
             openTeamSelectModal();
@@ -331,16 +331,12 @@ export async function renderMatchesSection() {
     const hintEl = document.getElementById("matches-section-hint");
     const btnChangeLabel = document.getElementById("btn-change-team-label");
     const btnChange = document.getElementById("btn-change-team");
-    const btnHomeShortcut = document.getElementById("btn-home-team-shortcut");
     const carouselFooter = document.getElementById("matches-carousel-footer");
     const navArrows = document.getElementById("matches-nav-arrows");
     const gridEl = document.getElementById("vasco-matches-grid");
 
     if (btnChange) {
         btnChange.onclick = openTeamSelectModal;
-    }
-    if (btnHomeShortcut) {
-        btnHomeShortcut.onclick = openTeamSelectModal;
     }
 
     // --- CASE 1: No Team Selected (Friendly Unselected State) ---

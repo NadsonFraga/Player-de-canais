@@ -269,94 +269,247 @@
     text-transform: capitalize;
 }
 
-/* 6. Discreet Utility Footer Strip */
-.home-footer-strip {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
+/* 6. Site footer (Início, Filmes, Séries, Animes): modules/footer.js. Neutral, line icons only */
+.site-footer {
+    margin: 48px auto 0;
+    padding: 0 48px 28px;
+    max-width: 1440px;
+    box-sizing: border-box;
+    color: var(--text-muted);
+    font-size: 0.82rem;
 }
 
-.home-footer-actions {
+/* Canais keeps its own full-screen layout */
+body[data-app-view="tv"] .site-footer {
+    display: none;
+}
+
+.site-footer-callout {
     display: flex;
     align-items: center;
     gap: 14px;
-    flex-wrap: wrap;
+    padding: 16px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
 }
 
-.footer-utility-link {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 0.80rem;
-    font-weight: 500;
+.site-footer-callout-icon {
+    color: #e4e4e7;
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.site-footer-callout-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.site-footer-callout-text strong {
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.site-footer-callout-btn {
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.site-footer-callout-btn:hover,
+.site-footer-callout-btn:focus-visible {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.32);
+    outline: none;
+}
+
+.site-footer-main {
+    display: flex;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 36px 0 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.site-footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 340px;
+}
+
+.site-footer-logo {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.site-footer-description {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.site-footer-contact {
+    color: #e4e4e7;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.site-footer-contact:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.site-footer-columns {
+    display: flex;
+    gap: 64px;
+}
+
+.site-footer-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+}
+
+.site-footer-heading {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+    margin-bottom: 2px;
+}
+
+.site-footer-column button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #d4d4d8;
+    font: inherit;
+    font-weight: 500;
     cursor: pointer;
     transition: color var(--transition-fast);
 }
 
-.footer-utility-link:hover {
+.site-footer-column button:hover,
+.site-footer-column button:focus-visible {
     color: #ffffff;
+    outline: none;
+    text-decoration: underline;
 }
 
-.footer-separator {
-    color: rgba(255, 255, 255, 0.15);
-    font-size: 0.75rem;
+.site-footer-bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding-top: 22px;
 }
 
-.home-footer-meta {
-    font-size: 0.78rem;
-    color: var(--text-muted);
+.site-footer-notes {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
-    text-align: right;
-}
-
-/* TMDB attribution (their API terms): their official logo, unmodified, and the notice */
-.footer-tmdb-credit {
-    display: inline-flex;
-    align-items: center;
     gap: 8px;
-    color: var(--text-muted);
-    font-size: 0.72rem;
-    text-decoration: none;
+    font-size: 0.74rem;
+    line-height: 1.55;
+    max-width: 860px;
 }
 
-.footer-tmdb-credit img {
+.site-footer-notes p {
+    margin: 0;
+}
+
+.site-footer-credits {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+/* TMDB attribution (their API terms): their official logo, unmodified */
+.site-footer-tmdb {
+    display: inline-flex;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.site-footer-tmdb img {
     height: 9px;
     width: auto;
-    flex-shrink: 0;
 }
 
-.footer-tmdb-credit:hover {
-    color: #ffffff;
-}
-
-.footer-copyright {
-    font-size: 0.70rem;
+.site-footer-copyright {
     color: rgba(255, 255, 255, 0.38);
 }
 
-@media (max-width: 640px) {
-    .home-footer-meta {
-        align-items: flex-start;
-        text-align: left;
+.site-footer-top {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+    color: #e4e4e7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.site-footer-top:hover,
+.site-footer-top:focus-visible {
+    background: rgba(255, 255, 255, 0.92);
+    color: #09090b;
+    outline: none;
+}
+
+.legal-modal-card {
+    max-width: 640px;
+}
+
+.legal-modal-paragraph {
+    margin: 0 0 12px;
+    color: #d4d4d8;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+    .site-footer {
+        padding: 0 16px 24px;
+        margin-top: 36px;
     }
 
-    .footer-tmdb-credit {
-        align-items: flex-start;
+    .site-footer-callout {
+        flex-wrap: wrap;
     }
 
-    .footer-tmdb-credit img {
-        margin-top: 3px;
+    .site-footer-callout-btn {
+        width: 100%;
+    }
+
+    .site-footer-main {
+        flex-direction: column;
+        gap: 28px;
+    }
+
+    .site-footer-columns {
+        gap: 48px;
     }
 }
 
