@@ -3,9 +3,7 @@
  * Central registry for API endpoints, static keys, and persistent configurations
  */
 
-// TMDB Movies & Series Engine
-export const TMDB_API_KEY = '***REMOVED***';
-export const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+// TMDB Movies & Series Engine (reads go through /api/tmdb, which holds the key: see core/tmdb.js)
 export const TMDB_IMG_W500 = 'https://image.tmdb.org/t/p/w500';
 export const TMDB_IMG_ORIGINAL = 'https://image.tmdb.org/t/p/original';
 
@@ -22,6 +20,9 @@ export const FAVORITE_TEAM_KEY = 'tvzinha_favorite_team';
 export const STREAM_ENGINE_API_BASE = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '8787'))
     ? `${window.location.protocol}//${window.location.hostname}:${window.location.port || '8787'}`
     : '';
+
+// TMDB reads (core/tmdb.js): our route adds the key kept as a server secret
+export const TMDB_PROXY_URL = `${STREAM_ENGINE_API_BASE}/api/tmdb`;
 
 // Soccer / Matches Feed Endpoints
 export const GITHUB_RAW_FEED_URL = 'https://raw.githubusercontent.com/NadsonFraga/Player-de-canais/data/proximos_jogos.json';

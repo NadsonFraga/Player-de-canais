@@ -4,29 +4,28 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261019_1817';
+import { store } from '../core/state.js?v=20261020_1139';
 import {
-    TMDB_API_KEY,
-    TMDB_BASE_URL,
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261019_1817';
-import { showToast } from '../core/toast.js?v=20261019_1817';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1817';
-import { buildFeedRows } from '../core/feedRows.js?v=20261019_1817';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1817';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1817';
-import { resumeStartTime } from '../core/resume.js?v=20261019_1817';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1817';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1817';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1817';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261019_1817';
-import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261019_1817';
-import { openMovieDetailsModal } from './movies.js?v=20261019_1817';
+} from '../core/constants.js?v=20261020_1139';
+import { showToast } from '../core/toast.js?v=20261020_1139';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1139';
+import { buildFeedRows } from '../core/feedRows.js?v=20261020_1139';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261020_1139';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1139';
+import { resumeStartTime } from '../core/resume.js?v=20261020_1139';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1139';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1139';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1139';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1139';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1139';
+import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1139';
+import { openMovieDetailsModal } from './movies.js?v=20261020_1139';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -317,12 +316,8 @@ export function renderHomeContinueWatching() {
 }
 
 // --- TMDB Fetch Helper ---
-export async function fetchSeriesEndpoint(path) {
-    const separator = path.includes('?') ? '&' : '?';
-    const url = `${TMDB_BASE_URL}/${path}${separator}api_key=${TMDB_API_KEY}&language=pt-BR`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`TMDB Series error ${res.status}`);
-    return await res.json();
+export function fetchSeriesEndpoint(path) {
+    return fetchTmdb(path);
 }
 
 /** Page fetcher of a catalog row for buildFeedRows (every row path already has a query string). */

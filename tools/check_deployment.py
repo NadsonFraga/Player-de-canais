@@ -10,6 +10,7 @@ requests (one MyAnimeList search, one host lookup per anime case), so it is safe
 """
 import http.client
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -86,6 +87,16 @@ if stream_url:
     path = "/" + stream_url.split("//", 1)[1].split("/", 1)[1]
     status, body, headers, ms = fetch(path)
     check("stream proxy returns a playlist", status == 200 and b"#EXTM3U" in body[:20], f"HTTP {status}, {len(body)} bytes")
+
+print("\n== TMDB key stays on the server (D3)")
+status, body, headers, ms = fetch("/api/tmdb?" + urllib.parse.urlencode({"path": "/movie/1022789?language=pt-BR"}))
+data = json.loads(body) if body[:1] == b"{" else {}
+check("/api/tmdb answers with TMDB's data (key set in Cloudflare)", status == 200 and data.get("id") == 1022789, f"HTTP {status}, {ms} ms {body[:80]!r}")
+status, body, headers, ms = fetch("/api/tmdb?" + urllib.parse.urlencode({"path": "/account"}))
+check("/api/tmdb refuses paths outside the read list", status == 400, f"HTTP {status}")
+for path in ["/assets/js/core/constants.js", "/assets/js/core/tmdb.js", "/assets/js/modules/movies.js", "/assets/js/modules/series.js"]:
+    status, body, headers, ms = fetch(path)
+    check(f"{path} carries no TMDB key", status == 200 and not re.search(rb"api_key=[0-9a-f]{32}|TMDB_API_KEY\s*=\s*['\"][0-9a-f]{32}", body), f"HTTP {status}")
 
 print(f"\n{'ALL PASSED' if not failures else str(failures) + ' FAILED'}")
 sys.exit(1 if failures else 0)
