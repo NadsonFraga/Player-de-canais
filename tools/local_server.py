@@ -21,7 +21,28 @@ from socketserver import ThreadingMixIn
 
 PORT = 8787
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-TMDB_API_KEY = "***REMOVED***"
+
+
+def load_tmdb_api_key():
+    """TMDB key (D3): the TMDB_API_KEY environment variable, else the git-ignored .env file at the project root."""
+    key = os.environ.get("TMDB_API_KEY", "").strip()
+    if key:
+        return key
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    try:
+        with open(env_path, encoding="utf-8") as env_file:
+            for line in env_file:
+                name, sep, value = line.strip().partition("=")
+                if sep and name.strip() == "TMDB_API_KEY":
+                    return value.strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return ""
+
+
+TMDB_API_KEY = load_tmdb_api_key()
+if not TMDB_API_KEY:
+    print("[LocalServer] TMDB_API_KEY not set (environment or .env): catalogs and /api/tmdb will fail", file=sys.stderr)
 
 # In-memory resolver cache (TTL 30 minutes)
 RESOLVE_CACHE = {}
@@ -1033,6 +1054,24 @@ def normalize_subtitles(tracks: list) -> list:
         for index, (lang, label, track) in enumerate(chosen)
     ]
 
+# ---------- TMDB reads (/api/tmdb): same rules as functions/api/tmdb.js
+TMDB_ALLOWED_PATH = re.compile(r"^/(movie|tv|discover|trending|search|genre|collection|person|find)(/|\?|$)")
+TMDB_CACHE = {}
+TMDB_CACHE_TTL_S = 1800
+
+
+def tmdb_target(path, key):
+    """The TMDB address for `path`, or None when the path is not an allowed read."""
+    if not isinstance(path, str) or not TMDB_ALLOWED_PATH.match(path) or ".." in path or re.search(r"[\s\\]", path):
+        return None
+    parsed = urllib.parse.urlsplit("https://api.themoviedb.org/3" + path)
+    if parsed.netloc != "api.themoviedb.org" or not parsed.path.startswith("/3/"):
+        return None
+    query = [(k, v) for k, v in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True) if k != "api_key"]
+    query.append(("api_key", key))
+    return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urllib.parse.urlencode(query), ""))
+
+
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
     # Python's default queue is 5 pending connections; a browser opens more than that at once (modules, styles,
@@ -1209,11 +1248,12 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         parsed = urllib.parse.urlparse(self.path)
         origin = self.headers.get("Origin")
-        if parsed.path == "/api/resolve" and not is_allowed_origin(origin):
+        restricted = parsed.path in ("/api/resolve", "/api/tmdb")
+        if restricted and not is_allowed_origin(origin):
             self.send_response(403)
             self.end_headers()
             return
-        self.send_cors_headers(204, content_type=None, origin=origin if parsed.path == "/api/resolve" else "*")
+        self.send_cors_headers(204, content_type=None, origin=origin if restricted else "*")
         self.send_header("Access-Control-Max-Age", "86400")
         self.end_headers()
 
@@ -1261,6 +1301,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     self.wfile.write(b'{"success":false,"error":"CORS origin forbidden"}')
                     return
                 self.handle_resolve(params, origin=origin)
+            elif path == "/api/tmdb":
+                self.handle_tmdb(params, origin=self.headers.get("Origin"))
             elif path == "/api/stream":
                 self.handle_stream(params, is_head=False)
             elif path == "/health":
@@ -1286,6 +1328,43 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
             except Exception:
                 pass
+
+    def send_json(self, status, payload, origin=None):
+        body = payload if isinstance(payload, bytes) else json.dumps(payload).encode("utf-8")
+        self.send_cors_headers(status, "application/json; charset=utf-8", origin=origin)
+        self.end_headers()
+        self.wfile.write(body)
+
+    def handle_tmdb(self, params, origin=None):
+        """/api/tmdb: same rules as functions/api/tmdb.js (kept in memory 30 min instead of the edge cache)."""
+        if not is_allowed_origin(origin):
+            self.send_response(403)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b'{"error":"origin_forbidden"}')
+            return
+        if not TMDB_API_KEY:
+            self.send_json(503, {"error": "tmdb_key_missing"}, origin)
+            return
+        path = (params.get("path") or [""])[0]
+        target = tmdb_target(path, TMDB_API_KEY)
+        if not target:
+            self.send_json(400, {"error": "path_not_allowed"}, origin)
+            return
+        cached = TMDB_CACHE.get(path)
+        if cached and time.time() - cached[0] < TMDB_CACHE_TTL_S:
+            self.send_json(200, cached[1], origin)
+            return
+        try:
+            req = urllib.request.Request(target, headers={"Accept": "application/json", "User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=15) as res:
+                body = res.read()
+            TMDB_CACHE[path] = (time.time(), body)
+            self.send_json(200, body, origin)
+        except urllib.error.HTTPError as e:
+            self.send_json(e.code, e.read() or b"{}", origin)
+        except Exception:
+            self.send_json(502, {"error": "tmdb_unreachable"}, origin)
 
     def handle_resolve(self, params, origin=None):
         media_id = params.get("id", [""])[0]

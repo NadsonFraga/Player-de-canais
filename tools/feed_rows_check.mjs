@@ -110,13 +110,14 @@ const readRows = (tracks) => `(async () => {
   return Object.fromEntries(${JSON.stringify(tracks)}.map(id => [id, cards(id)]));
 })()`;
 
-// The page preloads catalogs while idle, so requests are told apart by address, not by when they happened
+// The page preloads catalogs while idle, so requests are told apart by address, not by when they happened.
+// They go through our /api/tmdb route (D3), with the TMDB path in its query
 const ROW_REQUESTS = {
-  movies: "/3\\/(discover\\/movie|trending\\/movie|movie\\/now_playing)/",
-  series: "/3\\/discover\\/tv\\?(?!.*with_original_language=ja)/",
-  animes: "/3\\/discover\\/tv\\?.*with_original_language=ja/",
+  movies: "/\\/(discover\\/movie|trending\\/movie|movie\\/now_playing)/",
+  series: "/\\/discover\\/tv\\?(?!.*with_original_language=ja)/",
+  animes: "/\\/discover\\/tv\\?.*with_original_language=ja/",
 };
-const tmdbRowRequests = (view) => `performance.getEntriesByType('resource').map(e => e.name).filter(n => n.includes('api.themoviedb.org') && ${ROW_REQUESTS[view]}.test(n)).length`;
+const tmdbRowRequests = (view) => `performance.getEntriesByType('resource').map(e => decodeURIComponent(e.name)).filter(n => (n.includes('api.themoviedb.org') || n.includes('/api/tmdb')) && ${ROW_REQUESTS[view]}.test(n)).length`;
 
 const b = await launch(browserName);
 try {

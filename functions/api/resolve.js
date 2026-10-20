@@ -5,7 +5,8 @@
  */
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-const TMDB_API_KEY = "***REMOVED***";
+// Read from the TMDB_API_KEY secret at each request (D3): no key in the code
+let tmdbApiKey = "";
 
 // MGEB pages can take ~15 s on some titles: one long attempt instead of two short ones
 const MGEB_TIMEOUT_MS = 25000;
@@ -18,8 +19,8 @@ const MGEB_MERGE_WINDOW_MS = 1500;
 async function fetchImdbId(tmdbId, type = "movie") {
   try {
     const url = type === "movie"
-      ? `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_API_KEY}`
-      : `https://api.themoviedb.org/3/tv/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
+      ? `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${tmdbApiKey}`
+      : `https://api.themoviedb.org/3/tv/${tmdbId}/external_ids?api_key=${tmdbApiKey}`;
     const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
     if (res.ok) {
       const data = await res.json();
@@ -71,7 +72,7 @@ async function fetchSeasonGroups(tmdbId) {
   let groups = null;
   try {
     const get = async (path) => {
-      const res = await fetch(`https://api.themoviedb.org/3${path}?api_key=${TMDB_API_KEY}`, { headers: { "User-Agent": USER_AGENT } });
+      const res = await fetch(`https://api.themoviedb.org/3${path}?api_key=${tmdbApiKey}`, { headers: { "User-Agent": USER_AGENT } });
       return res.ok ? res.json() : null;
     };
     const show = await get(`/tv/${tmdbId}`);
@@ -148,7 +149,7 @@ function firstThenMerge(lookups, windowMs) {
   });
 }
 
-function isAllowedOrigin(origin) {
+export function isAllowedOrigin(origin) {
   if (!origin) return true;
   try {
     const url = new URL(origin);
@@ -1126,6 +1127,7 @@ function normalizeSubtitles(tracks) {
 
 export async function onRequestGet(context) {
   const { request } = context;
+  tmdbApiKey = (context.env && context.env.TMDB_API_KEY) || "";
   const origin = request.headers.get("Origin");
   if (!isAllowedOrigin(origin)) {
     return new Response(JSON.stringify({ success: false, error: "CORS origin forbidden" }), {
