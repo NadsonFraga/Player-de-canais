@@ -6,7 +6,21 @@
 
 ### Automated
 
-Filled in at the end of the phase (see the phase 1 report in the chat).
+Version `20261020_1520`, commit `8e6ad58`, merged into `staging` as `bb44405`.
+
+| Check | Result |
+|---|---|
+| `node --check`, `check_js.py`, `bump_version.py --check`, tag balance of `index.html` | PASS |
+| `title_page_check.mjs` (new): movie, series, anime, Back chain, stacked titles, cast list, library buttons after reload, title link, tab switch, phone width | 27/27 Chrome, 27/27 Firefox, 27/27 against staging |
+| `episode_entry_check.mjs` | 52/52 |
+| `continue_watching_check.mjs` | 9/9 |
+| `server_groups_check.mjs` | 12/12 |
+| `tab_reset_check.mjs` | all passed |
+| `player_ui_check.mjs` | 45/46: only the outdated "Escolha um canal" check (B21), same as before the phase |
+| `player_touch_check.mjs` | 16/17: only the flaky double tap (B21) |
+| `check_deployment.py` on staging | ALL PASSED |
+
+Fixed during the phase: a tab switch right after Back could be undone by the grouped history step (batches now count inside the 60 ms window after a popstate, and tab switches wait for a pending grouped step).
 
 ### Manual (user, on staging)
 
