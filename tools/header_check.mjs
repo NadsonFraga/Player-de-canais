@@ -245,12 +245,21 @@ try {
   check("phone: Buscar in the menu opens the search", phoneSearch !== null);
   await b.evaluate("(history.back(), true)");
   await waitFor(b, `!(${SEARCH_OPEN})`, 4000);
-  await b.evaluate("(window.scrollTo(0, 50), true)");
-  await sleep(200);
-  await b.evaluate("(window.scrollTo(0, 700), true)");
+  // Step by step, like a finger (a big jump counts as a new screen and shows the pill at once)
+  const scrollSteps = (from, to) => `(async () => { const step = ${from < to ? 60 : -60}; for (let y = ${from}; step > 0 ? y <= ${to} : y >= ${to}; y += step) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 40)); } return true; })()`;
+  await b.evaluate("(window.scrollTo(0, 0), true)");
+  await sleep(300);
+  await b.evaluate(scrollSteps(0, 720));
   const tucked = await waitFor(b, "document.body.classList.contains('nav-tucked') && getComputedStyle(document.getElementById('floating-nav-capsule')).pointerEvents === 'none'", 3000);
-  await b.evaluate("(window.scrollTo(0, 300), true)");
+  await b.evaluate(scrollSteps(720, 480));
   const shown = await waitFor(b, "!document.body.classList.contains('nav-tucked')", 3000);
+  // A new screen (a title page) shows the pill at once, even if it was tucked away
+  await b.evaluate(scrollSteps(480, 900));
+  await b.evaluate("(window.TvzinhaActions.openTitle('movie', { id: 1022789, title: 'Divertida Mente 2' }), true)");
+  const shownOnOpen = await waitFor(b, "!document.body.classList.contains('nav-tucked')", 1500);
+  await b.evaluate("(history.back(), true)");
+  await waitFor(b, `!(${PAGE_OPEN})`, 4000);
+  check("phone: a new screen shows the pill at once", shownOnOpen !== null);
   check("phone: the pill tucks away scrolling down and comes back scrolling up", tucked !== null && shown !== null);
   await b.evaluate("(window.scrollTo(0, 0), window.TvzinhaActions.openTitle('movie', { id: 1022789, title: 'Divertida Mente 2' }), true)");
   await waitFor(b, PAGE_OPEN, 5000);
