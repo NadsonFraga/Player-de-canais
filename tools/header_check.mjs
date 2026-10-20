@@ -6,7 +6,8 @@
  *   3. "/" opens the search; typing a word makes one request (not one per letter); the category filters reuse it;
  *      a result opens the title page and Back returns
  *   4. channels are found with no request, listed first, and open the channel; Back closes the search
- *   5. phones: the tools pill sits under the tabs, tucks away scrolling down and clears the title page's back button
+ *   5. phones: one row with a single menu button (search, profile and options inside); the whole pill tucks away
+ *      scrolling down and comes back scrolling up; it clears the title page's back button
  *
  *   node tools/header_check.mjs [--browser=chrome|edge|firefox] [--shots=<folder>]   (chrome by default)
  *
@@ -227,24 +228,35 @@ try {
   await b.evaluate("(window.TvzinhaActions.switchView('home'), true)");
   await sleep(1200);
 
-  // 5. Phones: second pill under the tabs, clear of the title page's back button; tucked while scrolling down
+  // 5. Phones: one row (tabs and a single round menu button), the menu holds search, profile and options;
+  //    the whole pill tucks away scrolling down and comes back scrolling up
   await b.viewport(390, 844, true);
   await sleep(1000);
-  const phone = await b.evaluate(`(() => { const p = document.getElementById('floating-nav-capsule').getBoundingClientRect(); const t = document.getElementById('nav-capsule-tools').getBoundingClientRect();
-    return { below: t.top >= p.bottom, inside: t.left >= 0 && t.right <= innerWidth, sideScroll: document.documentElement.scrollWidth > innerWidth }; })()`);
-  check("phone: tools pill under the tabs, inside the screen", phone.below && phone.inside && !phone.sideScroll, JSON.stringify(phone));
+  const phone = await b.evaluate(`(() => { const p = document.getElementById('floating-nav-capsule').getBoundingClientRect(); const more = document.getElementById('btn-nav-more').getBoundingClientRect();
+    return { toolsHidden: getComputedStyle(document.getElementById('nav-capsule-tools')).display === 'none', moreInPill: more.width > 0 && more.top >= p.top && more.bottom <= p.bottom,
+             inside: p.left >= 0 && p.right <= innerWidth, sideScroll: document.documentElement.scrollWidth > innerWidth }; })()`);
+  check("phone: one row with the menu button, nothing under the pill", phone.toolsHidden && phone.moreInPill && phone.inside && !phone.sideScroll, JSON.stringify(phone));
+  await b.evaluate("(document.getElementById('btn-nav-more').click(), true)");
+  const menuItems = await b.evaluate("[...document.querySelectorAll('#nav-mobile-menu .nav-menu-item')].map(i => i.dataset.menuAction || i.dataset.menuLegal).join(',')");
+  check("phone: the menu holds search, continue, account, tips and the legal panels", menuItems === "search,continue,account,adblock,privacy,terms,dmca", menuItems);
+  await b.shot("header-phone-menu.png");
+  await b.evaluate("(document.querySelector('#nav-mobile-menu [data-menu-action=\"search\"]').click(), true)");
+  const phoneSearch = await waitFor(b, `${SEARCH_OPEN} && !(${visible("nav-mobile-menu")})`, 4000);
+  check("phone: Buscar in the menu opens the search", phoneSearch !== null);
+  await b.evaluate("(history.back(), true)");
+  await waitFor(b, `!(${SEARCH_OPEN})`, 4000);
   await b.evaluate("(window.scrollTo(0, 50), true)");
   await sleep(200);
   await b.evaluate("(window.scrollTo(0, 700), true)");
-  const tucked = await waitFor(b, "document.body.classList.contains('nav-tools-tucked')", 3000);
+  const tucked = await waitFor(b, "document.body.classList.contains('nav-tucked') && getComputedStyle(document.getElementById('floating-nav-capsule')).pointerEvents === 'none'", 3000);
   await b.evaluate("(window.scrollTo(0, 300), true)");
-  const shown = await waitFor(b, "!document.body.classList.contains('nav-tools-tucked')", 3000);
-  check("phone: tools pill tucks away scrolling down and comes back scrolling up", tucked !== null && shown !== null);
+  const shown = await waitFor(b, "!document.body.classList.contains('nav-tucked')", 3000);
+  check("phone: the pill tucks away scrolling down and comes back scrolling up", tucked !== null && shown !== null);
   await b.evaluate("(window.scrollTo(0, 0), window.TvzinhaActions.openTitle('movie', { id: 1022789, title: 'Divertida Mente 2' }), true)");
   await waitFor(b, PAGE_OPEN, 5000);
   await sleep(1500);
-  const clear = await b.evaluate("(() => { const t = document.getElementById('nav-capsule-tools').getBoundingClientRect(); const k = document.getElementById('btn-title-back').getBoundingClientRect(); return !(t.left < k.right && t.right > k.left && t.top < k.bottom && t.bottom > k.top); })()");
-  check("phone: tools pill clear of the title page's back button", clear);
+  const clear = await b.evaluate("(() => { const t = document.getElementById('floating-nav-capsule').getBoundingClientRect(); const k = document.getElementById('btn-title-back').getBoundingClientRect(); return !(t.left < k.right && t.right > k.left && t.top < k.bottom && t.bottom > k.top); })()");
+  check("phone: the pill is clear of the title page's back button", clear);
   await b.shot("header-phone-title.png");
 } catch (e) {
   check("run without errors", false, e.message);

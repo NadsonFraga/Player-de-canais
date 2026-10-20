@@ -73,6 +73,7 @@ Version `20261020_1704`, commit `42c7180`, merged into `staging` as `52163e1`.
 | 5 | Search icon, or "/" on the keyboard | Search opens with the cursor in the field; results while typing; Tudo / Filmes / Séries / Animes / Canais / Pessoas | |
 | 6 | Search a movie, a series, an anime, a person ("Tom Hanks") and a channel ("globo", "espn") | Each kind shows; a title opens its page; a person opens their titles; a channel opens the channel | |
 | 7 | Back (or Esc) with a menu or the search open | Closes it and nothing else | |
-| 8 | Phone: the pill | Tab icons in the pill; search, profile and settings in a smaller pill under it; it hides while scrolling down and comes back scrolling up | |
-| 9 | Phone: the menus, the search, Canais and a title page | Menus open centered; search fills the screen; nothing covered (banner dots, Canais top, title page back button) | |
+| 8 | Phone: the pill | One row: TV icon, tab icons and a round profile button at the right (option B, decided 2026-10-20); the whole pill hides scrolling down and comes back scrolling up | |
+| 9 | Phone: the profile button, the search, Canais and a title page | One menu with Buscar, Continuar assistindo, Entrar (em breve), tips and the legal panels; search fills the screen; nothing covered | |
 | 10 | Firefox: items 1, 5 and 6 | Same as Chrome | |
+| 11 | A movie collection with titles not out yet (Vingadores) | Those cards are dimmed with an "Em breve" tag and still open their page; there, the button reads "Em breve · estreia em ..." and does not play; the search does not list them | |
