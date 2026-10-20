@@ -11,20 +11,20 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261020_1520';
-import { showToast } from '../core/toast.js?v=20261020_1520';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1520';
-import { buildFeedRows } from '../core/feedRows.js?v=20261020_1520';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1520';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1520';
-import { resumeStartTime } from '../core/resume.js?v=20261020_1520';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1520';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1520';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1520';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1520';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1520';
-import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1520';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1520';
+} from '../core/constants.js?v=20261020_1556';
+import { showToast } from '../core/toast.js?v=20261020_1556';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261020_1556';
+import { buildFeedRows } from '../core/feedRows.js?v=20261020_1556';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261020_1556';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261020_1556';
+import { resumeStartTime } from '../core/resume.js?v=20261020_1556';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261020_1556';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261020_1556';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1556';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1556';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261020_1556';
+import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261020_1556';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261020_1556';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -1909,6 +1909,64 @@ async function loadSeasonEpisodes(showId, seasonNumber) {
     renderEpisodesGrid(grid, episodes, seasonNumber);
 }
 
+// --- Episodes not out yet (announced in TMDB with a later date): shown, but they do not open the player ---
+
+function localToday() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Announced for a later date, or listed with no date and no picture yet. */
+function isUpcomingEpisode(ep) {
+    const date = ep && ep.air_date ? String(ep.air_date) : '';
+    if (!date) return !(ep && ep.still_path);
+    return date > localToday();
+}
+
+/** "14 de nov. de 2026", or '' when TMDB has no date. */
+function airDateText(isoDate) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(isoDate || ''));
+    if (!match) return '';
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+}
+
+function upcomingText(ep) {
+    const date = airDateText(ep && ep.air_date);
+    return date ? `Estreia em ${date}` : 'Data a confirmar';
+}
+
+/** Turns an episode card into a "coming soon" one: no play overlay, a tag, the release date. */
+function markUpcomingCard(card, ep) {
+    card.classList.add("is-upcoming");
+    card.setAttribute("aria-disabled", "true");
+    card.tabIndex = -1;
+    const box = card.querySelector(".ep-thumbnail-box");
+    if (box && !box.querySelector(".ep-upcoming-tag")) {
+        const tag = document.createElement("span");
+        tag.className = "ep-upcoming-tag";
+        tag.textContent = "Em breve";
+        box.appendChild(tag);
+    }
+    // The release date takes the place of "Reproduzir" (continuous list) or joins the season card's details
+    const meta = card.querySelector(".ep-meta-row");
+    const playLabel = meta && [...meta.querySelectorAll("span")].find(span => /^Reproduzir/.test(span.textContent.trim()));
+    if (playLabel) {
+        playLabel.textContent = upcomingText(ep);
+    } else if (meta && !meta.querySelector(".ep-upcoming-date")) {
+        const date = document.createElement("span");
+        date.className = "ep-upcoming-date";
+        date.textContent = upcomingText(ep);
+        meta.appendChild(date);
+    }
+    const overview = card.querySelector(".ep-overview");
+    if (overview && !overview.textContent.trim()) overview.textContent = "Ainda não lançado.";
+}
+
+function upcomingNotice(card) {
+    showToast(`Este episódio ainda não foi lançado. ${card.dataset.upcoming || ''}`.trim());
+}
+
 function renderEpisodesGrid(container, episodes, seasonNumber) {
     if (!container) return;
     container.innerHTML = "";
@@ -1982,7 +2040,16 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
             </div>
         `;
 
+        if (isUpcomingEpisode(ep)) {
+            card.dataset.upcoming = upcomingText(ep) + '.';
+            markUpcomingCard(card, ep);
+        }
+
         const playAction = () => {
+            if (card.classList.contains("is-upcoming")) {
+                upcomingNotice(card);
+                return;
+            }
             openEpisode(currentSelectedSeries, { season: seasonNumber, episode: ep.episode_number });
         };
 
@@ -2318,6 +2385,10 @@ function renderContinuousChunk(startEp, endEp) {
 
         const currentEpNum = epNum;
         const playAction = () => {
+            if (card.classList.contains("is-upcoming")) {
+                upcomingNotice(card);
+                return;
+            }
             openEpisode(currentSelectedSeries, { absolute: currentEpNum });
         };
 
@@ -2357,6 +2428,10 @@ function applyEpisodeToCard(card, episode) {
     if (overview) overview.textContent = episode.overview || "";
     const image = card.querySelector(".ep-thumbnail-img");
     if (image && episode.still_path) image.src = `${TMDB_IMG_W500}${episode.still_path}`;
+    if (isUpcomingEpisode(episode)) {
+        card.dataset.upcoming = upcomingText(episode) + '.';
+        markUpcomingCard(card, episode);
+    }
 }
 
 function goToEpisodeByAbsoluteNumber(epNumber) {

@@ -1,7 +1,7 @@
 /**
  * Checks the title page (modules/titlePage.js) with a movie, a series and an anime:
- *   1. a movie opens in full screen with its details (facts, cast, recommendations), the address shows ?filme=ID
- *      and the site footer moves into the page
+ *   1. a movie opens in full screen with its details (facts, cast, recommendations), the address shows ?filme=ID,
+ *      the site footer moves into the page, the lower sections are single sideways rows and the loading ring is gone
  *   2. Quero assistir, Assistido and Avaliar are saved and survive a reload of the title link
  *   3. Assistir opens the movie player over the page; Back closes the player, then the page (address cleared)
  *   4. a recommendation stacks a second title; Back returns to the first one; a cast member opens their list
@@ -107,7 +107,9 @@ async function waitFor(b, expr, timeoutMs) {
 
 const visible = (id) => `(() => { const el = document.getElementById('${id}'); return Boolean(el) && !el.classList.contains('hidden'); })()`;
 const PAGE_OPEN = visible("title-page");
-const DETAILS_READY = `(${PAGE_OPEN}) && document.querySelectorAll('#title-facts .title-fact').length >= 3`;
+const DETAILS_READY = `(${PAGE_OPEN}) && document.querySelectorAll('#title-facts .title-fact').length >= 3 && !document.getElementById('title-detail').classList.contains('is-loading')`;
+// Every card of a row on the same line (the rows scroll sideways)
+const ONE_LINE = (id) => `(() => { const cards = [...document.getElementById('${id}').children]; return cards.length > 0 && new Set(cards.map(c => c.offsetTop)).size === 1; })()`;
 const STATE = `({
   open: ${PAGE_OPEN},
   url: location.search,
@@ -144,6 +146,8 @@ try {
   check("address shows ?filme=ID", movie.url === "?filme=1022789", movie.url);
   check("cast and recommendations listed", movie.cast > 0 && movie.recs > 0, `cast ${movie.cast}, recs ${movie.recs}, trailers ${movie.trailers}`);
   check("site footer moved into the page", movie.footerInPage);
+  const lines = await b.evaluate(`({ trailers: ${ONE_LINE("title-trailers")}, cast: ${ONE_LINE("title-cast")}, recs: ${ONE_LINE("title-recs")}, loadingHidden: document.getElementById('title-loading').classList.contains('hidden') })`);
+  check("trailers, cast and recommendations are single rows; the loading ring is gone", lines.trailers && lines.cast && lines.recs && lines.loadingHidden, JSON.stringify(lines));
   await sleep(1500);
   await b.shot("title-movie-desktop.png");
 
