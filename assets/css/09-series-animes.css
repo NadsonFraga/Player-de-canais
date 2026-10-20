@@ -269,50 +269,240 @@
     text-transform: capitalize;
 }
 
-/* 6. Discreet Utility Footer Strip */
-.home-footer-strip {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
-.home-footer-actions {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-}
-
-.footer-utility-link {
-    background: transparent;
-    border: none;
+/* 6. Site footer (Início, Filmes, Séries, Animes): modules/footer.js. Neutral, line icons only */
+.site-footer {
+    margin: 48px auto 0;
+    padding: 0 48px 20px;
+    max-width: 1440px;
+    box-sizing: border-box;
     color: var(--text-muted);
-    font-size: 0.80rem;
-    font-weight: 500;
+    font-size: 0.82rem;
+}
+
+/* Canais keeps its own full-screen layout */
+body[data-app-view="tv"] .site-footer {
+    display: none;
+}
+
+/* Ad-block and DNS tips: a small discreet link above the footer, the tips open on click */
+.site-footer-tip {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
+    margin-bottom: 14px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 500;
     cursor: pointer;
     transition: color var(--transition-fast);
 }
 
-.footer-utility-link:hover {
+.site-footer-tip:hover,
+.site-footer-tip:focus-visible {
     color: #ffffff;
+    outline: none;
 }
 
-.footer-separator {
-    color: rgba(255, 255, 255, 0.15);
-    font-size: 0.75rem;
+.site-footer-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 48px;
+    padding: 26px 0 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.home-footer-meta {
-    font-size: 0.78rem;
-    color: var(--text-muted);
+.site-footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+}
+
+/* Logo, name and tagline on one line: "Tvzinha Online - Filmes, séries..." */
+.site-footer-logo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 9px;
+    margin-bottom: 4px;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.site-footer-logo img {
+    flex-shrink: 0;
+}
+
+.site-footer-name {
+    font-weight: 700;
+}
+
+.site-footer-tagline::before {
+    content: "-";
+    margin-right: 9px;
+    color: rgba(255, 255, 255, 0.42);
+}
+
+.site-footer-brand p {
+    margin: 0;
+    max-width: 560px;
+    line-height: 1.55;
+}
+
+.site-footer-credits {
+    font-size: 0.74rem;
+}
+
+/* TMDB logo on its own line, the credits text right under it */
+.site-footer-credits {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+/* TMDB attribution (their API terms): their official logo, unmodified */
+.site-footer-tmdb {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.site-footer-tmdb img {
+    height: 9px;
+    width: auto;
+}
+
+.site-footer-contact {
+    color: #e4e4e7;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.site-footer-contact:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.site-footer-columns {
+    display: flex;
+    gap: 56px;
+    flex-shrink: 0;
+}
+
+.site-footer-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.site-footer-heading {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+    margin-bottom: 2px;
+}
+
+.site-footer-column button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #d4d4d8;
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.site-footer-column button:hover,
+.site-footer-column button:focus-visible {
+    color: #ffffff;
+    outline: none;
+    text-decoration: underline;
+}
+
+/* One thin row: copyright on the left, back to top on the right */
+.site-footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 14px;
+}
+
+.site-footer-copyright {
+    margin: 0;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.38);
+}
+
+.site-footer-top {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+    color: #e4e4e7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.site-footer-top:hover,
+.site-footer-top:focus-visible {
+    background: rgba(255, 255, 255, 0.92);
+    color: #09090b;
+    outline: none;
+}
+
+.legal-modal-card {
+    max-width: 640px;
+}
+
+.legal-modal-paragraph {
+    margin: 0 0 12px;
+    color: #d4d4d8;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+    .site-footer {
+        padding: 0 16px 20px;
+        margin-top: 36px;
+    }
+
+    .site-footer-main {
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* The tagline gets its own line under the name, without the dash */
+    .site-footer-tagline {
+        flex-basis: 100%;
+        font-size: 0.92rem;
+    }
+
+    .site-footer-tagline::before {
+        content: none;
+    }
+
+    .site-footer-columns {
+        gap: 48px;
+    }
 }
 
 /* 2. Universal Dedicated Catalog Explorer (#movies-explore-view) */
