@@ -39,4 +39,4 @@ Fixed during the phase: a tab switch right after Back could be undone by the gro
 | 11 | With a page open, click a tab on the pill (Filmes, Séries, Início) | The page closes and the tab shows | |
 | 12 | Phone (Chrome Android): items 1, 6, 7 and the phone's Back button | Layout fits the screen; Back closes player, then page | |
 | 13 | Firefox: items 1, 6 and 7 | Same as Chrome | |
-| 14 | The banner "Assistir" on Início, Filmes, Séries and Animes | Opens the title page (Filmes: and starts playing) | |
+| 14 | The banner "Assistir Agora" on Início, Filmes, Séries and Animes | Always opens the title page (decided on 2026-10-20: same behavior everywhere); a live channel on the Início banner still opens the channel | |
