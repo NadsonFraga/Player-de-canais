@@ -64,6 +64,8 @@ Version `20261020_1704`, commit `42c7180`, merged into `staging` as `52163e1`.
 
 ### Manual (user, on staging)
 
+**Result:** approved by the user on 2026-10-20 ("pode prosseguir"), after these adjustments on staging: search hides titles not out yet and shows long names whole; "Em breve" tag on cards of titles not out yet (Assistir becomes "Em breve · estreia em ..."); phones get option B (one row, a single menu at the right) and a dark top band on the title page; hiding the pill on scroll was tried and removed. Open: the pill slides up a little while scrolling on Chrome for Android (B23).
+
 | # | Steps | Expected | Result |
 |---|---|---|---|
 | 1 | Look at the pill on the computer | TV icon (no "Início" tab), Canais, Filmes, Séries, Animes, Esportes dimmed with no badge, then search, profile, settings; everything centered | |
