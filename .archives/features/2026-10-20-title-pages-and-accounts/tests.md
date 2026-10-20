@@ -24,6 +24,8 @@ Fixed during the phase: a tab switch right after Back could be undone by the gro
 
 ### Manual (user, on staging)
 
+**Result:** approved by the user on 2026-10-20 ("tudo certo"), after these adjustments on staging: sideways rows for trailers, cast (directors look), collection and recommendations; smooth loading of the top; upcoming episodes greyed out with their release date; facts card without original language and network; banner "Assistir Agora" opens the title page everywhere.
+
 | # | Steps | Expected | Result |
 |---|---|---|---|
 | 1 | Filmes: open any movie from a row | Full page: title logo, genres, Assistir, +, eye, star, year / duration / age rating / score, Direção, overview with "Ler mais", facts card on the right ("termina às"), company logos | |
