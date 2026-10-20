@@ -4,7 +4,7 @@
  * Dual-Mode Episode Navigator (Seasons & Continuous Arcs), Watch History and Theater Player
  */
 
-import { store } from '../core/state.js?v=20261019_1657';
+import { store } from '../core/state.js?v=20261019_1817';
 import {
     TMDB_API_KEY,
     TMDB_BASE_URL,
@@ -14,17 +14,19 @@ import {
     TMDB_ANIMES_CACHE_KEY,
     WATCH_PROGRESS_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261019_1657';
-import { showToast } from '../core/toast.js?v=20261019_1657';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1657';
-import { buildFeedRows } from '../core/feedRows.js?v=20261019_1657';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1657';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1657';
-import { resumeStartTime } from '../core/resume.js?v=20261019_1657';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1657';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1657';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1657';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261019_1657';
+} from '../core/constants.js?v=20261019_1817';
+import { showToast } from '../core/toast.js?v=20261019_1817';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261019_1817';
+import { buildFeedRows } from '../core/feedRows.js?v=20261019_1817';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261019_1817';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261019_1817';
+import { resumeStartTime } from '../core/resume.js?v=20261019_1817';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261019_1817';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261019_1817';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261019_1817';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261019_1817';
+import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261019_1817';
+import { openMovieDetailsModal } from './movies.js?v=20261019_1817';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -196,13 +198,31 @@ function saveEpisodePosition(context, server, { position, duration, inEnding }) 
     }
 }
 
+/** Time label and bar of a saved position ({ position, duration }). */
+function continueTime(pos) {
+    if (!pos || !(pos.position > 0) || !(pos.duration > 0)) return { pct: 0, label: 'Retomar agora' };
+    const remainingMin = Math.round(Math.max(0, pos.duration - pos.position) / 60);
+    return {
+        pct: Math.min(100, Math.max(4, Math.round((pos.position / pos.duration) * 100))),
+        label: remainingMin > 0 ? `Faltam ${remainingMin} min` : 'Retomar agora'
+    };
+}
+
+// Movie progress is saved every ~10 s while it plays: redraw the rail once things settle
+let continueRedrawTimer = null;
+if (typeof window !== 'undefined') {
+    window.addEventListener(PROGRESS_EVENT, () => {
+        clearTimeout(continueRedrawTimer);
+        continueRedrawTimer = setTimeout(() => renderHomeContinueWatching(), 1500);
+    });
+}
+
 export function renderHomeContinueWatching() {
     const section = document.getElementById("home-continue-watching-section");
     const track = document.getElementById("home-continue-watching-track");
     if (!section || !track) return;
 
-    const progress = getStoredWatchProgress();
-    const items = Object.values(progress).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    const items = continueWatchingEntries();
 
     if (items.length === 0) {
         section.classList.add("hidden");
@@ -215,37 +235,31 @@ export function renderHomeContinueWatching() {
 
     const fragment = document.createDocumentFragment();
     items.slice(0, 10).forEach(item => {
+        const isMovie = item.mediaType === 'movie';
         const card = document.createElement("div");
         card.className = "continue-card";
         card.tabIndex = 0;
-        card.setAttribute("aria-label", `Continuar ${item.title} T${item.season}:E${item.episode}`);
+        card.setAttribute("aria-label", isMovie ? `Continuar ${item.title}` : `Continuar ${item.title} T${item.season}:E${item.episode}`);
 
         const imgUrl = item.backdrop_path
             ? `${TMDB_IMG_W500}${item.backdrop_path}`
             : (item.poster_path ? `${TMDB_IMG_W500}${item.poster_path}` : 'assets/logos/fav/icon-detailed.svg');
-        let progressPct = 0;
-        let timeLabel = 'Retomar agora';
-        if (item.positions) {
-            const posKey = `${item.season}:${item.episode}`;
-            const pos = item.positions[posKey];
-            if (pos && pos.position > 0 && pos.duration > 0) {
-                progressPct = Math.min(100, Math.max(4, Math.round((pos.position / pos.duration) * 100)));
-                const remainingSec = Math.max(0, pos.duration - pos.position);
-                const remainingMin = Math.round(remainingSec / 60);
-                if (remainingMin > 0) {
-                    timeLabel = `Faltam ${remainingMin} min`;
-                }
-            }
-        }
+        const { pct: progressPct, label: timeLabel } = continueTime(isMovie ? item : (item.positions || {})[`${item.season}:${item.episode}`]);
 
         const safeTitle = escapeHtml(item.title || 'Título');
         const safeTitleAttr = escapeAttr(item.title || 'Título');
         const safeImg = escapeAttr(imgUrl);
-        const safeSeason = escapeHtml(item.season);
-        const safeEp = escapeHtml(item.episode);
-        const safeEpTitle = escapeHtml(item.episodeTitle || ('Episódio ' + item.episode));
+        const subtitle = isMovie
+            ? 'Filme'
+            : `T${escapeHtml(item.season)}:E${escapeHtml(item.episode)} • ${escapeHtml(item.episodeTitle || ('Episódio ' + item.episode))}`;
 
         card.innerHTML = `
+            <button type="button" class="continue-card-remove" aria-label="Remover ${safeTitleAttr} de Continuar assistindo" title="Remover de Continuar assistindo">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                </svg>
+            </button>
             <div class="continue-card-media">
                 <img src="${safeImg}" alt="${safeTitleAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
                 <div class="continue-play-overlay">
@@ -261,20 +275,35 @@ export function renderHomeContinueWatching() {
             </div>
             <div class="continue-card-info">
                 <span class="continue-card-title">${safeTitle}</span>
-                <span class="continue-card-ep">T${safeSeason}:E${safeEp} • ${safeEpTitle}</span>
+                <span class="continue-card-ep">${subtitle}</span>
                 <span class="continue-card-time">${timeLabel}</span>
             </div>
         `;
 
         const resumeAction = () => {
+            if (isMovie) {
+                // Opens and plays it; the player starts where it stopped
+                openMovieDetailsModal({ id: item.id, title: item.title, poster_path: item.poster_path, backdrop_path: item.backdrop_path }, true);
+                return;
+            }
             openSeriesModal({ id: item.id, name: item.title, poster_path: item.poster_path, backdrop_path: item.backdrop_path }, item.mediaType || 'tv', {
                 autoPlaySeason: item.season,
                 autoPlayEpisode: item.episode
             });
         };
 
+        card.querySelector(".continue-card-remove").addEventListener("click", (e) => {
+            e.stopPropagation();
+            hideFromContinueWatching(item.key);
+            card.remove();
+            if (!track.querySelector(".continue-card")) section.classList.add("hidden");
+            showToast(`${item.title || 'Título'} removido de Continuar assistindo`);
+        });
+
         card.addEventListener("click", resumeAction);
         card.addEventListener("keydown", (e) => {
+            // Enter on the remove button belongs to the button
+            if (e.target !== card) return;
             if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 resumeAction();
