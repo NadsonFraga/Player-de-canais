@@ -15,13 +15,15 @@
 
 ## Manual (user, on the preview)
 
+The user reported every item OK on 2026-10-20 ("testado e aprovado").
+
 | # | Steps | Expected | Result |
 |---|---|---|---|
-| 1 | Play a movie on the Player Principal for a few minutes, close it, go to Início | the movie is on "Continuar assistindo" with "Filme", the bar and "Faltam X min" | |
-| 2 | Click that card | the movie opens and plays from where it stopped, with "Continuando de ..." and "Começar do início" | |
-| 3 | Open another movie on a servidor externo, go back to Início | it is on the rail too (no bar: external servers do not report the time) | |
-| 4 | Pass the mouse over a card and click the "x" in its corner | the card leaves, toast "... removido de Continuar assistindo", nothing opens | |
-| 5 | Watch the removed movie again | it comes back to the rail, from where it stopped | |
-| 6 | Phone: the "x" is visible on every card without hovering; tap it | same as 4 | |
-| 7 | Series and anime cards | open the episode as before; the "x" works the same | |
-| 8 | Remote / keyboard arrows on the rail | the "x" can be reached and Enter on it removes (Enter on the card still opens it) | |
+| 1 | Play a movie on the Player Principal for a few minutes, close it, go to Início | the movie is on "Continuar assistindo" with "Filme", the bar and "Faltam X min" | OK (user, 2026-10-20) |
+| 2 | Click that card | the movie opens and plays from where it stopped, with "Continuando de ..." and "Começar do início" | OK (user, 2026-10-20) |
+| 3 | Open another movie on a servidor externo, go back to Início | it is on the rail too (no bar: external servers do not report the time) | OK (user, 2026-10-20) |
+| 4 | Pass the mouse over a card and click the "x" in its corner | the card leaves, toast "... removido de Continuar assistindo", nothing opens | OK (user, 2026-10-20) |
+| 5 | Watch the removed movie again | it comes back to the rail, from where it stopped | OK (user, 2026-10-20) |
+| 6 | Phone: the "x" is visible on every card without hovering; tap it | same as 4 | OK (user, 2026-10-20) |
+| 7 | Series and anime cards | open the episode as before; the "x" works the same | OK (user, 2026-10-20) |
+| 8 | Remote / keyboard arrows on the rail | the "x" can be reached and Enter on it removes (Enter on the card still opens it) | OK (user, 2026-10-20) |
