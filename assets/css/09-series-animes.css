@@ -313,6 +313,51 @@
 .home-footer-meta {
     font-size: 0.78rem;
     color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    text-align: right;
+}
+
+/* TMDB attribution (their API terms): their official logo, unmodified, and the notice */
+.footer-tmdb-credit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-decoration: none;
+}
+
+.footer-tmdb-credit img {
+    height: 9px;
+    width: auto;
+    flex-shrink: 0;
+}
+
+.footer-tmdb-credit:hover {
+    color: #ffffff;
+}
+
+.footer-copyright {
+    font-size: 0.70rem;
+    color: rgba(255, 255, 255, 0.38);
+}
+
+@media (max-width: 640px) {
+    .home-footer-meta {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .footer-tmdb-credit {
+        align-items: flex-start;
+    }
+
+    .footer-tmdb-credit img {
+        margin-top: 3px;
+    }
 }
 
 /* 2. Universal Dedicated Catalog Explorer (#movies-explore-view) */
