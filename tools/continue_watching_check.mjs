@@ -173,7 +173,7 @@ try {
   await removeCard(MOVIE.title);
   await removeCard("Breaking Bad");
   await sleep(400);
-  const modalOpen = await b.evaluate("Boolean(document.getElementById('movie-modal') && !document.getElementById('movie-modal').classList.contains('hidden'))");
+  const modalOpen = await b.evaluate("Boolean(document.getElementById('movie-player-view') && !document.getElementById('movie-player-view').classList.contains('hidden'))");
   const afterRemove = (await b.evaluate(RAIL)).map(c => c.title);
   const kept = await b.evaluate(`(() => { const p = JSON.parse(localStorage.getItem('tvzinha_watch_progress_v1')); const m = p['movie:${MOVIE.id}'];
     return { movieHidden: m.hidden, moviePosition: m.position, showHidden: p[1396].hidden }; })()`);

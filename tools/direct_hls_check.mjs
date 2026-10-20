@@ -137,7 +137,9 @@ async function openEpisode(b, show, view) {
     if (ready !== null) break;
   }
   await b.evaluate("(window.TvzinhaActions.closeAdblockModal && window.TvzinhaActions.closeAdblockModal(), true)").catch(() => {});
-  await b.evaluate(`(window.TvzinhaActions.switchView('${view}'), import('/assets/js/modules/series.js?v=${VERSION}').then(m => m.openSeriesModal(${JSON.stringify({ ...show, backdrop_path: null, poster_path: null })}, 'tv', { autoPlaySeason: 1, autoPlayEpisode: 1 })).then(() => true))`);
+  await b.evaluate(`(window.TvzinhaActions.switchView('${view}'), true)`);
+  await sleep(600);
+  await b.evaluate(`(window.TvzinhaActions.openTitle('${view === "animes" ? "anime" : "tv"}', ${JSON.stringify({ ...show, backdrop_path: null, poster_path: null })}, { episode: { season: 1, episode: 1 } }), true)`);
 }
 
 const REACHER = { id: 108978, name: "Reacher", original_name: "Reacher", first_air_date: "2022-02-04", genre_ids: [80, 18], original_language: "en" };
