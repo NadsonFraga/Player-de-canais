@@ -272,7 +272,7 @@
 /* 6. Site footer (Início, Filmes, Séries, Animes): modules/footer.js. Neutral, line icons only */
 .site-footer {
     margin: 48px auto 0;
-    padding: 0 48px 28px;
+    padding: 0 48px 20px;
     max-width: 1440px;
     box-sizing: border-box;
     color: var(--text-muted);
@@ -284,83 +284,81 @@ body[data-app-view="tv"] .site-footer {
     display: none;
 }
 
-.site-footer-callout {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 20px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.site-footer-callout-icon {
-    color: #e4e4e7;
+/* Ad-block and DNS tips: a small discreet link above the footer, the tips open on click */
+.site-footer-tip {
     display: inline-flex;
-    flex-shrink: 0;
-}
-
-.site-footer-callout-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-}
-
-.site-footer-callout-text strong {
-    color: #ffffff;
-    font-size: 0.88rem;
-    font-weight: 700;
-}
-
-.site-footer-callout-btn {
-    flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    color: #ffffff;
-    border-radius: 999px;
-    padding: 8px 16px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 14px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: background var(--transition-fast), border-color var(--transition-fast);
+    transition: color var(--transition-fast);
 }
 
-.site-footer-callout-btn:hover,
-.site-footer-callout-btn:focus-visible {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.32);
+.site-footer-tip:hover,
+.site-footer-tip:focus-visible {
+    color: #ffffff;
     outline: none;
 }
 
 .site-footer-main {
     display: flex;
     justify-content: space-between;
-    gap: 32px;
-    padding: 36px 0 28px;
+    align-items: flex-start;
+    gap: 48px;
+    padding: 26px 0 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .site-footer-brand {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    max-width: 340px;
+    gap: 9px;
+    max-width: 560px;
 }
 
 .site-footer-logo {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
     color: #ffffff;
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
-.site-footer-description {
+.site-footer-brand p {
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.55;
+}
+
+.site-footer-note,
+.site-footer-credits {
+    font-size: 0.74rem;
+}
+
+.site-footer-credits {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+/* TMDB attribution (their API terms): their official logo, unmodified */
+.site-footer-tmdb {
+    display: inline-flex;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.site-footer-tmdb img {
+    height: 9px;
+    width: auto;
 }
 
 .site-footer-contact {
@@ -376,18 +374,19 @@ body[data-app-view="tv"] .site-footer {
 
 .site-footer-columns {
     display: flex;
-    gap: 64px;
+    gap: 56px;
+    flex-shrink: 0;
 }
 
 .site-footer-column {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 9px;
+    gap: 8px;
 }
 
 .site-footer-heading {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -413,53 +412,25 @@ body[data-app-view="tv"] .site-footer {
     text-decoration: underline;
 }
 
+/* One thin row: copyright on the left, back to top on the right */
 .site-footer-bottom {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
-    gap: 24px;
-    padding-top: 22px;
-}
-
-.site-footer-notes {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 0.74rem;
-    line-height: 1.55;
-    max-width: 860px;
-}
-
-.site-footer-notes p {
-    margin: 0;
-}
-
-.site-footer-credits {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-}
-
-/* TMDB attribution (their API terms): their official logo, unmodified */
-.site-footer-tmdb {
-    display: inline-flex;
-    flex-shrink: 0;
-    margin-top: 4px;
-}
-
-.site-footer-tmdb img {
-    height: 9px;
-    width: auto;
+    gap: 16px;
+    padding-top: 14px;
 }
 
 .site-footer-copyright {
+    margin: 0;
+    font-size: 0.72rem;
     color: rgba(255, 255, 255, 0.38);
 }
 
 .site-footer-top {
     flex-shrink: 0;
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.16);
     background: rgba(255, 255, 255, 0.05);
@@ -491,21 +462,13 @@ body[data-app-view="tv"] .site-footer {
 
 @media (max-width: 768px) {
     .site-footer {
-        padding: 0 16px 24px;
+        padding: 0 16px 20px;
         margin-top: 36px;
-    }
-
-    .site-footer-callout {
-        flex-wrap: wrap;
-    }
-
-    .site-footer-callout-btn {
-        width: 100%;
     }
 
     .site-footer-main {
         flex-direction: column;
-        gap: 28px;
+        gap: 24px;
     }
 
     .site-footer-columns {
