@@ -361,17 +361,19 @@ body[data-app-view="tv"] .site-footer {
     font-size: 0.74rem;
 }
 
+/* TMDB logo on its own line, the credits text right under it */
 .site-footer-credits {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 6px;
+    margin-top: 6px;
 }
 
 /* TMDB attribution (their API terms): their official logo, unmodified */
 .site-footer-tmdb {
     display: inline-flex;
     flex-shrink: 0;
-    margin-top: 4px;
 }
 
 .site-footer-tmdb img {

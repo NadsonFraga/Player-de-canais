@@ -2,7 +2,7 @@
  * TVZINHA ONLINE - TMDB reads through our /api/tmdb route, which adds the key kept as a server secret (D3).
  * `path`: a TMDB path with its query, e.g. "discover/movie?with_genres=16&page=2" (Portuguese is added here).
  */
-import { TMDB_PROXY_URL } from './constants.js?v=20261020_1345';
+import { TMDB_PROXY_URL } from './constants.js?v=20261020_1349';
 
 export async function fetchTmdb(path) {
     const relative = `/${String(path).replace(/^\/+/, '')}`;
