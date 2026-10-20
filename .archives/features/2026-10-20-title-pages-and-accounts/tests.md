@@ -86,7 +86,20 @@ Version `20261020_1704`, commit `42c7180`, merged into `staging` as `52163e1`.
 
 ### Automated
 
-Filled in at the end of the phase.
+Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
+
+| Check | Result |
+|---|---|
+| `node --check`, `check_js.py`, `bump_version.py --check`, tag balance of `index.html` | PASS |
+| `collection_check.mjs` (new): menu entry, tab counts, Assistindo labels and bars, newest first, filters, score, remove (kept as off with its time), card to title page and Back, Back home, "Continuar assistindo" to Assistindo, favorite channel, end of a movie marks Assistido and shows the rating card, a star saves the score, phone width | 16/16 Chrome, 16/16 Firefox, 16/16 against staging |
+| `title_page_check.mjs` (shared stars) | 28/28 |
+| `header_check.mjs` (Coleção in the menus) | 22/22 |
+| `continue_watching_check.mjs` | 9/9 |
+| `episode_entry_check.mjs` | 52/52 |
+| `tab_reset_check.mjs` | all passed |
+| `player_touch_check.mjs` | 17/17 |
+| `player_ui_check.mjs` | 43/46: only the known B21 items ("Escolha um canal", DBZ T9E31 fixed waits) |
+| `check_deployment.py` on staging | ALL PASSED |
 
 ### Manual (user, on staging)
 
