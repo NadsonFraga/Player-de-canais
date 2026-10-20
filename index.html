@@ -122,16 +122,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261020_1243">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261020_1243">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261020_1243">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261020_1243">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261020_1243">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261020_1243">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261020_1243">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261020_1243">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261020_1243">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261020_1243">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261020_1311">
 </head>
 
 <body>
@@ -307,35 +307,6 @@
                 </section>
             </div>
 
-            <!-- Discreet Utility Strip -->
-            <footer class="home-footer-strip">
-                <div class="home-footer-actions">
-                    <button id="btn-home-adblock-shortcut" class="footer-utility-link" type="button" aria-label="Aviso e configuração do Bloqueador de Anúncios">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            <polyline points="9 12 11 14 15 10"></polyline>
-                        </svg>
-                        <span>Dicas de Bloqueador de Anúncios & DNS</span>
-                    </button>
-                    <span class="footer-separator">•</span>
-                    <button id="btn-home-team-shortcut" class="footer-utility-link" type="button" aria-label="Escolher clube de futebol favorito">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polygon points="12 6 16.5 9.5 15 14.5 9 14.5 7.5 9.5 12 6"></polygon>
-                        </svg>
-                        <span>Personalizar Meu Clube de Futebol</span>
-                    </button>
-                </div>
-                <div class="home-footer-meta">
-                    <span class="brand-tagline">Tvzinha Online • Cinema, Séries e TV em Alta Definição</span>
-                    <!-- Attribution required by TMDB's API terms: their logo and this notice -->
-                    <a class="footer-tmdb-credit" href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" aria-label="The Movie Database (TMDB)">
-                        <img src="assets/logos/brands/tmdb.svg" alt="TMDB" width="68" height="9" loading="lazy">
-                        <span>Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</span>
-                    </a>
-                    <span class="footer-copyright">© 2026 Tvzinha Online. Títulos, imagens e marcas pertencem aos seus respectivos donos.</span>
-                </div>
-            </footer>
         </div>
     </main>
 
@@ -1547,6 +1518,92 @@
         </section>
     </main>
 
+    <!-- Site footer (Início, Filmes, Séries, Animes; Canais keeps its own layout): modules/footer.js -->
+    <footer id="site-footer" class="site-footer">
+        <div class="site-footer-callout">
+            <span class="site-footer-callout-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+            </span>
+            <div class="site-footer-callout-text">
+                <strong>Menos anúncios nos servidores externos</strong>
+                <span>Um bloqueador de anúncios ou um DNS privado evita pop-ups nos players de terceiros.</span>
+            </div>
+            <button id="btn-footer-adblock" class="site-footer-callout-btn" type="button">Ver dicas de bloqueador e DNS</button>
+        </div>
+
+        <div class="site-footer-main">
+            <div class="site-footer-brand">
+                <div class="site-footer-logo">
+                    <img src="assets/logos/fav/icon-detailed.svg" alt="" width="28" height="28" loading="lazy">
+                    <span>Tvzinha <strong>Online</strong></span>
+                </div>
+                <p class="site-footer-description">Filmes, séries, animes e canais ao vivo em um só lugar.</p>
+                <!-- Contact: shown once the site's own e-mail exists (set href and text, remove "hidden") -->
+                <a id="site-footer-contact" class="site-footer-contact hidden" href="#"></a>
+            </div>
+            <nav class="site-footer-columns" aria-label="Rodapé">
+                <div class="site-footer-column">
+                    <span class="site-footer-heading">Navegar</span>
+                    <button type="button" data-footer-view="home">Início</button>
+                    <button type="button" data-footer-view="tv">Canais</button>
+                    <button type="button" data-footer-view="movies">Filmes</button>
+                    <button type="button" data-footer-view="series">Séries</button>
+                    <button type="button" data-footer-view="animes">Animes</button>
+                </div>
+                <div class="site-footer-column">
+                    <span class="site-footer-heading">Legal</span>
+                    <button type="button" data-legal="privacy">Privacidade</button>
+                    <button type="button" data-legal="terms">Termos de uso</button>
+                    <button type="button" data-legal="dmca">DMCA</button>
+                </div>
+            </nav>
+        </div>
+
+        <div class="site-footer-bottom">
+            <div class="site-footer-notes">
+                <p>O Tvzinha Online não armazena nem envia arquivos de mídia. Os vídeos são exibidos a partir de provedores de terceiros.</p>
+                <p class="site-footer-credits">
+                    <!-- Attribution required by TMDB's API terms: their logo, unmodified, and the notice below -->
+                    <a class="site-footer-tmdb" href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" aria-label="The Movie Database (TMDB)">
+                        <img src="assets/logos/brands/tmdb.svg" alt="TMDB" width="68" height="9" loading="lazy">
+                    </a>
+                    <span>Dados de filmes e séries: TMDB. Animes: MyAnimeList. Aberturas e encerramentos: AniSkip, TheIntroDB e SkipDB. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</span>
+                </p>
+                <p class="site-footer-copyright">© 2026 Tvzinha Online. Títulos, imagens e marcas pertencem aos seus respectivos donos.</p>
+            </div>
+            <button id="btn-footer-top" class="site-footer-top" type="button" aria-label="Voltar ao topo" title="Voltar ao topo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Legal panel (Privacidade, Termos de uso, DMCA), same look as the ad-block tips: modules/footer.js -->
+    <div id="legal-modal" class="adblock-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title" style="display: none;">
+        <div class="adblock-modal-card legal-modal-card">
+            <div class="adblock-modal-header">
+                <div class="adblock-modal-title-box">
+                    <div>
+                        <h2 id="legal-modal-title"></h2>
+                        <p class="adblock-modal-subtitle">Tvzinha Online</p>
+                    </div>
+                </div>
+                <button id="btn-close-legal-modal" class="btn-modal-close" aria-label="Fechar" title="Fechar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="legal-modal-body" class="adblock-modal-body legal-modal-body"></div>
+        </div>
+    </div>
+
     <!-- Team Selection Modal -->
     <div id="team-select-modal" class="team-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="team-modal-title">
         <div class="team-modal-card">
@@ -1964,7 +2021,7 @@
     <!-- Streaming Engine V3: Hls.js & Artplayer load on demand with Subresource Integrity (D7, B11), see ensurePlayerLibs() in engine.js -->
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261020_1243"></script>
+    <script type="module" src="assets/js/main.js?v=20261020_1311"></script>
 </body>
 
 </html>

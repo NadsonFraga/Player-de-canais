@@ -3,7 +3,7 @@
  * Implements strict hierarchical back navigation across all tabs, searches, modals, drawers, and active media.
  */
 
-import { store } from '../core/state.js?v=20261020_1243';
+import { store } from '../core/state.js?v=20261020_1311';
 
 let navigationDepth = 0;
 let isProgrammaticBack = false;
@@ -178,6 +178,16 @@ export function handleBackButton() {
         const btnCloseAdblock = document.getElementById("btn-close-adblock-modal");
         if (btnCloseAdblock) {
             btnCloseAdblock.click();
+            return true;
+        }
+    }
+
+    // 2.5 Legal panel (footer: Privacidade, Termos de uso, DMCA)
+    const legalModal = document.getElementById("legal-modal");
+    if (legalModal && !legalModal.classList.contains("hidden")) {
+        const btnCloseLegal = document.getElementById("btn-close-legal-modal");
+        if (btnCloseLegal) {
+            btnCloseLegal.click();
             return true;
         }
     }
