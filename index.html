@@ -122,16 +122,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261020_1311">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261020_1311">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261020_1311">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261020_1311">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261020_1311">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261020_1311">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261020_1311">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261020_1311">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261020_1311">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261020_1311">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261020_1337">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261020_1337">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261020_1337">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261020_1337">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261020_1337">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261020_1337">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261020_1337">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261020_1337">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261020_1337">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261020_1337">
 </head>
 
 <body>
@@ -1520,27 +1520,29 @@
 
     <!-- Site footer (Início, Filmes, Séries, Animes; Canais keeps its own layout): modules/footer.js -->
     <footer id="site-footer" class="site-footer">
-        <div class="site-footer-callout">
-            <span class="site-footer-callout-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    <polyline points="9 12 11 14 15 10"></polyline>
-                </svg>
-            </span>
-            <div class="site-footer-callout-text">
-                <strong>Menos anúncios nos servidores externos</strong>
-                <span>Um bloqueador de anúncios ou um DNS privado evita pop-ups nos players de terceiros.</span>
-            </div>
-            <button id="btn-footer-adblock" class="site-footer-callout-btn" type="button">Ver dicas de bloqueador e DNS</button>
-        </div>
+        <button id="btn-footer-adblock" class="site-footer-tip" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            <span>Menos anúncios nos servidores externos</span>
+        </button>
 
         <div class="site-footer-main">
             <div class="site-footer-brand">
                 <div class="site-footer-logo">
-                    <img src="assets/logos/fav/icon-detailed.svg" alt="" width="28" height="28" loading="lazy">
-                    <span>Tvzinha <strong>Online</strong></span>
+                    <img src="assets/logos/fav/icon-detailed.svg" alt="" width="26" height="26" loading="lazy">
+                    <span>Tvzinha Online</span>
                 </div>
                 <p class="site-footer-description">Filmes, séries, animes e canais ao vivo em um só lugar.</p>
+                <p class="site-footer-note">O Tvzinha Online não armazena nem envia arquivos de mídia. Os vídeos são exibidos a partir de provedores de terceiros.</p>
+                <p class="site-footer-credits">
+                    <!-- Attribution required by TMDB's API terms: their logo, unmodified, and the notice -->
+                    <a class="site-footer-tmdb" href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" aria-label="The Movie Database (TMDB)">
+                        <img src="assets/logos/brands/tmdb.svg" alt="TMDB" width="68" height="9" loading="lazy">
+                    </a>
+                    <span>Dados de filmes e séries: TMDB. Animes: MyAnimeList. Aberturas e encerramentos: AniSkip, TheIntroDB e SkipDB. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</span>
+                </p>
                 <!-- Contact: shown once the site's own e-mail exists (set href and text, remove "hidden") -->
                 <a id="site-footer-contact" class="site-footer-contact hidden" href="#"></a>
             </div>
@@ -1563,19 +1565,9 @@
         </div>
 
         <div class="site-footer-bottom">
-            <div class="site-footer-notes">
-                <p>O Tvzinha Online não armazena nem envia arquivos de mídia. Os vídeos são exibidos a partir de provedores de terceiros.</p>
-                <p class="site-footer-credits">
-                    <!-- Attribution required by TMDB's API terms: their logo, unmodified, and the notice below -->
-                    <a class="site-footer-tmdb" href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" aria-label="The Movie Database (TMDB)">
-                        <img src="assets/logos/brands/tmdb.svg" alt="TMDB" width="68" height="9" loading="lazy">
-                    </a>
-                    <span>Dados de filmes e séries: TMDB. Animes: MyAnimeList. Aberturas e encerramentos: AniSkip, TheIntroDB e SkipDB. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</span>
-                </p>
-                <p class="site-footer-copyright">© 2026 Tvzinha Online. Títulos, imagens e marcas pertencem aos seus respectivos donos.</p>
-            </div>
+            <p class="site-footer-copyright">© 2026 Tvzinha Online. Títulos, imagens e marcas pertencem aos seus respectivos donos.</p>
             <button id="btn-footer-top" class="site-footer-top" type="button" aria-label="Voltar ao topo" title="Voltar ao topo">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="19" x2="12" y2="5"></line>
                     <polyline points="5 12 12 5 19 12"></polyline>
                 </svg>
@@ -2021,7 +2013,7 @@
     <!-- Streaming Engine V3: Hls.js & Artplayer load on demand with Subresource Integrity (D7, B11), see ensurePlayerLibs() in engine.js -->
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261020_1311"></script>
+    <script type="module" src="assets/js/main.js?v=20261020_1337"></script>
 </body>
 
 </html>
