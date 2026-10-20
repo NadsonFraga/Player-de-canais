@@ -1,10 +1,23 @@
 # Fila de Trabalho (alterações e testes)
 
-> **Atualizado em:** 2026-10-19
+> **Atualizado em:** 2026-10-20
 > **Status:** documento vivo. Nada daqui está aprovado para implementação, exceto o que estiver marcado como feito.
 > **Regras** (`CLAUDE.md`): mostrar o plano no chat, esperar aprovação, parar ao fim de cada fase, nenhuma operação git sem pedido, preferir correções gerais a remendos por título, testar vários títulos no Chrome e no Firefox.
 
 Legenda: `[feito]` implementado e verificado · `[impl]` implementado, verificação incompleta · `[aberto]` não iniciado · `[investigar]` causa ainda não confirmada · `[causa]` causa confirmada, falta decidir a correção · `[decisão]` depende de você.
+
+---
+
+## >>> FEAT GRANDE EM ANDAMENTO: página do título, topo novo, Coleção e conta <<<
+
+Plano: `features/2026-10-20-title-pages-and-accounts/plan.md` (proposto em 20/10, aguardando aprovação). Junta F10, F11 e G7 numa entrega só, em 4 fases, cada uma testada no `staging`; a produção recebe tudo de uma vez no fim.
+
+1. **Página do título em tela inteira** (filmes, séries, animes) e player em tela inteira; botões Quero assistir, Assistido e Avaliar já gravando no navegador.
+2. **Topo novo** (pílula com marca, abas, perfil, busca e engrenagem) e **busca geral**.
+3. **Coleção** (abas Assistindo, Quero assistir, Assistidos, Avaliados, Canais favoritos) e o cartão "Gostou? Avalie".
+4. **Conta e sincronização** (plano detalhado próprio antes do código), com Privacidade e Termos novos.
+
+Depois, fora desta feat: Trakt/AniList, notas do IMDb e Rotten Tomatoes, trailer no fundo, entrar com Google, login na TV.
 
 ---
 
