@@ -422,7 +422,7 @@
     display: none;
 }
 
-/* --- Phones: one round button at the right of the pill; the whole pill tucks away on scroll --- */
+/* --- Phones: one round button at the right of the pill (the pill stays fixed at the top) --- */
 @media (max-width: 768px) {
     .nav-tools-divider,
     .nav-capsule-tools {
@@ -450,23 +450,6 @@
     .nav-tool {
         width: 32px;
         height: 32px;
-    }
-
-    /* Tucked away while scrolling down, back when scrolling up (pill and its menu button together) */
-    .floating-nav-capsule {
-        transition: transform 0.25s ease, opacity 0.25s ease;
-    }
-
-    /* A new screen shows the pill at once (no sliding in) */
-    body.nav-instant .floating-nav-capsule,
-    body.nav-instant .title-page-back {
-        transition: none !important;
-    }
-
-    body.nav-tucked .floating-nav-capsule {
-        transform: translate(-50%, -80px);
-        opacity: 0;
-        pointer-events: none;
     }
 
     /* The menu opens under the pill, aligned to its right end */

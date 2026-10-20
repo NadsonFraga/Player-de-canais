@@ -6,8 +6,8 @@
  *   3. "/" opens the search; typing a word makes one request (not one per letter); the category filters reuse it;
  *      a result opens the title page and Back returns
  *   4. channels are found with no request, listed first, and open the channel; Back closes the search
- *   5. phones: one row with a single menu button (search, profile and options inside); the whole pill tucks away
- *      scrolling down and comes back scrolling up; it clears the title page's back button
+ *   5. phones: one row with a single menu button (search, profile and options inside), fixed at the top; it clears
+ *      the title page's back button
  *
  *   node tools/header_check.mjs [--browser=chrome|edge|firefox] [--shots=<folder>]   (chrome by default)
  *
@@ -228,8 +228,7 @@ try {
   await b.evaluate("(window.TvzinhaActions.switchView('home'), true)");
   await sleep(1200);
 
-  // 5. Phones: one row (tabs and a single round menu button), the menu holds search, profile and options;
-  //    the whole pill tucks away scrolling down and comes back scrolling up
+  // 5. Phones: one row (tabs and a single round menu button), fixed; the menu holds search, profile and options
   await b.viewport(390, 844, true);
   await sleep(1000);
   const phone = await b.evaluate(`(() => { const p = document.getElementById('floating-nav-capsule').getBoundingClientRect(); const more = document.getElementById('btn-nav-more').getBoundingClientRect();
@@ -245,22 +244,6 @@ try {
   check("phone: Buscar in the menu opens the search", phoneSearch !== null);
   await b.evaluate("(history.back(), true)");
   await waitFor(b, `!(${SEARCH_OPEN})`, 4000);
-  // Step by step, like a finger (a big jump counts as a new screen and shows the pill at once)
-  const scrollSteps = (from, to) => `(async () => { const step = ${from < to ? 60 : -60}; for (let y = ${from}; step > 0 ? y <= ${to} : y >= ${to}; y += step) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 40)); } return true; })()`;
-  await b.evaluate("(window.scrollTo(0, 0), true)");
-  await sleep(300);
-  await b.evaluate(scrollSteps(0, 720));
-  const tucked = await waitFor(b, "document.body.classList.contains('nav-tucked') && getComputedStyle(document.getElementById('floating-nav-capsule')).pointerEvents === 'none'", 3000);
-  await b.evaluate(scrollSteps(720, 480));
-  const shown = await waitFor(b, "!document.body.classList.contains('nav-tucked')", 3000);
-  // A new screen (a title page) shows the pill at once, even if it was tucked away
-  await b.evaluate(scrollSteps(480, 900));
-  await b.evaluate("(window.TvzinhaActions.openTitle('movie', { id: 1022789, title: 'Divertida Mente 2' }), true)");
-  const shownOnOpen = await waitFor(b, "!document.body.classList.contains('nav-tucked')", 1500);
-  await b.evaluate("(history.back(), true)");
-  await waitFor(b, `!(${PAGE_OPEN})`, 4000);
-  check("phone: a new screen shows the pill at once", shownOnOpen !== null);
-  check("phone: the pill tucks away scrolling down and comes back scrolling up", tucked !== null && shown !== null);
   await b.evaluate("(window.scrollTo(0, 0), window.TvzinhaActions.openTitle('movie', { id: 1022789, title: 'Divertida Mente 2' }), true)");
   await waitFor(b, PAGE_OPEN, 5000);
   await sleep(1500);

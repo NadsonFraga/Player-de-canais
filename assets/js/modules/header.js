@@ -1,24 +1,24 @@
 /**
  * TVZINHA ONLINE - Header tools: global search, profile menu and settings menu (the icons after the tabs in the
- * pill). Phones have one round button at the right of the pill with a single menu holding all of it, and the whole
- * pill tucks away while the page scrolls down (it comes back scrolling up).
+ * pill). Phones have one round button at the right of the pill with a single menu holding all of it; the pill stays
+ * fixed at the top (hiding it on scroll was tried and removed on 2026-10-20).
  *
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261020_1751';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1751';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1751';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1751';
-import { showToast } from '../core/toast.js?v=20261020_1751';
-import { syncPageLock } from '../core/activity.js?v=20261020_1751';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1751';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1751';
-import { switchAppView } from '../navigation/router.js?v=20261020_1751';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1751';
-import { isAnimeShow } from './series.js?v=20261020_1751';
-import { selectChannelByName } from './channels.js?v=20261020_1751';
-import { openLegalSection } from './footer.js?v=20261020_1751';
+import { store } from '../core/state.js?v=20261020_1808';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1808';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1808';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1808';
+import { showToast } from '../core/toast.js?v=20261020_1808';
+import { syncPageLock } from '../core/activity.js?v=20261020_1808';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1808';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1808';
+import { switchAppView } from '../navigation/router.js?v=20261020_1808';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1808';
+import { isAnimeShow } from './series.js?v=20261020_1808';
+import { selectChannelByName } from './channels.js?v=20261020_1808';
+import { openLegalSection } from './footer.js?v=20261020_1808';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -47,8 +47,6 @@ function openMenu(menuId) {
     if (!menu) return;
     menu.classList.remove('hidden');
     menuButton(menuId)?.setAttribute('aria-expanded', 'true');
-    // The pill stays visible while a menu is open (phones tuck it away on scroll)
-    document.body.classList.remove('nav-tucked');
     if (!openMenuId) pushNavLayer('menu');
     openMenuId = menuId;
     menu.querySelector('.nav-menu-item:not([aria-disabled="true"])')?.focus({ preventScroll: true });
@@ -387,30 +385,4 @@ export function setupHeader() {
             closeSearchThen(() => openPersonTitles({ id: Number(person.dataset.searchPerson), name: person.dataset.name, photo: person.dataset.photo || '' }));
         }
     });
-
-    // Phones: the pill tucks away while the person scrolls down and comes back when they scroll up. A new screen
-    // (tab switch, title page opened, stacked or closed) or a jump of the scroll shows it at once, without sliding.
-    const lastY = new WeakMap();
-    const showNow = () => {
-        if (!document.body.classList.contains('nav-tucked')) return;
-        document.body.classList.add('nav-instant');
-        document.body.classList.remove('nav-tucked');
-        requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove('nav-instant')));
-    };
-    new MutationObserver(showNow).observe(document.body, { attributes: true, attributeFilter: ['data-app-view'] });
-    const titlePage = document.getElementById('title-page');
-    if (titlePage) new MutationObserver(showNow).observe(titlePage, { attributes: true, attributeFilter: ['class'] });
-    window.addEventListener('popstate', showNow);
-    document.addEventListener('scroll', (e) => {
-        const target = e.target === document ? document.scrollingElement : e.target;
-        if (!target || (target !== document.scrollingElement && target.id !== 'title-page')) return;
-        // Each scrolling area keeps its own last position (the catalog and the title page scroll separately)
-        const y = target.scrollTop;
-        const before = lastY.has(target) ? lastY.get(target) : y;
-        lastY.set(target, y);
-        if (openMenuId) return;
-        if (Math.abs(y - before) > 400 || y <= 90) showNow();
-        else if (y > before + 10) document.body.classList.add('nav-tucked');
-        else if (y < before - 10) document.body.classList.remove('nav-tucked');
-    }, { capture: true, passive: true });
 }
