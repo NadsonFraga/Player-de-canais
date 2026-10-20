@@ -5,19 +5,19 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261020_1704';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1704';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1704';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1704';
-import { showToast } from '../core/toast.js?v=20261020_1704';
-import { syncPageLock } from '../core/activity.js?v=20261020_1704';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1704';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1704';
-import { switchAppView } from '../navigation/router.js?v=20261020_1704';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1704';
-import { isAnimeShow } from './series.js?v=20261020_1704';
-import { selectChannelByName } from './channels.js?v=20261020_1704';
-import { openLegalSection } from './footer.js?v=20261020_1704';
+import { store } from '../core/state.js?v=20261020_1714';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1714';
+import { fetchTmdb } from '../core/tmdb.js?v=20261020_1714';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1714';
+import { showToast } from '../core/toast.js?v=20261020_1714';
+import { syncPageLock } from '../core/activity.js?v=20261020_1714';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1714';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1714';
+import { switchAppView } from '../navigation/router.js?v=20261020_1714';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1714';
+import { isAnimeShow } from './series.js?v=20261020_1714';
+import { selectChannelByName } from './channels.js?v=20261020_1714';
+import { openLegalSection } from './footer.js?v=20261020_1714';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -185,10 +185,23 @@ function searchTmdb(query) {
     return multiCache.get(key);
 }
 
-/** Splits TMDB's mixed answer into our kinds. */
+function localToday() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Already out: a release (or first episode) date up to today. Announced titles (later date or none yet) stay out. */
+function isOut(item, today) {
+    const date = String(item.release_date || item.first_air_date || '');
+    return Boolean(date) && date <= today;
+}
+
+/** Splits TMDB's mixed answer into our kinds, without titles that are not out yet. */
 function splitResults(items) {
     const out = { movie: [], tv: [], anime: [], person: [] };
+    const today = localToday();
     items.forEach(item => {
+        if ((item.media_type === 'movie' || item.media_type === 'tv') && !isOut(item, today)) return;
         if (item.media_type === 'movie' && item.poster_path) out.movie.push({ kind: 'movie', item });
         else if (item.media_type === 'tv' && item.poster_path) {
             const kind = isAnimeShow(item) ? 'anime' : 'tv';
