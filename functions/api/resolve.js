@@ -149,6 +149,28 @@ function firstThenMerge(lookups, windowMs) {
   });
 }
 
+import { streamSigningKey, proxiedStreamUrl } from "./stream.js";
+
+// Calls per minute from one IP to /api/resolve and /api/tmdb, counted in this isolate's memory (free, approximate):
+// many title pages and catalog rows fit; a script hammering the routes does not
+export const API_IP_LIMIT = { max: 300, windowMs: 60 * 1000 };
+const apiIpWindows = new Map();
+
+/** Seconds to wait when this IP used up its calls of the minute, else 0. */
+export function apiIpBlockedFor(ip, now = Date.now()) {
+  const key = ip || "unknown";
+  let entry = apiIpWindows.get(key);
+  if (!entry || now - entry.start > API_IP_LIMIT.windowMs) {
+    entry = { start: now, count: 0 };
+    apiIpWindows.set(key, entry);
+  }
+  entry.count++;
+  if (apiIpWindows.size > 5000) {
+    for (const [k, v] of apiIpWindows) if (now - v.start > API_IP_LIMIT.windowMs) apiIpWindows.delete(k);
+  }
+  return entry.count > API_IP_LIMIT.max ? Math.ceil((entry.start + API_IP_LIMIT.windowMs - now) / 1000) : 0;
+}
+
 export function isAllowedOrigin(origin) {
   if (!origin) return true;
   try {
@@ -160,8 +182,8 @@ export function isAllowedOrigin(origin) {
     if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
     if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
     if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
-    if (host === "pages.dev" || host.endsWith(".pages.dev")) return true;
-    if (host === "tvzinha.online" || host.endsWith(".tvzinha.online")) return true;
+    // Our site and its previews only (any other *.pages.dev site is someone else's)
+    if (host === "tvzinhaonline.pages.dev" || host.endsWith(".tvzinhaonline.pages.dev")) return true;
     return false;
   } catch (e) {
     return false;
@@ -1139,6 +1161,13 @@ export async function onRequestGet(context) {
     "Access-Control-Allow-Origin": origin || "*",
     "Vary": "Origin",
   };
+  const ipWait = apiIpBlockedFor(request.headers.get("CF-Connecting-IP"));
+  if (ipWait) {
+    return new Response(JSON.stringify({ success: false, error: "too_many_requests" }), {
+      status: 429,
+      headers: { "Content-Type": "application/json; charset=utf-8", "Retry-After": String(ipWait), ...corsHeaders },
+    });
+  }
 
   const urlObj = new URL(request.url);
 
@@ -1159,6 +1188,15 @@ export async function onRequestGet(context) {
   // aniskip_only=1: only the MyAnimeList entry and its episode number (skip times for anime played from another host)
   const aniskipOnly = urlObj.searchParams.get("aniskip_only") === "1";
 
+  // Identifiers go into other sites' addresses: digits only (IMDb: "tt" + digits)
+  const imdbParam = urlObj.searchParams.get("imdb_id");
+  if ((id && !/^\d{1,9}$/.test(id)) || (malId && !/^\d{1,9}$/.test(malId)) || (imdbParam && !/^tt\d{1,10}$/.test(imdbParam))) {
+    return new Response(JSON.stringify({ success: false, error: "Invalid media identifier" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
   if (!id && !malId && !titleParam) {
     return new Response(JSON.stringify({ success: false, error: "Missing required media identifier (id, mal_id, or title)" }), {
       status: 400,
@@ -1167,6 +1205,9 @@ export async function onRequestGet(context) {
   }
 
   const proxyBase = `${urlObj.origin}/api/stream`;
+  // Proxy addresses are signed: the proxy takes no address it did not get from here
+  const streamKey = await streamSigningKey(context.env);
+  const proxied = (url, referer) => proxiedStreamUrl(proxyBase, streamKey, url, referer);
   let result = null;
 
   // Per-step durations exposed as a Server-Timing header (ms)
@@ -1212,14 +1253,14 @@ export async function onRequestGet(context) {
     if (zokoData && aniskipOnly) {
       result = { success: true, aniskip: { mal_id: parseInt(malId, 10), episode: effectiveEpisode, ready: true } };
     } else if (zokoData) {
-      const streamUrl = `${proxyBase}?url=${encodeURIComponent(zokoData.src)}&referer=${encodeURIComponent("https://zokoanime.video/")}`;
+      const streamUrl = await proxied(zokoData.src, "https://zokoanime.video/");
     
       // Build subtitles list with proxy URLs, keeping only Portuguese and English
-      const subtitles = normalizeSubtitles((zokoData.subtitles || []).map(s => ({
+      const subtitles = normalizeSubtitles(await Promise.all((zokoData.subtitles || []).map(async s => ({
         lang: s.lang || "",
         label: s.label || "",
-        url: `${proxyBase}?url=${encodeURIComponent(s.src)}&referer=${encodeURIComponent("https://zokoanime.video/")}`,
-      })));
+        url: await proxied(s.src, "https://zokoanime.video/"),
+      }))));
 
       const zokoSource = await timed("probe", probeSource({
         label: "ZokoAnime",
@@ -1292,7 +1333,7 @@ export async function onRequestGet(context) {
     }
 
     if (mgebData && mgebData.sources && mgebData.sources.length > 0) {
-      const parsedSources = mgebData.sources.map((s, idx) => {
+      const parsedSources = await Promise.all(mgebData.sources.map(async (s, idx) => {
         let rawFile = (s.file || "").trim();
         // Normalize any relative path artifacts from MGEB embed
         rawFile = rawFile.replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top");
@@ -1312,7 +1353,7 @@ export async function onRequestGet(context) {
         // Direct MP4 streams bypass datacenter proxy to eliminate Cloudflare WAF 403 blocks and enable native HTTP 206 byte-ranges
         const finalStreamUrl = isDirectMp4
           ? directCleanUrl
-          : `${proxyBase}?url=${encodeURIComponent(rawFile)}&referer=${encodeURIComponent(referer)}`;
+          : await proxied(rawFile, referer);
         const sourceType = s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4");
         // Every HLS segment through the proxy is one function call (~450 an hour of video). The player tries the
         // host first and falls back to the proxy, so hosts that need their Referer still play
@@ -1328,7 +1369,7 @@ export async function onRequestGet(context) {
             "Referer": referer,
           },
         };
-      });
+      }));
 
       function scoreSource(src) {
         const u = (src.raw_url || "").toLowerCase();

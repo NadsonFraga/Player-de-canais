@@ -4,14 +4,14 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261020_1352';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261020_1352';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261020_1352';
-import { showToast } from '../core/toast.js?v=20261020_1352';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261020_1352';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261020_1352';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261020_1352';
-import { escapeHtml } from '../core/sanitize.js?v=20261020_1352';
+import { store } from '../core/state.js?v=20261021_1511';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261021_1511';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261021_1511';
+import { showToast } from '../core/toast.js?v=20261021_1511';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261021_1511';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261021_1511';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261021_1511';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_1511';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -93,7 +93,6 @@ export function closeChannelsDrawer() {
 }
 
 export const closeMobileDrawer = closeChannelsDrawer;
-export const openMobileDrawer = openChannelsDrawer;
 
 function setupDrawerHandlers() {
     const toggleMenuBtn = document.getElementById("btn-toggle-menu");
@@ -330,7 +329,7 @@ export function renderSidebar() {
         headerBtn.className = "category-header";
         headerBtn.innerHTML = `
             <div class="category-title">
-                <span>${getCategoryIcon(category)} ${category}</span>
+                <span>${getCategoryIcon(category)} ${escapeHtml(category)}</span>
                 <span class="category-badge-count">${channelEntries.length}</span>
             </div>
             <svg class="category-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -358,7 +357,7 @@ export function renderSidebar() {
             channelBtn.innerHTML = `
                 <div class="channel-info-left">
                     ${logoHtml}
-                    <span class="channel-name">${channelName}</span>
+                    <span class="channel-name">${escapeHtml(channelName)}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <span class="channel-options-count">${playersCount} opç</span>
@@ -425,7 +424,7 @@ export function createChannel16x9Card(category, channelName, players) {
             ${logoLargeHtml}
         </div>
         <div class="channel-card-bottom">
-            <h4 class="channel-card-name" title="${channelName}">${channelName}</h4>
+            <h4 class="channel-card-name" title="${escapeAttr(channelName)}">${escapeHtml(channelName)}</h4>
         </div>
     `;
 
@@ -481,12 +480,12 @@ export function renderCategoryRows() {
             <div class="channels-row-header">
                 <div class="channels-row-title-box">
                     <span class="channels-row-badge">${iconSvg}</span>
-                    <h3>${category}</h3>
+                    <h3>${escapeHtml(category)}</h3>
                     <span class="channels-row-count">${channelList.length} canais</span>
                 </div>
-                <button class="btn-channels-row-see-all" data-category="${category}" type="button">Ver Todos &rarr;</button>
+                <button class="btn-channels-row-see-all" data-category="${escapeAttr(category)}" type="button">Ver Todos &rarr;</button>
             </div>
-            <div class="channels-row-scroller" data-category="${category}"></div>
+            <div class="channels-row-scroller" data-category="${escapeAttr(category)}"></div>
         `;
 
         const scroller = row.querySelector(".channels-row-scroller");
@@ -1234,13 +1233,13 @@ export function renderPlayerView(activeChannel) {
                     ${logoLargeHtml}
                     <div class="player-title-box">
                         <div style="display:flex;align-items:center;gap:8px;">
-                            <h2>${name}</h2>
+                            <h2>${escapeHtml(name)}</h2>
                             <button id="btn-fav-current" class="btn-card-fav ${isFav ? 'favorited' : ''}" title="${isFav ? 'Remover dos favoritos' : 'Favoritar canal'}" type="button">
                                 ${isFav ? getUiSvg('starFilled', 16) : getUiSvg('star', 16)}
                             </button>
                         </div>
                         <span class="channel-category-label">
-                            <span class="live-indicator"><span class="live-dot pulse-emerald"></span> AO VIVO</span> &bull; ${category}
+                            <span class="live-indicator"><span class="live-dot pulse-emerald"></span> AO VIVO</span> &bull; ${escapeHtml(category)}
                         </span>
                     </div>
                 </div>
@@ -1396,56 +1395,4 @@ export function renderPlayerView(activeChannel) {
     } else {
         mountTvContingencyIframe(activeChannel.contingencyUrl);
     }
-}
-
-/**
- * Resizable Sidebar (drag-to-resize)
- */
-export function setupSidebarResizer() {
-    const sidebar = document.getElementById("sidebar");
-    const sidebarResizer = document.getElementById("sidebar-resizer");
-    if (!sidebar || !sidebarResizer) return;
-
-    let isResizing = false;
-
-    // Load saved width from localStorage
-    try {
-        const savedWidth = localStorage.getItem("tvzinha_sidebar_width");
-        if (savedWidth && window.innerWidth > 768) {
-            const widthVal = parseInt(savedWidth, 10);
-            if (widthVal >= 240 && widthVal <= 600) {
-                sidebar.style.width = widthVal + "px";
-            }
-        }
-    } catch (e) {
-        console.warn("Erro ao ler largura da sidebar:", e);
-    }
-
-    sidebarResizer.addEventListener("mousedown", (e) => {
-        if (window.innerWidth <= 768) return;
-        e.preventDefault();
-        isResizing = true;
-        document.body.classList.add("is-resizing");
-
-        function onMouseMove(moveEvent) {
-            if (!isResizing) return;
-            const newWidth = Math.max(240, Math.min(600, moveEvent.clientX));
-            sidebar.style.width = newWidth + "px";
-            try {
-                localStorage.setItem("tvzinha_sidebar_width", newWidth);
-            } catch (err) {}
-        }
-
-        function onMouseUp() {
-            if (isResizing) {
-                isResizing = false;
-                document.body.classList.remove("is-resizing");
-                window.removeEventListener("mousemove", onMouseMove);
-                window.removeEventListener("mouseup", onMouseUp);
-            }
-        }
-
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
-    });
 }

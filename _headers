@@ -1,10 +1,11 @@
-# Global Security Headers & Content Security Policy (D6)
+# Global Security Headers & Content Security Policy (D6). No 'unsafe-inline' for scripts: every script is a file
+# (assets/js/guard.js for the head guard) and no element carries an inline handler (core/imageFallback.js).
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
   X-Frame-Options: SAMEORIGIN
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://image.tmdb.org https://images.metahub.space https://m.media-amazon.com https:; media-src 'self' blob: http: https:; connect-src 'self' blob: https://api.themoviedb.org https://api.aniskip.com https://api.jikan.moe https:; frame-src 'self' https://embedplayer2.xyz https://superflixapi.top https://mgeb.top https://*.mgeb.top https://*.blogger.com https://www.youtube.com https:; frame-ancestors 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self';
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://image.tmdb.org https://images.metahub.space https://m.media-amazon.com https:; media-src 'self' blob: http: https:; connect-src 'self' blob: https://api.themoviedb.org https://api.aniskip.com https://api.jikan.moe https:; frame-src 'self' https://embedplayer2.xyz https://superflixapi.top https://mgeb.top https://*.mgeb.top https://*.blogger.com https://www.youtube.com https:; frame-ancestors 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self';
 
 # Cloudflare Pages Cache Rules for Dynamic Scraping JSON
 /data/proximos_jogos.json

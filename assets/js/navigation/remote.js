@@ -3,12 +3,52 @@
  * Purely DOM-based spatial navigation with Euclidean 2D distance calculation
  */
 
-import { store } from '../core/state.js?v=20261020_1352';
+import { store } from '../core/state.js?v=20261021_1511';
+import { handleBackButton } from './historyManager.js?v=20261021_1511';
 
 export function setupTvRemoteNavigation() {
     function getFocusableElements() {
         const selector = [
             '#floating-nav-capsule .nav-capsule-item',
+            '#floating-nav-capsule .nav-tool',
+            '.nav-menu:not(.hidden) .nav-menu-item',
+            '#global-search-input',
+            '#btn-close-search',
+            '.search-kind',
+            '.search-channel',
+            '.search-person',
+            '#btn-account-back',
+            '.account-switch-option',
+            '.account-input',
+            '#btn-account-eye',
+            '#btn-account-submit',
+            '.account-link',
+            '.account-inline-link',
+            '#btn-account-copy',
+            '#btn-account-code-done',
+            '#btn-profile-back',
+            '.profile-tile',
+            '#btn-profile-manage',
+            '#btn-profile-signout',
+            '#profile-name',
+            '.profile-avatar-tab',
+            '.profile-avatar-option',
+            '#btn-profile-save',
+            '#btn-profile-remove',
+            '#btn-profile-confirm-remove',
+            '#btn-profile-confirm-cancel',
+            '#btn-profile-guest-yes',
+            '#btn-profile-guest-no',
+            '#btn-settings-back',
+            '.settings-nav-item:not([hidden])',
+            '#settings-panel button',
+            '#settings-panel input',
+            '.collection-tab',
+            '.collection-filter',
+            '.collection-remove',
+            '.collection-channel',
+            '.rate-prompt .rate-star-half',
+            '.rate-prompt-skip',
             '#btn-home-hero-watch',
             '#btn-home-hero-explore',
             '.home-channel-card',
@@ -39,8 +79,20 @@ export function setupTvRemoteNavigation() {
             '#animes-search-input',
             '#btn-hero-watch-movie',
             '.movie-poster-card',
-            '#btn-close-movie-modal',
-            '#btn-close-series-modal',
+            '#btn-title-back',
+            '#btn-title-play',
+            '.title-action',
+            '.rate-star-half',
+            '#btn-title-more',
+            '.title-credit-link',
+            '.title-company',
+            '.title-trailer-card',
+            '.title-cast-card',
+            '#btn-title-list-more',
+            '#btn-close-trailer',
+            '.btn-mode-switch',
+            '#btn-close-movie-player',
+            '#btn-close-series-player',
             '.btn-movie-server',
             '.btn-series-server-pill',
             '.series-ep-card',
@@ -124,6 +176,27 @@ export function setupTvRemoteNavigation() {
         const key = e.key;
 
         if (key === 'Escape' || key === 'Back' || key === 'BrowserBack') {
+            // Global search, the account page and the profiles: the same step as the Back button
+            const overlayOpen = ["search-overlay", "account-page", "profile-page", "settings-page"].some(id => {
+                const el = document.getElementById(id);
+                return el && !el.classList.contains("hidden");
+            });
+            if (overlayOpen && !e.defaultPrevented) {
+                e.preventDefault();
+                handleBackButton();
+                return;
+            }
+            // Title page and its trailer (no player over them): the same step as the Back button
+            const titlePage = document.getElementById("title-page");
+            const playerOpen = ["movie-player-view", "series-player-view"].some(id => {
+                const view = document.getElementById(id);
+                return view && !view.classList.contains("hidden");
+            });
+            if (titlePage && !titlePage.classList.contains("hidden") && !playerOpen && !e.defaultPrevented) {
+                e.preventDefault();
+                handleBackButton();
+                return;
+            }
             const drawer = document.getElementById("sidebar");
             if (drawer && drawer.classList.contains("open")) {
                 e.preventDefault();
@@ -133,7 +206,7 @@ export function setupTvRemoteNavigation() {
             }
             if (activeModal) {
                 e.preventDefault();
-                const closeBtn = activeModal.querySelector(".btn-close-modal, #btn-close-movie-modal, #btn-close-series-modal, #btn-close-team-modal");
+                const closeBtn = activeModal.querySelector(".btn-close-modal, #btn-close-team-modal");
                 if (closeBtn) closeBtn.click();
                 return;
             }

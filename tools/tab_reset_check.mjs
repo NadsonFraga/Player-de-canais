@@ -8,9 +8,28 @@
  * Needs `python tools/local_server.py` on 127.0.0.1:8787 (catalog data from TMDB; no video is played).
  */
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+// Test browser profiles are removed when the run ends (left behind, they add up to gigabytes in %TEMP%)
+const tempDirs = [];
+function tempDir(prefix) {
+  const dir = mkdtempSync(prefix);
+  tempDirs.push(dir);
+  return dir;
+}
+process.on("exit", () => {
+  // A browser started from a launcher can outlive the process the test killed: stop whatever still uses our profiles
+  if (tempDirs.length && process.platform === "win32") {
+    const filter = tempDirs.map(d => `$_.CommandLine -like '*${d.split(/[\/]/).pop()}*'`).join(" -or ");
+    try { spawnSync("powershell", ["-NoProfile", "-Command", `Get-CimInstance Win32_Process | Where-Object { ${filter} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: "ignore", timeout: 20000 }); } catch {}
+  }
+  for (const dir of tempDirs) {
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch {}
+  }
+});
+
 
 const BASE = "http://127.0.0.1:8787";
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
@@ -52,7 +71,7 @@ function rpc(ws, isBidi) {
 
 /** { evaluate(expr), navigate(url), close() } for headless Chrome/Edge (CDP) or Firefox (WebDriver BiDi), always muted. */
 async function launch(name) {
-  const profile = mkdtempSync(join(tmpdir(), `tvz-tabs-${name}-`));
+  const profile = tempDir(join(tmpdir(), `tvz-tabs-${name}-`));
   const port = 9740 + Math.floor(Math.random() * 40);
   if (name === "firefox") {
     writeFileSync(join(profile, "user.js"), 'user_pref("media.volume_scale", "0.0");\nuser_pref("media.autoplay.default", 0);\n');
@@ -155,9 +174,9 @@ try {
   await switchTo(b, "series");
   await search(b, "series", "friends");
   await b.evaluate(`import('/assets/js/modules/series.js?v=${VERSION}').then(m => { window.__s = m; return true; })`);
-  await b.evaluate("(window.__s.openSeriesModal({ id: 1668, name: 'Friends' }, 'tv'), true)");
+  await b.evaluate("(window.TvzinhaActions.openTitle('tv', { id: 1668, name: 'Friends' }), true)");
   await sleep(2500);
-  await b.evaluate("(document.getElementById('btn-close-series-modal').click(), true)");
+  await b.evaluate("(document.getElementById('btn-title-back').click(), true)");
   await sleep(1200);
   const inside = await b.evaluate(`({ explore: ${visible("series-explore-view")}, query: ${value("series-explore-search-input")} })`);
   check("inside a tab: opening a title from the search and closing it keeps the search", inside.explore && inside.query === "friends", JSON.stringify(inside));

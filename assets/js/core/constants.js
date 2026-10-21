@@ -6,6 +6,8 @@
 // TMDB Movies & Series Engine (reads go through /api/tmdb, which holds the key: see core/tmdb.js)
 export const TMDB_IMG_W500 = 'https://image.tmdb.org/t/p/w500';
 export const TMDB_IMG_ORIGINAL = 'https://image.tmdb.org/t/p/original';
+export const TMDB_IMG_W185 = 'https://image.tmdb.org/t/p/w185';
+export const TMDB_IMG_W1280 = 'https://image.tmdb.org/t/p/w1280';
 
 // LocalStorage Cache Keys & TTL
 export const TMDB_CACHE_KEY = 'tvzinha_movies_cache_v5';
@@ -13,8 +15,16 @@ export const TMDB_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 export const TMDB_SERIES_CACHE_KEY = 'tvzinha_series_cache_v5';
 export const TMDB_ANIMES_CACHE_KEY = 'tvzinha_animes_cache_v5';
 export const WATCH_PROGRESS_KEY = 'tvzinha_watch_progress_v1';
+// Quero assistir, Assistido and ratings per title (core/library.js)
+export const LIBRARY_KEY = 'tvzinha_library_v1';
 export const FAVORITES_STORAGE_KEY = 'tvzinha_favorites';
 export const FAVORITE_TEAM_KEY = 'tvzinha_favorite_team';
+// Volume, subtitles, quality, speed, Ajustar / Preencher (core/playerPrefs.js)
+export const PLAYER_PREFS_KEY = 'tvzinha_player_prefs_v1';
+// When channel favorites, the favorite team and the player preferences last changed (core/profileStore.js), for the sync
+export const PERSONAL_TIMES_KEY = 'tvzinha_personal_times_v1';
+// The keys above that belong to a person (library, progress, favorites, team, player) are per profile when signed in:
+// read and write them through storageKey() of core/profileStore.js
 
 // Native Stream Engine Proxy URL
 export const STREAM_ENGINE_API_BASE = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '8787'))

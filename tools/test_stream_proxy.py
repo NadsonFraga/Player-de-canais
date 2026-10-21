@@ -60,6 +60,22 @@ def run_python():
     spec = importlib.util.spec_from_file_location("local_server", ROOT / "tools" / "local_server.py")
     ls = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ls)
+    # The same secret as the Node runner; every case is signed like /api/resolve does (fixtures about_signing)
+    ls._STREAM_SECRET = "test-signing-secret"
+    key = ls.stream_signing_key()
+
+    def signed_query(case):
+        query = dict(case["request"].get("query") or {})
+        mode = case.get("signing", "valid")
+        if not query.get("url") or mode == "none":
+            return query
+        url = query["url"] + "?other" if mode == "tampered" else query["url"]
+        exp = int(__import__("time").time()) - 60 if mode == "expired" else None
+        link = ls.proxied_stream_url("http://127.0.0.1:8787/api/stream", key, url, query.get("referer", ""), query.get("origin", ""), exp=exp)
+        params = urllib.parse.parse_qs(urllib.parse.urlparse(link).query)
+        query["exp"], query["sig"] = params["exp"][0], params["sig"][0]
+        return query
+
     # Every upstream request of the proxy goes through one function (redirects not followed); older versions called
     # urllib.request.urlopen directly, so both are replaced
     real_urlopen = urllib.request.urlopen
@@ -92,7 +108,7 @@ def run_python():
             if hasattr(ls, "upstream_open"):
                 ls.upstream_open = fake_open
             method = (case["request"].get("method") or "GET").upper()
-            query = urllib.parse.urlencode(case["request"].get("query") or {})
+            query = urllib.parse.urlencode(signed_query(case))
             handler = ls.DevAPIHandler.__new__(ls.DevAPIHandler)
             handler.path = "/api/stream" + (f"?{query}" if query else "")
             handler.command = method

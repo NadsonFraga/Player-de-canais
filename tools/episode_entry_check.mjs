@@ -9,9 +9,28 @@
  * asks for (server request, anime lookup), the player header and the saved history entry.
  */
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+// Test browser profiles are removed when the run ends (left behind, they add up to gigabytes in %TEMP%)
+const tempDirs = [];
+function tempDir(prefix) {
+  const dir = mkdtempSync(prefix);
+  tempDirs.push(dir);
+  return dir;
+}
+process.on("exit", () => {
+  // A browser started from a launcher can outlive the process the test killed: stop whatever still uses our profiles
+  if (tempDirs.length && process.platform === "win32") {
+    const filter = tempDirs.map(d => `$_.CommandLine -like '*${d.split(/[\/]/).pop()}*'`).join(" -or ");
+    try { spawnSync("powershell", ["-NoProfile", "-Command", `Get-CimInstance Win32_Process | Where-Object { ${filter} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: "ignore", timeout: 20000 }); } catch {}
+  }
+  for (const dir of tempDirs) {
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch {}
+  }
+});
+
 
 const BASE = "http://127.0.0.1:8787";
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
@@ -62,7 +81,7 @@ function rpc(ws, isBidi) {
 
 /** { evaluate(expr), navigate(url), close() } for headless Edge (CDP) or Firefox (WebDriver BiDi), always muted. */
 async function launch(name) {
-  const profile = mkdtempSync(join(tmpdir(), `tvz-entry-${name}-`));
+  const profile = tempDir(join(tmpdir(), `tvz-entry-${name}-`));
   const port = 9800 + Math.floor(Math.random() * 150);
   if (name === "firefox") {
     writeFileSync(join(profile, "user.js"), 'user_pref("media.volume_scale", "0.0");\nuser_pref("media.autoplay.default", 0);\nuser_pref("full-screen-api.allow-trusted-requests-only", false);\n');
@@ -171,9 +190,9 @@ try {
     return b.evaluate(SNAPSHOT(show.id));
   };
   const count = () => b.evaluate("window.__resolves.length");
-  const reset = () => b.evaluate("(window.__s.stopSeriesPlayer(), window.__s.closeSeriesModal(), new Promise(r => setTimeout(() => r(true), 400)))");
+  const reset = () => b.evaluate("(window.__s.stopSeriesPlayer(), window.TvzinhaActions.closeTitle(), new Promise(r => setTimeout(() => r(true), 400)))");
   const openDetails = async (show) => {
-    await b.evaluate(`(window.__s.openSeriesModal({ id: ${show.id}, name: ${JSON.stringify(show.name)} }, '${show.anime ? "anime" : "tv"}'), true)`);
+    await b.evaluate(`(window.TvzinhaActions.openTitle('${show.anime ? "anime" : "tv"}', { id: ${show.id}, name: ${JSON.stringify(show.name)} }), true)`);
     for (let i = 0; i < 40; i++) {
       if (await b.evaluate("document.querySelectorAll('#series-season-select option').length > 0")) break;
       await sleep(250);
@@ -194,11 +213,11 @@ try {
     await b.evaluate("(document.querySelector('#home-continue-watching-section .continue-card')?.click(), true)");
     paths["continuar assistindo"] = await waitForOpen(show, before);
 
-    // 2. details button "Continuar" (reads the history saved by path 1)
+    // 2. title page button "Continuar" (reads the history saved by path 1)
     await reset();
     await openDetails(show);
     before = await count();
-    await b.evaluate("(document.getElementById('btn-series-modal-direct-play').click(), true)");
+    await b.evaluate("(document.getElementById('btn-title-play').click(), true)");
     paths["botao dos detalhes"] = await waitForOpen(show, before);
 
     // 3. season list
@@ -270,7 +289,7 @@ try {
   }
   // Real playback (stub removed): skip markers reach the progress bar for a series and for an anime resumed from
   // the "Continuar assistindo" card. No recap in a first episode.
-  await b.evaluate("(window.fetch = window.__realFetch, window.__s.stopSeriesPlayer(), window.__s.closeSeriesModal(), true)");
+  await b.evaluate("(window.fetch = window.__realFetch, window.__s.stopSeriesPlayer(), window.TvzinhaActions.closeTitle(), true)");
   const markers = async (label, open, expected) => {
     await b.evaluate("(window.__s.stopSeriesPlayer(), new Promise(r => setTimeout(() => r(true), 1500)))");
     await b.evaluate(open);
