@@ -103,7 +103,12 @@ def main():
         if step["route"] == "sync":
             result = local_sync.handle_sync(req, db)
         else:
-            result = local_accounts.handle_account({**req, "path": step["route"][len("account/"):]}, db)
+            account_path = step["route"][len("account/"):]
+            # Turnstile, faked (test_accounts_api.py has the cases): every sign-up and sign-in here passes it
+            if account_path in ("register", "recover", "login") and req["body"] is not None:
+                req["body"] = {"turnstileToken": f"ok-{account_path}", **req["body"]}
+            result = local_accounts.handle_account({**req, "path": account_path}, db,
+                                                   verify_captcha=lambda token, action, ip: "ok" if token == f"ok-{action}" else "failed")
         if result["setCookie"]:
             value = re.match(r"tvz_session=([^;]*)", result["setCookie"]).group(1)
             cookies[step["device"]] = value if int(re.search(r"Max-Age=(\d+)", result["setCookie"]).group(1)) > 0 else ""
