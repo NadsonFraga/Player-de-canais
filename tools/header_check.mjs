@@ -209,6 +209,8 @@ try {
   await b.evaluate("(document.body.focus(), document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true)");
   const searchOpen = await waitFor(b, `${SEARCH_OPEN} && document.activeElement && document.activeElement.id === 'global-search-input'`, 3000);
   check("'/' opens the search with the cursor in the field", searchOpen !== null);
+  // The browser keeps at most 250 resource entries and the Início alone loads about 215: start an empty, larger list
+  await b.evaluate("(performance.clearResourceTimings(), performance.setResourceTimingBufferSize(10000), true)");
   const before = await b.evaluate(SEARCH_CALLS);
   for (const part of ["b", "ba", "bat", "batm", "batma", "batman"]) {
     await b.evaluate(typeInSearch(part));
