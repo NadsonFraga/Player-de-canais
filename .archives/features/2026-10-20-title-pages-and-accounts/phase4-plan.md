@@ -311,3 +311,24 @@ Branch `feat/sync` from `staging`. No database change (the `records` and `counte
   data; two profiles stay apart in the cloud.
 - `account_check`, `profile_check`, `collection_check`, `continue_watching_check`, `header_check`, the player suites.
 
+### Sync timing as built (confirmed with the user on 2026-10-21)
+
+| Moment | When | What |
+|---|---|---|
+| Opening the site (signed in, profile in use) | 1.5 s after it loads | brings what changed elsewhere, sends what is pending |
+| A change here (Coleção, favorites, team, player preferences, movie progress) | 30 s after the **first** unsent change (later changes do not push it back) | one request with everything changed meanwhile; a playing movie saves every ~10 s, so it syncs at most every 30 s |
+| Episode positions of series | saved without starting the 30 s count | go with the next sync (page hidden, another change, opening) |
+| Page hidden (tab switch, minimize, close, phone locked) | at once, only when something is pending | sent with `keepalive` (survives the page closing) |
+| Back to the tab after more than 5 minutes away | 0.5 s after coming back | brings what changed elsewhere |
+| Profile switch | at once | what the old profile left goes first, then the new one syncs |
+| "Sim" to the guest data question | 2 s later | sends what was brought |
+| Connection back (`online`) | 1 s later | sends what waited |
+| Sair | before signing out, up to 4 s | sends what is pending; asks before leaving unsent changes |
+| "Sincronizar agora" (Configurações, 4d) | at once | full sync |
+| Errors | 30 s, 1, 2, 4, 8, 10 min; a 429 waits the time the server gives | |
+
+Guests never sync. **Decision:** while a tab is open and in use it does not ask the server for news on its own; a change
+made on another device shows after a reload, a return to the tab after 5 minutes, or the next sync of this device.
+A light check every 5 minutes while the tab is visible was offered (up to 12 calls an hour per open tab) and left out
+for now to save the daily calls; it can be added later if needed.
+
