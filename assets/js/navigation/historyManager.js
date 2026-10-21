@@ -3,7 +3,7 @@
  * Implements strict hierarchical back navigation across all tabs, searches, modals, drawers, and active media.
  */
 
-import { store } from '../core/state.js?v=20261021_0250';
+import { store } from '../core/state.js?v=20261021_0614';
 
 let navigationDepth = 0;
 let isProgrammaticBack = false;
@@ -241,6 +241,13 @@ export function handleBackButton() {
             btnCloseLegal.click();
             return true;
         }
+    }
+
+    // 2.53 A confirmation (core/confirmDialog.js), over everything: Back answers "no"
+    const confirmBox = document.getElementById("confirm-dialog");
+    if (confirmBox && !confirmBox.classList.contains("hidden")) {
+        document.getElementById("btn-confirm-dialog-no")?.click();
+        return true;
     }
 
     // 2.54 Profiles (Quem está assistindo?, the editor), over the title page; it may stay (a profile must be chosen)

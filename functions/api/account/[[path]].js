@@ -34,6 +34,9 @@ export const LIMITS = {
     register: { max: 10, windowMs: 60 * 60 * 1000 },  // accounts created from one device
 };
 export const COOKIE_NAME = 'tvz_session';
+// Calls from one IP per minute (account and sync), counted in this isolate's memory: free and approximate. High
+// enough for many people behind one carrier IP (mobile networks share them), low enough to cut a flood early.
+export const IP_LIMIT = { max: 120, windowMs: 60 * 1000 };
 // The avatars the site ships (assets/img/avatars/<id>.svg): illustrated faces (l, n) and our line icons (i)
 export const AVATARS = [
     ...Array.from({ length: 12 }, (_, i) => `l${String(i + 1).padStart(2, '0')}`),
@@ -144,14 +147,32 @@ function safeEqual(a, b) {
 
 // --- Attempt limits ---
 
+const ipWindows = new Map();
+
+/** Seconds to wait when this IP made too many calls in the last minute, else 0 (no database). */
+export function ipBlockedFor(ip, now) {
+    const key = ip || 'unknown';
+    let entry = ipWindows.get(key);
+    if (!entry || now - entry.start > IP_LIMIT.windowMs) {
+        entry = { start: now, count: 0 };
+        ipWindows.set(key, entry);
+    }
+    entry.count++;
+    // Old windows go, so the map stays small
+    if (ipWindows.size > 5000) {
+        for (const [k, v] of ipWindows) if (now - v.start > IP_LIMIT.windowMs) ipWindows.delete(k);
+    }
+    return entry.count > IP_LIMIT.max ? Math.ceil((entry.start + IP_LIMIT.windowMs - now) / 1000) : 0;
+}
+
 /** Seconds to wait when `key` used up its tries in the window, else 0. */
-async function blockedFor(db, key, rule, now) {
+export async function blockedFor(db, key, rule, now) {
     const row = await db.first('SELECT count, window_start FROM attempts WHERE key = ?', [key]);
     if (!row || now - row.window_start > rule.windowMs || row.count < rule.max) return 0;
     return Math.ceil((row.window_start + rule.windowMs - now) / 1000);
 }
 
-async function addAttempt(db, key, rule, now) {
+export async function addAttempt(db, key, rule, now) {
     const row = await db.first('SELECT count, window_start FROM attempts WHERE key = ?', [key]);
     if (!row || now - row.window_start > rule.windowMs) {
         await db.run('INSERT OR REPLACE INTO attempts (key, count, window_start) VALUES (?, 1, ?)', [key, now]);
@@ -164,7 +185,7 @@ async function addAttempt(db, key, rule, now) {
 
 // --- Sessions and the cookie ---
 
-function cookieHeader(token, maxAgeSeconds, secure) {
+export function cookieHeader(token, maxAgeSeconds, secure) {
     return `${COOKIE_NAME}=${token}; Path=/api; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${secure ? '; Secure' : ''}`;
 }
 
@@ -185,9 +206,10 @@ async function createSession(db, accountId, now) {
 }
 
 /** { account, tokenHash, renewed } for the cookie's session, or null. */
-async function currentSession(db, cookieText, now) {
+export async function currentSession(db, cookieText, now) {
     const token = readCookie(cookieText);
-    if (!token || token.length > 100) return null;
+    // Only what createSession makes (32 random bytes, base64url): anything else is refused without a database read
+    if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
     const tokenHash = await sha256Hex(token);
     const session = await db.first('SELECT account_id, last_seen_at, expires_at FROM sessions WHERE token_hash = ?', [tokenHash]);
     if (!session) return null;
@@ -250,6 +272,8 @@ export async function handleAccount(req, db) {
     if (req.path === 'me' ? req.method !== 'GET' : req.method !== 'POST') return fail(405, 'method_not_allowed');
     // Writes only from this site's own pages
     if (isWrite && (req.origin !== req.requestOrigin || req.customHeader !== '1')) return fail(403, 'origin_forbidden');
+    const ipWait = ipBlockedFor(req.ip, now);
+    if (ipWait) return fail(429, 'too_many_attempts', { retryAfter: ipWait });
 
     const body = req.body && typeof req.body === 'object' ? req.body : {};
     const pepper = req.pepper || '';
@@ -442,12 +466,14 @@ export async function handleAccount(req, db) {
 
 // --- Cloudflare glue ---
 
-/** The D1 binding behind the small interface handleAccount uses. */
+/** The D1 binding behind the small interface handleAccount and handleSync use. */
 export function d1Database(d1) {
     return {
         first: (sql, params = []) => d1.prepare(sql).bind(...params).first(),
         all: async (sql, params = []) => (await d1.prepare(sql).bind(...params).all()).results || [],
         run: (sql, params = []) => d1.prepare(sql).bind(...params).run(),
+        // Several writes in one round trip, all or none
+        batch: (statements) => d1.batch(statements.map(s => d1.prepare(s.sql).bind(...s.params))),
     };
 }
 

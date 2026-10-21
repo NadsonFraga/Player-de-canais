@@ -9,12 +9,12 @@
  * Only constants.js is imported (no cycles): core/state.js builds the store from these keys at load time.
  * Switching fires PROFILE_EVENT on window; each store drops its memory copy and tells its screens.
  */
-import { WATCH_PROGRESS_KEY, LIBRARY_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY } from './constants.js?v=20261021_0250';
+import { WATCH_PROGRESS_KEY, LIBRARY_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY, PERSONAL_TIMES_KEY } from './constants.js?v=20261021_0614';
 
 export const PROFILE_EVENT = 'tvzinha:profile';
 // { profileId, lastSeen, asked: [profile ids already asked about the guest data] }
 const ACTIVE_KEY = 'tvzinha_profile_v1';
-export const PROFILE_DATA_KEYS = [LIBRARY_KEY, WATCH_PROGRESS_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY];
+export const PROFILE_DATA_KEYS = [LIBRARY_KEY, WATCH_PROGRESS_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY, PERSONAL_TIMES_KEY];
 // The last use is written at most this often (the 3-hour rule needs minutes, not seconds)
 const TOUCH_EVERY_MS = 60 * 1000;
 
@@ -58,6 +58,46 @@ export function setActiveProfile(profileId, { force = false } = {}) {
     active.lastSeen = Date.now();
     writeActive();
     if (changed) window.dispatchEvent(new CustomEvent(PROFILE_EVENT, { detail: { profileId: next } }));
+}
+
+/** The data of the profile in use was replaced (the sync brought changes): every store reads it again. */
+export function notifyProfileData() {
+    window.dispatchEvent(new CustomEvent(PROFILE_EVENT, { detail: { profileId: active.profileId, refresh: true } }));
+}
+
+// --- When favorites, the team and the player preferences changed (the library and progress keep their own times) ---
+
+/** { favorites: { <channel key>: { on, at } }, team: <time>, player: <time> } of a profile (the one in use by default). */
+export function readPersonalTimes(profileId = active.profileId) {
+    try {
+        const data = JSON.parse(localStorage.getItem(profileId ? `${PERSONAL_TIMES_KEY}:${profileId}` : PERSONAL_TIMES_KEY) || 'null');
+        if (data && typeof data === 'object') return { favorites: data.favorites && typeof data.favorites === 'object' ? data.favorites : {}, team: Number(data.team) || 0, player: Number(data.player) || 0 };
+    } catch (e) {
+        // Starts over
+    }
+    return { favorites: {}, team: 0, player: 0 };
+}
+
+export function writePersonalTimes(times, profileId = active.profileId) {
+    try {
+        localStorage.setItem(profileId ? `${PERSONAL_TIMES_KEY}:${profileId}` : PERSONAL_TIMES_KEY, JSON.stringify(times));
+    } catch (e) {
+        // The change itself is saved; only its time is lost
+    }
+}
+
+/** A channel turned into a favorite or out of it, now. */
+export function stampFavorite(channelKey, on) {
+    const times = readPersonalTimes();
+    times.favorites[channelKey] = { on: Boolean(on), at: Date.now() };
+    writePersonalTimes(times);
+}
+
+/** The team ('team') or the player preferences ('player') changed now. */
+export function stampTime(field) {
+    const times = readPersonalTimes();
+    times[field] = Date.now();
+    writePersonalTimes(times);
 }
 
 /** Milliseconds since the site was last used with the active profile (Infinity when never). */
