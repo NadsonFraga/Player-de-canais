@@ -10,31 +10,24 @@
     display: none !important;
 }
 
-/* Signed in: the profile's initial in the pill and in the menu (step 4b brings the avatars) */
-.nav-tool.has-initial > svg,
-.nav-menu-avatar.has-initial > svg {
+/* Signed in: the profile's avatar in place of the line icon, in the pill and in the menu */
+.nav-tool.has-avatar > svg,
+.nav-menu-avatar.has-avatar > svg {
     display: none;
 }
 
-.nav-initial {
+.nav-avatar {
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    background: #f4f4f5;
-    color: #09090b;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-heading);
-    font-size: 0.82rem;
-    font-weight: 800;
-    line-height: 1;
+    display: block;
+    object-fit: cover;
+    user-select: none;
 }
 
-.nav-menu-avatar .nav-initial {
+.nav-menu-avatar .nav-avatar {
     width: 38px;
     height: 38px;
-    font-size: 1rem;
 }
 
 /* --- The page --- */

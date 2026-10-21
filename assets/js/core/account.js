@@ -4,8 +4,10 @@
  * The session is an HttpOnly cookie the page cannot read, so a small copy of the account (nickname, profiles) is kept
  * in localStorage to draw the menu at once; /api/account/me confirms it in the background. Guests never call the
  * server (no cost): /me runs only when that copy says someone is signed in.
+ * Profiles: the list comes with the account; which one is in use on this device lives in core/profileStore.js.
  */
-import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261021_0210';
+import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261021_0250';
+import { activeProfileId, setActiveProfile } from './profileStore.js?v=20261021_0250';
 
 const CACHE_KEY = 'tvzinha_account_v1';
 export const ACCOUNT_EVENT = 'tvzinha:account';
@@ -24,6 +26,8 @@ function readCache() {
 
 function setState(next) {
     state = next;
+    // Signed out: the site reads the guest data again
+    if (!next.signedIn && activeProfileId()) setActiveProfile(null);
     try {
         if (next.signedIn) localStorage.setItem(CACHE_KEY, JSON.stringify({ account: next.account, profiles: next.profiles }));
         else localStorage.removeItem(CACHE_KEY);
@@ -36,6 +40,12 @@ function setState(next) {
 /** { signedIn, account: { nickname, createdAt }, profiles: [{ id, name, avatar }] } */
 export function getAccount() {
     return { ...state, profiles: [...state.profiles] };
+}
+
+/** The profile in use on this device ({ id, name, avatar }), or null (guest, or none picked yet). */
+export function getActiveProfile() {
+    const id = activeProfileId();
+    return (state.signedIn && id && state.profiles.find(p => p.id === id)) || null;
 }
 
 /** { status, json } of /api/account/<path>; a network failure answers status 0 with error 'network'. */
@@ -93,6 +103,38 @@ export async function refreshAccount() {
     else if (result.status === 401) setState({ signedIn: false, account: null, profiles: [] });
     // Other failures (offline, server busy) keep the copy: the person stays signed in until the server says otherwise
     return getAccount();
+}
+
+// --- Profiles (create, rename, avatar, remove); the answer is the full list ---
+
+async function profilesCall(body) {
+    const result = await call('profiles', body);
+    if (result.status === 200 || result.status === 201) setState({ ...state, profiles: result.json.profiles || [] });
+    else if (result.status === 401) setState({ signedIn: false, account: null, profiles: [] });
+    return result;
+}
+
+export function createProfile(name, avatar) {
+    return profilesCall({ action: 'create', name, avatar });
+}
+
+/** `changes`: { name?, avatar? } */
+export function updateProfile(id, changes) {
+    return profilesCall({ action: 'update', id, ...changes });
+}
+
+export function removeProfile(id) {
+    return profilesCall({ action: 'remove', id });
+}
+
+/** null when valid, else the server's error code (same rule: 1 to 20 letters, numbers, spaces, . - _ '). */
+export function profileNameProblem(name, profiles = [], exceptId = null) {
+    const value = String(name || '').trim();
+    if (!value) return 'profile_name_short';
+    if ([...value].length > 20) return 'profile_name_long';
+    if (!/^[\p{L}\p{N} ._'-]+$/u.test(value)) return 'profile_name_chars';
+    if (profiles.some(p => p.id !== exceptId && p.name.toLowerCase() === value.toLowerCase())) return 'profile_name_taken';
+    return null;
 }
 
 // --- The rules the server applies, checked while the person types (same as functions/api/account/[[path]].js) ---

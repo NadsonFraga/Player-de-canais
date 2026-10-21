@@ -3,8 +3,8 @@
  * Purely DOM-based spatial navigation with Euclidean 2D distance calculation
  */
 
-import { store } from '../core/state.js?v=20261021_0210';
-import { handleBackButton } from './historyManager.js?v=20261021_0210';
+import { store } from '../core/state.js?v=20261021_0250';
+import { handleBackButton } from './historyManager.js?v=20261021_0250';
 
 export function setupTvRemoteNavigation() {
     function getFocusableElements() {
@@ -26,6 +26,19 @@ export function setupTvRemoteNavigation() {
             '.account-inline-link',
             '#btn-account-copy',
             '#btn-account-code-done',
+            '#btn-profile-back',
+            '.profile-tile',
+            '#btn-profile-manage',
+            '#btn-profile-signout',
+            '#profile-name',
+            '.profile-avatar-tab',
+            '.profile-avatar-option',
+            '#btn-profile-save',
+            '#btn-profile-remove',
+            '#btn-profile-confirm-remove',
+            '#btn-profile-confirm-cancel',
+            '#btn-profile-guest-yes',
+            '#btn-profile-guest-no',
             '.collection-tab',
             '.collection-filter',
             '.collection-remove',
@@ -159,10 +172,11 @@ export function setupTvRemoteNavigation() {
         const key = e.key;
 
         if (key === 'Escape' || key === 'Back' || key === 'BrowserBack') {
-            // Global search and the account page: the same step as the Back button
-            const searchOverlay = document.getElementById("search-overlay");
-            const accountPage = document.getElementById("account-page");
-            const overlayOpen = [searchOverlay, accountPage].some(el => el && !el.classList.contains("hidden"));
+            // Global search, the account page and the profiles: the same step as the Back button
+            const overlayOpen = ["search-overlay", "account-page", "profile-page"].some(id => {
+                const el = document.getElementById(id);
+                return el && !el.classList.contains("hidden");
+            });
             if (overlayOpen && !e.defaultPrevented) {
                 e.preventDefault();
                 handleBackButton();

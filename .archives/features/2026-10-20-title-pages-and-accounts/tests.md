@@ -130,14 +130,48 @@ Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
 | `tools/account_check.mjs` (new, browser): guest menu, live rules and strength, recovery code kept on Back, signed-in menu and initial, reload keeps the session (cookie unreadable by the page), Sair, wrong password, Esqueci a senha, phone width, test account deleted | 15/15 Chrome, 15/15 Firefox (local server) |
 | `header_check.mjs`, `title_page_check.mjs` | 26/26, 28/28 |
 | `collection_check.mjs` | 15/16: the movie stays paused right after it starts in the test browser; production does the same today (not from this feature, see the chat of 2026-10-21) |
+| On staging, after the D1 databases, the `DB` binding and `ACCOUNTS_PEPPER` were set up: `account_check.mjs` | 15/15 Chrome, 15/15 Firefox |
+| PBKDF2 on the free plan (5 sign-ins, 1 sign-up, 3 `/me` on staging) | no CPU-limit error; sign-up ~1.9 s, sign-in ~1.1 s, `/me` ~0.6 s (kept at 100 000 rounds) |
+| Fix `feat/accounts-fixes` (the password eye dropped 18 px when pressed: the focus style replaced its centering transform; same for the Coleção channel remove button): new real-press check in `account_check.mjs` | fails on the old code (18 px), 16/16 Chrome and Firefox with the fix, 16/16 on staging |
 
 ### Manual (user, on staging, after the databases exist)
 
 | # | Steps | Expected | Result |
 |---|---|---|---|
-| 1 | Profile menu -> Entrar ou criar conta -> Criar conta | Rules ticked while typing, strength bar, button only works with the rules met; line with Termos and Privacidade links | |
-| 2 | Create the account | Recovery code in large type, Copiar works, Back keeps the screen, "Guardei o código" closes it; menu shows the profile, Sair, and the initial in the pill | |
-| 3 | Reload; open the site on the phone and sign in there | Still signed in after the reload; the phone signs in with the nickname in any case | |
-| 4 | Sair; a wrong password; the right one | Visitante again; "Apelido ou senha incorretos."; signed in | |
+| 1 | Profile menu -> Entrar ou criar conta -> Criar conta | Rules ticked while typing, strength bar, button only works with the rules met; line with Termos and Privacidade links | PASS after the eye fix (the user found the eye jumping when pressed) |
+| 2 | Create the account | Recovery code in large type, Copiar works, Back keeps the screen, "Guardei o código" closes it; menu shows the profile, Sair, and the initial in the pill | PASS |
+| 3 | Reload; open the site on the phone and sign in there | Still signed in after the reload; the phone signs in with the nickname in any case | PASS (the Coleção did not show on the phone: expected, sync is step 4c) |
+| 4 | Sair; a wrong password; the right one | Visitante again; "Apelido ou senha incorretos."; signed in | PASS (the guest data stayed after Sair: expected until 4c) |
 | 5 | Esqueci a senha with the code | New password saved, a new code shown | |
 | 6 | Five wrong passwords in a row | "Muitas tentativas. Tente de novo em N minutos." | |
+
+**Phase 4a approved by the user on 2026-10-21** ("pode prosseguir"; no delete-account button yet: it comes with Configurações in 4d).
+
+## Phase 4b: profiles (`feat/profiles` -> `staging`)
+
+**Date:** 2026-10-21 · **Staging:** https://staging.tvzinhaonline.pages.dev
+
+### Automated
+
+| Check | Result |
+|---|---|
+| `accounts_api_check.mjs` and `test_accounts_api.py`: 24 new profile cases (empty, long and symbol names, unknown avatar, accents allowed, same name in other case refused, up to 5 then `profiles_full`, rename and avatar, rename to another's name refused, own name in other case kept, update without fields, remove, removed is gone, unknown action, signed out, another account's profile not found, the last profile cannot be removed) | 62/62 and 62/62 |
+| `tools/profile_check.mjs` (new, browser): picker after the account (Back keeps it), guest data question and Sim, Trocar with Back, Adicionar perfil with live name checks and an icon avatar, Começar vazio, data kept apart per profile, Gerenciar perfis rename and avatar, Excluir perfil (Back to the editor; no data left on the device), the 3-hour rule (4 h asks, 30 min does not), phone width, Sair da conta brings the guest data back | 15/15 Chrome, 15/15 Firefox |
+| `account_check.mjs` (now through the picker; avatar in the pill) | 17/17 Chrome, 17/17 Firefox |
+| `header_check`, `title_page_check` | 26/26, 28/28 |
+| `collection_check`, `continue_watching_check` | 15/16, 8/9: only the movie that pauses right after starting in the test browser (known, also on production) |
+| `player_ui_check` | DBZ T9E31 request checks fail (known flaky, backlog B21) |
+| `player_touch_check` | 15/17: "anime episode is playing" and "playback keeps running after the skip"; the same two fail on staging without 4b (the test browser pauses the video), so not from this step |
+| Schema with block comments, run as one joined line (as the D1 console does) | the 6 tables created |
+
+### Manual (user, on staging)
+
+| # | Steps | Expected | Result |
+|---|---|---|---|
+| 1 | Open the site on the computer where you are signed in | "Quem está assistindo?" with your profile; choosing it asks "Levar o que está neste aparelho..."; Sim: your Coleção is there | |
+| 2 | Menu -> Trocar -> Adicionar perfil | Name checked while typing; the illustrated avatars and the icons; Criar perfil adds it to the list | |
+| 3 | Choose the new profile -> Começar vazio | Empty Coleção and Continuar assistindo; its avatar in the pill and in the menu | |
+| 4 | Save a title in each profile and switch with Trocar | Each one sees only its own titles; the site goes to Início after switching | |
+| 5 | Gerenciar perfis: rename, change the avatar, delete a profile | Saved at once; deleting asks first and the profile leaves the list | |
+| 6 | Phone: sign in | The picker after signing in; on the phone the profile starts empty (sync is 4c) | |
+| 7 | TV remote or keyboard arrows on the picker and the editor | Every tile, avatar and button can be reached; Esc goes back one step | |
