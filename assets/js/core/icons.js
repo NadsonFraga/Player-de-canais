@@ -1,3 +1,4 @@
+import { escapeHtml, escapeAttr } from './sanitize.js?v=20261021_1129';
 /**
  * TVZINHA ONLINE - Monochromatic UI SVGs & Channel Logos Registry
  */
@@ -123,14 +124,14 @@ export function createLogoBadgeHtml(channelName, size = 'sm') {
     if (imgSrc) {
         return `
             <div class="channel-logo-img-wrapper ${sizeClass}">
-                <img src="${imgSrc}" alt="${channelName}" class="channel-logo-img" loading="lazy">
+                <img src="${escapeAttr(imgSrc)}" alt="${escapeAttr(channelName)}" class="channel-logo-img" loading="lazy">
             </div>
         `;
     }
 
     return `
         <div class="channel-logo-img-wrapper channel-logo-fallback ${sizeClass}">
-            <span>${(channelName || 'TV').slice(0, 3).toUpperCase()}</span>
+            <span>${escapeHtml((channelName || 'TV').slice(0, 3).toUpperCase())}</span>
         </div>
     `;
 }
@@ -141,8 +142,8 @@ export function createLogoBadgeHtml(channelName, size = 'sm') {
 export function createChannelCardLogoHtml(channelName) {
     const imgSrc = getChannelLogoSrc(channelName);
     if (imgSrc) {
-        return `<img src="${imgSrc}" alt="${channelName}" class="channel-card-logo" loading="lazy">`;
+        return `<img src="${escapeAttr(imgSrc)}" alt="${escapeAttr(channelName)}" class="channel-card-logo" loading="lazy">`;
     }
     const acronym = (channelName || 'TV').slice(0, 3).toUpperCase();
-    return `<span class="channel-card-logo-fallback">${acronym}</span>`;
+    return `<span class="channel-card-logo-fallback">${escapeHtml(acronym)}</span>`;
 }

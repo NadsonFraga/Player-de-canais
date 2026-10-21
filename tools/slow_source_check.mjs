@@ -11,10 +11,29 @@
  * The slow host is a throttling proxy started here on another port (the page's CSP is bypassed for it).
  */
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+// Test browser profiles are removed when the run ends (left behind, they add up to gigabytes in %TEMP%)
+const tempDirs = [];
+function tempDir(prefix) {
+  const dir = mkdtempSync(prefix);
+  tempDirs.push(dir);
+  return dir;
+}
+process.on("exit", () => {
+  // A browser started from a launcher can outlive the process the test killed: stop whatever still uses our profiles
+  if (tempDirs.length && process.platform === "win32") {
+    const filter = tempDirs.map(d => `$_.CommandLine -like '*${d.split(/[\/]/).pop()}*'`).join(" -or ");
+    try { spawnSync("powershell", ["-NoProfile", "-Command", `Get-CimInstance Win32_Process | Where-Object { ${filter} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: "ignore", timeout: 20000 }); } catch {}
+  }
+  for (const dir of tempDirs) {
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch {}
+  }
+});
+
 
 const BASE = "http://127.0.0.1:8787";
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
@@ -63,7 +82,7 @@ function startSlowHost(bytesPerSecond, stopAfter = 0) {
 }
 
 async function launch() {
-  const profile = mkdtempSync(join(tmpdir(), "tvz-slow-"));
+  const profile = tempDir(join(tmpdir(), "tvz-slow-"));
   const port = 9500 + Math.floor(Math.random() * 90);
   const proc = spawn(browserName === "edge" ? EDGE : CHROME, ["--headless=new", `--remote-debugging-port=${port}`, "--remote-allow-origins=*",
     `--user-data-dir=${profile}`, "--no-first-run", "--mute-audio", "--autoplay-policy=no-user-gesture-required", "--window-size=1280,800", "about:blank"], { stdio: "ignore" });

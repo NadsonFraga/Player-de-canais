@@ -4,21 +4,22 @@
  * and quick-navigation portals for Movies, Series, Animes, and Live Channels.
  */
 
-import { store } from '../core/state.js?v=20261021_0957';
+import { store } from '../core/state.js?v=20261021_1129';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_1129';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
     TMDB_CACHE_KEY,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY
-} from '../core/constants.js?v=20261021_0957';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261021_0957';
-import { switchAppView } from '../navigation/router.js?v=20261021_0957';
-import { fetchTmdbEndpoint } from './movies.js?v=20261021_0957';
-import { fetchSeriesEndpoint } from './series.js?v=20261021_0957';
-import { openTitle } from './titlePage.js?v=20261021_0957';
-import { selectChannelByName } from './channels.js?v=20261021_0957';
-import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261021_0957';
+} from '../core/constants.js?v=20261021_1129';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261021_1129';
+import { switchAppView } from '../navigation/router.js?v=20261021_1129';
+import { fetchTmdbEndpoint } from './movies.js?v=20261021_1129';
+import { fetchSeriesEndpoint } from './series.js?v=20261021_1129';
+import { openTitle } from './titlePage.js?v=20261021_1129';
+import { selectChannelByName } from './channels.js?v=20261021_1129';
+import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261021_1129';
 
 const TMDB_GENRES = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -480,7 +481,7 @@ function showHeroSlide(index) {
 
     if (genresEl) {
         if (Array.isArray(item.genres) && item.genres.length > 0) {
-            genresEl.innerHTML = item.genres.map(g => `<span class="movies-genre-tag">${g}</span>`).join('');
+            genresEl.innerHTML = item.genres.map(g => `<span class="movies-genre-tag">${escapeHtml(g)}</span>`).join('');
             genresEl.style.display = 'flex';
         } else {
             genresEl.innerHTML = '';
@@ -553,7 +554,7 @@ function renderHomeChannelsTrack() {
                 ${logoHtml}
             </div>
             <div class="channel-card-bottom">
-                <h4 class="channel-card-name">${ch.name}</h4>
+                <h4 class="channel-card-name">${escapeHtml(ch.name)}</h4>
             </div>
         `;
 
@@ -688,12 +689,12 @@ function createPosterCard({ id, title, year, rating, posterPath, onClick }) {
         : 'assets/logos/fav/icon-detailed.svg';
 
     card.innerHTML = `
-        <img class="movie-poster-img" src="${posterUrl}" alt="${title}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+        <img class="movie-poster-img" src="${escapeAttr(posterUrl)}" alt="${escapeAttr(title)}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
         <div class="movie-poster-overlay">
-            <h4 class="movie-card-title" title="${title}">${title}</h4>
+            <h4 class="movie-card-title" title="${escapeAttr(title)}">${escapeHtml(title)}</h4>
             <div class="movie-card-meta">
-                <span>${year}</span>
-                <span class="movie-card-rating">★ ${rating}</span>
+                <span>${escapeHtml(year)}</span>
+                <span class="movie-card-rating">★ ${escapeHtml(rating)}</span>
             </div>
         </div>
     `;

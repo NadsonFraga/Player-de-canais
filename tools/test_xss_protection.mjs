@@ -9,10 +9,29 @@
  * Run: node tools/test_xss_protection.mjs
  */
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, existsSync } from "node:fs";
+import { mkdtempSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { escapeHtml, escapeAttr } from "../assets/js/core/sanitize.js";
+
+// Test browser profiles are removed when the run ends (left behind, they add up to gigabytes in %TEMP%)
+const tempDirs = [];
+function tempDir(prefix) {
+  const dir = mkdtempSync(prefix);
+  tempDirs.push(dir);
+  return dir;
+}
+process.on("exit", () => {
+  // A browser started from a launcher can outlive the process the test killed: stop whatever still uses our profiles
+  if (tempDirs.length && process.platform === "win32") {
+    const filter = tempDirs.map(d => `$_.CommandLine -like '*${d.split(/[\/]/).pop()}*'`).join(" -or ");
+    try { spawnSync("powershell", ["-NoProfile", "-Command", `Get-CimInstance Win32_Process | Where-Object { ${filter} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: "ignore", timeout: 20000 }); } catch {}
+  }
+  for (const dir of tempDirs) {
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch {}
+  }
+});
+
 
 let passed = 0;
 let failed = 0;
@@ -76,7 +95,7 @@ const serverRunning = await fetch("http://127.0.0.1:8787/", { signal: AbortSigna
 const serverProc = serverRunning ? null : spawn("python", ["tools/local_server.py", "--port", "8787"], { stdio: "ignore" });
 if (serverProc) await new Promise(r => setTimeout(r, 600));
 
-const profile = mkdtempSync(join(tmpdir(), "tvz-xss-"));
+const profile = tempDir(join(tmpdir(), "tvz-xss-"));
 const browserProc = spawn(CHROMIUM, [
   "--headless=new",
   `--remote-debugging-port=${DEBUG_PORT}`,

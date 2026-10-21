@@ -116,12 +116,6 @@
     cursor: grab;
 }
 
-.matches-grid.matches-carousel.is-dragging {
-    scroll-snap-type: none;
-    scroll-behavior: auto;
-    cursor: grabbing;
-}
-
 .matches-grid.matches-carousel::-webkit-scrollbar {
     height: 6px;
 }
@@ -468,29 +462,6 @@
     font-weight: 700;
 }
 
-
-/* Venue row */
-.match-meta-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.76rem;
-    color: var(--text-muted);
-}
-
-.match-meta-row svg {
-    width: 13px;
-    height: 13px;
-    flex-shrink: 0;
-    opacity: 0.8;
-}
-
-.match-meta-stadium {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 /* Broadcast Footer */
 .match-broadcast-footer {
     border-top: 1px solid var(--border-subtle);
@@ -579,11 +550,6 @@
     flex-shrink: 0;
 }
 
-.category-header-btn:hover .category-header-icon,
-.category-header-btn[aria-expanded="true"] .category-header-icon {
-    color: #ffffff;
-}
-
 .pill .icon-svg {
     display: inline-flex;
     align-items: center;
@@ -614,8 +580,7 @@
     margin: 8px 0;
 }
 /* --- TV Remote & D-Pad Focus Navigation Styles --- */
-:focus-visible:not(input):not(textarea),
-.tv-focused:not(input):not(textarea) {
+:focus-visible:not(input):not(textarea) {
     outline: 2px solid #ffffff !important;
     outline-offset: 3px !important;
     box-shadow: 0 0 16px rgba(255, 255, 255, 0.25) !important;
@@ -624,7 +589,7 @@
     z-index: 10;
 }
 
-:focus:not(:focus-visible):not(.tv-focused),
+:focus:not(:focus-visible),
 input:focus,
 input:focus-visible,
 textarea:focus,

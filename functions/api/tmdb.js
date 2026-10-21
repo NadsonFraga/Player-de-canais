@@ -7,7 +7,7 @@
  * Read paths only, same origins as /api/resolve. Answers are cached for 30 min by the browser and at the edge
  * (keyed by the path, never by the key). Mirrored by tools/local_server.py.
  */
-import { isAllowedOrigin } from "./resolve.js";
+import { isAllowedOrigin, apiIpBlockedFor } from "./resolve.js";
 
 const TMDB_ORIGIN = "https://api.themoviedb.org";
 // Only what the site reads: titles, lists, search; nothing that writes or reaches an account
@@ -42,6 +42,8 @@ export async function onRequestGet(context) {
   const origin = request.headers.get("Origin");
   if (!isAllowedOrigin(origin)) return json(403, { error: "origin_forbidden" });
   const cors = { "Access-Control-Allow-Origin": origin || "*", "Vary": "Origin" };
+  const ipWait = apiIpBlockedFor(request.headers.get("CF-Connecting-IP"));
+  if (ipWait) return json(429, { error: "too_many_requests" }, { ...cors, "Retry-After": String(ipWait) });
 
   const key = env && env.TMDB_API_KEY;
   if (!key) return json(503, { error: "tmdb_key_missing" }, cors);

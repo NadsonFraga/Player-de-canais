@@ -4,8 +4,8 @@
  * Built on first use, over everything (layer 1400). It is a history layer: the phone's Back and Esc answer "no"
  * (historyManager.js presses its "no" button).
  */
-import { pushNavLayer, popNavLayer, isHandlingBack } from '../navigation/historyManager.js?v=20261021_0957';
-import { escapeHtml } from './sanitize.js?v=20261021_0957';
+import { pushNavLayer, popNavLayer, isHandlingBack } from '../navigation/historyManager.js?v=20261021_1129';
+import { escapeHtml } from './sanitize.js?v=20261021_1129';
 
 let pending = null;
 
@@ -39,11 +39,6 @@ function dialog() {
         }
     });
     return el;
-}
-
-export function isConfirmOpen() {
-    const el = document.getElementById('confirm-dialog');
-    return Boolean(el) && !el.classList.contains('hidden');
 }
 
 function answer(value) {

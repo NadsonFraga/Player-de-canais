@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261021_0957';
-import { showToast } from '../core/toast.js?v=20261021_0957';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261021_0957';
-import { buildFeedRows } from '../core/feedRows.js?v=20261021_0957';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261021_0957';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261021_0957';
-import { resumeStartTime } from '../core/resume.js?v=20261021_0957';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261021_0957';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_0957';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0957';
-import { fetchTmdb } from '../core/tmdb.js?v=20261021_0957';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261021_0957';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261021_0957';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261021_0957';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261021_0957';
+} from '../core/constants.js?v=20261021_1129';
+import { showToast } from '../core/toast.js?v=20261021_1129';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261021_1129';
+import { buildFeedRows } from '../core/feedRows.js?v=20261021_1129';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261021_1129';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261021_1129';
+import { resumeStartTime } from '../core/resume.js?v=20261021_1129';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261021_1129';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_1129';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_1129';
+import { fetchTmdb } from '../core/tmdb.js?v=20261021_1129';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261021_1129';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261021_1129';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261021_1129';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261021_1129';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -262,7 +262,7 @@ export function renderHomeContinueWatching() {
                 </svg>
             </button>
             <div class="continue-card-media">
-                <img src="${safeImg}" alt="${safeTitleAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+                <img src="${safeImg}" alt="${safeTitleAttr}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
                 <div class="continue-play-overlay">
                     <div class="continue-play-btn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -430,7 +430,7 @@ function createSeriesCardElement(seriesItem, mediaType = 'tv') {
     const safeRating = escapeHtml(rating);
 
     card.innerHTML = `
-        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
         <div class="movie-poster-overlay">
             <h4 class="movie-card-title" title="${safeTitleAttr}">${safeTitle}</h4>
             <div class="movie-card-meta">
@@ -2026,7 +2026,7 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
 
         card.innerHTML = `
             <div class="ep-thumbnail-box">
-                <img class="ep-thumbnail-img" src="${safeStill}" alt="${safeEpTitleAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+                <img class="ep-thumbnail-img" src="${safeStill}" alt="${safeEpTitleAttr}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
                 <span class="ep-number-tag">Ep. ${safeEpNum}</span>
                 ${isWatched ? '<span class="ep-watched-tag">Visto</span>' : ''}
                 <div class="ep-play-overlay">
@@ -2629,7 +2629,7 @@ function startEpisodePlayback(context, options = {}) {
     if (genresEl) {
         genresEl.innerHTML = (showItem.genre_ids || []).slice(0, 3).map(id => {
             const name = TMDB_GENRES[id];
-            return name ? `<span class="movie-modal-badge">${name}</span>` : '';
+            return name ? `<span class="movie-modal-badge">${escapeHtml(name)}</span>` : '';
         }).join('');
     }
     if (overviewEl) {

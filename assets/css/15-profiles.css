@@ -93,15 +93,13 @@
 }
 
 .profile-tile:hover .profile-avatar-wrap,
-.profile-tile:focus-visible .profile-avatar-wrap,
-.profile-tile.tv-focused .profile-avatar-wrap {
+.profile-tile:focus-visible .profile-avatar-wrap {
     box-shadow: 0 0 0 3px #ffffff;
     transform: scale(1.04);
 }
 
 /* The ring on the avatar is the focus mark: no outline around the whole tile */
-.profile-tile:focus-visible,
-.profile-tile.tv-focused {
+.profile-tile:focus-visible {
     outline: none !important;
     box-shadow: none !important;
 }
@@ -124,8 +122,7 @@
 }
 
 .profile-tile:hover .profile-tile-name,
-.profile-tile:focus-visible .profile-tile-name,
-.profile-tile.tv-focused .profile-tile-name {
+.profile-tile:focus-visible .profile-tile-name {
     color: #ffffff;
 }
 
