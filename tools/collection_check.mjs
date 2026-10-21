@@ -1,11 +1,11 @@
 /**
  * Checks the Coleção (modules/collection.js) and the "Gostou? Avalie" card (modules/ratePrompt.js):
- *   1. the profile menu opens it, with the count of each tab (seeded library, progress and favorites)
+ *   1. the Coleção icon in the pill opens it, with the count of each tab (seeded library, progress and favorites)
  *   2. Assistindo shows the time left of a movie and the episode of a series, with the bar
  *   3. Quero assistir lists newest first; the Filmes / Séries / Animes filter splits it
  *   4. Avaliados shows the score; 5. the remove button turns the field off (kept with its time, for the sync)
- *   6. a card opens its title page and Back returns; 7. Back from the Coleção goes home; the menu's "Continuar
- *      assistindo" opens it on Assistindo; 8. a favorite channel opens the channel
+ *   6. a card opens its title page and Back returns; 7. Back from the Coleção goes home; the icon opens it again on
+ *      Assistindo; 8. a favorite channel opens the channel
  *   9. the end of a movie marks it Assistido and asks for a score in the player; a star saves it
  *  10. phones: no sideways scroll
  *
@@ -162,12 +162,11 @@ try {
   await b.evaluate(seed);
   await startApp(b);
 
-  // 1. From the profile menu, with the counts of each tab
-  await b.evaluate("(document.getElementById('btn-nav-profile').click(), true)");
-  await b.evaluate("(document.querySelector('#nav-profile-menu [data-menu-action=\"collection\"]').click(), true)");
+  // 1. From the Coleção icon in the pill, with the counts of each tab
+  await b.evaluate("(document.getElementById('btn-nav-collection').click(), true)");
   const opened = await waitFor(b, COLLECTION_OPEN, 5000);
   const counts = await b.evaluate(COUNTS);
-  check("the profile menu opens the Coleção", opened !== null);
+  check("the Coleção icon opens the Coleção", opened !== null);
   check("tab counts: Assistindo 2, Quero assistir 2, Assistidos 1, Avaliados 1, Canais 1",
     counts.watching === 2 && counts.watchlist === 2 && counts.watched === 1 && counts.rated === 1 && counts.channels === 1, JSON.stringify(counts));
 
@@ -211,14 +210,13 @@ try {
   const backToCollection = await waitFor(b, `!(${PAGE_OPEN}) && ${COLLECTION_OPEN}`, 5000);
   check("Back returns to the Coleção", backToCollection !== null);
 
-  // 7. Back from the Coleção goes home; the menu's "Continuar assistindo" opens it on Assistindo
+  // 7. Back from the Coleção goes home; the icon opens it again on Assistindo
   await b.evaluate("(history.back(), true)");
   const home = await waitFor(b, "document.body.getAttribute('data-app-view') === 'home'", 5000);
   check("Back from the Coleção goes home", home !== null);
-  await b.evaluate("(document.getElementById('btn-nav-profile').click(), true)");
-  await b.evaluate("(document.querySelector('#nav-profile-menu [data-menu-action=\"continue\"]').click(), true)");
+  await b.evaluate("(document.getElementById('btn-nav-collection').click(), true)");
   const onWatching = await waitFor(b, `${COLLECTION_OPEN} && document.querySelector('.collection-tab.active').dataset.collectionTab === 'watching'`, 5000);
-  check("'Continuar assistindo' opens the Coleção on Assistindo", onWatching !== null);
+  check("the Coleção icon opens it on Assistindo", onWatching !== null);
 
   // 8. Favorite channels open the channel
   await b.evaluate(tab("channels"));

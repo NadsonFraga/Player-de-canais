@@ -122,19 +122,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/11-title-page.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/12-header.css?v=20261020_1857">
-    <link rel="stylesheet" href="assets/css/13-collection.css?v=20261020_1857">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/11-title-page.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/12-header.css?v=20261021_0024">
+    <link rel="stylesheet" href="assets/css/13-collection.css?v=20261021_0024">
 </head>
 
 <body>
@@ -188,112 +188,50 @@
         </button>
 
         <span class="nav-capsule-divider nav-tools-divider" aria-hidden="true"></span>
-        <!-- Search, profile and settings: inside the pill on computers (phones use the single menu below) -->
+        <!-- Search, Coleção and the profile menu: the same three icons on computers and phones -->
         <div id="nav-capsule-tools" class="nav-capsule-tools">
             <button id="btn-nav-search" class="nav-tool" type="button" aria-label="Buscar" title="Buscar (atalho: /)">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+            <button id="btn-nav-collection" class="nav-tool" type="button" aria-label="Coleção" title="Coleção">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
             </button>
             <div class="nav-menu-wrap">
                 <button id="btn-nav-profile" class="nav-tool nav-tool-avatar" type="button" aria-label="Perfil" title="Perfil" aria-haspopup="true" aria-expanded="false" aria-controls="nav-profile-menu">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg>
                 </button>
                 <div id="nav-profile-menu" class="nav-menu hidden" role="menu" aria-label="Perfil">
+                    <!-- The profile in use, with the switch next to it (profiles come with the account) -->
                     <div class="nav-menu-head">
-                        <span class="nav-menu-avatar" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg></span>
+                        <span class="nav-menu-avatar" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg></span>
                         <span class="nav-menu-head-text">
                             <strong>Visitante</strong>
-                            <span>Seu progresso fica neste aparelho</span>
+                            <span>Perfil deste aparelho</span>
                         </span>
+                        <button type="button" class="nav-menu-switch" data-menu-action="profiles" aria-label="Trocar perfil (em breve)" title="Trocar perfil (em breve)">Trocar</button>
                     </div>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-action="collection">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                        <span>Coleção</span>
-                    </button>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-action="continue">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>
-                        <span>Continuar assistindo</span>
-                    </button>
                     <button type="button" class="nav-menu-item is-soon" role="menuitem" aria-disabled="true" data-menu-action="account">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
                         <span>Entrar ou criar conta</span>
                         <span class="nav-menu-note">em breve</span>
                     </button>
-                </div>
-            </div>
-            <div class="nav-menu-wrap">
-                <button id="btn-nav-settings" class="nav-tool" type="button" aria-label="Opções" title="Opções" aria-haspopup="true" aria-expanded="false" aria-controls="nav-settings-menu">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                </button>
-                <div id="nav-settings-menu" class="nav-menu hidden" role="menu" aria-label="Opções">
-                    <button id="btn-menu-adblock" type="button" class="nav-menu-item" role="menuitem" data-menu-action="adblock">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
-                        <span>Menos anúncios nos servidores externos</span>
+                    <button type="button" class="nav-menu-item is-soon" role="menuitem" aria-disabled="true" data-menu-action="watchparty">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        <span>Watch Party</span>
+                        <span class="nav-menu-note">em breve</span>
                     </button>
-                    <div class="nav-menu-sep" role="separator"></div>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-legal="privacy">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
-                        <span>Privacidade</span>
-                    </button>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-legal="terms">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="13" y2="17"></line></svg>
-                        <span>Termos de uso</span>
-                    </button>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-legal="dmca">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        <span>DMCA e remoção</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <!-- Phones: one round button at the right of the pill opens everything (search, profile, options) -->
-        <span class="nav-capsule-divider nav-more-divider" aria-hidden="true"></span>
-        <div class="nav-menu-wrap nav-mobile-more">
-            <button id="btn-nav-more" class="nav-tool nav-tool-avatar" type="button" aria-label="Menu" title="Menu" aria-haspopup="true" aria-expanded="false" aria-controls="nav-mobile-menu">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg>
-            </button>
-            <div id="nav-mobile-menu" class="nav-menu hidden" role="menu" aria-label="Menu">
-                    <div class="nav-menu-head">
-                        <span class="nav-menu-avatar" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg></span>
-                        <span class="nav-menu-head-text">
-                            <strong>Visitante</strong>
-                            <span>Seu progresso fica neste aparelho</span>
-                        </span>
-                    </div>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-action="search">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <span>Buscar</span>
-                    </button>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-action="collection">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                        <span>Coleção</span>
-                    </button>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-action="continue">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>
-                        <span>Continuar assistindo</span>
-                    </button>
-                    <button type="button" class="nav-menu-item is-soon" role="menuitem" aria-disabled="true" data-menu-action="account">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-                        <span>Entrar ou criar conta</span>
+                    <button type="button" class="nav-menu-item is-soon" role="menuitem" aria-disabled="true" data-menu-action="premium">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 18h20"></path><path d="M3 18l2-11 5 5 2-7 2 7 5-5 2 11"></path></svg>
+                        <span>Premium</span>
                         <span class="nav-menu-note">em breve</span>
                     </button>
                     <div class="nav-menu-sep" role="separator"></div>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-action="adblock">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
-                        <span>Menos anúncios nos servidores externos</span>
+                    <button type="button" class="nav-menu-item is-soon" role="menuitem" aria-disabled="true" data-menu-action="settings">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <span>Configurações</span>
+                        <span class="nav-menu-note">em breve</span>
                     </button>
-                    <div class="nav-menu-sep" role="separator"></div>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-legal="privacy">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
-                        <span>Privacidade</span>
-                    </button>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-legal="terms">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="13" y2="17"></line></svg>
-                        <span>Termos de uso</span>
-                    </button>
-                    <button type="button" class="nav-menu-item" role="menuitem" data-menu-legal="dmca">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        <span>DMCA e remoção</span>
-                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -2231,7 +2169,7 @@
     <!-- Streaming Engine V3: Hls.js & Artplayer load on demand with Subresource Integrity (D7, B11), see ensurePlayerLibs() in engine.js -->
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261020_1857"></script>
+    <script type="module" src="assets/js/main.js?v=20261021_0024"></script>
 </body>
 
 </html>

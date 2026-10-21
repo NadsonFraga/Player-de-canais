@@ -1,13 +1,14 @@
 /**
  * Checks the header pill tools (modules/header.js):
- *   1. the brand icon replaces the Início tab and goes home; Esportes is dimmed with no badge; search, profile and
- *      settings come in that order
- *   2. the profile and settings menus open and Back closes them; settings opens Privacidade and the ad-block tips
+ *   1. the brand icon replaces the Início tab and goes home; Esportes is dimmed with no badge; search, Coleção and
+ *      profile come in that order
+ *   2. the profile menu opens and Back closes it; it holds the profile switch and the em breve items (account, Watch
+ *      Party, Premium, Configurações); the Coleção icon opens the Coleção and lights up there
  *   3. "/" opens the search; typing a word makes one request (not one per letter); the category filters reuse it;
  *      a result opens the title page and Back returns
  *   4. channels are found with no request, listed first, and open the channel; Back closes the search
- *   5. phones: one row with a single menu button (search, profile and options inside), fixed at the top; it clears
- *      the title page's back button
+ *   5. phones: the same three icons in one row (Esportes hidden until it opens), inside 390 and 360 px screens even
+ *      with the active tab's name; the profile menu fits; the pill clears the title page's back button
  *
  *   node tools/header_check.mjs [--browser=chrome|edge|firefox] [--shots=<folder>]   (chrome by default)
  *
@@ -151,7 +152,7 @@ try {
   })`);
   check("brand icon in place of the Início tab", pill.brand && pill.homeLabel === "", JSON.stringify(pill));
   check("Esportes dimmed, no badge", !pill.badge && pill.sportsOpacity < 0.6, String(pill.sportsOpacity));
-  check("tools in order: search, profile, settings", pill.tools === "btn-nav-search,btn-nav-profile,btn-nav-settings", pill.tools);
+  check("tools in order: search, Coleção, profile", pill.tools === "btn-nav-search,btn-nav-collection,btn-nav-profile", pill.tools);
   await b.evaluate("(window.TvzinhaActions.switchView('movies'), true)");
   await sleep(800);
   await b.evaluate("(document.getElementById('nav-tab-home').click(), true)");
@@ -168,19 +169,20 @@ try {
   await b.evaluate("(history.back(), true)");
   const profileClosed = await waitFor(b, `!(${visible("nav-profile-menu")}) && document.body.getAttribute('data-app-view') === 'home'`, 4000);
   check("profile menu opens and Back closes it (page stays)", profileOpen && profileClosed !== null);
-  await b.evaluate("(document.getElementById('btn-nav-settings').click(), true)");
-  await b.evaluate("(document.querySelector('#nav-settings-menu [data-menu-legal=\"privacy\"]').click(), true)");
-  const legal = await waitFor(b, `!(${visible("nav-settings-menu")}) && document.getElementById('legal-modal').style.display === 'flex' && document.getElementById('legal-modal-title').textContent === 'Privacidade'`, 4000);
-  check("settings menu opens Privacidade", legal !== null);
+  await b.evaluate("(document.getElementById('btn-nav-profile').click(), true)");
+  const menu = await b.evaluate("({ switch: Boolean(document.querySelector('#nav-profile-menu .nav-menu-head .nav-menu-switch')), items: [...document.querySelectorAll('#nav-profile-menu .nav-menu-item')].map(i => i.dataset.menuAction + (i.classList.contains('is-soon') ? '*' : '')).join(',') })");
+  check("profile menu: the profile with its switch, then account, Watch Party, Premium and Configurações (em breve)", menu.switch && menu.items === "account*,watchparty*,premium*,settings*", JSON.stringify(menu));
+  await b.evaluate("(document.querySelector('#nav-profile-menu [data-menu-action=\"watchparty\"]').click(), true)");
+  await sleep(300);
+  const soon = await b.evaluate("document.getElementById('app-toast').textContent");
+  check("an em breve item says what it will be", /Watch Party/.test(soon), soon);
   await b.evaluate("(history.back(), true)");
-  const legalClosed = await waitFor(b, "document.getElementById('legal-modal').classList.contains('hidden')", 4000);
-  check("Back closes the legal panel", legalClosed !== null);
-  await b.evaluate("(document.getElementById('btn-nav-settings').click(), true)");
-  await b.evaluate("(document.getElementById('btn-menu-adblock').click(), true)");
-  const tips = await waitFor(b, `!(${visible("nav-settings-menu")}) && document.getElementById('adblock-modal').style.display === 'flex'`, 4000);
-  check("settings menu opens the ad-block tips", tips !== null);
-  await b.evaluate("(window.TvzinhaActions.closeAdblockModal(), true)");
-  await sleep(500);
+  await waitFor(b, `!(${visible("nav-profile-menu")})`, 4000);
+  await b.evaluate("(document.getElementById('btn-nav-collection').click(), true)");
+  const collectionOn = await waitFor(b, "document.body.getAttribute('data-app-view') === 'collection' && document.getElementById('btn-nav-collection').classList.contains('active')", 5000);
+  check("the Coleção icon opens the Coleção and lights up there", collectionOn !== null);
+  await b.evaluate("(window.TvzinhaActions.switchView('home'), true)");
+  await waitFor(b, "document.body.getAttribute('data-app-view') === 'home' && !document.getElementById('btn-nav-collection').classList.contains('active')", 4000);
 
   // 3. Search: "/" opens it, one request per search, a result opens the title page
   await b.evaluate("(document.body.focus(), document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true)");
@@ -228,20 +230,28 @@ try {
   await b.evaluate("(window.TvzinhaActions.switchView('home'), true)");
   await sleep(1200);
 
-  // 5. Phones: one row (tabs and a single round menu button), fixed; the menu holds search, profile and options
-  await b.viewport(390, 844, true);
+  // 5. Phones: the same three icons in the pill (Esportes hidden until it opens), inside the screen at 390 and 360 px
+  for (const width of [390, 360]) {
+    await b.viewport(width, 800, true);
+    await sleep(800);
+    const phone = await b.evaluate(`(() => { const p = document.getElementById('floating-nav-capsule').getBoundingClientRect(); const tools = document.getElementById('nav-capsule-tools');
+      return { toolsInPill: getComputedStyle(tools).display !== 'none' && tools.getBoundingClientRect().bottom <= p.bottom, sportsHidden: getComputedStyle(document.getElementById('nav-tab-sports')).display === 'none',
+               inside: p.left >= 0 && p.right <= innerWidth, sideScroll: document.documentElement.scrollWidth > innerWidth, width: Math.round(p.width) }; })()`);
+    check(`phone ${width}: one row with search, Coleção and profile, inside the screen`, phone.toolsInPill && phone.sportsHidden && phone.inside && !phone.sideScroll, JSON.stringify(phone));
+  }
+  await b.evaluate("(window.TvzinhaActions.switchView('movies'), true)");
   await sleep(1000);
-  const phone = await b.evaluate(`(() => { const p = document.getElementById('floating-nav-capsule').getBoundingClientRect(); const more = document.getElementById('btn-nav-more').getBoundingClientRect();
-    return { toolsHidden: getComputedStyle(document.getElementById('nav-capsule-tools')).display === 'none', moreInPill: more.width > 0 && more.top >= p.top && more.bottom <= p.bottom,
-             inside: p.left >= 0 && p.right <= innerWidth, sideScroll: document.documentElement.scrollWidth > innerWidth }; })()`);
-  check("phone: one row with the menu button, nothing under the pill", phone.toolsHidden && phone.moreInPill && phone.inside && !phone.sideScroll, JSON.stringify(phone));
-  await b.evaluate("(document.getElementById('btn-nav-more').click(), true)");
-  const menuItems = await b.evaluate("[...document.querySelectorAll('#nav-mobile-menu .nav-menu-item')].map(i => i.dataset.menuAction || i.dataset.menuLegal).join(',')");
-  check("phone: the menu holds search, the Coleção, continue, account, tips and the legal panels", menuItems === "search,collection,continue,account,adblock,privacy,terms,dmca", menuItems);
+  const withLabel = await b.evaluate("(() => { const p = document.getElementById('floating-nav-capsule').getBoundingClientRect(); return { inside: p.left >= 0 && p.right <= innerWidth, width: Math.round(p.width) }; })()");
+  check("phone 360: still inside with the active tab's name", withLabel.inside, JSON.stringify(withLabel));
+  await b.evaluate("(document.getElementById('btn-nav-profile').click(), true)");
+  const menuBox = await b.evaluate("(() => { const r = document.getElementById('nav-profile-menu').getBoundingClientRect(); return { inside: r.left >= 0 && r.right <= innerWidth, w: Math.round(r.width) }; })()");
+  check("phone: the profile menu fits the screen", menuBox.inside, JSON.stringify(menuBox));
   await b.shot("header-phone-menu.png");
-  await b.evaluate("(document.querySelector('#nav-mobile-menu [data-menu-action=\"search\"]').click(), true)");
-  const phoneSearch = await waitFor(b, `${SEARCH_OPEN} && !(${visible("nav-mobile-menu")})`, 4000);
-  check("phone: Buscar in the menu opens the search", phoneSearch !== null);
+  await b.evaluate("(history.back(), true)");
+  await waitFor(b, `!(${visible("nav-profile-menu")})`, 4000);
+  await b.evaluate("(document.getElementById('btn-nav-search').click(), true)");
+  const phoneSearch = await waitFor(b, SEARCH_OPEN, 4000);
+  check("phone: the search icon opens the search", phoneSearch !== null);
   await b.evaluate("(history.back(), true)");
   await waitFor(b, `!(${SEARCH_OPEN})`, 4000);
   await b.evaluate("(window.scrollTo(0, 0), window.TvzinhaActions.openTitle('movie', { id: 1022789, title: 'Divertida Mente 2' }), true)");

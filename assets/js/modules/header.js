@@ -1,24 +1,24 @@
 /**
- * TVZINHA ONLINE - Header tools: global search, profile menu and settings menu (the icons after the tabs in the
- * pill). Phones have one round button at the right of the pill with a single menu holding all of it; the pill stays
- * fixed at the top (hiding it on scroll was tried and removed on 2026-10-20).
+ * TVZINHA ONLINE - Header tools: global search, the Coleção and the profile menu (the three icons after the tabs in
+ * the pill, the same on computers and phones). The profile menu holds the account only: the profile in use with its
+ * switch, Entrar ou criar conta, Watch Party, Premium and Configurações (a screen of its own, later). The legal
+ * panels and the ad-block tips live in the footer. The pill stays fixed at the top.
  *
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261020_1857';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261020_1857';
-import { fetchTmdb } from '../core/tmdb.js?v=20261020_1857';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261020_1857';
-import { showToast } from '../core/toast.js?v=20261020_1857';
-import { syncPageLock } from '../core/activity.js?v=20261020_1857';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261020_1857';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261020_1857';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261020_1857';
-import { isAnimeShow } from './series.js?v=20261020_1857';
-import { selectChannelByName } from './channels.js?v=20261020_1857';
-import { openLegalSection } from './footer.js?v=20261020_1857';
-import { openCollection } from './collection.js?v=20261020_1857';
+import { store } from '../core/state.js?v=20261021_0024';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261021_0024';
+import { fetchTmdb } from '../core/tmdb.js?v=20261021_0024';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0024';
+import { showToast } from '../core/toast.js?v=20261021_0024';
+import { syncPageLock } from '../core/activity.js?v=20261021_0024';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261021_0024';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_0024';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261021_0024';
+import { isAnimeShow } from './series.js?v=20261021_0024';
+import { selectChannelByName } from './channels.js?v=20261021_0024';
+import { openCollection } from './collection.js?v=20261021_0024';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -49,7 +49,7 @@ function openMenu(menuId) {
     menuButton(menuId)?.setAttribute('aria-expanded', 'true');
     if (!openMenuId) pushNavLayer('menu');
     openMenuId = menuId;
-    menu.querySelector('.nav-menu-item:not([aria-disabled="true"])')?.focus({ preventScroll: true });
+    menu.querySelector('button')?.focus({ preventScroll: true });
 }
 
 /** Closes the open menu. `keepHistory`: its history layer was already taken (Back) or is reused. */
@@ -60,11 +60,6 @@ export function closeMenu({ keepHistory = false } = {}) {
     menuButton(openMenuId)?.setAttribute('aria-expanded', 'false');
     openMenuId = null;
     if (!keepHistory) popNavLayer();
-}
-
-/** Closes the menu, then runs `action` once its history step has landed (so a new layer is not the one undone). */
-function closeMenuThen(action) {
-    runNavBatch(() => closeMenu(), action);
 }
 
 // --- Global search ---
@@ -274,7 +269,19 @@ export function setupHeader() {
     tools.dataset.ready = '1';
 
     document.getElementById('btn-nav-search')?.addEventListener('click', openSearch);
-    ['nav-profile-menu', 'nav-settings-menu', 'nav-mobile-menu'].forEach(menuId => {
+    document.getElementById('btn-nav-collection')?.addEventListener('click', () => openCollection());
+    // The Coleção icon lights up while the Coleção is on screen, like the tabs
+    const markCollection = () => {
+        const on = document.body.getAttribute('data-app-view') === 'collection';
+        const button = document.getElementById('btn-nav-collection');
+        if (!button) return;
+        button.classList.toggle('active', on);
+        if (on) button.setAttribute('aria-current', 'page');
+        else button.removeAttribute('aria-current');
+    };
+    new MutationObserver(markCollection).observe(document.body, { attributes: true, attributeFilter: ['data-app-view'] });
+    markCollection();
+    ['nav-profile-menu'].forEach(menuId => {
         menuButton(menuId)?.addEventListener('click', (e) => {
             e.stopPropagation();
             if (openMenuId === menuId) closeMenu();
@@ -282,23 +289,18 @@ export function setupHeader() {
         });
     });
 
-    // Menu items (the same actions in the computer menus and in the phone's single menu)
-    document.querySelectorAll('#floating-nav-capsule .nav-menu').forEach(menu => menu.addEventListener('click', (e) => {
-        const legal = e.target.closest('[data-menu-legal]');
-        if (legal) {
-            closeMenuThen(() => openLegalSection(legal.dataset.menuLegal));
-            return;
-        }
+    // Profile menu: everything in it is still on its way; each item says what it will be
+    const SOON = {
+        profiles: 'Os perfis chegam com a conta: cada conta vai ter os seus.',
+        account: 'A conta chega em breve. Por enquanto, tudo fica salvo neste aparelho.',
+        watchparty: 'Watch Party em breve: assistir junto com amigos, ao mesmo tempo.',
+        premium: 'Premium em breve.',
+        settings: 'As configurações do site chegam em breve, numa tela própria.'
+    };
+    document.getElementById('nav-profile-menu')?.addEventListener('click', (e) => {
         const item = e.target.closest('[data-menu-action]');
-        if (!item) return;
-        const action = item.dataset.menuAction;
-        if (action === 'collection') closeMenuThen(() => openCollection());
-        else if (action === 'continue') closeMenuThen(() => openCollection('watching'));
-        else if (action === 'search') closeMenuThen(openSearch);
-        else if (action === 'account') showToast('A conta chega em breve. Por enquanto, tudo fica salvo neste aparelho.');
-        // The tips open through the footer's button (main.js handles it), after the menu's history step lands
-        else if (action === 'adblock') closeMenuThen(() => document.getElementById('btn-footer-adblock')?.click());
-    }));
+        if (item && SOON[item.dataset.menuAction]) showToast(SOON[item.dataset.menuAction]);
+    });
 
     // A click outside closes the menu; Esc closes it and gives the focus back to its button
     document.addEventListener('click', (e) => {
