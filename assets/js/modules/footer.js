@@ -1,8 +1,8 @@
 /**
  * TVZINHA ONLINE - Site footer (Início, Filmes, Séries, Animes) and the legal panel (Privacidade, Termos de uso, DMCA)
  */
-import { switchAppView } from '../navigation/router.js?v=20261021_1129';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_1129';
+import { switchAppView } from '../navigation/router.js?v=20261021_1502';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_1502';
 
 // Plain text only, written here so the panel needs no other request. Keep the wording accurate: the proxy passes
 // video through our servers without storing it, so "não armazena nem envia" is true and "não hospeda" is not said.
@@ -13,7 +13,7 @@ const LEGAL_SECTIONS = {
         paragraphs: [
             'O Tvzinha Online pode ser usado sem conta. Sem conta, suas preferências, favoritos e o progresso do que você assiste ficam guardados apenas no seu navegador e não são enviados para nós.',
             'A conta é opcional e não pede e-mail nem nome real. Com uma conta, guardamos: o apelido; a senha e o código de recuperação, apenas de forma embaralhada e sem volta (ninguém consegue lê-los, nem nós); os perfis, com nome e avatar; e, de cada perfil, o que é sincronizado entre aparelhos: Coleção e notas, Continuar assistindo, canais e time favoritos e preferências do player.',
-            'Para manter você conectado, usamos um único cookie de sessão, essencial e que a página não consegue ler. Ele é renovado enquanto você usa o site e termina depois de 90 dias sem uso, ou quando você sai da conta. Não guardamos seu endereço IP: para limitar tentativas de senha, usamos um código feito a partir dele, que muda todo dia e não permite descobrir o IP.',
+            'Para manter você conectado, usamos um único cookie de sessão, essencial e que a página não consegue ler. Ele é renovado enquanto você usa o site e termina depois de 90 dias sem uso, ou quando você sai da conta. Não guardamos seu endereço IP: para limitar tentativas de senha, usamos um código feito a partir dele, que muda todo dia e não permite descobrir o IP. Os formulários da conta usam o Cloudflare Turnstile para barrar robôs: ele analisa sinais do navegador para confirmar que há uma pessoa, sem uso para publicidade.',
             'Os dados da conta ficam em servidores da Cloudflare. Você pode apagar a conta e tudo o que ela guarda a qualquer momento, em Configurações, Conta, Apagar conta: a exclusão é imediata. Sair da conta remove as cópias dela do aparelho.',
             'Não usamos cookies de rastreamento nem publicidade própria. As visitas são contadas pelo Web Analytics da Cloudflare, de forma anônima e sem cookies.',
             'Para exibir títulos e vídeos, o seu navegador se comunica com serviços de terceiros (TMDB, MyAnimeList, AniSkip e os provedores de vídeo), que têm as próprias políticas. Os servidores externos, abertos em quadro, podem exibir anúncios e usar cookies próprios.',

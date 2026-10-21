@@ -333,7 +333,7 @@ try {
   check("Sair da conta: Visitante with the guest data as it was", guestAgain.watchlist === 1 && guestAgain.watching === 1, JSON.stringify(guestAgain));
 
   // Clean up: delete the test account
-  await b.evaluate(`fetch('/api/account/login', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tvzinha-Request': '1' }, body: JSON.stringify({ nickname: ${JSON.stringify(nickname)}, password: ${JSON.stringify(password)} }) }).then(r => r.status)`);
+  await b.evaluate(`fetch('/api/account/login', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tvzinha-Request': '1' }, body: JSON.stringify({ nickname: ${JSON.stringify(nickname)}, password: ${JSON.stringify(password)}, turnstileToken: 'XXXX.DUMMY.TOKEN.XXXX' }) }).then(r => r.status)`);
   const deleted = await b.evaluate(`fetch('/api/account/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tvzinha-Request': '1' }, body: JSON.stringify({ password: ${JSON.stringify(password)} }) }).then(r => r.status)`);
   check("the test account is deleted", deleted === 200, String(deleted));
 } catch (e) {

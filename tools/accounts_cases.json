@@ -1,70 +1,1032 @@
 {
-  "about": "Account API cases run against functions/api/account/[[path]].js (tools/accounts_api_check.mjs) and tools/local_accounts.py (tools/test_accounts_api.py). Each device has its own cookie and IP. Strings like {code1} are values saved by earlier steps. 'origin': same (default), other or none; 'header': false sends no X-Tvzinha-Request; 'advance': milliseconds added to the clock before the step.",
-  "devices": { "A": "198.51.100.1", "B": "198.51.100.2" },
+  "about": "Account API cases run against functions/api/account/[[path]].js (tools/accounts_api_check.mjs) and tools/local_accounts.py (tools/test_accounts_api.py). Each device has its own cookie and IP. Strings like {code1} are values saved by earlier steps. 'origin': same (default), other or none; 'header': false sends no X-Tvzinha-Request; 'advance': milliseconds added to the clock before the step. Turnstile: the runners check tokens with a fake ('ok-<route>' passes, 'unavailable' means Cloudflare could not be reached, anything else fails) and add 'ok-<route>' to register, recover and login bodies unless the step has 'noCaptcha': true or its own turnstileToken.",
+  "devices": {
+    "A": "198.51.100.1",
+    "B": "198.51.100.2",
+    "C": "198.51.100.3"
+  },
   "steps": [
-    { "name": "nickname too short", "device": "A", "path": "register", "body": { "nickname": "ab", "password": "cinema2026" }, "expect": { "status": 400, "error": "nickname_short" } },
-    { "name": "nickname with a space", "device": "A", "path": "register", "body": { "nickname": "nad son", "password": "cinema2026" }, "expect": { "status": 400, "error": "nickname_chars" } },
-    { "name": "password without a number", "device": "A", "path": "register", "body": { "nickname": "Nadson", "password": "abcdefgh" }, "expect": { "status": 400, "error": "password_number" } },
-    { "name": "password without a letter", "device": "A", "path": "register", "body": { "nickname": "Nadson", "password": "12345678" }, "expect": { "status": 400, "error": "password_letter" } },
-    { "name": "password too short", "device": "A", "path": "register", "body": { "nickname": "Nadson", "password": "abc12" }, "expect": { "status": 400, "error": "password_short" } },
-    { "name": "password equal to the nickname", "device": "A", "path": "register", "body": { "nickname": "Nadson123", "password": "nadson123" }, "expect": { "status": 400, "error": "password_is_nickname" } },
-    { "name": "write without the custom header", "device": "A", "path": "register", "header": false, "body": { "nickname": "Nadson", "password": "cinema2026" }, "expect": { "status": 403, "error": "origin_forbidden" } },
-    { "name": "write from another site", "device": "A", "path": "register", "origin": "other", "body": { "nickname": "Nadson", "password": "cinema2026" }, "expect": { "status": 403, "error": "origin_forbidden" } },
-    { "name": "create the account", "device": "A", "path": "register", "body": { "nickname": "Nadson", "password": "cinema2026" },
-      "expect": { "status": 201, "cookie": "set", "has": ["recoveryCode"], "json": { "account.nickname": "Nadson", "profiles.length": 1, "profiles.0.name": "Nadson" } }, "save": { "code1": "recoveryCode" } },
-    { "name": "same nickname in other case", "device": "B", "path": "register", "body": { "nickname": "nadson", "password": "outra2026" }, "expect": { "status": 409, "error": "nickname_taken" } },
-    { "name": "signed in on A", "device": "A", "method": "GET", "path": "me", "origin": "none", "expect": { "status": 200, "json": { "account.nickname": "Nadson" } } },
-    { "name": "signed out on B", "device": "B", "method": "GET", "path": "me", "origin": "none", "expect": { "status": 401, "error": "not_signed_in" } },
-    { "name": "wrong password 1", "device": "B", "path": "login", "body": { "nickname": "nadson", "password": "errada2026" }, "expect": { "status": 401, "error": "wrong_credentials" } },
-    { "name": "wrong password 2", "device": "B", "path": "login", "body": { "nickname": "nadson", "password": "errada2026" }, "expect": { "status": 401, "error": "wrong_credentials" } },
-    { "name": "wrong password 3", "device": "B", "path": "login", "body": { "nickname": "nadson", "password": "errada2026" }, "expect": { "status": 401, "error": "wrong_credentials" } },
-    { "name": "wrong password 4", "device": "B", "path": "login", "body": { "nickname": "nadson", "password": "errada2026" }, "expect": { "status": 401, "error": "wrong_credentials" } },
-    { "name": "wrong password 5", "device": "B", "path": "login", "body": { "nickname": "nadson", "password": "errada2026" }, "expect": { "status": 401, "error": "wrong_credentials" } },
-    { "name": "sixth try blocked, even with the right password", "device": "B", "path": "login", "body": { "nickname": "nadson", "password": "cinema2026" }, "expect": { "status": 429, "error": "too_many_attempts", "has": ["retryAfter"] } },
-    { "name": "after 16 minutes it works", "device": "B", "advance": 960000, "path": "login", "body": { "nickname": "NADSON", "password": "cinema2026" }, "expect": { "status": 200, "cookie": "set", "json": { "account.nickname": "Nadson" } } },
-    { "name": "change password with the wrong current one", "device": "B", "path": "password", "body": { "currentPassword": "errada2026", "newPassword": "pipoca2027" }, "expect": { "status": 401, "error": "wrong_password" } },
-    { "name": "change password", "device": "B", "path": "password", "body": { "currentPassword": "cinema2026", "newPassword": "pipoca2027" }, "expect": { "status": 200 } },
-    { "name": "the other device was signed out", "device": "A", "method": "GET", "path": "me", "origin": "none", "expect": { "status": 401, "error": "not_signed_in", "cookie": "cleared" } },
-    { "name": "old password no longer works", "device": "A", "path": "login", "body": { "nickname": "nadson", "password": "cinema2026" }, "expect": { "status": 401, "error": "wrong_credentials" } },
-    { "name": "new password works", "device": "A", "path": "login", "body": { "nickname": "nadson", "password": "pipoca2027" }, "expect": { "status": 200, "cookie": "set" } },
-    { "name": "a new recovery code", "device": "A", "path": "recovery-code", "body": { "password": "pipoca2027" }, "expect": { "status": 200, "has": ["recoveryCode"] }, "save": { "code2": "recoveryCode" } },
-    { "name": "the old recovery code no longer works", "device": "B", "path": "recover", "body": { "nickname": "nadson", "recoveryCode": "{code1}", "newPassword": "filme2028" }, "expect": { "status": 401, "error": "wrong_recovery" } },
-    { "name": "recover with the new code (lower case, no dashes)", "device": "B", "path": "recover", "body": { "nickname": "nadson", "recoveryCode": "{code2:loose}", "newPassword": "filme2028" },
-      "expect": { "status": 200, "cookie": "set", "has": ["recoveryCode"], "json": { "account.nickname": "Nadson" } }, "save": { "code3": "recoveryCode" } },
-    { "name": "recovering signed out the other devices", "device": "A", "method": "GET", "path": "me", "origin": "none", "expect": { "status": 401, "error": "not_signed_in" } },
-    { "name": "sign out", "device": "B", "path": "logout", "body": {}, "expect": { "status": 200, "cookie": "cleared" } },
-    { "name": "signed out", "device": "B", "method": "GET", "path": "me", "origin": "none", "expect": { "status": 401, "error": "not_signed_in" } },
-    { "name": "sign in again", "device": "B", "path": "login", "body": { "nickname": "nadson", "password": "filme2028" }, "expect": { "status": 200, "cookie": "set" } },
-    { "name": "delete with the wrong password", "device": "B", "path": "delete", "body": { "password": "errada2026" }, "expect": { "status": 401, "error": "wrong_password" } },
-    { "name": "delete the account", "device": "B", "path": "delete", "body": { "password": "filme2028" }, "expect": { "status": 200, "cookie": "cleared" } },
-    { "name": "the account is gone", "device": "A", "path": "login", "body": { "nickname": "nadson", "password": "filme2028" }, "expect": { "status": 401, "error": "wrong_credentials" } },
-    { "name": "the nickname is free again", "device": "A", "path": "register", "body": { "nickname": "Nadson", "password": "cinema2026" }, "expect": { "status": 201, "cookie": "set" } },
-    { "name": "profiles: the first one has the default avatar", "device": "A", "method": "GET", "path": "me", "origin": "none", "expect": { "status": 200, "json": { "profiles.length": 1, "profiles.0.avatar": "l01" } }, "save": { "p1": "profiles.0.id" } },
-    { "name": "profiles: a name is needed", "device": "A", "path": "profiles", "body": { "action": "create", "name": "  ", "avatar": "n03" }, "expect": { "status": 400, "error": "profile_name_short" } },
-    { "name": "profiles: no symbols in the name", "device": "A", "path": "profiles", "body": { "action": "create", "name": "Ana <b>", "avatar": "n03" }, "expect": { "status": 400, "error": "profile_name_chars" } },
-    { "name": "profiles: at most 20 characters", "device": "A", "path": "profiles", "body": { "action": "create", "name": "Abcdefghijklmnopqrstu", "avatar": "n03" }, "expect": { "status": 400, "error": "profile_name_long" } },
-    { "name": "profiles: only the site's avatars", "device": "A", "path": "profiles", "body": { "action": "create", "name": "Mãe", "avatar": "x99" }, "expect": { "status": 400, "error": "avatar_unknown" } },
-    { "name": "profiles: create the second (accents allowed)", "device": "A", "path": "profiles", "body": { "action": "create", "name": " Mãe ", "avatar": "n03" }, "expect": { "status": 201, "has": ["created"], "json": { "profiles.length": 2, "profiles.1.name": "Mãe", "profiles.1.avatar": "n03" } }, "save": { "p2": "created" } },
-    { "name": "profiles: the same name in other case is refused", "device": "A", "path": "profiles", "body": { "action": "create", "name": "NADSON", "avatar": "i01" }, "expect": { "status": 409, "error": "profile_name_taken" } },
-    { "name": "profiles: the third", "device": "A", "path": "profiles", "body": { "action": "create", "name": "Pai", "avatar": "i02" }, "expect": { "status": 201, "json": { "profiles.length": 3 } } },
-    { "name": "profiles: the fourth", "device": "A", "path": "profiles", "body": { "action": "create", "name": "Júlia", "avatar": "l05" }, "expect": { "status": 201, "json": { "profiles.length": 4 } } },
-    { "name": "profiles: the fifth", "device": "A", "path": "profiles", "body": { "action": "create", "name": "Leo 2", "avatar": "n07" }, "expect": { "status": 201, "json": { "profiles.length": 5, "profiles.4.name": "Leo 2" } } },
-    { "name": "profiles: a sixth is refused", "device": "A", "path": "profiles", "body": { "action": "create", "name": "Extra", "avatar": "i03" }, "expect": { "status": 409, "error": "profiles_full" } },
-    { "name": "profiles: rename and change the avatar", "device": "A", "path": "profiles", "body": { "action": "update", "id": "{p2}", "name": "Mamãe", "avatar": "i04" }, "expect": { "status": 200, "json": { "profiles.1.name": "Mamãe", "profiles.1.avatar": "i04" } } },
-    { "name": "profiles: renaming to another profile's name is refused", "device": "A", "path": "profiles", "body": { "action": "update", "id": "{p2}", "name": "pai" }, "expect": { "status": 409, "error": "profile_name_taken" } },
-    { "name": "profiles: keeping its own name in other case works", "device": "A", "path": "profiles", "body": { "action": "update", "id": "{p2}", "name": "MAMÃE" }, "expect": { "status": 200, "json": { "profiles.1.name": "MAMÃE" } } },
-    { "name": "profiles: an update needs a field", "device": "A", "path": "profiles", "body": { "action": "update", "id": "{p2}" }, "expect": { "status": 400, "error": "missing_fields" } },
-    { "name": "profiles: an unknown avatar is refused on update", "device": "A", "path": "profiles", "body": { "action": "update", "id": "{p2}", "avatar": "zz" }, "expect": { "status": 400, "error": "avatar_unknown" } },
-    { "name": "profiles: remove one", "device": "A", "path": "profiles", "body": { "action": "remove", "id": "{p2}" }, "expect": { "status": 200, "json": { "profiles.length": 4, "profiles.1.name": "Pai" } } },
-    { "name": "profiles: a removed profile is gone", "device": "A", "path": "profiles", "body": { "action": "remove", "id": "{p2}" }, "expect": { "status": 404, "error": "not_found" } },
-    { "name": "profiles: unknown action", "device": "A", "path": "profiles", "body": { "action": "explode" }, "expect": { "status": 400, "error": "unknown_action" } },
-    { "name": "profiles: signed out", "device": "B", "path": "profiles", "body": { "action": "create", "name": "Intruso", "avatar": "l02" }, "expect": { "status": 401, "error": "not_signed_in" } },
-    { "name": "profiles: another account", "device": "B", "path": "register", "body": { "nickname": "Outra.conta", "password": "outra2026" }, "expect": { "status": 201, "json": { "profiles.length": 1 } }, "save": { "b1": "profiles.0.id" } },
-    { "name": "profiles: another account's profile is not found", "device": "B", "path": "profiles", "body": { "action": "update", "id": "{p1}", "name": "Hacker" }, "expect": { "status": 404, "error": "not_found" } },
-    { "name": "profiles: the last profile cannot be removed", "device": "B", "path": "profiles", "body": { "action": "remove", "id": "{b1}" }, "expect": { "status": 409, "error": "profile_last" } },
-    { "name": "profiles: the first account still has its profile", "device": "A", "method": "GET", "path": "me", "origin": "none", "expect": { "status": 200, "json": { "profiles.length": 4, "profiles.0.name": "Nadson" } } },
-    { "name": "unknown route", "device": "A", "path": "nothing", "body": {}, "expect": { "status": 404, "error": "not_found" } },
-    { "name": "me only answers GET", "device": "A", "path": "me", "body": {}, "expect": { "status": 405, "error": "method_not_allowed" } },
-    { "name": "register only answers POST", "device": "A", "method": "GET", "path": "register", "origin": "none", "expect": { "status": 405, "error": "method_not_allowed" } }
+    {
+      "name": "nickname too short",
+      "device": "A",
+      "path": "register",
+      "body": {
+        "nickname": "ab",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 400,
+        "error": "nickname_short"
+      }
+    },
+    {
+      "name": "nickname with a space",
+      "device": "A",
+      "path": "register",
+      "body": {
+        "nickname": "nad son",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 400,
+        "error": "nickname_chars"
+      }
+    },
+    {
+      "name": "password without a number",
+      "device": "A",
+      "path": "register",
+      "body": {
+        "nickname": "Nadson",
+        "password": "abcdefgh"
+      },
+      "expect": {
+        "status": 400,
+        "error": "password_number"
+      }
+    },
+    {
+      "name": "password without a letter",
+      "device": "A",
+      "path": "register",
+      "body": {
+        "nickname": "Nadson",
+        "password": "12345678"
+      },
+      "expect": {
+        "status": 400,
+        "error": "password_letter"
+      }
+    },
+    {
+      "name": "password too short",
+      "device": "A",
+      "path": "register",
+      "body": {
+        "nickname": "Nadson",
+        "password": "abc12"
+      },
+      "expect": {
+        "status": 400,
+        "error": "password_short"
+      }
+    },
+    {
+      "name": "password equal to the nickname",
+      "device": "A",
+      "path": "register",
+      "body": {
+        "nickname": "Nadson123",
+        "password": "nadson123"
+      },
+      "expect": {
+        "status": 400,
+        "error": "password_is_nickname"
+      }
+    },
+    {
+      "name": "write without the custom header",
+      "device": "A",
+      "path": "register",
+      "header": false,
+      "body": {
+        "nickname": "Nadson",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 403,
+        "error": "origin_forbidden"
+      }
+    },
+    {
+      "name": "write from another site",
+      "device": "A",
+      "path": "register",
+      "origin": "other",
+      "body": {
+        "nickname": "Nadson",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 403,
+        "error": "origin_forbidden"
+      }
+    },
+    {
+      "name": "create the account",
+      "device": "A",
+      "path": "register",
+      "body": {
+        "nickname": "Nadson",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 201,
+        "cookie": "set",
+        "has": [
+          "recoveryCode"
+        ],
+        "json": {
+          "account.nickname": "Nadson",
+          "profiles.length": 1,
+          "profiles.0.name": "Nadson"
+        }
+      },
+      "save": {
+        "code1": "recoveryCode"
+      }
+    },
+    {
+      "name": "same nickname in other case",
+      "device": "B",
+      "path": "register",
+      "body": {
+        "nickname": "nadson",
+        "password": "outra2026"
+      },
+      "expect": {
+        "status": 409,
+        "error": "nickname_taken"
+      }
+    },
+    {
+      "name": "signed in on A",
+      "device": "A",
+      "method": "GET",
+      "path": "me",
+      "origin": "none",
+      "expect": {
+        "status": 200,
+        "json": {
+          "account.nickname": "Nadson"
+        }
+      }
+    },
+    {
+      "name": "signed out on B",
+      "device": "B",
+      "method": "GET",
+      "path": "me",
+      "origin": "none",
+      "expect": {
+        "status": 401,
+        "error": "not_signed_in"
+      }
+    },
+    {
+      "name": "wrong password 1",
+      "device": "B",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "errada2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "wrong password 2",
+      "device": "B",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "errada2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "wrong password 3",
+      "device": "B",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "errada2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "wrong password 4",
+      "device": "B",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "errada2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "wrong password 5",
+      "device": "B",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "errada2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "sixth try blocked, even with the right password",
+      "device": "B",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 429,
+        "error": "too_many_attempts",
+        "has": [
+          "retryAfter"
+        ]
+      }
+    },
+    {
+      "name": "after 16 minutes it works",
+      "device": "B",
+      "advance": 960000,
+      "path": "login",
+      "body": {
+        "nickname": "NADSON",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 200,
+        "cookie": "set",
+        "json": {
+          "account.nickname": "Nadson"
+        }
+      }
+    },
+    {
+      "name": "change password with the wrong current one",
+      "device": "B",
+      "path": "password",
+      "body": {
+        "currentPassword": "errada2026",
+        "newPassword": "pipoca2027"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_password"
+      }
+    },
+    {
+      "name": "change password",
+      "device": "B",
+      "path": "password",
+      "body": {
+        "currentPassword": "cinema2026",
+        "newPassword": "pipoca2027"
+      },
+      "expect": {
+        "status": 200
+      }
+    },
+    {
+      "name": "the other device was signed out",
+      "device": "A",
+      "method": "GET",
+      "path": "me",
+      "origin": "none",
+      "expect": {
+        "status": 401,
+        "error": "not_signed_in",
+        "cookie": "cleared"
+      }
+    },
+    {
+      "name": "old password no longer works",
+      "device": "A",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "new password works",
+      "device": "A",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "pipoca2027"
+      },
+      "expect": {
+        "status": 200,
+        "cookie": "set"
+      }
+    },
+    {
+      "name": "a new recovery code",
+      "device": "A",
+      "path": "recovery-code",
+      "body": {
+        "password": "pipoca2027"
+      },
+      "expect": {
+        "status": 200,
+        "has": [
+          "recoveryCode"
+        ]
+      },
+      "save": {
+        "code2": "recoveryCode"
+      }
+    },
+    {
+      "name": "the old recovery code no longer works",
+      "device": "B",
+      "path": "recover",
+      "body": {
+        "nickname": "nadson",
+        "recoveryCode": "{code1}",
+        "newPassword": "filme2028"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_recovery"
+      }
+    },
+    {
+      "name": "recover with the new code (lower case, no dashes)",
+      "device": "B",
+      "path": "recover",
+      "body": {
+        "nickname": "nadson",
+        "recoveryCode": "{code2:loose}",
+        "newPassword": "filme2028"
+      },
+      "expect": {
+        "status": 200,
+        "cookie": "set",
+        "has": [
+          "recoveryCode"
+        ],
+        "json": {
+          "account.nickname": "Nadson"
+        }
+      },
+      "save": {
+        "code3": "recoveryCode"
+      }
+    },
+    {
+      "name": "recovering signed out the other devices",
+      "device": "A",
+      "method": "GET",
+      "path": "me",
+      "origin": "none",
+      "expect": {
+        "status": 401,
+        "error": "not_signed_in"
+      }
+    },
+    {
+      "name": "sign out",
+      "device": "B",
+      "path": "logout",
+      "body": {},
+      "expect": {
+        "status": 200,
+        "cookie": "cleared"
+      }
+    },
+    {
+      "name": "signed out",
+      "device": "B",
+      "method": "GET",
+      "path": "me",
+      "origin": "none",
+      "expect": {
+        "status": 401,
+        "error": "not_signed_in"
+      }
+    },
+    {
+      "name": "sign in again",
+      "device": "B",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "filme2028"
+      },
+      "expect": {
+        "status": 200,
+        "cookie": "set"
+      }
+    },
+    {
+      "name": "delete with the wrong password",
+      "device": "B",
+      "path": "delete",
+      "body": {
+        "password": "errada2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_password"
+      }
+    },
+    {
+      "name": "delete the account",
+      "device": "B",
+      "path": "delete",
+      "body": {
+        "password": "filme2028"
+      },
+      "expect": {
+        "status": 200,
+        "cookie": "cleared"
+      }
+    },
+    {
+      "name": "the account is gone",
+      "device": "A",
+      "path": "login",
+      "body": {
+        "nickname": "nadson",
+        "password": "filme2028"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "the nickname is free again",
+      "device": "A",
+      "path": "register",
+      "body": {
+        "nickname": "Nadson",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 201,
+        "cookie": "set"
+      }
+    },
+    {
+      "name": "profiles: the first one has the default avatar",
+      "device": "A",
+      "method": "GET",
+      "path": "me",
+      "origin": "none",
+      "expect": {
+        "status": 200,
+        "json": {
+          "profiles.length": 1,
+          "profiles.0.avatar": "l01"
+        }
+      },
+      "save": {
+        "p1": "profiles.0.id"
+      }
+    },
+    {
+      "name": "profiles: a name is needed",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "  ",
+        "avatar": "n03"
+      },
+      "expect": {
+        "status": 400,
+        "error": "profile_name_short"
+      }
+    },
+    {
+      "name": "profiles: no symbols in the name",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "Ana <b>",
+        "avatar": "n03"
+      },
+      "expect": {
+        "status": 400,
+        "error": "profile_name_chars"
+      }
+    },
+    {
+      "name": "profiles: at most 20 characters",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "Abcdefghijklmnopqrstu",
+        "avatar": "n03"
+      },
+      "expect": {
+        "status": 400,
+        "error": "profile_name_long"
+      }
+    },
+    {
+      "name": "profiles: only the site's avatars",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "Mãe",
+        "avatar": "x99"
+      },
+      "expect": {
+        "status": 400,
+        "error": "avatar_unknown"
+      }
+    },
+    {
+      "name": "profiles: create the second (accents allowed)",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": " Mãe ",
+        "avatar": "n03"
+      },
+      "expect": {
+        "status": 201,
+        "has": [
+          "created"
+        ],
+        "json": {
+          "profiles.length": 2,
+          "profiles.1.name": "Mãe",
+          "profiles.1.avatar": "n03"
+        }
+      },
+      "save": {
+        "p2": "created"
+      }
+    },
+    {
+      "name": "profiles: the same name in other case is refused",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "NADSON",
+        "avatar": "i01"
+      },
+      "expect": {
+        "status": 409,
+        "error": "profile_name_taken"
+      }
+    },
+    {
+      "name": "profiles: the third",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "Pai",
+        "avatar": "i02"
+      },
+      "expect": {
+        "status": 201,
+        "json": {
+          "profiles.length": 3
+        }
+      }
+    },
+    {
+      "name": "profiles: the fourth",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "Júlia",
+        "avatar": "l05"
+      },
+      "expect": {
+        "status": 201,
+        "json": {
+          "profiles.length": 4
+        }
+      }
+    },
+    {
+      "name": "profiles: the fifth",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "Leo 2",
+        "avatar": "n07"
+      },
+      "expect": {
+        "status": 201,
+        "json": {
+          "profiles.length": 5,
+          "profiles.4.name": "Leo 2"
+        }
+      }
+    },
+    {
+      "name": "profiles: a sixth is refused",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "Extra",
+        "avatar": "i03"
+      },
+      "expect": {
+        "status": 409,
+        "error": "profiles_full"
+      }
+    },
+    {
+      "name": "profiles: rename and change the avatar",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "update",
+        "id": "{p2}",
+        "name": "Mamãe",
+        "avatar": "i04"
+      },
+      "expect": {
+        "status": 200,
+        "json": {
+          "profiles.1.name": "Mamãe",
+          "profiles.1.avatar": "i04"
+        }
+      }
+    },
+    {
+      "name": "profiles: renaming to another profile's name is refused",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "update",
+        "id": "{p2}",
+        "name": "pai"
+      },
+      "expect": {
+        "status": 409,
+        "error": "profile_name_taken"
+      }
+    },
+    {
+      "name": "profiles: keeping its own name in other case works",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "update",
+        "id": "{p2}",
+        "name": "MAMÃE"
+      },
+      "expect": {
+        "status": 200,
+        "json": {
+          "profiles.1.name": "MAMÃE"
+        }
+      }
+    },
+    {
+      "name": "profiles: an update needs a field",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "update",
+        "id": "{p2}"
+      },
+      "expect": {
+        "status": 400,
+        "error": "missing_fields"
+      }
+    },
+    {
+      "name": "profiles: an unknown avatar is refused on update",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "update",
+        "id": "{p2}",
+        "avatar": "zz"
+      },
+      "expect": {
+        "status": 400,
+        "error": "avatar_unknown"
+      }
+    },
+    {
+      "name": "profiles: remove one",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "remove",
+        "id": "{p2}"
+      },
+      "expect": {
+        "status": 200,
+        "json": {
+          "profiles.length": 4,
+          "profiles.1.name": "Pai"
+        }
+      }
+    },
+    {
+      "name": "profiles: a removed profile is gone",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "remove",
+        "id": "{p2}"
+      },
+      "expect": {
+        "status": 404,
+        "error": "not_found"
+      }
+    },
+    {
+      "name": "profiles: unknown action",
+      "device": "A",
+      "path": "profiles",
+      "body": {
+        "action": "explode"
+      },
+      "expect": {
+        "status": 400,
+        "error": "unknown_action"
+      }
+    },
+    {
+      "name": "profiles: signed out",
+      "device": "B",
+      "path": "profiles",
+      "body": {
+        "action": "create",
+        "name": "Intruso",
+        "avatar": "l02"
+      },
+      "expect": {
+        "status": 401,
+        "error": "not_signed_in"
+      }
+    },
+    {
+      "name": "profiles: another account",
+      "device": "B",
+      "path": "register",
+      "body": {
+        "nickname": "Outra.conta",
+        "password": "outra2026"
+      },
+      "expect": {
+        "status": 201,
+        "json": {
+          "profiles.length": 1
+        }
+      },
+      "save": {
+        "b1": "profiles.0.id"
+      }
+    },
+    {
+      "name": "profiles: another account's profile is not found",
+      "device": "B",
+      "path": "profiles",
+      "body": {
+        "action": "update",
+        "id": "{p1}",
+        "name": "Hacker"
+      },
+      "expect": {
+        "status": 404,
+        "error": "not_found"
+      }
+    },
+    {
+      "name": "profiles: the last profile cannot be removed",
+      "device": "B",
+      "path": "profiles",
+      "body": {
+        "action": "remove",
+        "id": "{b1}"
+      },
+      "expect": {
+        "status": 409,
+        "error": "profile_last"
+      }
+    },
+    {
+      "name": "profiles: the first account still has its profile",
+      "device": "A",
+      "method": "GET",
+      "path": "me",
+      "origin": "none",
+      "expect": {
+        "status": 200,
+        "json": {
+          "profiles.length": 4,
+          "profiles.0.name": "Nadson"
+        }
+      }
+    },
+    {
+      "name": "captcha: sign-up without the check is refused before anything else",
+      "device": "C",
+      "path": "register",
+      "noCaptcha": true,
+      "body": {
+        "nickname": "x",
+        "password": "y"
+      },
+      "expect": {
+        "status": 400,
+        "error": "captcha_required"
+      }
+    },
+    {
+      "name": "captcha: a refused check",
+      "device": "C",
+      "path": "register",
+      "body": {
+        "nickname": "Robo01",
+        "password": "cinema2026",
+        "turnstileToken": "bad"
+      },
+      "expect": {
+        "status": 403,
+        "error": "captcha_failed"
+      }
+    },
+    {
+      "name": "captcha: Cloudflare unreachable creates nothing",
+      "device": "C",
+      "path": "register",
+      "body": {
+        "nickname": "Robo01",
+        "password": "cinema2026",
+        "turnstileToken": "unavailable"
+      },
+      "expect": {
+        "status": 503,
+        "error": "captcha_unavailable"
+      }
+    },
+    {
+      "name": "captcha: recovery without the check is refused",
+      "device": "C",
+      "path": "recover",
+      "noCaptcha": true,
+      "body": {
+        "nickname": "nadson",
+        "recoveryCode": "AAAA-BBBB-CCCC-DDDD",
+        "newPassword": "nova2029x"
+      },
+      "expect": {
+        "status": 400,
+        "error": "captcha_required"
+      }
+    },
+    {
+      "name": "captcha: an account for the sign-in checks",
+      "device": "C",
+      "path": "register",
+      "body": {
+        "nickname": "Robo02",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 201
+      }
+    },
+    {
+      "name": "captcha: sign-in asks nothing at first (wrong password 1)",
+      "device": "C",
+      "path": "login",
+      "noCaptcha": true,
+      "body": {
+        "nickname": "robo02",
+        "password": "errada2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "captcha: still nothing (wrong password 2)",
+      "device": "C",
+      "path": "login",
+      "noCaptcha": true,
+      "body": {
+        "nickname": "robo02",
+        "password": "errada2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "captcha: after 2 wrong passwords sign-in asks for the check",
+      "device": "C",
+      "path": "login",
+      "noCaptcha": true,
+      "body": {
+        "nickname": "robo02",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 400,
+        "error": "captcha_required"
+      }
+    },
+    {
+      "name": "captcha: with the check, a wrong password is still wrong",
+      "device": "C",
+      "path": "login",
+      "body": {
+        "nickname": "robo02",
+        "password": "errada2026"
+      },
+      "expect": {
+        "status": 401,
+        "error": "wrong_credentials"
+      }
+    },
+    {
+      "name": "captcha: with the check, the right password signs in",
+      "device": "C",
+      "path": "login",
+      "body": {
+        "nickname": "robo02",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 200,
+        "cookie": "set"
+      }
+    },
+    {
+      "name": "captcha: this device keeps asking for a while (its own failures)",
+      "device": "C",
+      "path": "login",
+      "noCaptcha": true,
+      "body": {
+        "nickname": "robo02",
+        "password": "cinema2026"
+      },
+      "expect": {
+        "status": 400,
+        "error": "captcha_required"
+      }
+    },
+    {
+      "name": "unknown route",
+      "device": "A",
+      "path": "nothing",
+      "body": {},
+      "expect": {
+        "status": 404,
+        "error": "not_found"
+      }
+    },
+    {
+      "name": "me only answers GET",
+      "device": "A",
+      "path": "me",
+      "body": {},
+      "expect": {
+        "status": 405,
+        "error": "method_not_allowed"
+      }
+    },
+    {
+      "name": "register only answers POST",
+      "device": "A",
+      "method": "GET",
+      "path": "register",
+      "origin": "none",
+      "expect": {
+        "status": 405,
+        "error": "method_not_allowed"
+      }
+    }
   ]
 }
