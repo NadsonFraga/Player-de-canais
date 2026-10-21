@@ -210,9 +210,11 @@
     padding-right: 48px;
 }
 
+/* Centered with margins, not transform: the focus style (04-sports.css) replaces the transform of a focused button */
 .collection-channel-wrap .collection-remove {
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
 }
 
 /* --- "Gostou? Avalie" in the player stage --- */

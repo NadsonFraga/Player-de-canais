@@ -69,6 +69,9 @@ async function launch(name) {
       // Not every Firefox build supports it: the window size given at launch stays then
       viewport: (width, height) => send("browsingContext.setViewport", { context, viewport: { width, height } }).catch(() => null),
       shot: async () => null,
+      // A real mouse press, held for holdMs
+      press: (x, y, holdMs) => send("input.performActions", { context, actions: [{ type: "pointer", id: "mouse", actions: [
+        { type: "pointerMove", x: Math.round(x), y: Math.round(y) }, { type: "pointerDown", button: 0 }, { type: "pause", duration: holdMs }, { type: "pointerUp", button: 0 }] }] }),
       close: () => { try { ws.close(); } catch {} try { spawnSync("taskkill", ["/PID", String(proc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {} },
     };
   }
@@ -92,6 +95,12 @@ async function launch(name) {
       if (!shotsDir) return;
       const r = await send("Page.captureScreenshot", { format: "png" });
       writeFileSync(join(shotsDir, file), Buffer.from(r.data, "base64"));
+    },
+    press: async (x, y, holdMs) => {
+      await send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+      await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
+      await sleep(holdMs);
+      await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
     },
     close: () => { try { ws.close(); } catch {} try { spawnSync("taskkill", ["/PID", String(proc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {} },
   };
@@ -166,6 +175,20 @@ try {
   const strong = await b.evaluate("({ met: [...document.querySelectorAll('#account-rules .is-met')].length, level: document.getElementById('account-strength').dataset.level, disabled: document.getElementById('btn-account-submit').disabled })");
   check("'Cinema2026!': every rule met, strength above weak, the button works", strong.met === 3 && strong.level !== "fraca" && !strong.disabled, JSON.stringify(strong));
   await b.shot("account-signup.png");
+
+  // The eye: real presses keep it in place inside the field (a focused button once lost its centering and dropped) and each one toggles
+  await b.evaluate(`(() => { const eye = document.getElementById('btn-account-eye'); window.__eyeTops = [];
+    const sample = () => { if (!window.__eyeTops) return; window.__eyeTops.push(eye.getBoundingClientRect().top - eye.parentElement.getBoundingClientRect().top); requestAnimationFrame(sample); }; sample(); return true; })()`);
+  const eyeAt = await b.evaluate("(() => { const r = document.getElementById('btn-account-eye').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()");
+  const types = [];
+  for (let i = 0; i < 3; i++) {
+    await b.press(eyeAt.x, eyeAt.y, 250);
+    await sleep(300);
+    types.push(await b.evaluate("document.getElementById('account-password').type"));
+  }
+  const eye = await b.evaluate("(() => { const t = window.__eyeTops; window.__eyeTops = null; return { moved: Math.max(...t) - Math.min(...t), samples: t.length, focus: document.activeElement && document.activeElement.id }; })()");
+  check("the eye stays in place in the field while pressed and toggles on every press (focus stays in the password)", eye.moved < 1 && types.join() === "text,password,text" && eye.focus === "account-password", JSON.stringify({ ...eye, types }));
+  await b.evaluate("(document.getElementById('btn-account-eye').click(), true)");
 
   // 3. Create: the recovery code, which the page keeps until "Guardei o código"
   await b.evaluate("(document.getElementById('btn-account-submit').click(), true)");
