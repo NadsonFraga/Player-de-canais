@@ -262,3 +262,4 @@ Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
 | 4 | Transmitir (Android) on a movie | Web Video Caster plays it | |
 | 5 | Phone: the same quick round | As before | |
 
+**Security review approved by the user on 2026-10-21** (manual round on staging: no problems seen). Production still waits for the user's go-ahead (more changes first).
