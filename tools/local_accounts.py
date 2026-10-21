@@ -30,6 +30,8 @@ LIMITS = {
     "register": {"max": 10, "windowMs": 60 * 60 * 1000},
 }
 COOKIE_NAME = "tvz_session"
+# Calls from one IP per minute (account and sync), counted in memory (same as IP_LIMIT in the function)
+IP_LIMIT = {"max": 120, "windowMs": 60 * 1000}
 # The avatars the site ships (assets/img/avatars/<id>.svg): illustrated faces (l, n) and our line icons (i)
 AVATARS = [f"l{i:02d}" for i in range(1, 13)] + [f"n{i:02d}" for i in range(1, 13)] + [f"i{i:02d}" for i in range(1, 9)]
 DEFAULT_AVATAR = "l01"
@@ -111,6 +113,24 @@ def safe_equal(a, b):
 
 # --- Attempt limits ---
 
+_IP_WINDOWS = {}
+
+
+def ip_blocked_for(ip, now):
+    key = ip or "unknown"
+    entry = _IP_WINDOWS.get(key)
+    if not entry or now - entry["start"] > IP_LIMIT["windowMs"]:
+        entry = {"start": now, "count": 0}
+        _IP_WINDOWS[key] = entry
+    entry["count"] += 1
+    if len(_IP_WINDOWS) > 5000:
+        for k in [k for k, v in _IP_WINDOWS.items() if now - v["start"] > IP_LIMIT["windowMs"]]:
+            del _IP_WINDOWS[k]
+    if entry["count"] > IP_LIMIT["max"]:
+        return -(-(entry["start"] + IP_LIMIT["windowMs"] - now) // 1000)
+    return 0
+
+
 def blocked_for(db, key, rule, now):
     row = db.first("SELECT count, window_start FROM attempts WHERE key = ?", [key])
     if not row or now - row["window_start"] > rule["windowMs"] or row["count"] < rule["max"]:
@@ -151,7 +171,8 @@ def create_session(db, account_id, now):
 
 def current_session(db, cookie_text, now):
     token = read_cookie(cookie_text)
-    if not token or len(token) > 100:
+    # Only what create_session makes (32 random bytes, base64url): anything else is refused without a database read
+    if not re.fullmatch(r"[A-Za-z0-9_-]{43}", token or ""):
         return None
     token_hash = sha256_hex(token)
     session = db.first("SELECT account_id, last_seen_at, expires_at FROM sessions WHERE token_hash = ?", [token_hash])
@@ -217,6 +238,9 @@ def handle_account(req, db):
         return fail(405, "method_not_allowed")
     if is_write and (req.get("origin") != req.get("requestOrigin") or req.get("customHeader") != "1"):
         return fail(403, "origin_forbidden")
+    ip_wait = ip_blocked_for(req.get("ip"), now)
+    if ip_wait:
+        return fail(429, "too_many_attempts", {"retryAfter": ip_wait})
 
     body = req.get("body") if isinstance(req.get("body"), dict) else {}
     pepper = req.get("pepper") or ""
@@ -438,6 +462,18 @@ class SqliteDatabase:
         with self.lock:
             self.conn.execute(sql, list(params))
 
+    def batch(self, statements):
+        """Several writes at once, all or none (D1's batch)."""
+        with self.lock:
+            self.conn.execute("BEGIN")
+            try:
+                for statement in statements:
+                    self.conn.execute(statement["sql"], list(statement["params"]))
+                self.conn.execute("COMMIT")
+            except Exception:
+                self.conn.execute("ROLLBACK")
+                raise
+
 
 def default_database_path():
     """Outside the project folder: the local server publishes everything inside it."""
@@ -456,9 +492,9 @@ def local_database():
     return _DATABASE
 
 
-def parse_body(raw):
+def parse_body(raw, limit=4096):
     """(body, error): the POST body as a dict, or the same errors as the function."""
-    if len(raw) > 4096:
+    if len(raw) > limit:
         return None, "too_large"
     try:
         return (json.loads(raw.decode("utf-8")) if raw else {}), None

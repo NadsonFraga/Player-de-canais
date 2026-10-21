@@ -1,6 +1,6 @@
 # Phase 4 plan: account, profiles, sync and the Configurações screen
 
-> **Status:** 4a implemented and approved on staging (2026-10-21). 4b implemented (detail at the end), on staging for the manual tests.
+> **Status:** 4a and 4b approved on staging (2026-10-21). 4c implemented (with the abuse limits below), on staging for the manual tests.
 > Part of the big feature (`plan.md` in this folder). Built on the 2026-10-19 decisions (G7, G7b, F10 in `backlog.md`) and
 > the review points listed there; the 2026-10-19 draft (`features/2026-10-19-user-accounts-and-cloud-sync/plan.md`) is
 > reference only (it used e-mail, a single blob per category and a max() merge that undoes removals).
@@ -213,3 +213,101 @@ Branch `feat/profiles` from `staging`.
   width, Back rules.
 - `account_check`, `header_check`, `collection_check`, `continue_watching_check`, `title_page_check` and the player
   suites (the storage keys change under them).
+
+## Step 4c in detail (written 2026-10-21, after 4b was approved)
+
+Branch `feat/sync` from `staging`. No database change (the `records` and `counters` tables exist since 4a).
+
+### What travels (one record per item, per profile)
+
+| kind | key | data | merge |
+|---|---|---|---|
+| `library` | `movie:<id>` / `tv:<id>` | the library entry (title, poster, year, `watchlist`, `watched`, `rating`) | each of `watchlist`, `watched`, `rating` by its own time; the title data follows the newest |
+| `progress` | show id / `movie:<id>` | the "Continuar assistindo" entry | the head (season, episode, `timestamp`) by `timestamp`; each episode position by its `at`; `hidden` by `hiddenAt` against `timestamp` (watching again brings it back); a movie's position by `at`; at most 40 positions kept, as on the device |
+| `favorite` | channel key | `{ on, at }` | by `at` |
+| `prefs` | `player` | the player preferences with `at` | the whole object, newest wins |
+| `prefs` | `team` | `{ team, at }` | newest wins |
+
+- Favorites, the team and the player preferences get a time when they change (today they have none): `toggleFavorite`,
+  `setFavoriteTeam` and `setPlayerPref` write it next to the value, in a small side record, so the stored formats stay
+  as they are.
+- Removals are fields turned off with their time (the library already works this way; a favorite becomes
+  `{ on: false, at }`), never a deleted row, so they reach the other devices. "Começar do início" saves a newer time and
+  wins.
+- One merge module, `assets/js/core/syncMerge.js` (no imports), used by the page and by the Cloudflare function (a
+  relative import: Pages bundles it). If the bundling refuses a file outside `functions/`, a copy goes to
+  `functions/api/_lib/` with a check that both are identical. The Python mirror (`tools/local_sync.py`) runs the same
+  JSON cases (`tools/sync_cases.json`), like the account API.
+
+### Server: `POST /api/sync`
+
+- Body `{ profileId, since, changes: [{ kind, key, data }] }`; signed in, same origin and header as the account writes.
+- The profile must belong to the account (`not_found` otherwise). Each change is merged with the stored record; a
+  record that really changed gets the profile's next change number (`rev`).
+- Answer `{ rev, changes, more }`: every record with `rev > since` (the client merges them again, which changes nothing
+  for its own), at most 500 per answer; `more: true` makes the client ask again.
+- Limits: body up to 256 KB (the account routes keep 4 KB), up to 300 changes per request, 16 KB per record, 5 000
+  records per profile; one sync per second per session is enough (more answers `too_many_attempts`).
+- Writes go in one D1 batch (one round trip), so a first upload of a big library stays fast.
+
+### Client: `assets/js/core/sync.js`
+
+- Per profile and device, `tvzinha_sync_v1:<profile>`: the last `rev` received and a fingerprint of each record as the
+  server last confirmed it. A sync builds the records from the stores, sends only those whose fingerprint differs (up to
+  300 per request, more requests if needed), then merges the answer into the stores and redraws (the same events as a
+  profile switch).
+- When: on opening the site (once a profile is in use), 30 s after the last change, when the page is hidden (sent with
+  `keepalive`), on coming back to the tab after 5 minutes away, before switching profile, and from "Sincronizar agora"
+  (Configurações, 4d). Never during a sync already running. Guests never sync.
+- Offline or server errors: nothing is lost (the fingerprints only move once the server confirms); the next sync sends
+  it. Retries wait longer each time (30 s, 1 min, 2 min... up to 10 min).
+- First sync of a profile on a device: `since = 0` brings everything the account has; what the device has (for example
+  what "Sim" brought from the guest data in 4b) goes up in the same sync.
+- A profile removed on another device: its copies on this device are removed when `/me` no longer lists it.
+
+### Sair (decision 4 turns on)
+
+- Sair first sends what is pending (up to 4 s). Then it removes every copy of the account's profiles from the device and
+  their sync records; the guest data stays.
+- If the pending changes could not be sent (offline): "Algumas mudanças ainda não foram enviadas. Sair mesmo assim?"
+  with Sair / Cancelar.
+
+### Abuse limits and data checks (asked by the user when approving 4c)
+
+- Rejected before any database read, at no D1 cost: wrong method, origin or header, oversized body, broken JSON, a
+  cookie that cannot be a session token.
+- Per IP, counted in the isolate's memory (approximate, free): at most 60 account or sync calls a minute; more answers
+  429 at once.
+- Per account (D1 counters in `attempts`): 1 sync a second, 120 an hour, 10 000 records written a day; 5 000 records per
+  profile, 16 KB per record. Normal use stays far below; the page waits longer after a 429.
+- Data checks on the server: only known kinds and fields are kept (anything else is dropped), ids and numbers checked,
+  texts trimmed to a length, poster paths must look like TMDB paths, times in the future are cut to "now" (so nobody can
+  make a change win forever). Synced titles are still escaped when shown.
+- What code cannot stop: every call that reaches the function counts toward the 100 000 daily calls, rejected or not. A
+  large flood could use them up (players and accounts would stop until the next day; the site itself stays up).
+  Cloudflare's automatic DDoS protection covers `pages.dev`; a free rate-limiting rule that blocks before the function
+  runs needs a custom domain (backlog item).
+
+### Status in the menu
+
+- Under the profile name in the menu: "Sincronizado agora" / "Sincronizado há 5 min" / "Sincronizando..." / "Sem
+  conexão: as mudanças esperam". No toast for routine syncs.
+
+### Cost
+
+- About 1 call on opening, 1 per batch of changes (30 s after the last one) and 1 when leaving: 5 to 10 calls per
+  signed-in visitor per day, as estimated before. D1: one row written per changed record.
+
+### Tests
+
+- Merge: `tools/sync_cases.json` (newest field wins, removal travels, rewatch brings back a hidden entry, "Começar do
+  início" wins over an older further position, positions capped at 40, the same change twice changes nothing) against
+  `syncMerge.js` and the Python mirror.
+- API: signed out, another account's profile, `since` and paging (`more`), the limits, a change sent twice gets no new
+  `rev`.
+- Browser, new `tools/sync_check.mjs` with two separate browsers (A and B) on the same account, Chrome and Firefox:
+  A saves a title, a rating, a favorite and progress; B opens and has them; B removes the title; A gets the removal;
+  B goes offline, changes, comes back and the change arrives; Sair on A removes the profile copies and keeps the guest
+  data; two profiles stay apart in the cloud.
+- `account_check`, `profile_check`, `collection_check`, `continue_watching_check`, `header_check`, the player suites.
+

@@ -21,6 +21,8 @@ export const FAVORITES_STORAGE_KEY = 'tvzinha_favorites';
 export const FAVORITE_TEAM_KEY = 'tvzinha_favorite_team';
 // Volume, subtitles, quality, speed, Ajustar / Preencher (core/playerPrefs.js)
 export const PLAYER_PREFS_KEY = 'tvzinha_player_prefs_v1';
+// When channel favorites, the favorite team and the player preferences last changed (core/profileStore.js), for the sync
+export const PERSONAL_TIMES_KEY = 'tvzinha_personal_times_v1';
 // The keys above that belong to a person (library, progress, favorites, team, player) are per profile when signed in:
 // read and write them through storageKey() of core/profileStore.js
 
