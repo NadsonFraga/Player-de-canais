@@ -7,16 +7,16 @@
  * whose data the site reads (core/profileStore.js) and goes to Início. The first time a profile is used on a device
  * that has guest data, the page asks whether that data goes with it.
  */
-import { getAccount, getActiveProfile, createProfile, updateProfile, removeProfile, profileNameProblem, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0614';
-import { leaveAccount } from '../core/sync.js?v=20261021_0614';
-import { activeProfileId, setActiveProfile, timeSinceLastUse, touchProfile, shouldAskAboutGuestData, markGuestDataAsked, copyGuestDataTo, removeProfileData } from '../core/profileStore.js?v=20261021_0614';
-import { AVATAR_FACES, AVATAR_ICONS, DEFAULT_AVATAR, avatarSrc, freeAvatar } from '../core/avatars.js?v=20261021_0614';
-import { showToast } from '../core/toast.js?v=20261021_0614';
-import { syncPageLock } from '../core/activity.js?v=20261021_0614';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0614';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0614';
-import { switchAppView } from '../navigation/router.js?v=20261021_0614';
-import { isTitlePageOpen, exitTitleTo } from './titlePage.js?v=20261021_0614';
+import { getAccount, getActiveProfile, createProfile, updateProfile, removeProfile, profileNameProblem, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0948';
+import { leaveAccount } from '../core/sync.js?v=20261021_0948';
+import { activeProfileId, setActiveProfile, timeSinceLastUse, touchProfile, shouldAskAboutGuestData, markGuestDataAsked, copyGuestDataTo, removeProfileData } from '../core/profileStore.js?v=20261021_0948';
+import { AVATAR_FACES, AVATAR_ICONS, DEFAULT_AVATAR, avatarSrc, freeAvatar } from '../core/avatars.js?v=20261021_0948';
+import { showToast } from '../core/toast.js?v=20261021_0948';
+import { syncPageLock } from '../core/activity.js?v=20261021_0948';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0948';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0948';
+import { switchAppView } from '../navigation/router.js?v=20261021_0948';
+import { isTitlePageOpen, exitTitleTo } from './titlePage.js?v=20261021_0948';
 
 const MAX_PROFILES = 5;
 // Away longer than this: the picker asks again who is watching
@@ -67,8 +67,8 @@ function findProfile(id) {
     return profiles().find(p => p.id === id) || null;
 }
 
-/** Opens "Quem está assistindo?". `required`: a profile must be chosen (Back stays). */
-export function openProfilePicker({ required: mustChoose = false } = {}) {
+/** Opens "Quem está assistindo?". `required`: a profile must be chosen (Back stays); `manage`: in Gerenciar perfis. */
+export function openProfilePicker({ required: mustChoose = false, manage = false } = {}) {
     if (!getAccount().signedIn) return;
     const el = page();
     if (!el) return;
@@ -80,7 +80,7 @@ export function openProfilePicker({ required: mustChoose = false } = {}) {
         syncPageLock();
         pushNavLayer('profiles');
     }
-    setManaging(false);
+    setManaging(manage && !required);
     showScreen('pick');
     const active = el.querySelector('.profile-tile.is-active') || el.querySelector('.profile-tile');
     if (active) active.focus({ preventScroll: true });
@@ -196,7 +196,8 @@ function applyProfile(profile, { reload = false } = {}) {
     required = false;
     // Início's history entry goes in after the page's has left, or the page's Back would undo it
     runNavBatch(() => closeProfilePage(), () => {
-        if (!changed) return;
+        // From Configurações the person stays there (the page redraws with the new profile)
+        if (!changed || isOpen('settings-page')) return;
         if (isTitlePageOpen()) exitTitleTo('home');
         else switchAppView('home');
     });
@@ -374,10 +375,14 @@ function back() {
 
 // --- When the picker opens by itself ---
 
-// Read from the page (accountPage.js imports this module: no import back)
-function isAccountPageOpen() {
-    const el = document.getElementById('account-page');
+// Read from the page (accountPage.js and settingsPage.js import this module: no import back)
+function isOpen(id) {
+    const el = document.getElementById(id);
     return Boolean(el) && !el.classList.contains('hidden');
+}
+
+function isAccountPageOpen() {
+    return isOpen('account-page');
 }
 
 function playerOpen() {
