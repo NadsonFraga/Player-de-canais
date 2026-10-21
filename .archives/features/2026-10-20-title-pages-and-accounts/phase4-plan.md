@@ -1,6 +1,6 @@
 # Phase 4 plan: account, profiles, sync and the Configurações screen
 
-> **Status:** 4a and 4b approved on staging (2026-10-21). 4c implemented (with the abuse limits below), on staging for the manual tests.
+> **Status:** 4a, 4b and 4c approved on staging (2026-10-21). 4d implemented (two-pane layout), on staging for the manual tests.
 > Part of the big feature (`plan.md` in this folder). Built on the 2026-10-19 decisions (G7, G7b, F10 in `backlog.md`) and
 > the review points listed there; the 2026-10-19 draft (`features/2026-10-19-user-accounts-and-cloud-sync/plan.md`) is
 > reference only (it used e-mail, a single blob per category and a max() merge that undoes removals).
@@ -331,4 +331,63 @@ Guests never sync. **Decision:** while a tab is open and in use it does not ask 
 made on another device shows after a reload, a return to the tab after 5 minutes, or the next sync of this device.
 A light check every 5 minutes while the tab is visible was offered (up to 12 calls an hour per open tab) and left out
 for now to save the daily calls; it can be added later if needed.
+
+## Step 4d in detail (written 2026-10-21, after 4c was approved)
+
+Branch `feat/settings` from `staging`. No database or API change (the account routes for password, recovery code and
+delete exist since 4a).
+
+### Configurações (a full-screen page, like the account and profile pages)
+
+- Opened from "Configurações" in the profile menu (no "em breve" any more), for guests too. Back and Esc close it.
+- Layout (user, 2026-10-21: "algo bem moderno, seguindo os padrões da indústria"): two panes on computers and TVs, the
+  topics on the left (icon + name: Conta, Perfis, Player, Sincronização, Sobre) and the chosen topic on the right, in
+  grouped cards of rows (title, short description, control on the right), segmented choices for the player options
+  and a "zona de perigo" at the end of Conta; switching topic changes only the right side. Phones: the list of topics
+  first, a topic opens full screen and Back returns to the list. TV remote: up/down on the list, right into the topic.
+- **Conta** (signed in): nickname and creation date; **Trocar senha** (current + new, the same rules, strength bar and
+  live checks as Criar conta; the other devices are signed out, as the API already does); **Gerar novo código de
+  recuperação** (asks the password, shows the new code once with Copiar, like after Criar conta; the old one stops
+  working); **Sair**; **Apagar conta** (password + a red confirmation: "Isso apaga a conta, os perfis e tudo o que foi
+  sincronizado. Não dá para desfazer."; then the account's copies leave the device, the guest data stays). Guests see a
+  card "Entrar ou criar conta" instead.
+- **Perfis** (signed in): the profiles with their avatars and "Gerenciar perfis" (opens the profile page already in the
+  manage mode).
+- **Player**: Legenda preferida (Automática / Português / Inglês / Desligada), Qualidade (Automática / 1080p / 720p /
+  480p), Tela (Ajustar / Preencher), Velocidade (0.75x to 2x). The same preferences the player already saves when you
+  change them while watching; per profile, and synced.
+- **Sincronização** (signed in): the status line of the menu ("Sincronizado há 5 min"...) and "Sincronizar agora" with a
+  spinner.
+- **Sobre**: Privacidade, Termos de uso, DMCA (the legal panel), Dicas para bloquear anúncios (the existing tips),
+  credits ("Dados de filmes e séries: TMDB. Avatares: Lorelei, de Lisa Wischofsky, e Notionists, de Zoish, CC0") and
+  the site version.
+
+### Privacidade and Termos rewritten
+
+- **Privacidade**: without an account nothing changes (data only in the browser). With the optional account, exactly what
+  is kept: the nickname; the password and the recovery code only as one-way hashes (nobody, us included, can read them);
+  the profiles (name and avatar); the synced data of each profile (Coleção and ratings, Continuar assistindo, favorite
+  channels and team, player preferences). The session cookie (essential, HttpOnly, renewed while in use, ends after 90
+  days without use) only keeps you signed in. No e-mail, no real name, no IP stored: attempt limits use a code made from
+  the IP that changes every day and is erased within 24 hours. Stored on Cloudflare's servers (D1). Apagar conta in
+  Configurações erases everything at once; Sair removes the account's copies from that device. Analytics and third
+  parties stay as today.
+- **Termos de uso**: adds the account: it is free and optional; keep the password and the recovery code safe (without
+  e-mail, a lost code means a lost account); one nickname per person is not required, but accounts used to abuse the
+  service may be removed; the sync and the account may change or end, with notice on the site when possible. The rest
+  stays.
+
+### Tests
+
+- New `tools/settings_check.mjs` (Chrome and Firefox): guest view (Player and Sobre, the Entrar card); signed in:
+  Trocar senha (wrong current refused, rules, success; the old password no longer works), new recovery code shown once
+  and the old code refused, the player choices saved and kept after a reload, Sincronizar agora updates the line,
+  Gerenciar perfis opens the manage mode, the legal texts mention the account, Apagar conta (Cancelar keeps it; with the
+  password the account is gone, the device copies leave, the guest data stays), phone width, Back.
+- `account_check`, `profile_check`, `sync_check`, `header_check`, the player suites (with a time limit).
+
+### After 4d
+
+On approval, and only with the user's go-ahead, `staging` merges into `master` (production): the whole big feature. Then
+`summary.md` for the feature, its row in `.archives/README.md` and the backlog update.
 

@@ -1,19 +1,23 @@
 /**
  * TVZINHA ONLINE - Site footer (Início, Filmes, Séries, Animes) and the legal panel (Privacidade, Termos de uso, DMCA)
  */
-import { switchAppView } from '../navigation/router.js?v=20261021_0614';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_0614';
+import { switchAppView } from '../navigation/router.js?v=20261021_0948';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_0948';
 
 // Plain text only, written here so the panel needs no other request. Keep the wording accurate: the proxy passes
 // video through our servers without storing it, so "não armazena nem envia" is true and "não hospeda" is not said.
+// The account paragraphs follow functions/api/account and functions/api/sync.js: change them together.
 const LEGAL_SECTIONS = {
     privacy: {
         title: 'Privacidade',
         paragraphs: [
-            'O Tvzinha Online não pede cadastro. Suas preferências, favoritos e o progresso do que você assiste ficam guardados apenas no seu navegador e não são enviados para nós.',
+            'O Tvzinha Online pode ser usado sem conta. Sem conta, suas preferências, favoritos e o progresso do que você assiste ficam guardados apenas no seu navegador e não são enviados para nós.',
+            'A conta é opcional e não pede e-mail nem nome real. Com uma conta, guardamos: o apelido; a senha e o código de recuperação, apenas de forma embaralhada e sem volta (ninguém consegue lê-los, nem nós); os perfis, com nome e avatar; e, de cada perfil, o que é sincronizado entre aparelhos: Coleção e notas, Continuar assistindo, canais e time favoritos e preferências do player.',
+            'Para manter você conectado, usamos um único cookie de sessão, essencial e que a página não consegue ler. Ele é renovado enquanto você usa o site e termina depois de 90 dias sem uso, ou quando você sai da conta. Não guardamos seu endereço IP: para limitar tentativas de senha, usamos um código feito a partir dele, que muda todo dia e não permite descobrir o IP.',
+            'Os dados da conta ficam em servidores da Cloudflare. Você pode apagar a conta e tudo o que ela guarda a qualquer momento, em Configurações, Conta, Apagar conta: a exclusão é imediata. Sair da conta remove as cópias dela do aparelho.',
             'Não usamos cookies de rastreamento nem publicidade própria. As visitas são contadas pelo Web Analytics da Cloudflare, de forma anônima e sem cookies.',
             'Para exibir títulos e vídeos, o seu navegador se comunica com serviços de terceiros (TMDB, MyAnimeList, AniSkip e os provedores de vídeo), que têm as próprias políticas. Os servidores externos, abertos em quadro, podem exibir anúncios e usar cookies próprios.',
-            'Para apagar tudo o que o site guardou, limpe os dados deste site nas configurações do seu navegador.'
+            'Para apagar o que o site guardou neste aparelho sem conta, limpe os dados deste site nas configurações do seu navegador.'
         ]
     },
     terms: {
@@ -21,7 +25,9 @@ const LEGAL_SECTIONS = {
         paragraphs: [
             'O Tvzinha Online é gratuito e oferecido como está, sem garantia de disponibilidade de títulos, canais ou fontes.',
             'O site não armazena nem envia arquivos de mídia. Os vídeos são exibidos a partir de provedores de terceiros, responsáveis pelo conteúdo que publicam.',
-            'Títulos, imagens e marcas pertencem aos seus respectivos donos. Dados de filmes e séries: TMDB.',
+            'A conta é gratuita e opcional. Guarde bem a senha e o código de recuperação: como não pedimos e-mail, sem eles não há como recuperar a conta.',
+            'Contas usadas para abusar do serviço, atacar o site ou prejudicar outras pessoas podem ser removidas. As contas, os perfis e a sincronização podem mudar ou deixar de existir; quando possível, avisaremos no site com antecedência.',
+            'Títulos, imagens e marcas pertencem aos seus respectivos donos. Dados de filmes e séries: TMDB. Avatares: Lorelei, de Lisa Wischofsky, e Notionists, de Zoish (CC0).',
             'Ao usar o site, você concorda em não utilizá-lo para fins ilegais nem para prejudicar o serviço ou outras pessoas.'
         ]
     },

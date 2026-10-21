@@ -7,24 +7,25 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261021_0614';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261021_0614';
-import { fetchTmdb } from '../core/tmdb.js?v=20261021_0614';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0614';
-import { showToast } from '../core/toast.js?v=20261021_0614';
-import { syncPageLock } from '../core/activity.js?v=20261021_0614';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261021_0614';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_0614';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261021_0614';
-import { isAnimeShow } from './series.js?v=20261021_0614';
-import { selectChannelByName } from './channels.js?v=20261021_0614';
-import { openCollection } from './collection.js?v=20261021_0614';
-import { getAccount, getActiveProfile, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0614';
-import { leaveAccount, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261021_0614';
-import { PROFILE_EVENT } from '../core/profileStore.js?v=20261021_0614';
-import { avatarSrc } from '../core/avatars.js?v=20261021_0614';
-import { openAccountPage } from './accountPage.js?v=20261021_0614';
-import { openProfilePicker } from './profilePage.js?v=20261021_0614';
+import { store } from '../core/state.js?v=20261021_0948';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261021_0948';
+import { fetchTmdb } from '../core/tmdb.js?v=20261021_0948';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0948';
+import { showToast } from '../core/toast.js?v=20261021_0948';
+import { syncPageLock } from '../core/activity.js?v=20261021_0948';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261021_0948';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_0948';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261021_0948';
+import { isAnimeShow } from './series.js?v=20261021_0948';
+import { selectChannelByName } from './channels.js?v=20261021_0948';
+import { openCollection } from './collection.js?v=20261021_0948';
+import { getAccount, getActiveProfile, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0948';
+import { leaveAccount, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261021_0948';
+import { PROFILE_EVENT } from '../core/profileStore.js?v=20261021_0948';
+import { avatarSrc } from '../core/avatars.js?v=20261021_0948';
+import { openAccountPage } from './accountPage.js?v=20261021_0948';
+import { openProfilePicker } from './profilePage.js?v=20261021_0948';
+import { openSettingsPage } from './settingsPage.js?v=20261021_0948';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -367,11 +368,10 @@ export function setupHeader() {
         });
     });
 
-    // Profile menu: Trocar, Entrar ou criar conta and Sair work; the rest says what it will be
+    // Profile menu: Trocar, Entrar ou criar conta, Configurações and Sair work; the rest says what it will be
     const SOON = {
         watchparty: 'Watch Party em breve: assistir junto com amigos, ao mesmo tempo.',
-        premium: 'Premium em breve.',
-        settings: 'As configurações do site chegam em breve, numa tela própria.'
+        premium: 'Premium em breve.'
     };
     document.getElementById('nav-profile-menu')?.addEventListener('click', async (e) => {
         const item = e.target.closest('[data-menu-action]');
@@ -382,6 +382,8 @@ export function setupHeader() {
             runNavBatch(() => closeMenu(), () => openAccountPage('signin'));
         } else if (action === 'profiles') {
             runNavBatch(() => closeMenu(), () => openProfilePicker());
+        } else if (action === 'settings') {
+            runNavBatch(() => closeMenu(), () => openSettingsPage());
         } else if (action === 'signout') {
             // What is pending goes first; a confirmation may open, after the menu's history entry has left
             runNavBatch(() => closeMenu(), async () => {

@@ -3,7 +3,7 @@
  * Implements strict hierarchical back navigation across all tabs, searches, modals, drawers, and active media.
  */
 
-import { store } from '../core/state.js?v=20261021_0614';
+import { store } from '../core/state.js?v=20261021_0948';
 
 let navigationDepth = 0;
 let isProgrammaticBack = false;
@@ -266,6 +266,16 @@ export function handleBackButton() {
         const btnAccountBack = document.getElementById("btn-account-back");
         if (btnAccountBack) {
             btnAccountBack.click();
+            return true;
+        }
+    }
+
+    // 2.56 Configurações: a form closes first, then (phones) the topic returns to the list, then the page closes
+    const settingsPage = document.getElementById("settings-page");
+    if (settingsPage && !settingsPage.classList.contains("hidden")) {
+        const btnSettingsBack = document.getElementById("btn-settings-back");
+        if (btnSettingsBack) {
+            btnSettingsBack.click();
             return true;
         }
     }

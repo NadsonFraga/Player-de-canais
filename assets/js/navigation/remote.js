@@ -3,8 +3,8 @@
  * Purely DOM-based spatial navigation with Euclidean 2D distance calculation
  */
 
-import { store } from '../core/state.js?v=20261021_0614';
-import { handleBackButton } from './historyManager.js?v=20261021_0614';
+import { store } from '../core/state.js?v=20261021_0948';
+import { handleBackButton } from './historyManager.js?v=20261021_0948';
 
 export function setupTvRemoteNavigation() {
     function getFocusableElements() {
@@ -39,6 +39,10 @@ export function setupTvRemoteNavigation() {
             '#btn-profile-confirm-cancel',
             '#btn-profile-guest-yes',
             '#btn-profile-guest-no',
+            '#btn-settings-back',
+            '.settings-nav-item:not([hidden])',
+            '#settings-panel button',
+            '#settings-panel input',
             '.collection-tab',
             '.collection-filter',
             '.collection-remove',
@@ -173,7 +177,7 @@ export function setupTvRemoteNavigation() {
 
         if (key === 'Escape' || key === 'Back' || key === 'BrowserBack') {
             // Global search, the account page and the profiles: the same step as the Back button
-            const overlayOpen = ["search-overlay", "account-page", "profile-page"].some(id => {
+            const overlayOpen = ["search-overlay", "account-page", "profile-page", "settings-page"].some(id => {
                 const el = document.getElementById(id);
                 return el && !el.classList.contains("hidden");
             });
