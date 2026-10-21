@@ -3,15 +3,15 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261021_0614';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261021_0614';
-import { showToast } from '../core/toast.js?v=20261021_0614';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261021_0614';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261021_0614';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261021_0614';
-import { formatClock } from '../core/resume.js?v=20261021_0614';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261021_0614';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261021_0614';
+import { store } from '../core/state.js?v=20261021_0948';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261021_0948';
+import { showToast } from '../core/toast.js?v=20261021_0948';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261021_0948';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261021_0948';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261021_0948';
+import { formatClock } from '../core/resume.js?v=20261021_0948';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261021_0948';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261021_0948';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -2508,7 +2508,11 @@ function chosenSubtitleIndex(subtitles) {
     const pref = getPlayerPrefs().subtitle;
     if (pref === 'off') return -1;
     if (pref) {
-        const match = subtitles.findIndex(sub => String(sub.lang || '').toLowerCase() === String(pref).toLowerCase());
+        const wanted = String(pref).toLowerCase();
+        const lang = sub => String(sub.lang || '').toLowerCase();
+        let match = subtitles.findIndex(sub => lang(sub) === wanted);
+        // "Inglês" in Configurações saves 'en': an 'en-US' track is English too
+        if (match < 0) match = subtitles.findIndex(sub => lang(sub).split(/[-_]/)[0] === wanted.split(/[-_]/)[0]);
         if (match >= 0) return match;
     }
     return defaultSubtitleIndex(subtitles);

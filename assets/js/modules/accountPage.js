@@ -6,12 +6,12 @@
  * still decides. After creating the account or recovering it, the new recovery code is shown and the page only closes
  * through "Guardei o código". Signed in, "Quem está assistindo?" follows (modules/profilePage.js).
  */
-import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_0614';
-import { showToast } from '../core/toast.js?v=20261021_0614';
-import { syncPageLock } from '../core/activity.js?v=20261021_0614';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0614';
-import { openLegalSection } from './footer.js?v=20261021_0614';
-import { openProfilePicker } from './profilePage.js?v=20261021_0614';
+import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_0948';
+import { showToast } from '../core/toast.js?v=20261021_0948';
+import { syncPageLock } from '../core/activity.js?v=20261021_0948';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0948';
+import { openLegalSection } from './footer.js?v=20261021_0948';
+import { openProfilePicker } from './profilePage.js?v=20261021_0948';
 
 const MESSAGES = {
     nickname_short: 'O apelido precisa ter pelo menos 3 caracteres.',
