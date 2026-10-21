@@ -1,6 +1,6 @@
 # Phase 4 plan: account, profiles, sync and the Configurações screen
 
-> **Status:** proposed on 2026-10-21, waiting for the user's approval. Nothing is implemented.
+> **Status:** decisions answered on 2026-10-21 (below); avatars still open. Nothing is implemented.
 > Part of the big feature (`plan.md` in this folder). Built on the 2026-10-19 decisions (G7, G7b, F10 in `backlog.md`) and
 > the review points listed there; the 2026-10-19 draft (`features/2026-10-19-user-accounts-and-cloud-sync/plan.md`) is
 > reference only (it used e-mail, a single blob per category and a max() merge that undoes removals).
@@ -131,10 +131,16 @@ nothing new.
   browser signs in and receives the data, profiles keep their data apart, sign out clears the device copy, delete.
 - The existing suites, with the account signed out and signed in.
 
-## Decisions for the user
+## Decisions (user, 2026-10-21)
 
-1. Nickname rules (3 to 20 characters, letters, numbers, `.`, `-`, `_`) and passwords of 8 characters or more?
-2. Up to 5 profiles per account?
-3. Signing out removes the account's data from the device (recommended for shared computers)?
-4. Sign-up acceptance: a line with links under the button (recommended) or a checkbox?
-5. The four steps 4a to 4d, each with its own stop on staging?
+1. No e-mail (confirmed after discussing it: sending e-mail needs a provider and our own domain; it can come later as an
+   optional recovery e-mail, so the accounts table keeps room for it).
+2. Passwords: at least 8 characters with at least one letter and one number, and not equal to the nickname. No list of
+   common passwords (the user found it unnecessary). A strength bar computed in the browser (length and variety) guides
+   without blocking. Same rules checked by the server.
+3. Up to 5 profiles per account; Netflix-like flow: after creating the account or signing in, the profile picker
+   ("Quem está assistindo?") with "Adicionar perfil".
+4. Signing out removes the account's copies from the device (the account itself stays intact on the server).
+5. Sign-up acceptance: a line with links under the button, no checkbox.
+6. Four steps (4a to 4d), each with its own stop on staging.
+7. Avatars: open (see the answer in the chat of 2026-10-21; the user is looking for a set).
