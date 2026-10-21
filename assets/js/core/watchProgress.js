@@ -7,10 +7,13 @@
  * TMDB movie and TV ids overlap, so movies get their own prefix. `hidden` + `hiddenAt` take an entry off the rail
  * without erasing its times; watching it again (a newer `timestamp`) brings it back.
  */
-import { WATCH_PROGRESS_KEY } from './constants.js?v=20261021_0210';
+import { WATCH_PROGRESS_KEY } from './constants.js?v=20261021_0250';
+import { storageKey, PROFILE_EVENT } from './profileStore.js?v=20261021_0250';
 
 // Fired whenever the store changes, so the rail redraws without the modules importing each other
 export const PROGRESS_EVENT = 'tvzinha:progress';
+// Another profile's progress: the screens redraw
+if (typeof window !== 'undefined') window.addEventListener(PROFILE_EVENT, () => window.dispatchEvent(new CustomEvent(PROGRESS_EVENT)));
 
 export function movieKey(id) {
     return `movie:${id}`;
@@ -18,17 +21,18 @@ export function movieKey(id) {
 
 export function readWatchProgress() {
     try {
-        const raw = localStorage.getItem(WATCH_PROGRESS_KEY);
+        const raw = localStorage.getItem(storageKey(WATCH_PROGRESS_KEY));
         return raw ? JSON.parse(raw) : {};
     } catch (e) {
         return {};
     }
 }
 
-function writeWatchProgress(progress) {
+/** Saves the whole store; `notify: false` skips the redraw event (the caller redraws, or nothing shows it). */
+export function writeWatchProgress(progress, { notify = true } = {}) {
     try {
-        localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(progress));
-        window.dispatchEvent(new CustomEvent(PROGRESS_EVENT));
+        localStorage.setItem(storageKey(WATCH_PROGRESS_KEY), JSON.stringify(progress));
+        if (notify) window.dispatchEvent(new CustomEvent(PROGRESS_EVENT));
     } catch (e) {
         // Progress is optional
     }

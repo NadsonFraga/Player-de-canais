@@ -3,7 +3,7 @@
  * Implements strict hierarchical back navigation across all tabs, searches, modals, drawers, and active media.
  */
 
-import { store } from '../core/state.js?v=20261021_0210';
+import { store } from '../core/state.js?v=20261021_0250';
 
 let navigationDepth = 0;
 let isProgrammaticBack = false;
@@ -239,6 +239,16 @@ export function handleBackButton() {
         const btnCloseLegal = document.getElementById("btn-close-legal-modal");
         if (btnCloseLegal) {
             btnCloseLegal.click();
+            return true;
+        }
+    }
+
+    // 2.54 Profiles (Quem está assistindo?, the editor), over the title page; it may stay (a profile must be chosen)
+    const profilePage = document.getElementById("profile-page");
+    if (profilePage && !profilePage.classList.contains("hidden")) {
+        const btnProfileBack = document.getElementById("btn-profile-back");
+        if (btnProfileBack) {
+            btnProfileBack.click();
             return true;
         }
     }

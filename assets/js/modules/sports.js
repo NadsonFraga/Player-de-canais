@@ -3,12 +3,13 @@
  * Fetches and renders match schedule feeds with team crest resolution and custom team picker
  */
 
-import { store } from '../core/state.js?v=20261021_0210';
-import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261021_0210';
-import { getUiSvg } from '../core/icons.js?v=20261021_0210';
-import { showToast } from '../core/toast.js?v=20261021_0210';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_0210';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0210';
+import { store } from '../core/state.js?v=20261021_0250';
+import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261021_0250';
+import { getUiSvg } from '../core/icons.js?v=20261021_0250';
+import { storageKey } from '../core/profileStore.js?v=20261021_0250';
+import { showToast } from '../core/toast.js?v=20261021_0250';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_0250';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0250';
 
 let matchesRefreshTimer = null;
 let isTeamModalInitialized = false;
@@ -38,7 +39,7 @@ export function resolveClientTeamCrest(teamId, teamInfo) {
 }
 
 export function getFavoriteTeam() {
-    return store.favoriteTeam || localStorage.getItem(FAVORITE_TEAM_KEY) || null;
+    return store.favoriteTeam || localStorage.getItem(storageKey(FAVORITE_TEAM_KEY)) || null;
 }
 
 export function setFavoriteTeam(teamId) {

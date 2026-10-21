@@ -2,7 +2,8 @@
  * Checks the account flow in the browser (modules/accountPage.js, core/account.js, /api/account/*):
  *   1. a guest's menu offers Entrar ou criar conta, which opens the page
  *   2. Criar conta checks the nickname and the password rules while typing (strength bar, button waits)
- *   3. creating shows the recovery code; Back does not leave it; "Guardei o código" signs in (menu, initial)
+ *   3. creating shows the recovery code; Back does not leave it; "Guardei o código" opens "Quem está assistindo?"
+ *      (Back does not skip it); the profile signs in (menu, avatar in the pill)
  *   4. a reload keeps the session, and the page cannot read the session cookie (HttpOnly)
  *   5. Sair; a wrong password says so without telling which field; the right one signs in
  *   6. Esqueci a senha with the code (typed loosely) saves a new password and shows a new code
@@ -143,7 +144,15 @@ const ACCOUNT_OPEN = visible("account-page");
 const CODE_VIEW = "(() => { const v = document.getElementById('account-code-view'); return Boolean(v) && !v.hidden; })()";
 const MENU = `({ name: document.getElementById('nav-menu-profile-name').textContent, sub: document.getElementById('nav-menu-profile-sub').textContent,
   signout: !document.getElementById('btn-menu-signout').hidden, enter: !document.getElementById('btn-menu-account').hidden,
-  initial: (document.querySelector('#btn-nav-profile .nav-initial') || {}).textContent || '' })`;
+  avatar: (() => { const i = document.querySelector('#btn-nav-profile .nav-avatar'); return i ? i.getAttribute('src') : ''; })() })`;
+const PICKER_OPEN = visible("profile-page");
+/** Signed in: "Quem está assistindo?" opens; the first profile is chosen and the page closes. */
+async function pickFirstProfile(b) {
+  const opened = await waitFor(b, `(${PICKER_OPEN}) && document.querySelectorAll('#profile-grid .profile-tile[data-profile-id]').length > 0`, 6000);
+  await b.evaluate("(document.querySelector('#profile-grid .profile-tile[data-profile-id]').click(), true)");
+  const closed = await waitFor(b, `!(${PICKER_OPEN})`, 4000);
+  return opened !== null && closed !== null;
+}
 const type = (id, text) => `(() => { const i = document.getElementById('${id}'); i.focus(); i.value = ${JSON.stringify(text)}; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`;
 const nickname = `Teste${Date.now().toString(36).slice(-6)}`;
 const password = "Cinema2026!";
@@ -202,15 +211,22 @@ try {
   check("Back does not leave the code screen", stays);
   await b.evaluate("(document.getElementById('btn-account-code-done').click(), true)");
   await waitFor(b, `!(${ACCOUNT_OPEN})`, 4000);
+  const picker = await waitFor(b, PICKER_OPEN, 6000);
+  await sleep(400);
+  await b.evaluate("(history.back(), true)");
+  await sleep(600);
+  const pickerStays = await b.evaluate(`({ open: ${PICKER_OPEN}, arrow: !document.getElementById('btn-profile-back').hidden, tiles: document.querySelectorAll('#profile-grid .profile-tile[data-profile-id]').length })`);
+  check("after the code, 'Quem está assistindo?' opens with the first profile; Back does not skip it", picker !== null && pickerStays.open && !pickerStays.arrow && pickerStays.tiles === 1, JSON.stringify(pickerStays));
+  await pickFirstProfile(b);
   const signed = await b.evaluate(MENU);
-  check("signed in: the menu shows the profile, Sair and the initial in the pill", signed.name === nickname && signed.signout && !signed.enter && signed.initial === "T", JSON.stringify(signed));
+  check("signed in: the menu shows the profile, Sair and its avatar in the pill", signed.name === nickname && signed.signout && !signed.enter && /avatars\/l01\.svg$/.test(signed.avatar), JSON.stringify(signed));
 
   // 4. A reload keeps the session (HttpOnly cookie, confirmed by /api/account/me)
   await startApp(b);
   await sleep(1500);
   const cookieHidden = await b.evaluate("!document.cookie.includes('tvz_session')");
-  const afterReload = await b.evaluate(MENU);
-  check("after a reload the person is still signed in; the page cannot read the session cookie", afterReload.name === nickname && cookieHidden, JSON.stringify({ ...afterReload, cookieHidden }));
+  const afterReload = await b.evaluate(`({ ...${MENU}, picker: ${PICKER_OPEN} })`);
+  check("after a reload the person is still signed in with the same profile (no picker within 3 hours); the page cannot read the session cookie", afterReload.name === nickname && !afterReload.picker && cookieHidden, JSON.stringify({ ...afterReload, cookieHidden }));
 
   // 5. Sair, then a wrong password and the right one
   await b.evaluate("(document.getElementById('btn-nav-profile').click(), true)");
@@ -225,8 +241,9 @@ try {
   check("a wrong password says so (without telling which field)", wrong !== null);
   await b.evaluate(type("account-password", password));
   await b.evaluate("(document.getElementById('btn-account-submit').click(), true)");
+  const picked = await pickFirstProfile(b);
   const back = await waitFor(b, `!(${ACCOUNT_OPEN}) && document.getElementById('nav-menu-profile-name').textContent === ${JSON.stringify(nickname)}`, 10000);
-  check("the right password signs in (nickname in any case)", back !== null);
+  check("the right password signs in (nickname in any case) through 'Quem está assistindo?'", picked && back !== null);
 
   // 6. Esqueci a senha: nickname + code + new password, then a new code
   await b.evaluate("(document.getElementById('btn-nav-profile').click(), document.getElementById('btn-menu-signout').click(), true)");
@@ -242,6 +259,7 @@ try {
   check("Esqueci a senha with the code (typed loosely) saves the new password and shows a new code", recovered !== null && code2 && code2 !== code, code2);
   await b.evaluate("(document.getElementById('btn-account-code-done').click(), true)");
   await waitFor(b, `!(${ACCOUNT_OPEN})`, 4000);
+  await pickFirstProfile(b);
 
   // 7. Phones: the page fits
   await b.viewport(390, 844, true);

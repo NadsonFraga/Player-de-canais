@@ -1,33 +1,33 @@
 /**
  * TVZINHA ONLINE - Reactive Core Store (Pure EventTarget)
- * Zero external imports to ensure absolute unidirectional data flow and avoid circular dependencies
+ * Only leaf imports (constants and the profile key, which import nothing else) to keep the data flow one-way
+ * and avoid circular dependencies
  */
+import { FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY } from './constants.js?v=20261021_0250';
+import { storageKey, PROFILE_EVENT } from './profileStore.js?v=20261021_0250';
+
+/** Channel favorites and the favorite team of the guest or the active profile. */
+function readPersonalChoices() {
+    let favorites = new Set();
+    let favoriteTeam = null;
+    try {
+        if (typeof localStorage !== 'undefined') {
+            const saved = localStorage.getItem(storageKey(FAVORITES_STORAGE_KEY));
+            if (saved) favorites = new Set(JSON.parse(saved));
+            // null by default until the person explicitly picks one
+            favoriteTeam = localStorage.getItem(storageKey(FAVORITE_TEAM_KEY)) || null;
+        }
+    } catch (e) {
+        console.warn("[Store] Error loading favorites:", e);
+    }
+    return { favorites, favoriteTeam };
+}
 
 class TvzinhaStore extends EventTarget {
     constructor() {
         super();
 
-        // Safely load initial favorites from localStorage
-        let initialFavs = new Set();
-        try {
-            if (typeof localStorage !== 'undefined') {
-                const saved = localStorage.getItem("tvzinha_favorites");
-                if (saved) {
-                    initialFavs = new Set(JSON.parse(saved));
-                }
-            }
-        } catch (e) {
-            console.warn("[Store] Error loading initial favorites:", e);
-        }
-
-        // Safely load initial favorite team (null by default until user explicitly picks one)
-        let initialTeam = null;
-        try {
-            if (typeof localStorage !== 'undefined') {
-                const savedTeam = localStorage.getItem("tvzinha_favorite_team");
-                if (savedTeam) initialTeam = savedTeam;
-            }
-        } catch (e) {}
+        const { favorites: initialFavs, favoriteTeam: initialTeam } = readPersonalChoices();
 
         this._state = {
             currentView: 'tv',
@@ -163,7 +163,7 @@ class TvzinhaStore extends EventTarget {
 
         try {
             if (typeof localStorage !== 'undefined') {
-                localStorage.setItem("tvzinha_favorites", JSON.stringify(Array.from(favs)));
+                localStorage.setItem(storageKey(FAVORITES_STORAGE_KEY), JSON.stringify(Array.from(favs)));
             }
         } catch (e) {
             console.warn("[Store] Error saving favorites to storage:", e);
@@ -185,7 +185,7 @@ class TvzinhaStore extends EventTarget {
         this._state.favoriteTeam = safeTeam;
         try {
             if (typeof localStorage !== 'undefined') {
-                localStorage.setItem("tvzinha_favorite_team", safeTeam);
+                localStorage.setItem(storageKey(FAVORITE_TEAM_KEY), safeTeam);
             }
         } catch (e) {}
 
@@ -210,4 +210,15 @@ class TvzinhaStore extends EventTarget {
 }
 
 export const store = new TvzinhaStore();
+
+// Another profile: its favorites and team, and the screens that show them redraw
+if (typeof window !== 'undefined') {
+    window.addEventListener(PROFILE_EVENT, () => {
+        const { favorites, favoriteTeam } = readPersonalChoices();
+        store._state.favorites = favorites;
+        store._state.favoriteTeam = favoriteTeam;
+        store.dispatchEvent(new CustomEvent('favorites:change', { detail: { channelKey: null, isFavorite: false, favorites: new Set(favorites) } }));
+        store.dispatchEvent(new CustomEvent('team:change', { detail: { favoriteTeam } }));
+    });
+}
 export { TvzinhaStore };
