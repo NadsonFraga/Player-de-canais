@@ -7,22 +7,28 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261021_0024';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261021_0024';
-import { fetchTmdb } from '../core/tmdb.js?v=20261021_0024';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0024';
-import { showToast } from '../core/toast.js?v=20261021_0024';
-import { syncPageLock } from '../core/activity.js?v=20261021_0024';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261021_0024';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_0024';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261021_0024';
-import { isAnimeShow } from './series.js?v=20261021_0024';
-import { selectChannelByName } from './channels.js?v=20261021_0024';
-import { openCollection } from './collection.js?v=20261021_0024';
+import { store } from '../core/state.js?v=20261021_0034';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261021_0034';
+import { fetchTmdb } from '../core/tmdb.js?v=20261021_0034';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0034';
+import { showToast } from '../core/toast.js?v=20261021_0034';
+import { syncPageLock } from '../core/activity.js?v=20261021_0034';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261021_0034';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_0034';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261021_0034';
+import { isAnimeShow } from './series.js?v=20261021_0034';
+import { selectChannelByName } from './channels.js?v=20261021_0034';
+import { openCollection } from './collection.js?v=20261021_0034';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
 const KIND_LABEL = { movie: 'Filmes', tv: 'Séries', anime: 'Animes', channel: 'Canais', person: 'Pessoas' };
+// People: TMDB lists everyone ever credited (crew of small productions included). Only actors, directors and writers
+// with a photo and something known show: a title with this many votes, or this popularity (TMDB's scale is low:
+// Fernanda Montenegro is ~1, Christopher Nolan ~8; the unknown namesakes stay under 0.5).
+const PERSON_ROLE = { Acting: 'Atuação', Directing: 'Direção', Writing: 'Roteiro' };
+const PERSON_MIN_VOTES = 300;
+const PERSON_MIN_POPULARITY = 2;
 
 let searchKind = 'all';
 let searchTimer = null;
@@ -167,6 +173,24 @@ function isOut(item, today) {
     return Boolean(date) && date <= today;
 }
 
+function knownTitles(person) {
+    return (person.known_for || []).filter(work => work.title || work.name);
+}
+
+/** An actor, director or writer people may look for (see PERSON_ROLE). */
+function isKnownPerson(person) {
+    if (!person.profile_path || !PERSON_ROLE[person.known_for_department]) return false;
+    const mostVoted = Math.max(0, ...knownTitles(person).map(work => Number(work.vote_count) || 0));
+    return mostVoted >= PERSON_MIN_VOTES || Number(person.popularity) >= PERSON_MIN_POPULARITY;
+}
+
+/** "Atuação · Central do Brasil": the role and the best-known title. */
+function personLine(person) {
+    const best = knownTitles(person).sort((a, b) => (Number(b.vote_count) || 0) - (Number(a.vote_count) || 0))[0];
+    const role = PERSON_ROLE[person.known_for_department] || '';
+    return best ? `${role} · ${best.title || best.name}` : role;
+}
+
 /** Splits TMDB's mixed answer into our kinds, without titles that are not out yet. */
 function splitResults(items) {
     const out = { movie: [], tv: [], anime: [], person: [] };
@@ -177,8 +201,9 @@ function splitResults(items) {
         else if (item.media_type === 'tv' && item.poster_path) {
             const kind = isAnimeShow(item) ? 'anime' : 'tv';
             out[kind].push({ kind, item });
-        } else if (item.media_type === 'person') out.person.push(item);
+        } else if (item.media_type === 'person' && isKnownPerson(item)) out.person.push(item);
     });
+    out.person.sort((a, b) => (Number(b.popularity) || 0) - (Number(a.popularity) || 0));
     return out;
 }
 
@@ -249,7 +274,7 @@ function renderResults(box, split, channels) {
                         ? `<img class="title-cast-photo" src="${escapeAttr(TMDB_IMG_W185 + p.profile_path)}" alt="" loading="lazy">`
                         : `<span class="title-cast-photo is-empty" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg></span>`}
                     <span class="title-cast-name">${escapeHtml(p.name)}</span>
-                    <span class="title-cast-role">${escapeHtml(p.known_for_department === 'Directing' ? 'Direção' : p.known_for_department === 'Acting' ? 'Atuação' : (p.known_for_department || ''))}</span>
+                    <span class="title-cast-role">${escapeHtml(personLine(p))}</span>
                 </button>`).join('');
         } else {
             grid.className = 'search-title-grid';

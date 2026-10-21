@@ -6,7 +6,8 @@
  *      Party, Premium, Configurações); the Coleção icon opens the Coleção and lights up there
  *   3. "/" opens the search; typing a word makes one request (not one per letter); the category filters reuse it;
  *      a result opens the title page and Back returns
- *   4. channels are found with no request, listed first, and open the channel; Back closes the search
+ *   4. channels are found with no request, listed first, and open the channel; Back closes the search; people are
+ *      only known actors, directors and writers ("nolan": Christopher Nolan first; "nadson": nobody)
  *   5. phones: the same three icons in one row (Esportes hidden until it opens), inside 390 and 360 px screens even
  *      with the active tab's name; the profile menu fits; the pill clears the title page's back button
  *
@@ -229,6 +230,19 @@ try {
   check("a channel result opens the channel", channel !== null);
   await b.evaluate("(window.TvzinhaActions.switchView('home'), true)");
   await sleep(1200);
+
+  // 4b. People: only known actors, directors and writers, most popular first, with their role and a known title
+  await b.evaluate("(window.TvzinhaActions.openSearch(), true)");
+  await b.evaluate(typeInSearch("nolan"));
+  await waitFor(b, "document.querySelectorAll('#search-results .search-person').length > 0", 10000);
+  const people = await b.evaluate("[...document.querySelectorAll('#search-results .search-person')].map(p => p.querySelector('.title-cast-name').textContent + ' | ' + p.querySelector('.title-cast-role').textContent)");
+  check("'nolan': Christopher Nolan first, with role and a known title", /^Christopher Nolan \| Direção · \S/.test(people[0] || '') && people.every(line => /\| (Atuação|Direção|Roteiro) · /.test(line)), JSON.stringify(people));
+  await b.evaluate(typeInSearch("nadson"));
+  await sleep(2500);
+  const namesakes = await b.evaluate("document.querySelectorAll('#search-results .search-person').length");
+  check("'nadson': unknown namesakes do not show", namesakes === 0, String(namesakes));
+  await b.evaluate("(history.back(), true)");
+  await waitFor(b, `!(${SEARCH_OPEN})`, 4000);
 
   // 5. Phones: the same three icons in the pill (Esportes hidden until it opens), inside the screen at 390 and 360 px
   for (const width of [390, 360]) {
