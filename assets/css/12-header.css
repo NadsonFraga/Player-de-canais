@@ -141,6 +141,17 @@
     color: var(--text-secondary);
 }
 
+/* The account sync under the profile: quiet, amber while it cannot reach the server */
+.nav-menu-head-text .nav-menu-sync {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.nav-menu-head-text .nav-menu-sync[data-state="offline"],
+.nav-menu-head-text .nav-menu-sync[data-state="error"] {
+    color: #fbbf24;
+}
+
 .nav-menu-item {
     display: flex;
     align-items: center;

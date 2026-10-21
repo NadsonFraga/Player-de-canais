@@ -4,8 +4,11 @@
  * Kept in their own record, apart from the watch history, so a future login or settings tab can read and sync them
  * as one object. Every read and write survives a blocked or full storage (private windows): defaults are used then.
  */
-import { PLAYER_PREFS_KEY } from './constants.js?v=20261021_0250';
-import { storageKey, PROFILE_EVENT } from './profileStore.js?v=20261021_0250';
+import { PLAYER_PREFS_KEY } from './constants.js?v=20261021_0614';
+import { storageKey, stampTime, PROFILE_EVENT } from './profileStore.js?v=20261021_0614';
+
+// Fired after a preference is saved (the account sync sends it)
+export const PREFS_EVENT = 'tvzinha:prefs';
 
 // Older single-purpose key for the "Tela" choice, folded into the record on first read
 const LEGACY_FIT_KEY = 'tvz-video-fit';
@@ -50,6 +53,8 @@ export function setPlayerPref(key, value) {
     prefs[key] = value;
     try {
         localStorage.setItem(storageKey(PLAYER_PREFS_KEY), JSON.stringify(prefs));
+        stampTime('player');
+        window.dispatchEvent(new CustomEvent(PREFS_EVENT));
     } catch (e) {
         // Kept for this page only
     }
