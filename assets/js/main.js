@@ -3,22 +3,24 @@
  * Coordinates core state, modular engines, navigation, and exposes TvzinhaActions
  */
 
-import { store } from './core/state.js?v=20261021_0046';
-import { showToast } from './core/toast.js?v=20261021_0046';
-import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261021_0046';
-import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261021_0046';
-import { runWhenHomeIdle } from './core/activity.js?v=20261021_0046';
-import { initMoviesView, resetMoviesViewState } from './modules/movies.js?v=20261021_0046';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261021_0046';
-import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261021_0046';
-import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261021_0046';
-import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261021_0046';
-import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261021_0046';
-import { preloadPlayerLibs } from './player/engine.js?v=20261021_0046';
-import { setupSiteFooter } from './modules/footer.js?v=20261021_0046';
-import { setupTitlePage, openTitle, titleBack, closeTitlePage, readTitleFromAddress } from './modules/titlePage.js?v=20261021_0046';
-import { setupHeader, openSearch } from './modules/header.js?v=20261021_0046';
-import { setupCollection, renderCollection, openCollection } from './modules/collection.js?v=20261021_0046';
+import { store } from './core/state.js?v=20261021_0145';
+import { showToast } from './core/toast.js?v=20261021_0145';
+import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261021_0145';
+import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261021_0145';
+import { runWhenHomeIdle } from './core/activity.js?v=20261021_0145';
+import { initMoviesView, resetMoviesViewState } from './modules/movies.js?v=20261021_0145';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261021_0145';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261021_0145';
+import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261021_0145';
+import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261021_0145';
+import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261021_0145';
+import { preloadPlayerLibs } from './player/engine.js?v=20261021_0145';
+import { setupSiteFooter } from './modules/footer.js?v=20261021_0145';
+import { setupTitlePage, openTitle, titleBack, closeTitlePage, readTitleFromAddress } from './modules/titlePage.js?v=20261021_0145';
+import { setupHeader, openSearch } from './modules/header.js?v=20261021_0145';
+import { setupCollection, renderCollection, openCollection } from './modules/collection.js?v=20261021_0145';
+import { setupAccountPage, openAccountPage } from './modules/accountPage.js?v=20261021_0145';
+import { refreshAccount } from './core/account.js?v=20261021_0145';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
@@ -106,6 +108,7 @@ Object.defineProperty(window, 'TvzinhaActions', {
         closeTitle: closeTitlePage,
         openSearch: openSearch,
         openCollection: openCollection,
+        openAccount: openAccountPage,
         openMovie: (movie, play = false) => openTitle('movie', movie, { play }),
         closeMovie: closeTitlePage,
         playEpisode: playSeriesEpisode,
@@ -181,6 +184,9 @@ async function bootstrapApp() {
     setupTitlePage();
     setupHeader();
     setupCollection();
+    setupAccountPage();
+    // Only when this browser's copy says someone is signed in: guests never call the server
+    refreshAccount();
 
     // Check adblock onboarding notice
     checkAdblockNoticeStatus();

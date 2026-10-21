@@ -122,19 +122,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/11-title-page.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/12-header.css?v=20261021_0046">
-    <link rel="stylesheet" href="assets/css/13-collection.css?v=20261021_0046">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/11-title-page.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/12-header.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/13-collection.css?v=20261021_0145">
+    <link rel="stylesheet" href="assets/css/14-account.css?v=20261021_0145">
 </head>
 
 <body>
@@ -203,17 +204,16 @@
                 <div id="nav-profile-menu" class="nav-menu hidden" role="menu" aria-label="Perfil">
                     <!-- The profile in use, with the switch next to it (profiles come with the account) -->
                     <div class="nav-menu-head">
-                        <span class="nav-menu-avatar" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg></span>
+                        <span id="nav-menu-avatar" class="nav-menu-avatar" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg></span>
                         <span class="nav-menu-head-text">
-                            <strong>Visitante</strong>
-                            <span>Perfil deste aparelho</span>
+                            <strong id="nav-menu-profile-name">Visitante</strong>
+                            <span id="nav-menu-profile-sub">Perfil deste aparelho</span>
                         </span>
                         <button type="button" class="nav-menu-switch" data-menu-action="profiles" aria-label="Trocar perfil (em breve)" title="Trocar perfil (em breve)">Trocar</button>
                     </div>
-                    <button type="button" class="nav-menu-item is-soon" role="menuitem" aria-disabled="true" data-menu-action="account">
+                    <button type="button" id="btn-menu-account" class="nav-menu-item" role="menuitem" data-menu-action="account">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
                         <span>Entrar ou criar conta</span>
-                        <span class="nav-menu-note">em breve</span>
                     </button>
                     <button type="button" class="nav-menu-item is-soon" role="menuitem" aria-disabled="true" data-menu-action="watchparty">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -230,6 +230,10 @@
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         <span>Configurações</span>
                         <span class="nav-menu-note">em breve</span>
+                    </button>
+                    <button id="btn-menu-signout" type="button" class="nav-menu-item" role="menuitem" data-menu-action="signout" hidden>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <span>Sair da conta</span>
                     </button>
                 </div>
             </div>
@@ -2032,6 +2036,77 @@
         </div>
     </div>
 
+    <!-- Account: Entrar, Criar conta, Esqueci a senha and the recovery code (modules/accountPage.js) -->
+    <section id="account-page" class="account-page hidden" role="dialog" aria-modal="true" aria-labelledby="account-title">
+        <button id="btn-account-back" class="title-page-back account-back" type="button" title="Voltar" aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+        <div class="account-card">
+            <div class="account-brand">
+                <img src="assets/logos/fav/icon-detailed.svg" alt="" width="34" height="34">
+                <span>Tvzinha Online</span>
+            </div>
+
+            <div id="account-form-view" class="account-view">
+                <div class="account-switch" role="tablist" aria-label="Conta">
+                    <span class="account-switch-glider" aria-hidden="true"></span>
+                    <button type="button" class="account-switch-option active" role="tab" aria-selected="true" data-account-view="signin">Entrar</button>
+                    <button type="button" class="account-switch-option" role="tab" aria-selected="false" data-account-view="signup">Criar conta</button>
+                </div>
+
+                <form id="account-form" class="account-form" novalidate>
+                    <h1 id="account-title" class="account-title">Entrar</h1>
+                    <p id="account-lead" class="account-lead">Sua Coleção e seu progresso em qualquer aparelho.</p>
+
+                    <label class="account-field">
+                        <span class="account-label">Apelido</span>
+                        <input id="account-nickname" class="account-input" type="text" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="20" required>
+                        <small id="account-nickname-hint" class="account-hint"></small>
+                    </label>
+
+                    <label class="account-field" id="account-code-field" hidden>
+                        <span class="account-label">Código de recuperação</span>
+                        <input id="account-code-input" class="account-input account-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" placeholder="XXXX-XXXX-XXXX-XXXX">
+                    </label>
+
+                    <div class="account-field">
+                        <label class="account-label" for="account-password" id="account-password-label">Senha</label>
+                        <div class="account-input-wrap">
+                            <input id="account-password" class="account-input" type="password" name="password" autocomplete="current-password" maxlength="200" required>
+                            <button id="btn-account-eye" class="account-eye" type="button" aria-label="Mostrar senha" aria-pressed="false"><svg class="icon-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="icon-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 4.06-5.06"></path><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg></button>
+                        </div>
+                        <div id="account-strength" class="account-strength" hidden>
+                            <span class="account-strength-bar"><span></span></span>
+                            <span id="account-strength-label" class="account-strength-label"></span>
+                        </div>
+                        <ul id="account-rules" class="account-rules" hidden>
+                            <li data-rule="length"><span class="account-rule-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Pelo menos 8 caracteres</span></li>
+                            <li data-rule="letter"><span class="account-rule-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Uma letra</span></li>
+                            <li data-rule="number"><span class="account-rule-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Um número</span></li>
+                        </ul>
+                    </div>
+
+                    <p id="account-error" class="account-error" role="alert"></p>
+
+                    <button id="btn-account-submit" class="account-submit" type="submit">
+                        <span id="account-submit-label">Entrar</span>
+                        <span class="account-spinner" aria-hidden="true"></span>
+                    </button>
+
+                    <button id="btn-account-forgot" class="account-link" type="button" data-account-view="recover">Esqueci a senha</button>
+                    <button id="btn-account-remembered" class="account-link" type="button" data-account-view="signin" hidden>Voltar para Entrar</button>
+                    <p id="account-terms" class="account-terms" hidden>Ao criar a conta, você concorda com os <button type="button" class="account-inline-link" data-legal="terms">Termos de uso</button> e a <button type="button" class="account-inline-link" data-legal="privacy">Política de Privacidade</button>.</p>
+                </form>
+            </div>
+
+            <div id="account-code-view" class="account-view" hidden>
+                <h1 class="account-title">Guarde seu código de recuperação</h1>
+                <p class="account-lead">Sem e-mail, ele é a única forma de voltar à conta se você esquecer a senha. Ele aparece só agora: anote ou copie para um lugar seguro.</p>
+                <div id="account-code" class="account-code" aria-live="polite"></div>
+                <button id="btn-account-copy" class="account-secondary" type="button">Copiar código</button>
+                <button id="btn-account-code-done" class="account-submit" type="button"><span>Guardei o código</span></button>
+            </div>
+        </div>
+    </section>
+
     <!-- Movie player page: full screen over the title page (movies.js playMovie) -->
     <div id="movie-player-view" class="movie-modal-backdrop player-page hidden" role="dialog" aria-modal="true" aria-labelledby="movie-player-server-title">
         <div class="movie-modal-card player-page-card is-playing">
@@ -2169,7 +2244,7 @@
     <!-- Streaming Engine V3: Hls.js & Artplayer load on demand with Subresource Integrity (D7, B11), see ensurePlayerLibs() in engine.js -->
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261021_0046"></script>
+    <script type="module" src="assets/js/main.js?v=20261021_0145"></script>
 </body>
 
 </html>
