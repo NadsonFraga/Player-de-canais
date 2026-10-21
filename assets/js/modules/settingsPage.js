@@ -6,19 +6,19 @@
  * state when shown (and again when the account, the profile, the preferences or the sync change), in grouped cards of
  * rows. Guests see Conta (Entrar ou criar conta), Player and Sobre.
  */
-import { getAccount, getActiveProfile, changePassword, renewRecoveryCode, passwordRules, passwordStrength, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0948';
-import { leaveAccount, deleteAccountHere, syncNow, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261021_0948';
-import { getPlayerPrefs, setPlayerPref, PREFS_EVENT } from '../core/playerPrefs.js?v=20261021_0948';
-import { PROFILE_EVENT } from '../core/profileStore.js?v=20261021_0948';
-import { avatarSrc } from '../core/avatars.js?v=20261021_0948';
-import { confirmDialog } from '../core/confirmDialog.js?v=20261021_0948';
-import { showToast } from '../core/toast.js?v=20261021_0948';
-import { syncPageLock } from '../core/activity.js?v=20261021_0948';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0948';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0948';
-import { openLegalSection } from './footer.js?v=20261021_0948';
-import { openAccountPage } from './accountPage.js?v=20261021_0948';
-import { openProfilePicker } from './profilePage.js?v=20261021_0948';
+import { getAccount, getActiveProfile, changePassword, renewRecoveryCode, passwordRules, passwordStrength, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0957';
+import { leaveAccount, deleteAccountHere, syncNow, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261021_0957';
+import { getPlayerPrefs, setPlayerPref, PREFS_EVENT } from '../core/playerPrefs.js?v=20261021_0957';
+import { PROFILE_EVENT } from '../core/profileStore.js?v=20261021_0957';
+import { avatarSrc } from '../core/avatars.js?v=20261021_0957';
+import { confirmDialog } from '../core/confirmDialog.js?v=20261021_0957';
+import { showToast } from '../core/toast.js?v=20261021_0957';
+import { syncPageLock } from '../core/activity.js?v=20261021_0957';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0957';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0957';
+import { openLegalSection } from './footer.js?v=20261021_0957';
+import { openAccountPage } from './accountPage.js?v=20261021_0957';
+import { openProfilePicker } from './profilePage.js?v=20261021_0957';
 
 const SECTIONS = {
     account: 'Conta',
@@ -163,11 +163,16 @@ const linkRow = (title, attrs, sub = '') => `
 
 const button = (label, attrs, kind = '', type = 'button') => `<button type="${type}" class="settings-button ${kind}" ${attrs}><span>${escapeHtml(label)}</span><span class="account-spinner" aria-hidden="true"></span></button>`;
 
-const passwordField = (id, label, autocomplete) => `
+/**
+ * A password field. `confirm`: a password typed again to confirm a serious action (trocar senha, código, apagar):
+ * marked so the browser and password managers (1Password, LastPass, Bitwarden) do not fill it with the saved password;
+ * filled in, anyone at an unlocked computer could change or delete the account without knowing the password.
+ */
+const passwordField = (id, label, autocomplete, { confirm = false } = {}) => `
     <div class="account-field">
         <label class="account-label" for="${id}">${escapeHtml(label)}</label>
         <div class="account-input-wrap">
-            <input id="${id}" class="account-input" type="password" autocomplete="${autocomplete}" maxlength="200">
+            <input id="${id}" name="${confirm ? `confirm-${id}` : id}" class="account-input" type="password" autocomplete="${confirm ? 'new-password' : autocomplete}" maxlength="200"${confirm ? ' data-1p-ignore data-lpignore="true" data-bwignore="true"' : ''}>
             <button type="button" class="account-eye settings-eye" data-eye-for="${id}" aria-label="Mostrar senha" aria-pressed="false">${EYE}</button>
         </div>
     </div>`;
@@ -196,7 +201,7 @@ function accountPanel() {
         </ul>`;
     const passwordForm = openForm === 'password' ? `
         <form class="settings-form" data-form="password" novalidate>
-            ${passwordField('settings-current-password', 'Senha atual', 'current-password')}
+            ${passwordField('settings-current-password', 'Senha atual', 'current-password', { confirm: true })}
             ${passwordField('settings-new-password', 'Senha nova', 'new-password')}
             <div class="account-strength" id="settings-strength" data-level=""><span class="account-strength-bar"><span></span></span><span class="account-strength-label" id="settings-strength-label"></span></div>
             ${rules}
@@ -217,7 +222,7 @@ function accountPanel() {
         </div>` : `
         <form class="settings-form" data-form="code" novalidate>
             <p class="settings-form-lead">O código novo substitui o anterior. Confirme com a sua senha.</p>
-            ${passwordField('settings-code-password', 'Senha', 'current-password')}
+            ${passwordField('settings-code-password', 'Senha', 'current-password', { confirm: true })}
             <p class="account-error settings-error" role="alert"></p>
             <div class="settings-form-actions">
                 ${button('Cancelar', 'data-settings-action="cancel-form"')}
@@ -227,7 +232,7 @@ function accountPanel() {
     const deleteForm = openForm === 'delete' ? `
         <form class="settings-form" data-form="delete" novalidate>
             <p class="settings-form-lead">Apaga a conta, os perfis e tudo o que foi sincronizado. Não dá para desfazer. Os dados guardados neste aparelho sem conta continuam aqui.</p>
-            ${passwordField('settings-delete-password', 'Senha', 'current-password')}
+            ${passwordField('settings-delete-password', 'Senha', 'current-password', { confirm: true })}
             <p class="account-error settings-error" role="alert"></p>
             <div class="settings-form-actions">
                 ${button('Cancelar', 'data-settings-action="cancel-form"')}
