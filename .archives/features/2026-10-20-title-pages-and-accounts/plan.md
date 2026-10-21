@@ -1,6 +1,6 @@
 # Plan: title pages, new header, Coleção and accounts (big feature)
 
-> **Status:** phases 1 and 2 approved on staging on 2026-10-20 (not in production: `master` gets the whole feature at the end). Next: phase 3.
+> **Status:** phases 1 to 3 approved on staging (2026-10-20 and 2026-10-21; not in production: `master` gets the whole feature at the end). Next: phase 4, detailed in `phase4-plan.md`.
 > Replaces the separate backlog items F10 (Coleção and header), F11 (global search) and G7 (account); the 2026-10-19 draft in `features/2026-10-19-user-accounts-and-cloud-sync/plan.md` is reference only.
 > References: FlyStream (title page, header pill, search overlay, settings menu), 7Movies and Stremio (Coleção tabs), Trakt and Letterboxd (ratings 1 to 10).
 
