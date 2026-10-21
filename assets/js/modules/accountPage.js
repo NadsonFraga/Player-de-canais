@@ -8,13 +8,13 @@
  * Robots: Criar conta and Esqueci a senha carry the Turnstile check (core/turnstile.js); Entrar adds it when the server
  * asks (after 2 wrong passwords) and then sends again by itself.
  */
-import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_1502';
-import { showToast } from '../core/toast.js?v=20261021_1502';
-import { syncPageLock } from '../core/activity.js?v=20261021_1502';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_1502';
-import { openLegalSection } from './footer.js?v=20261021_1502';
-import { openProfilePicker } from './profilePage.js?v=20261021_1502';
-import { createCheck } from '../core/turnstile.js?v=20261021_1502';
+import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_1511';
+import { showToast } from '../core/toast.js?v=20261021_1511';
+import { syncPageLock } from '../core/activity.js?v=20261021_1511';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_1511';
+import { openLegalSection } from './footer.js?v=20261021_1511';
+import { openProfilePicker } from './profilePage.js?v=20261021_1511';
+import { createCheck } from '../core/turnstile.js?v=20261021_1511';
 
 const MESSAGES = {
     nickname_short: 'O apelido precisa ter pelo menos 3 caracteres.',
@@ -50,12 +50,20 @@ let check = null;
 let checkAction = null;
 // Entrar needs the check after 2 wrong passwords (the server says so)
 let loginNeedsCheck = false;
+// A try stopped because the box Cloudflare showed was not ticked yet: it goes by itself once it is
+let retryWhenChecked = false;
 
 /** The check for `action` under the password (made once per form). */
 function ensureCheck(action) {
     if (check && checkAction === action) return check;
     dropCheck();
-    check = createCheck(document.getElementById('account-turnstile'), action);
+    check = createCheck(document.getElementById('account-turnstile'), action, {
+        onToken: () => {
+            if (!retryWhenChecked || !isAccountPageOpen()) return;
+            retryWhenChecked = false;
+            document.getElementById('account-form').requestSubmit();
+        },
+    });
     checkAction = action;
     return check;
 }
@@ -123,6 +131,7 @@ function resetForm() {
     setBusy(false);
     codeReason = null;
     loginNeedsCheck = false;
+    retryWhenChecked = false;
     dropCheck();
 }
 
@@ -264,8 +273,16 @@ async function submit(e) {
         token = await current.token();
         if (!token) {
             setBusy(false);
-            setError(current.unavailable ? MESSAGES.captcha_unavailable : MESSAGES.captcha_failed);
-            current.reset();
+            if (current.unavailable) {
+                setError(MESSAGES.captcha_unavailable);
+            } else if (current.failed) {
+                setError(MESSAGES.captcha_failed);
+                current.reset();
+            } else {
+                // Cloudflare showed its box: the try goes on by itself once it is ticked
+                setError(MESSAGES.captcha_required);
+                retryWhenChecked = true;
+            }
             return;
         }
     }
