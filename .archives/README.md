@@ -60,6 +60,7 @@ Project documentation folder (replaces the former `docs/`). When resuming work, 
 | 2026-10-20 | [tmdb-key](features/2026-10-20-tmdb-key/) | done (D3; new key applied in production) |
 | 2026-10-20 | [tmdb-credits](features/2026-10-20-tmdb-credits/) | done |
 | 2026-10-20 | [site-footer](features/2026-10-20-site-footer/) | done |
-| 2026-10-20 | [title-pages-and-accounts](features/2026-10-20-title-pages-and-accounts/) | planned (big feature: title page, header, Coleção, account) |
+| 2026-10-20 | [title-pages-and-accounts](features/2026-10-20-title-pages-and-accounts/) | done (big feature: title page, header, Coleção, accounts, profiles, sync, Configurações, security review; production 2026-10-21) |
+| 2026-10-21 | [turnstile](features/2026-10-21-turnstile/) | done (robot check on the account forms; production 2026-10-21) |
 
 Folders before 2026-10-08 were dated from their summaries and commit history; older ones may lack a `summary.md`.

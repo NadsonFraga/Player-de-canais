@@ -8,16 +8,9 @@ Legenda: `[feito]` implementado e verificado · `[impl]` implementado, verifica�
 
 ---
 
-## >>> FEAT GRANDE EM ANDAMENTO: página do título, topo novo, Coleção e conta <<<
+## Feat grande entregue (21/10)
 
-Plano: `features/2026-10-20-title-pages-and-accounts/plan.md`. **Situação em 21/10:** fases 1 a 4d aprovadas no `staging`; revisão de segurança e código morto (`security-review.md` na mesma pasta) no `staging` para os testes; produção depois da sua aprovação; por último, a limpeza do histórico do Git (S1). Junta F10, F11 e G7 numa entrega só, em 4 fases, cada uma testada no `staging`; a produção recebe tudo de uma vez no fim.
-
-1. **Página do título em tela inteira** (filmes, séries, animes) e player em tela inteira; botões Quero assistir, Assistido e Avaliar já gravando no navegador.
-2. **Topo novo** (pílula com marca, abas, perfil, busca e engrenagem) e **busca geral**.
-3. **Coleção** (abas Assistindo, Quero assistir, Assistidos, Avaliados, Canais favoritos) e o cartão "Gostou? Avalie".
-4. **Conta e sincronização** (plano detalhado próprio antes do código), com Privacidade e Termos novos.
-
-Depois, fora desta feat: Trakt/AniList, notas do IMDb e Rotten Tomatoes, trailer no fundo, entrar com Google, login na TV.
+Página do título, topo novo, Coleção, contas, perfis, sincronização, Configurações, revisão de segurança e Turnstile: **em produção desde 21/10**. Resumo em `features/2026-10-20-title-pages-and-accounts/summary.md`; o que ficou para depois está nos itens F12, F13, F14, G7b e S2.
 
 ---
 
@@ -290,6 +283,6 @@ Não commitado. Arquivos alterados: `functions/api/resolve.js`, `tools/local_ser
 - `[feito]` S1. **Limpar o histórico do Git (repositório público)** (21/10, revisão de segurança, aprovado por você): apagar de todas as versões as 4 exportações de conversa (`docs/CHAT_HISTORY.md`, `docs/chat_history_full.jsonl`, `.archives/history/*`) e trocar por `***REMOVED***` as chaves antigas do TMDB (`2dca...`, já revogada, e `428f...`), o seu e-mail e os caminhos de usuário do Windows. Com `git filter-repo` e push forçado em todos os branches, **depois da ida para produção**; antes, o outro computador não pode ter nada sem enviar, e depois precisa clonar de novo. O GitHub ainda guarda os commits antigos por um tempo (só o suporte apaga de vez). **Feito em 21/10 (antes da produção, a seu pedido; não havia outro computador):** `git filter-repo` apagou as 4 exportações e trocou as chaves, o e-mail e os caminhos em todas as versões (só 5 documentos de `.archives` mudaram no conteúdo atual; o código do site é o mesmo); os commits passaram a usar o e-mail privado do GitHub, também configurado neste repositório; push forçado no `master` e no `staging` (o `data` ficou como estava). Os identificadores dos commits mudaram: referências antigas nos documentos (por exemplo `a25d41c`) não existem mais. Backup do histórico antigo em `%LOCALAPPDATA%	vzinha-local
 epo-backup-2026-10-21.git` (tem os dados antigos: apagar quando não precisar mais).
 - `[decisão]` S2. **Itens da revisão de segurança deixados como estão** (21/10): sandbox nos iframes dos servidores externos (a maioria recusa), tempo de login que revela se um apelido existe (o cadastro já revela), bloqueio de 15 min por apelido após 5 senhas erradas, 100 mil rodadas de PBKDF2 e senha de 8 caracteres sem lista de vazadas, sem registro de eventos de segurança. Detalhes em `features/2026-10-20-title-pages-and-accounts/security-review.md`.
-- `[impl]` S3. **Cloudflare Turnstile nos formulários da conta** (21/10, decidido por você; o Google continua opcional, G7b): sempre em Criar conta e Esqueci a senha, no Entrar só depois de 2 senhas erradas. Pasta `features/2026-10-21-turnstile/`. No staging para os testes manuais.
+- `[feito]` S3. **Cloudflare Turnstile nos formulários da conta** (21/10, decidido por você; o Google continua opcional, G7b): sempre em Criar conta e Esqueci a senha, no Entrar só depois de 2 senhas erradas. Pasta `features/2026-10-21-turnstile/`. Aprovado e em produção em 21/10.
 - `[feito]` F11. **Busca geral** (opcional, depois da conta; pedido seu em 19/10): ícone de busca na pílula; resultados enquanto se digita (sem botão), filmes, séries, animes e canais juntos, filtros (tipo, ano, gênero); espera um instante depois da digitação para não estourar o limite do TMDB. Independente da conta, pode ser antecipada. **Feito na fase 2 da feat grande (20/10): busca global na pílula.**
 - `[decisão]` G7b. **Entrar com Google:** opcional, no fim de tudo (decidido em 19/10). A conta já nasce com uma tabela de métodos de entrada para ele ser acrescentado e vinculado depois, sem nunca ser a única forma de entrar.

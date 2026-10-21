@@ -1,6 +1,6 @@
 # Turnstile on the account forms
 
-> **Status:** implemented 2026-10-21, on staging for the manual tests (tests.md). Production waits for the user. Google sign-in stays optional for later (G7b), not part of this.
+> **Status:** done, in production since 2026-10-21 (summary.md). Google sign-in stays optional for later (G7b), not part of this.
 
 ## Why
 

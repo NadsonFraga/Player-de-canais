@@ -23,3 +23,5 @@
 | 2 | Esqueci a senha | Works the same | |
 | 3 | Entrar with a wrong password twice, then the right one | After the second error a small check may appear (or not); the right password signs in | |
 | 4 | Phone: Criar conta | Same; the check fits the screen when it shows | |
+
+**Approved by the user on 2026-10-21** (manual tests on staging fine); merged to production the same day.
