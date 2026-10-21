@@ -501,6 +501,43 @@
     width: 100%;
 }
 
+/* --- A confirmation (core/confirmDialog.js), over everything --- */
+.confirm-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.66);
+    animation: account-fade 0.18s ease-out;
+}
+
+.confirm-dialog.hidden {
+    display: none;
+}
+
+.confirm-dialog-card {
+    width: min(420px, 100%);
+    display: flex;
+    flex-direction: column;
+    animation: account-card-in 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-dialog-card .account-lead {
+    margin: 10px 0 18px;
+}
+
+.confirm-dialog-card .account-submit {
+    width: 100%;
+}
+
+.confirm-dialog-card .account-secondary {
+    margin: 10px 0 0;
+}
+
 @media (max-width: 768px) {
     .account-page {
         padding: 72px 12px 24px;

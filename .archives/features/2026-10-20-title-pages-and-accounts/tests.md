@@ -175,3 +175,33 @@ Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
 | 5 | Gerenciar perfis: rename, change the avatar, delete a profile | Saved at once; deleting asks first and the profile leaves the list | |
 | 6 | Phone: sign in | The picker after signing in; on the phone the profile starts empty (sync is 4c) | |
 | 7 | TV remote or keyboard arrows on the picker and the editor | Every tile, avatar and button can be reached; Esc goes back one step | |
+
+**Phase 4b approved by the user on 2026-10-21** (account created on the computer, signed in on the phone, profiles and Trocar working; the data itself syncs in 4c).
+
+## Phase 4c: sync (`feat/sync` -> `staging`)
+
+**Date:** 2026-10-21 · **Staging:** https://staging.tvzinhaonline.pages.dev (no database change)
+
+### Automated
+
+| Check | Result |
+|---|---|
+| `tools/sync_api_check.mjs` (syncMerge.js + the Cloudflare function) and `tools/test_sync_api.py` (the local mirror): the same `tools/sync_cases.json`: 10 data checks (unknown fields dropped, fake poster, future time cut to now, bad keys and kinds, sizes), 11 merges (newest field wins, removal travels, rewatch brings back a hidden entry, "Começar do início", a finished movie opened again, per-episode positions, a tie settled by content; each also merged in the other order and again with itself), 26 route steps (signed out, header, origin, broken request, another account's profile, more than 300 changes, one sync a second, a second device gets everything, removal reaches the first device, an older copy comes back corrected, the same change twice gets no new number, paging of 604 records, profiles apart, a removed profile, only POST; no secret in any answer) | 47/47 and 47/47 |
+| `account_check` 17/17 (account API also gained the per-IP limit and the early cookie check: 62/62 and 62/62) | Chrome and Firefox |
+| `tools/sync_check.mjs` (new, two separate browsers on one account): A sends a title, a rating, a favorite and a movie time; B receives them; B's removal reaches A; B offline: the change waits ("Sem conexão" in the menu) and arrives; Sair with an unsent change asks first; Sair removes the account's copies and keeps the guest data; what A sent while leaving reaches B | 8/8 Chrome, 8/8 Firefox |
+| `profile_check` | 15/15 Chrome, 15/15 Firefox |
+| `header_check`, `title_page_check`, `collection_check`, `continue_watching_check` | 26/26, 28/28, 16/16, 9/9 (the movie autoplay passed this time: that failure is flaky) |
+| `player_ui_check` | DBZ T9E31 request checks fail (known, B21) |
+| `player_touch_check` | hung once for hours (no time limit in the script, B21); run again with a 7-minute limit: 17/17 |
+
+### Manual (user, on staging)
+
+| # | Steps | Expected | Result |
+|---|---|---|---|
+| 1 | Open the site on the computer (signed in) and wait a few seconds; open the profile menu | "Sincronizado agora" under the profile; the Coleção you had there goes up | |
+| 2 | Open the site on the phone, same account and profile | The computer's Coleção, ratings, Continuar assistindo and favorite channels show up | |
+| 3 | Mark a title on the phone; on the computer, switch tabs and come back after 5 minutes (or reload) | The title is there | |
+| 4 | Take something out of the Coleção on one device | It leaves the other one too | |
+| 5 | Sair on the phone | Visitante; the account's Coleção leaves the phone; entering again brings it back | |
+| 6 | Two profiles: save something in each, check on the other device | Each profile keeps its own | |
+

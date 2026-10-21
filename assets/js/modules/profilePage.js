@@ -7,15 +7,16 @@
  * whose data the site reads (core/profileStore.js) and goes to Início. The first time a profile is used on a device
  * that has guest data, the page asks whether that data goes with it.
  */
-import { getAccount, getActiveProfile, createProfile, updateProfile, removeProfile, profileNameProblem, signOut, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0250';
-import { activeProfileId, setActiveProfile, timeSinceLastUse, touchProfile, shouldAskAboutGuestData, markGuestDataAsked, copyGuestDataTo, removeProfileData } from '../core/profileStore.js?v=20261021_0250';
-import { AVATAR_FACES, AVATAR_ICONS, DEFAULT_AVATAR, avatarSrc, freeAvatar } from '../core/avatars.js?v=20261021_0250';
-import { showToast } from '../core/toast.js?v=20261021_0250';
-import { syncPageLock } from '../core/activity.js?v=20261021_0250';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0250';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0250';
-import { switchAppView } from '../navigation/router.js?v=20261021_0250';
-import { isTitlePageOpen, exitTitleTo } from './titlePage.js?v=20261021_0250';
+import { getAccount, getActiveProfile, createProfile, updateProfile, removeProfile, profileNameProblem, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0614';
+import { leaveAccount } from '../core/sync.js?v=20261021_0614';
+import { activeProfileId, setActiveProfile, timeSinceLastUse, touchProfile, shouldAskAboutGuestData, markGuestDataAsked, copyGuestDataTo, removeProfileData } from '../core/profileStore.js?v=20261021_0614';
+import { AVATAR_FACES, AVATAR_ICONS, DEFAULT_AVATAR, avatarSrc, freeAvatar } from '../core/avatars.js?v=20261021_0614';
+import { showToast } from '../core/toast.js?v=20261021_0614';
+import { syncPageLock } from '../core/activity.js?v=20261021_0614';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0614';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0614';
+import { switchAppView } from '../navigation/router.js?v=20261021_0614';
+import { isTitlePageOpen, exitTitleTo } from './titlePage.js?v=20261021_0614';
 
 const MAX_PROFILES = 5;
 // Away longer than this: the picker asks again who is watching
@@ -405,11 +406,9 @@ export function setupProfilePage() {
 
     document.getElementById('btn-profile-back').addEventListener('click', back);
     document.getElementById('btn-profile-manage').addEventListener('click', () => setManaging(!managing));
+    // Sending what is pending first; signed out, the account listener below closes the page
     document.getElementById('btn-profile-signout').addEventListener('click', async () => {
-        required = false;
-        await signOut();
-        closeProfilePage();
-        showToast('Você saiu da conta. A conta continua salva: é só entrar de novo.');
+        if (await leaveAccount()) showToast('Você saiu da conta. A conta continua salva: é só entrar de novo.');
     });
     document.getElementById('profile-grid').addEventListener('click', (e) => {
         const tile = e.target.closest('.profile-tile');

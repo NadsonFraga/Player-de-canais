@@ -3,8 +3,8 @@
  * Only leaf imports (constants and the profile key, which import nothing else) to keep the data flow one-way
  * and avoid circular dependencies
  */
-import { FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY } from './constants.js?v=20261021_0250';
-import { storageKey, PROFILE_EVENT } from './profileStore.js?v=20261021_0250';
+import { FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY } from './constants.js?v=20261021_0614';
+import { storageKey, stampFavorite, stampTime, PROFILE_EVENT } from './profileStore.js?v=20261021_0614';
 
 /** Channel favorites and the favorite team of the guest or the active profile. */
 function readPersonalChoices() {
@@ -160,6 +160,8 @@ class TvzinhaStore extends EventTarget {
             favs.add(channelKey);
             isNowFav = true;
         }
+        // Its time, so a removal reaches the other devices too
+        stampFavorite(existingMatch || channelKey, isNowFav);
 
         try {
             if (typeof localStorage !== 'undefined') {
@@ -186,6 +188,7 @@ class TvzinhaStore extends EventTarget {
         try {
             if (typeof localStorage !== 'undefined') {
                 localStorage.setItem(storageKey(FAVORITE_TEAM_KEY), safeTeam);
+                stampTime('team');
             }
         } catch (e) {}
 

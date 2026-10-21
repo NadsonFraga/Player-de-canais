@@ -21,6 +21,7 @@ from socketserver import ThreadingMixIn
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import local_accounts  # noqa: E402  (mirror of functions/api/account/[[path]].js)
+import local_sync  # noqa: E402  (mirror of functions/api/sync.js)
 
 PORT = 8787
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -1315,6 +1316,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.handle_tmdb(params, origin=self.headers.get("Origin"))
             elif path.startswith("/api/account/"):
                 self.handle_account("GET", path)
+            elif path == "/api/sync":
+                self.handle_sync("GET")
             elif path == "/api/stream":
                 self.handle_stream(params, is_head=False)
             elif path == "/health":
@@ -1346,6 +1349,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             path = urllib.parse.urlparse(self.path).path
             if path.startswith("/api/account/"):
                 self.handle_account("POST", path)
+            elif path == "/api/sync":
+                self.handle_sync("POST")
             else:
                 self.send_response(404)
                 self.end_headers()
@@ -1381,6 +1386,31 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             # Plain http here: a Secure cookie would be refused on a phone opening the LAN address
             "secure": False,
             "pepper": ACCOUNTS_PEPPER,
+        }, local_accounts.local_database())
+        self.send_account_reply(result)
+
+    def handle_sync(self, method):
+        """/api/sync: same answers as functions/api/sync.js."""
+        body = None
+        if method == "POST":
+            limit = local_sync.SYNC_LIMITS["bodyBytes"]
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(min(length, limit + 1)) if length else b""
+            body, error = local_accounts.parse_body(raw, limit)
+            if error:
+                self.send_account_reply({"status": 413 if error == "too_large" else 400, "json": {"error": error}, "setCookie": None})
+                return
+        host = self.headers.get("Host") or "127.0.0.1:8787"
+        result = local_sync.handle_sync({
+            "method": method,
+            "body": body,
+            "cookie": self.headers.get("Cookie") or "",
+            "origin": self.headers.get("Origin"),
+            "requestOrigin": f"http://{host}",
+            "customHeader": self.headers.get("X-Tvzinha-Request"),
+            "ip": self.client_address[0] if self.client_address else "",
+            "now": int(time.time() * 1000),
+            "secure": False,
         }, local_accounts.local_database())
         self.send_account_reply(result)
 
