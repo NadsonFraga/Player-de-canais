@@ -4,13 +4,14 @@
  * A full-screen page over everything else (a history layer: Back closes it). The rules are checked while the person
  * types (core/account.js has the same rules as the server) so mistakes show before the button is pressed; the server
  * still decides. After creating the account or recovering it, the new recovery code is shown and the page only closes
- * through "Guardei o código".
+ * through "Guardei o código". Signed in, "Quem está assistindo?" follows (modules/profilePage.js).
  */
-import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_0210';
-import { showToast } from '../core/toast.js?v=20261021_0210';
-import { syncPageLock } from '../core/activity.js?v=20261021_0210';
-import { pushNavLayer, popNavLayer, isHandlingBack } from '../navigation/historyManager.js?v=20261021_0210';
-import { openLegalSection } from './footer.js?v=20261021_0210';
+import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_0250';
+import { showToast } from '../core/toast.js?v=20261021_0250';
+import { syncPageLock } from '../core/activity.js?v=20261021_0250';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0250';
+import { openLegalSection } from './footer.js?v=20261021_0250';
+import { openProfilePicker } from './profilePage.js?v=20261021_0250';
 
 const MESSAGES = {
     nickname_short: 'O apelido precisa ter pelo menos 3 caracteres.',
@@ -229,9 +230,7 @@ async function submit(e) {
         return;
     }
     if (view === 'signin') {
-        const name = (result.json.account && result.json.account.nickname) || nickname;
-        closeAccountPage();
-        showToast(`Bem-vindo de volta, ${name}!`);
+        closeIntoProfiles();
         return;
     }
     showCode(result.json.recoveryCode, view);
@@ -250,9 +249,13 @@ function showCode(code, reason) {
 }
 
 function finishCode() {
-    const reason = codeReason;
-    closeAccountPage();
-    showToast(reason === 'recover' ? 'Senha nova salva. Você entrou na conta.' : 'Conta criada. Bem-vindo!');
+    if (codeReason === 'recover') showToast('Senha nova salva. Você entrou na conta.');
+    closeIntoProfiles();
+}
+
+/** Signed in: the page gives way to "Quem está assistindo?" (its history layer goes in after this page's has left). */
+function closeIntoProfiles() {
+    runNavBatch(() => closeAccountPage(), () => openProfilePicker({ required: true }));
 }
 
 async function copyCode() {

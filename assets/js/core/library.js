@@ -10,10 +10,13 @@
  * `rating.value` is 1 to 10 (5 stars with halves, the Trakt and Letterboxd scale); null when removed.
  * Animes are TV titles (`tv:<id>`); `kind` keeps 'anime' only to show them in the right place.
  */
-import { LIBRARY_KEY } from './constants.js?v=20261021_0210';
+import { LIBRARY_KEY } from './constants.js?v=20261021_0250';
+import { storageKey, PROFILE_EVENT } from './profileStore.js?v=20261021_0250';
 
 // Fired whenever the library changes, so screens redraw without importing each other
 export const LIBRARY_EVENT = 'tvzinha:library';
+// Another profile's library: the screens redraw
+if (typeof window !== 'undefined') window.addEventListener(PROFILE_EVENT, () => window.dispatchEvent(new CustomEvent(LIBRARY_EVENT)));
 
 export function libraryKey(kind, id) {
     return `${kind === 'movie' ? 'movie' : 'tv'}:${id}`;
@@ -21,7 +24,7 @@ export function libraryKey(kind, id) {
 
 function readLibrary() {
     try {
-        const raw = localStorage.getItem(LIBRARY_KEY);
+        const raw = localStorage.getItem(storageKey(LIBRARY_KEY));
         const data = raw ? JSON.parse(raw) : null;
         return data && typeof data.items === 'object' && data.items ? data : { items: {} };
     } catch (e) {
@@ -31,7 +34,7 @@ function readLibrary() {
 
 function writeLibrary(data) {
     try {
-        localStorage.setItem(LIBRARY_KEY, JSON.stringify(data));
+        localStorage.setItem(storageKey(LIBRARY_KEY), JSON.stringify(data));
         window.dispatchEvent(new CustomEvent(LIBRARY_EVENT));
         return true;
     } catch (e) {

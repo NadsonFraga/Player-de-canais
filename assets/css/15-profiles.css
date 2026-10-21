@@ -1,0 +1,335 @@
+/* ==========================================================================
+   PROFILES (modules/profilePage.js): "Quem está assistindo?", Gerenciar perfis,
+   the editor with the avatars, the guest data question. Reuses the account page's
+   card, fields and buttons (14-account.css). Layer: 1300, like the account page.
+   ========================================================================== */
+
+.profile-page [hidden] {
+    display: none !important;
+}
+
+.profile-page {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    padding: 72px 20px 40px;
+    box-sizing: border-box;
+    background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(255, 255, 255, 0.07), transparent 60%),
+        var(--bg-base);
+}
+
+.profile-view {
+    width: 100%;
+    max-width: 920px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-page.is-entering .profile-view {
+    animation: account-card-in 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-view.is-switching {
+    animation: account-fade 0.22s ease-out;
+}
+
+.profile-title {
+    margin: 0 0 30px;
+    font-family: var(--font-heading);
+    font-size: clamp(1.6rem, 4vw, 2.5rem);
+    font-weight: 800;
+    color: #ffffff;
+    text-align: center;
+}
+
+/* --- The profiles --- */
+.profile-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+}
+
+.profile-tile {
+    width: 132px;
+    padding: 0;
+    border: none;
+    background: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.profile-avatar-wrap {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 24%;
+    overflow: hidden;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.profile-avatar {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 24%;
+    user-select: none;
+}
+
+.profile-tile.is-active .profile-avatar-wrap {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.profile-tile:hover .profile-avatar-wrap,
+.profile-tile:focus-visible .profile-avatar-wrap,
+.profile-tile.tv-focused .profile-avatar-wrap {
+    box-shadow: 0 0 0 3px #ffffff;
+    transform: scale(1.04);
+}
+
+/* The ring on the avatar is the focus mark: no outline around the whole tile */
+.profile-tile:focus-visible,
+.profile-tile.tv-focused {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.profile-tile-name {
+    max-width: 100%;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease;
+}
+
+/* "Adicionar perfil" may take two lines on phones instead of being cut */
+.profile-tile-add .profile-tile-name {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+}
+
+.profile-tile:hover .profile-tile-name,
+.profile-tile:focus-visible .profile-tile-name,
+.profile-tile.tv-focused .profile-tile-name {
+    color: #ffffff;
+}
+
+.profile-tile-edit {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+}
+
+.profile-page.is-managing .profile-tile-edit {
+    display: flex;
+}
+
+.profile-add-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: 2px dashed rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+}
+
+.profile-page.is-managing .profile-tile-add {
+    display: none;
+}
+
+.profile-manage {
+    width: auto;
+    min-width: 200px;
+    margin: 38px 0 6px;
+    padding: 0 28px;
+}
+
+.profile-signout {
+    margin-top: 6px;
+}
+
+.profile-page.is-managing .profile-signout {
+    visibility: hidden;
+}
+
+/* --- The editor, the confirmation and the guest data question --- */
+.profile-card {
+    width: min(480px, 100%);
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-card .account-submit {
+    width: 100%;
+}
+
+.profile-card .account-secondary {
+    margin: 10px 0 0;
+}
+
+.profile-card .account-error {
+    margin: 10px 0 2px;
+}
+
+.profile-card .account-lead {
+    margin: 10px 0 18px;
+}
+
+.profile-edit-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 18px 0 18px;
+}
+
+.profile-edit-preview,
+.profile-guest-avatar {
+    flex: none;
+    width: 88px;
+    height: 88px;
+}
+
+.profile-edit-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-avatar-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.profile-avatar-tab {
+    padding: 7px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: none;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.profile-avatar-tab.active {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #09090b;
+}
+
+.profile-avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    gap: 10px;
+    max-height: 236px;
+    overflow-y: auto;
+    padding: 4px;
+    margin: 0 -4px 6px;
+}
+
+.profile-avatar-option {
+    aspect-ratio: 1;
+    padding: 0;
+    border: none;
+    border-radius: 24%;
+    overflow: hidden;
+    background: none;
+    cursor: pointer;
+    opacity: 0.88;
+    transition: opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-avatar-option img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.profile-avatar-option:hover {
+    opacity: 1;
+}
+
+.profile-avatar-option.is-selected {
+    opacity: 1;
+    box-shadow: 0 0 0 3px #ffffff;
+}
+
+.profile-remove {
+    margin-top: 10px;
+    color: #fca5a5;
+}
+
+.profile-remove:hover,
+.profile-remove:focus-visible {
+    color: #fecaca;
+}
+
+.profile-danger {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.profile-danger:hover:not(:disabled),
+.profile-danger:focus-visible {
+    background: #dc2626;
+}
+
+.profile-guest-card {
+    align-items: center;
+    text-align: center;
+}
+
+.profile-guest-avatar {
+    margin-bottom: 14px;
+    border-radius: 24%;
+}
+
+@media (max-width: 768px) {
+    .profile-page {
+        padding: 64px 12px 24px;
+    }
+
+    .profile-page .account-back {
+        top: 14px;
+        left: 12px;
+    }
+
+    .profile-grid {
+        gap: 16px;
+    }
+
+    .profile-tile {
+        width: 100px;
+    }
+
+    .profile-avatar-wrap {
+        width: 92px;
+        height: 92px;
+    }
+
+    .profile-title {
+        margin-bottom: 22px;
+    }
+}

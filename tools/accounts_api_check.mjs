@@ -77,7 +77,7 @@ for (const step of cases.steps) {
   if (result.setCookie && !/HttpOnly/.test(result.setCookie)) problems.push("cookie without HttpOnly");
   // Nothing secret ever leaves the server
   if (/hash|salt|token/i.test(JSON.stringify(result.json))) problems.push("a secret field in the answer");
-  for (const [name, field] of Object.entries(step.save || {})) saved[name] = result.json[field];
+  for (const [name, field] of Object.entries(step.save || {})) saved[name] = pick(result.json, field);
 
   if (problems.length) failed++;
   console.log(`${problems.length ? "FAIL" : "OK  "} ${step.name}${problems.length ? " -> " + problems.join("; ") : ""}`);
