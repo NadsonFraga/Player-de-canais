@@ -143,4 +143,10 @@ nothing new.
 4. Signing out removes the account's copies from the device (the account itself stays intact on the server).
 5. Sign-up acceptance: a line with links under the button, no checkbox.
 6. Four steps (4a to 4d), each with its own stop on staging.
-7. Avatars: open (see the answer in the chat of 2026-10-21; the user is looking for a set).
+7. Avatars: option C, free-license illustrated avatars (CC0, licence checked per style, e.g. DiceBear "Lorelei" or
+   "Notionists") plus our own line icons, all on a palette of colored backgrounds; small SVG files loaded only by the
+   profile screens. The user may swap them later.
+8. Profile picker: after creating the account and after signing in, like Netflix. On later visits it shows again when
+   the site was last used more than 3 hours before; within 3 hours the same profile continues.
+9. The account flow must feel very fluid (instant feedback, transitions, no jumps): it is the first thing people see.
+   A review of the fluidity of the whole site comes later (backlog F13).
