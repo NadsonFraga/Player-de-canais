@@ -5,13 +5,16 @@
  * types (core/account.js has the same rules as the server) so mistakes show before the button is pressed; the server
  * still decides. After creating the account or recovering it, the new recovery code is shown and the page only closes
  * through "Guardei o código". Signed in, "Quem está assistindo?" follows (modules/profilePage.js).
+ * Robots: Criar conta and Esqueci a senha carry the Turnstile check (core/turnstile.js); Entrar adds it when the server
+ * asks (after 2 wrong passwords) and then sends again by itself.
  */
-import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_1129';
-import { showToast } from '../core/toast.js?v=20261021_1129';
-import { syncPageLock } from '../core/activity.js?v=20261021_1129';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_1129';
-import { openLegalSection } from './footer.js?v=20261021_1129';
-import { openProfilePicker } from './profilePage.js?v=20261021_1129';
+import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_1502';
+import { showToast } from '../core/toast.js?v=20261021_1502';
+import { syncPageLock } from '../core/activity.js?v=20261021_1502';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_1502';
+import { openLegalSection } from './footer.js?v=20261021_1502';
+import { openProfilePicker } from './profilePage.js?v=20261021_1502';
+import { createCheck } from '../core/turnstile.js?v=20261021_1502';
 
 const MESSAGES = {
     nickname_short: 'O apelido precisa ter pelo menos 3 caracteres.',
@@ -28,6 +31,9 @@ const MESSAGES = {
     wrong_credentials: 'Apelido ou senha incorretos.',
     wrong_recovery: 'Apelido ou código de recuperação incorretos.',
     accounts_unavailable: 'As contas estão fora do ar agora. Tente de novo mais tarde.',
+    captcha_required: 'Confirme a verificação para continuar.',
+    captcha_failed: 'Não deu para confirmar que você é uma pessoa. Tente de novo.',
+    captcha_unavailable: 'A verificação está fora do ar agora. Tente de novo em instantes.',
     network: 'Sem conexão com o servidor. Verifique a internet e tente de novo.'
 };
 
@@ -39,6 +45,33 @@ const VIEWS = {
 
 let view = 'signin';
 let busy = false;
+// The robot check on screen, and the action it is for ('register' | 'recover' | 'login')
+let check = null;
+let checkAction = null;
+// Entrar needs the check after 2 wrong passwords (the server says so)
+let loginNeedsCheck = false;
+
+/** The check for `action` under the password (made once per form). */
+function ensureCheck(action) {
+    if (check && checkAction === action) return check;
+    dropCheck();
+    check = createCheck(document.getElementById('account-turnstile'), action);
+    checkAction = action;
+    return check;
+}
+
+function dropCheck() {
+    if (check) check.remove();
+    check = null;
+    checkAction = null;
+}
+
+/** What the current form needs: the action of its check, or null. */
+function checkActionFor(current) {
+    if (current === 'signup') return 'register';
+    if (current === 'recover') return 'recover';
+    return loginNeedsCheck ? 'login' : null;
+}
 // After the code: what the closing toast says ('signup' or 'recover')
 let codeReason = null;
 
@@ -89,6 +122,8 @@ function resetForm() {
     setError('');
     setBusy(false);
     codeReason = null;
+    loginNeedsCheck = false;
+    dropCheck();
 }
 
 function showFormView() {
@@ -129,6 +164,10 @@ function setView(next, { focus = false, reset = false } = {}) {
     form.classList.add('is-switching');
     setError('');
     updateLiveChecks();
+    // The robot check loads with the form that needs it (it is usually done before the person finishes typing)
+    const action = checkActionFor(view);
+    if (action) ensureCheck(action);
+    else dropCheck();
     if (focus) {
         const nickname = document.getElementById('account-nickname');
         (nickname.value ? (view === 'recover' ? document.getElementById('account-code-input') : password) : nickname).focus({ preventScroll: true });
@@ -218,11 +257,33 @@ async function submit(e) {
     const password = document.getElementById('account-password').value;
     setError('');
     setBusy(true);
+    let token = '';
+    const action = checkActionFor(view);
+    if (action) {
+        const current = ensureCheck(action);
+        token = await current.token();
+        if (!token) {
+            setBusy(false);
+            setError(current.unavailable ? MESSAGES.captcha_unavailable : MESSAGES.captcha_failed);
+            current.reset();
+            return;
+        }
+    }
     let result;
-    if (view === 'signin') result = await signIn(nickname, password);
-    else if (view === 'signup') result = await register(nickname, password);
-    else result = await recoverAccount(nickname, document.getElementById('account-code-input').value, password);
+    if (view === 'signin') result = await signIn(nickname, password, token);
+    else if (view === 'signup') result = await register(nickname, password, token);
+    else result = await recoverAccount(nickname, document.getElementById('account-code-input').value, password, token);
     setBusy(false);
+    // Each token is accepted once: a fresh one for the next try
+    if (check) check.reset();
+
+    // After 2 wrong passwords the server asks for the check: show it and send again by itself
+    if (view === 'signin' && !loginNeedsCheck && result.json && result.json.error === 'captcha_required') {
+        loginNeedsCheck = true;
+        ensureCheck('login');
+        submit(e);
+        return;
+    }
 
     const ok = view === 'signup' ? result.status === 201 : result.status === 200;
     if (!ok) {

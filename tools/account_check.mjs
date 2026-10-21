@@ -5,9 +5,11 @@
  *   3. creating shows the recovery code; Back does not leave it; "Guardei o código" opens "Quem está assistindo?"
  *      (Back does not skip it); the profile signs in (menu, avatar in the pill)
  *   4. a reload keeps the session, and the page cannot read the session cookie (HttpOnly)
- *   5. Sair; a wrong password says so without telling which field; the right one signs in
+ *   5. Sair; a wrong password says so without telling which field; after a second one the right password goes
+ *      through the robot check (Turnstile, Cloudflare's test key here) by itself
  *   6. Esqueci a senha with the code (typed loosely) saves a new password and shows a new code
- *   7. phones: the page fits; the test account is deleted at the end
+ *   7. phones: the page fits; with the "always blocks" test key, Criar conta says the check failed; the test account
+ *      is deleted at the end (signed in, so no sign-in check is needed)
  *
  *   node tools/account_check.mjs [--browser=chrome|edge|firefox] [--shots=<folder>] [--base=http://127.0.0.1:8787]
  *
@@ -258,11 +260,16 @@ try {
   await b.evaluate("(document.getElementById('btn-account-submit').click(), true)");
   const wrong = await waitFor(b, "document.getElementById('account-error').textContent === 'Apelido ou senha incorretos.'", 10000);
   check("a wrong password says so (without telling which field)", wrong !== null);
+  // A second wrong password: the next try needs the robot check, which the page adds and sends by itself
+  await b.evaluate("(document.getElementById('account-error').textContent = '', true)");
+  await b.evaluate(type("account-password", "Errada2027"));
+  await b.evaluate("(document.getElementById('btn-account-submit').click(), true)");
+  await waitFor(b, "document.getElementById('account-error').textContent === 'Apelido ou senha incorretos.'", 10000);
   await b.evaluate(type("account-password", password));
   await b.evaluate("(document.getElementById('btn-account-submit').click(), true)");
   const picked = await pickFirstProfile(b);
   const back = await waitFor(b, `!(${ACCOUNT_OPEN}) && document.getElementById('nav-menu-profile-name').textContent === ${JSON.stringify(nickname)}`, 10000);
-  check("the right password signs in (nickname in any case) through 'Quem está assistindo?'", picked && back !== null);
+  check("after 2 wrong passwords the right one still signs in, through the robot check and 'Quem está assistindo?'", picked && back !== null);
 
   // 6. Esqueci a senha: nickname + code + new password, then a new code
   await b.evaluate("(document.getElementById('btn-nav-profile').click(), document.getElementById('btn-menu-signout').click(), true)");
@@ -282,17 +289,28 @@ try {
 
   // 7. Phones: the page fits
   await b.viewport(390, 844, true);
-  await b.evaluate("(document.getElementById('btn-nav-profile').click(), document.getElementById('btn-menu-signout').click(), true)");
-  await waitFor(b, "document.getElementById('nav-menu-profile-name').textContent === 'Visitante'", 5000);
   await b.evaluate("(window.TvzinhaActions.openAccount('signup'), true)");
   await sleep(600);
   const phone = await b.evaluate("(() => { const c = document.querySelector('.account-card').getBoundingClientRect(); return { inside: c.left >= 0 && c.right <= innerWidth, side: document.documentElement.scrollWidth > innerWidth }; })()");
   check("phone: the account page fits the screen", phone.inside && !phone.side, JSON.stringify(phone));
   await b.shot("account-phone.png");
   await b.evaluate("(history.back(), true)");
+  await waitFor(b, `!(${ACCOUNT_OPEN})`, 4000);
 
-  // Clean up: delete the test account
-  await b.evaluate(`fetch('/api/account/login', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tvzinha-Request': '1' }, body: JSON.stringify({ nickname: ${JSON.stringify(nickname)}, password: ${JSON.stringify(newPassword)} }) }).then(r => r.status)`);
+  // The robot check fails (Cloudflare's "always blocks" test key, only honored on this computer): Criar conta says so
+  if (/127\.0\.0\.1|localhost/.test(BASE)) {
+    await b.evaluate("(localStorage.setItem('tvz_turnstile_test_key', '2x00000000000000000000AB'), true)");
+    await b.evaluate("(window.TvzinhaActions.openAccount('signup'), true)");
+    await b.evaluate(type("account-nickname", `Robo${Date.now().toString(36).slice(-6)}`));
+    await b.evaluate(type("account-password", "Cinema2026!"));
+    await b.evaluate("(document.getElementById('btn-account-submit').click(), true)");
+    const blocked = await waitFor(b, "document.getElementById('account-error').textContent === 'Não deu para confirmar que você é uma pessoa. Tente de novo.'", 20000);
+    check("a failed robot check stops Criar conta with its own message", blocked !== null);
+    await b.evaluate("(localStorage.removeItem('tvz_turnstile_test_key'), history.back(), true)");
+    await waitFor(b, `!(${ACCOUNT_OPEN})`, 4000);
+  }
+
+  // Clean up: delete the test account (still signed in after Esqueci a senha)
   const deleted = await b.evaluate(`fetch('/api/account/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tvzinha-Request': '1' }, body: JSON.stringify({ password: ${JSON.stringify(newPassword)} }) }).then(r => r.status)`);
   check("the test account is deleted", deleted === 200, String(deleted));
 } catch (e) {

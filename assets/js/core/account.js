@@ -6,8 +6,8 @@
  * server (no cost): /me runs only when that copy says someone is signed in.
  * Profiles: the list comes with the account; which one is in use on this device lives in core/profileStore.js.
  */
-import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261021_1129';
-import { activeProfileId, setActiveProfile } from './profileStore.js?v=20261021_1129';
+import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261021_1502';
+import { activeProfileId, setActiveProfile } from './profileStore.js?v=20261021_1502';
 
 const CACHE_KEY = 'tvzinha_account_v1';
 export const ACCOUNT_EVENT = 'tvzinha:account';
@@ -71,20 +71,21 @@ function signedInWith(json) {
     setState({ signedIn: true, account: json.account, profiles: json.profiles || [] });
 }
 
-export async function register(nickname, password) {
-    const result = await call('register', { nickname, password });
+// `turnstileToken`: the robot check (core/turnstile.js), sent when the form has one
+export async function register(nickname, password, turnstileToken = '') {
+    const result = await call('register', { nickname, password, ...(turnstileToken ? { turnstileToken } : {}) });
     if (result.status === 201) signedInWith(result.json);
     return result;
 }
 
-export async function signIn(nickname, password) {
-    const result = await call('login', { nickname, password });
+export async function signIn(nickname, password, turnstileToken = '') {
+    const result = await call('login', { nickname, password, ...(turnstileToken ? { turnstileToken } : {}) });
     if (result.status === 200) signedInWith(result.json);
     return result;
 }
 
-export async function recoverAccount(nickname, recoveryCode, newPassword) {
-    const result = await call('recover', { nickname, recoveryCode, newPassword });
+export async function recoverAccount(nickname, recoveryCode, newPassword, turnstileToken = '') {
+    const result = await call('recover', { nickname, recoveryCode, newPassword, ...(turnstileToken ? { turnstileToken } : {}) });
     if (result.status === 200) signedInWith(result.json);
     return result;
 }

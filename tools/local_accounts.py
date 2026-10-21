@@ -36,6 +36,8 @@ IP_LIMIT = {"max": 120, "windowMs": 60 * 1000}
 AVATARS = [f"l{i:02d}" for i in range(1, 13)] + [f"n{i:02d}" for i in range(1, 13)] + [f"i{i:02d}" for i in range(1, 9)]
 DEFAULT_AVATAR = "l01"
 RECOVERY_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+# Wrong passwords (nickname or device, in its window) after which sign-in also asks for the Turnstile check
+LOGIN_CAPTCHA_AFTER = 2
 SCHEMA_PATH = Path(__file__).with_name("accounts_schema.sql")
 
 
@@ -138,6 +140,11 @@ def blocked_for(db, key, rule, now):
     return -(-(row["window_start"] + rule["windowMs"] - now) // 1000)
 
 
+def attempts_in(db, key, rule, now):
+    row = db.first("SELECT count, window_start FROM attempts WHERE key = ?", [key])
+    return row["count"] if row and now - row["window_start"] <= rule["windowMs"] else 0
+
+
 def add_attempt(db, key, rule, now):
     row = db.first("SELECT count, window_start FROM attempts WHERE key = ?", [key])
     if not row or now - row["window_start"] > rule["windowMs"]:
@@ -221,7 +228,8 @@ def new_secret_hash(secret, pepper):
 
 # --- The handler ---
 
-def handle_account(req, db):
+def handle_account(req, db, verify_captcha=None):
+    """verify_captcha(token, action, ip) -> 'ok' | 'failed' | 'unavailable' (Turnstile); None when the check is off."""
     now = req["now"]
 
     def reply(status, payload, set_cookie=None):
@@ -251,7 +259,21 @@ def handle_account(req, db):
     def session_cookie(token):
         return cookie_header(token, SESSION_DAYS * 24 * 3600, req.get("secure"))
 
+    def captcha_problem(action):
+        if not verify_captcha:
+            return None
+        token = body.get("turnstileToken") if isinstance(body.get("turnstileToken"), str) else ""
+        if not token or len(token) > 2048:
+            return fail(400, "captcha_required")
+        outcome = verify_captcha(token, action, req.get("ip"))
+        if outcome == "ok":
+            return None
+        return fail(503, "captcha_unavailable") if outcome == "unavailable" else fail(403, "captcha_failed")
+
     if path == "register":
+        captcha = captcha_problem("register")
+        if captcha:
+            return captcha
         nickname_error = check_nickname(body.get("nickname"))
         if nickname_error:
             return fail(400, nickname_error)
@@ -289,6 +311,11 @@ def handle_account(req, db):
         wait = max(blocked_for(db, nickname_key, LIMITS["nickname"], now), blocked_for(db, device_key, LIMITS["device"], now))
         if wait:
             return fail(429, "too_many_attempts", {"retryAfter": wait})
+        failures = max(attempts_in(db, nickname_key, LIMITS["nickname"], now), attempts_in(db, device_key, LIMITS["device"], now))
+        if failures >= LOGIN_CAPTCHA_AFTER:
+            captcha = captcha_problem("login")
+            if captcha:
+                return captcha
         account = db.first("SELECT * FROM accounts WHERE nickname_key = ?", [key])
         if not account or not verify_password(account, body["password"], pepper):
             add_attempt(db, nickname_key, LIMITS["nickname"], now)
@@ -311,6 +338,9 @@ def handle_account(req, db):
         return reply(200, account_view(db, session["account"]), session_cookie(session["token"]) if session["renewed"] else None)
 
     if path == "recover":
+        captcha = captcha_problem("recover")
+        if captcha:
+            return captcha
         if not isinstance(body.get("nickname"), str) or not isinstance(body.get("recoveryCode"), str):
             return fail(400, "missing_fields")
         key = body["nickname"].strip().lower()

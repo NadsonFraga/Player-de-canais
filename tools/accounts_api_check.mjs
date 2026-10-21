@@ -38,6 +38,15 @@ function pick(json, dotted) {
   return dotted.split(".").reduce((value, part) => (value == null ? undefined : value[part]), json);
 }
 
+// Turnstile, faked: 'ok-<route>' passes, 'unavailable' is Cloudflare unreachable, anything else fails
+const verifyCaptcha = async (token, action) => (token === `ok-${action}` ? "ok" : token === "unavailable" ? "unavailable" : "failed");
+const CAPTCHA_ROUTES = { register: "register", recover: "recover", login: "login" };
+function withCaptcha(step, body) {
+  const action = CAPTCHA_ROUTES[step.path];
+  if (!action || step.noCaptcha || !body || "turnstileToken" in body) return body;
+  return { ...body, turnstileToken: `ok-${action}` };
+}
+
 for (const step of cases.steps) {
   clock += step.advance || 0;
   clock += 1000;
@@ -45,7 +54,7 @@ for (const step of cases.steps) {
   const result = await handleAccount({
     method: step.method || "POST",
     path: step.path,
-    body: step.body ? fill(step.body) : null,
+    body: step.body ? withCaptcha(step, fill(step.body)) : null,
     cookie: cookies[step.device] ? `tvz_session=${cookies[step.device]}` : "",
     origin,
     requestOrigin: SITE,
@@ -54,7 +63,7 @@ for (const step of cases.steps) {
     now: clock,
     secure: true,
     pepper: "",
-  }, db);
+  }, db, { verifyCaptcha });
 
   // The browser keeps or drops the cookie
   if (result.setCookie) {

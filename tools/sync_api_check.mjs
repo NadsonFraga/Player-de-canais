@@ -101,9 +101,12 @@ for (const step of cases.steps) {
     secure: true,
     pepper: "",
   };
+  const accountPath = step.route.slice("account/".length);
+  // Turnstile, faked (accounts_api_check.mjs has the cases): every sign-up and sign-in here passes it
+  if (["register", "recover", "login"].includes(accountPath) && req.body) req.body = { turnstileToken: `ok-${accountPath}`, ...req.body };
   const result = step.route === "sync"
     ? await handleSync(req, db)
-    : await handleAccount({ ...req, path: step.route.slice("account/".length) }, db);
+    : await handleAccount({ ...req, path: accountPath }, db, { verifyCaptcha: async (token, action) => (token === `ok-${action}` ? "ok" : "failed") });
   if (result.setCookie) {
     const value = /^tvz_session=([^;]*)/.exec(result.setCookie)[1];
     cookies[step.device] = Number(/Max-Age=(\d+)/.exec(result.setCookie)[1]) > 0 ? value : "";
