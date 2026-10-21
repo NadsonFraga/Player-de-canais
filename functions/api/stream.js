@@ -7,6 +7,11 @@
  * application/octet-stream, and every answer carries nosniff and a sandbox CSP, so nothing it returns can run as a
  * page on our origin. Mirrored by tools/local_server.py (handle_stream); both are checked offline by
  * tools/test_stream_proxy.py.
+ *
+ * Signed addresses: only /api/resolve (and this proxy, for the parts of a playlist) make proxy addresses, each with
+ * `exp` (seconds) and `sig`, an HMAC of the address with a server secret (STREAM_SIGNING_KEY, else derived from
+ * ACCOUNTS_PEPPER). Anything else is refused, so the proxy is not open to other people's content. With no secret
+ * (local development without .env) the proxy stays open.
  */
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -29,6 +34,54 @@ const MAX_BUFFERED_BYTES = 5 * 1024 * 1024;
 const MEDIA_TYPE = /^(video\/|audio\/|application\/(mp4|octet-stream)$|binary\/octet-stream$)/i;
 // Hosts disguise segments (".jpeg", text/html): the address decides the type, else plain data
 const TYPE_BY_EXTENSION = { ts: "video/mp2t", mp4: "video/mp4", m4s: "video/mp4", m4v: "video/mp4", aac: "audio/aac", m4a: "audio/mp4", mp3: "audio/mpeg" };
+
+// A signed address is good for a day: covers a long pause and casting; resolve answers are cached 30 min at most
+export const STREAM_LINK_TTL_S = 24 * 3600;
+const encoder = new TextEncoder();
+const signingKeys = new Map();
+
+/** The HMAC key for proxy addresses, or null when no secret is set. */
+export async function streamSigningKey(env) {
+  const secret = env && (env.STREAM_SIGNING_KEY || env.ACCOUNTS_PEPPER);
+  if (!secret) return null;
+  if (!signingKeys.has(secret)) {
+    // Its own key: the same secret never signs two kinds of thing
+    signingKeys.set(secret, crypto.subtle.importKey("raw", encoder.encode(`tvzinha-stream|${secret}`), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]));
+  }
+  return signingKeys.get(secret);
+}
+
+async function linkSignature(key, exp, url, referer, origin) {
+  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(`${exp}\n${url}\n${referer}\n${origin}`)));
+  let text = "";
+  for (const b of mac.slice(0, 16)) text += String.fromCharCode(b);
+  return btoa(text).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+/** A proxy address for `url` (signed when `key` is set; `exp` keeps the parent's expiry for playlist parts). */
+export async function proxiedStreamUrl(proxyBase, key, url, referer = "", { origin = "", exp = null } = {}) {
+  let out = `${proxyBase}?url=${encodeURIComponent(url)}&referer=${encodeURIComponent(referer)}`;
+  if (origin) out += `&origin=${encodeURIComponent(origin)}`;
+  if (key) {
+    const expires = exp || Math.floor(Date.now() / 1000) + STREAM_LINK_TTL_S;
+    out += `&exp=${expires}&sig=${await linkSignature(key, expires, url, referer, origin)}`;
+  }
+  return out;
+}
+
+/** True when the address carries a valid, unexpired signature (always true with no key). */
+async function linkIsValid(key, params, url, referer, origin) {
+  if (!key) return true;
+  const exp = Number(params.get("exp"));
+  const now = Math.floor(Date.now() / 1000);
+  if (!Number.isInteger(exp) || exp < now || exp > now + 2 * STREAM_LINK_TTL_S) return false;
+  const expected = await linkSignature(key, exp, url, referer, origin);
+  const given = params.get("sig") || "";
+  if (given.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < given.length; i++) diff |= given.charCodeAt(i) ^ expected.charCodeAt(i);
+  return diff === 0;
+}
 
 export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: { ...CORS_HEADERS, "Access-Control-Max-Age": "86400" } });
@@ -134,6 +187,12 @@ export async function onRequestGet(context) {
   if (!isHttpUrl(targetUrl) || /[\r\n]/.test(customReferer || "") || /[\r\n]/.test(customOrigin || "")) {
     return errorResponse(400, "bad_request");
   }
+  // Only addresses this site made (signed by /api/resolve or by this proxy for a playlist's parts)
+  const signingKey = await streamSigningKey(context.env);
+  if (!(await linkIsValid(signingKey, urlObj.searchParams, targetUrl, customReferer || "", customOrigin || ""))) {
+    return errorResponse(403, "forbidden");
+  }
+  const linkExp = signingKey ? Number(urlObj.searchParams.get("exp")) : null;
 
   // Custom referer override or automatic provider detection
   if (!customReferer) {
@@ -198,21 +257,30 @@ export async function onRequestGet(context) {
     if (playlistText === null) return errorResponse(502, "upstream_too_large");
     const baseUrl = new URL(finalUrl);
     const proxyBase = `${urlObj.origin}${urlObj.pathname}`;
-    const proxied = (uri) => `${proxyBase}?url=${encodeURIComponent(new URL(uri, baseUrl).toString())}&referer=${encodeURIComponent(customReferer)}`;
+    // The playlist's parts expire with the playlist
+    const proxied = (uri) => proxiedStreamUrl(proxyBase, signingKey, new URL(uri, baseUrl).toString(), customReferer, { exp: linkExp });
 
-    const rewritten = playlistText.split("\n").map(line => {
+    const rewritten = (await Promise.all(playlistText.split("\n").map(async line => {
       const trimmed = line.trim();
       if (!trimmed) return line;
       // URI in tags (e.g., #EXT-X-KEY:METHOD=...,URI="...", #EXT-X-MAP:URI="...")
       if (trimmed.startsWith("#")) {
-        return line.replace(/URI=["']([^"']+)["']/g, (match, uri) => `URI="${proxied(uri)}"`);
+        let out = line;
+        for (const [match, uri] of [...line.matchAll(/URI=["']([^"']+)["']/g)]) {
+          try {
+            out = out.replace(match, `URI="${await proxied(uri)}"`);
+          } catch (e) {
+            // An address that does not parse stays as it is
+          }
+        }
+        return out;
       }
       try {
-        return proxied(trimmed);
+        return await proxied(trimmed);
       } catch (e) {
         return line;
       }
-    }).join("\n");
+    }))).join("\n");
     return new Response(rewritten, { status: upstream.status, headers });
   }
 

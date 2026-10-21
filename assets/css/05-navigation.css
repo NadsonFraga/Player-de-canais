@@ -1,34 +1,4 @@
-/* ==========================================================================
-   ADBLOCK & PRIVATE DNS DISCLAIMER MODAL
-   ========================================================================== */
-.mobile-header-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
 
-.btn-header-adblock {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 5px 12px;
-    border-radius: var(--radius-full);
-    cursor: pointer;
-    transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.btn-header-adblock:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.35);
-    box-shadow: 0 0 14px rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
-}
 
 .adblock-modal-backdrop {
     position: fixed;
@@ -504,5 +474,4 @@
 .nav-capsule-icon {
     flex-shrink: 0;
 }
-
 

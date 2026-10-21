@@ -12,9 +12,28 @@
  * Needs the local server (or the staging URL in --base). The test account is deleted at the end.
  */
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+// Test browser profiles are removed when the run ends (left behind, they add up to gigabytes in %TEMP%)
+const tempDirs = [];
+function tempDir(prefix) {
+  const dir = mkdtempSync(prefix);
+  tempDirs.push(dir);
+  return dir;
+}
+process.on("exit", () => {
+  // A browser started from a launcher can outlive the process the test killed: stop whatever still uses our profiles
+  if (tempDirs.length && process.platform === "win32") {
+    const filter = tempDirs.map(d => `$_.CommandLine -like '*${d.split(/[\/]/).pop()}*'`).join(" -or ");
+    try { spawnSync("powershell", ["-NoProfile", "-Command", `Get-CimInstance Win32_Process | Where-Object { ${filter} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: "ignore", timeout: 20000 }); } catch {}
+  }
+  for (const dir of tempDirs) {
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch {}
+  }
+});
+
 
 const BASE = (process.argv.find(a => a.startsWith("--base=")) || "--base=http://127.0.0.1:8787").split("=")[1];
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
@@ -49,7 +68,7 @@ function rpc(ws, isBidi) {
 
 /** Fresh muted browser: { evaluate, navigate, viewport, shot, close }. */
 async function launch(name) {
-  const profile = mkdtempSync(join(tmpdir(), `tvz-account-${name}-`));
+  const profile = tempDir(join(tmpdir(), `tvz-account-${name}-`));
   const port = 9200 + Math.floor(Math.random() * 40);
   if (name === "firefox") {
     writeFileSync(join(profile, "user.js"), 'user_pref("media.volume_scale", "0.0");\nuser_pref("media.autoplay.default", 0);\n');

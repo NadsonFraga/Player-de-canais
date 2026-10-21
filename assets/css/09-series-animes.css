@@ -32,8 +32,6 @@
     margin-bottom: 24px;
 }
 
-
-
 /* 3. Continue Watching Progress Bar Enhancement */
 .continue-progress-bar-wrapper {
     position: absolute;
@@ -261,12 +259,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-}
-
-.channel-card-category {
-    font-size: 0.70rem;
-    color: var(--text-muted);
-    text-transform: capitalize;
 }
 
 /* 6. Site footer (Início, Filmes, Séries, Animes): modules/footer.js. Neutral, line icons only */
@@ -514,11 +506,6 @@ body[data-app-view="tv"] .site-footer {
     flex-direction: column;
     gap: 22px;
     box-sizing: border-box;
-}
-
-.btn-filter-text {
-    font-size: 0.78rem;
-    font-weight: 600;
 }
 
 /* Explorer Top Bar */
@@ -932,18 +919,6 @@ body[data-app-view="tv"] .site-footer {
         font-size: 0.84rem;
     }
 
-    .home-hero-nav .btn-hero-nav-arrow {
-        display: none;
-    }
-
-    .home-hero-nav {
-        right: 18px;
-        bottom: 20px;
-        padding: 4px 8px;
-    }
-
-
-
     .home-channel-card {
         flex: 0 0 114px;
         height: 114px;
@@ -1025,58 +1000,10 @@ body[data-app-view="tv"] .site-footer {
    PHASE 2: SÉRIES, ANIMES, EPISODE NAVIGATOR & CONTINUE WATCHING STYLES
    ========================================================================== */
 
-/* 1. Home Portals & Continue Watching Section */
-.portal-icon-box.series-accent {
-    background: rgba(225, 29, 72, 0.14);
-    border-color: rgba(225, 29, 72, 0.35);
-    color: #fb7185;
-}
-
-.portal-card-glow.series-glow {
-    background: radial-gradient(circle at 80% 20%, rgba(225, 29, 72, 0.22) 0%, transparent 70%);
-}
-
-.portal-badge.series-badge {
-    background: rgba(225, 29, 72, 0.14);
-    color: #fda4af;
-    border-color: rgba(225, 29, 72, 0.3);
-}
-
-.portal-icon-box.anime-accent {
-    background: rgba(217, 70, 239, 0.14);
-    border-color: rgba(217, 70, 239, 0.35);
-    color: #e879f9;
-}
-
-.portal-card-glow.anime-glow {
-    background: radial-gradient(circle at 80% 20%, rgba(217, 70, 239, 0.22) 0%, transparent 70%);
-}
-
-.portal-badge.anime-badge {
-    background: rgba(217, 70, 239, 0.14);
-    color: #f0abfc;
-    border-color: rgba(217, 70, 239, 0.3);
-}
-
 /* Home Continue Watching Rail */
 .home-continue-watching-section {
     margin-top: 36px;
     margin-bottom: 24px;
-}
-
-.continue-watching-title-box {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.continue-icon-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #34d399;
-    box-shadow: 0 0 10px #34d399;
-    animation: pulseGlow 2s infinite ease-in-out;
 }
 
 .continue-watching-carousel-wrapper {
@@ -1339,42 +1266,6 @@ body[data-app-view="tv"] .site-footer {
     box-shadow: 0 0 16px rgba(217, 70, 239, 0.25);
 }
 
-/* Dedicated In-View Search Section for Series and Animes */
-.movies-search-section {
-    padding: 0 4% 40px 4%;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    animation: fadeIn 0.25s ease;
-}
-
-.search-section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.search-section-title-box {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.search-section-title-box h2 {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
-}
-
-.search-results-count {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
 /* ==========================================================================
    3. EPISODE SELECTOR (title page, modules/titlePage.js)
    ========================================================================== */
@@ -1496,11 +1387,6 @@ body[data-app-view="tv"] .site-footer {
     border-color: rgba(255, 255, 255, 0.22);
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.season-total-count {
-    font-size: 0.78rem;
-    color: var(--text-muted);
 }
 
 /* Episode Cards Grid - Single unified scroll handled by parent modal card */
@@ -1743,86 +1629,6 @@ input[type="number"] {
     color: #f0abfc;
 }
 
-/* ==========================================================================
-   4. DEDICATED SERIES & ANIMES THEATER PLAYER VIEW
-   ========================================================================== */
-.series-theater-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 5000;
-    background: rgba(8, 8, 10, 0.96);
-    backdrop-filter: blur(16px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
-    animation: fadeInModal 0.25s ease forwards;
-}
-
-.series-theater-overlay.hidden {
-    display: none !important;
-}
-
-.series-theater-container {
-    width: 100%;
-    max-width: 1040px;
-    display: flex;
-    flex-direction: column;
-    background: #111114;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85), 0 0 45px rgba(225, 29, 72, 0.12);
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.series-theater-top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #16161a;
-    padding: 12px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.series-theater-title-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 240px;
-}
-
-.theater-dot {
-    background: #fb7185;
-    box-shadow: 0 0 12px #fb7185;
-}
-
-.series-theater-title {
-    font-size: 0.98rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.series-theater-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
 .series-theater-stage {
     position: relative;
     width: 100%;
@@ -1839,19 +1645,6 @@ input[type="number"] {
     border: none;
     display: block;
     background: #000000;
-}
-
-.series-player-bottom-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #141418;
-    padding: 12px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    flex-wrap: wrap;
-    gap: 12px;
-    user-select: none;
-    -webkit-user-select: none;
 }
 
 .series-ep-nav-buttons {
@@ -1898,26 +1691,6 @@ input[type="number"] {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.14);
     border-color: rgba(255, 255, 255, 0.3);
-}
-
-.series-servers-selector {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.server-label {
-    font-size: 0.80rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.series-server-pills {
-    display: flex;
-    align-items: center;
-    gap: 6px;
 }
 
 .btn-series-server-pill {
@@ -2025,41 +1798,9 @@ input[type="number"] {
 }
 
 @media (max-width: 768px) {
-    .series-theater-container {
-        border-radius: 12px;
-        margin: 6px;
-    }
-
-    .series-theater-top-bar {
-        padding: 8px 10px;
-        gap: 8px;
-    }
-
-    .series-theater-title-group {
-        min-width: 0;
-        flex: 1;
-    }
-
-    .series-theater-title {
-        font-size: 0.80rem;
-        max-width: 48vw;
-    }
-
-    .btn-player-action-mini {
-        padding: 5px 8px;
-        font-size: 0.70rem;
-        gap: 4px;
-    }
 
     .series-episodes-grid {
         grid-template-columns: 1fr;
-    }
-
-    .series-player-bottom-bar {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 8px 10px;
-        gap: 8px;
     }
 
     .series-ep-nav-buttons {
@@ -2077,28 +1818,6 @@ input[type="number"] {
         justify-content: center;
         gap: 4px;
         white-space: nowrap;
-    }
-
-    .series-servers-selector {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        padding: 2px 0;
-    }
-
-    .series-servers-selector::-webkit-scrollbar {
-        display: none;
-    }
-
-    .series-server-pills {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex-shrink: 0;
     }
 
     .btn-series-server-pill {
@@ -2156,15 +1875,6 @@ input[type="number"] {
     box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.2);
 }
 
-
-/* Interactive controls defense for series/animes theater */
-.series-theater-top-bar,
-.series-player-bottom-bar {
-    position: relative;
-    z-index: 20;
-}
-
-.btn-player-action-mini,
 .btn-player-control,
 .btn-series-server-pill,
 .drawer-item {
