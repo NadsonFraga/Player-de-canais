@@ -103,6 +103,8 @@ Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
 
 ### Manual (user, on staging)
 
+**Result:** approved by the user on 2026-10-21 ("pode prosseguir"), after these adjustments on staging: search, Coleção (library icon) and profile in the pill on every screen; the profile menu holds the account only (profile with "Trocar", Entrar, Watch Party, Premium, Configurações, all em breve); legal and tips items left the menus; Esportes hidden on phones; people in the search are only known actors, directors and writers.
+
 | # | Steps | Expected | Result |
 |---|---|---|---|
 | 1 | The Coleção icon in the pill (computer and phone) | The Coleção opens with tabs Assistindo, Quero assistir, Assistidos, Avaliados, Canais favoritos, each with its count; the icon lights up there | |
