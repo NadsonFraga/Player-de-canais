@@ -42,6 +42,17 @@ def pick(data, dotted):
     return value
 
 
+def verify_captcha(token, action, ip):
+    """Turnstile, faked: 'ok-<route>' passes, 'unavailable' is Cloudflare unreachable, anything else fails."""
+    return "ok" if token == f"ok-{action}" else "unavailable" if token == "unavailable" else "failed"
+
+
+def with_captcha(step, body):
+    if step["path"] not in ("register", "recover", "login") or step.get("noCaptcha") or body is None or "turnstileToken" in body:
+        return body
+    return {**body, "turnstileToken": f"ok-{step['path']}"}
+
+
 def main():
     db = local_accounts.SqliteDatabase(":memory:")
     cookies, saved = {}, {}
@@ -53,7 +64,7 @@ def main():
         result = local_accounts.handle_account({
             "method": step.get("method", "POST"),
             "path": step["path"],
-            "body": fill(step["body"], saved) if "body" in step else None,
+            "body": with_captcha(step, fill(step["body"], saved)) if "body" in step else None,
             "cookie": f"tvz_session={cookies[step['device']]}" if cookies.get(step["device"]) else "",
             "origin": origin,
             "requestOrigin": SITE,
@@ -62,7 +73,7 @@ def main():
             "now": clock,
             "secure": True,
             "pepper": "",
-        }, db)
+        }, db, verify_captcha=verify_captcha)
         if result["setCookie"]:
             value = re.match(r"tvz_session=([^;]*)", result["setCookie"]).group(1)
             max_age = int(re.search(r"Max-Age=(\d+)", result["setCookie"]).group(1))

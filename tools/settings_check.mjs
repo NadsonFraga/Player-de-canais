@@ -172,7 +172,8 @@ const ERROR = "(document.querySelector('#settings-panel .settings-error') || {})
 const nickname = `Conf${Date.now().toString(36).slice(-6)}`;
 const password = "Cinema2026!";
 const newPassword = "Pipoca2027x";
-const post = (path, body) => `fetch('/api/account/${path}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tvzinha-Request': '1' }, body: JSON.stringify(${JSON.stringify(body)}) }).then(r => r.status)`;
+// Sign-in and recovery carry the robot check: the local server takes Cloudflare's test token (see core/turnstile.js)
+const post = (path, body) => `fetch('/api/account/${path}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tvzinha-Request': '1' }, body: JSON.stringify(${JSON.stringify(["login", "recover", "register"].includes(path) ? { ...body, turnstileToken: "XXXX.DUMMY.TOKEN.XXXX" } : body)}) }).then(r => r.status)`;
 const mod = (path) => `[...document.querySelectorAll('script[type=module]')].map(s => s.src).find(s => s.includes('main.js')).replace('main.js', '${path}')`;
 
 async function openSettings(b) {

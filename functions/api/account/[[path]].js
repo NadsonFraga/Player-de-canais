@@ -16,6 +16,8 @@
  * The session lives in an HttpOnly cookie (scripts in the page cannot read it); the database keeps only a hash of it.
  * Writes must come from this same origin with the X-Tvzinha-Request header (other sites cannot post for the user).
  * Passwords and recovery codes are hashed with PBKDF2-SHA256 (and the ACCOUNTS_PEPPER secret when it is set).
+ * Robots: Cloudflare Turnstile (secret TURNSTILE_SECRET) is checked on every sign-up and recovery, and on sign-in once a
+ * nickname or a device has 2 wrong passwords in its window. Without the secret the check is off.
  *
  * `handleAccount` takes a plain description of the request and returns a plain answer, so the same cases run here, in
  * tools/local_accounts.py (the local server's mirror; keep both identical) and in tools/accounts_api_check.mjs.
@@ -44,6 +46,8 @@ export const AVATARS = [
     ...Array.from({ length: 8 }, (_, i) => `i${String(i + 1).padStart(2, '0')}`),
 ];
 export const DEFAULT_AVATAR = 'l01';
+// Wrong passwords (for a nickname or a device, in its window) after which sign-in also asks for the Turnstile check
+export const LOGIN_CAPTCHA_AFTER = 2;
 const RECOVERY_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // no 0/O, 1/I/L
 
 const encoder = new TextEncoder();
@@ -172,6 +176,12 @@ export async function blockedFor(db, key, rule, now) {
     return Math.ceil((row.window_start + rule.windowMs - now) / 1000);
 }
 
+/** Failures counted for `key` in its current window. */
+async function attemptsIn(db, key, rule, now) {
+    const row = await db.first('SELECT count, window_start FROM attempts WHERE key = ?', [key]);
+    return row && now - row.window_start <= rule.windowMs ? row.count : 0;
+}
+
 export async function addAttempt(db, key, rule, now) {
     const row = await db.first('SELECT count, window_start FROM attempts WHERE key = ?', [key]);
     if (!row || now - row.window_start > rule.windowMs) {
@@ -260,9 +270,10 @@ async function newSecretHash(secret, pepper) {
  * `req`: { method, path ('register', 'login'...), body (parsed JSON or null), cookie, origin, requestOrigin,
  *          customHeader (value of X-Tvzinha-Request), ip, now, secure, pepper }
  * `db`:  { first(sql, params), all(sql, params), run(sql, params) }
+ * `verifyCaptcha(token, action, ip)`: 'ok' | 'failed' | 'unavailable' (Turnstile); null when the check is off.
  * Returns { status, json, setCookie }.
  */
-export async function handleAccount(req, db) {
+export async function handleAccount(req, db, { verifyCaptcha = null } = {}) {
     const now = req.now;
     const reply = (status, json, setCookie = null) => ({ status, json, setCookie });
     const fail = (status, error, extra = {}) => reply(status, { error, ...extra });
@@ -280,9 +291,21 @@ export async function handleAccount(req, db) {
     const deviceKey = `ip:${await sha256Hex(`${req.ip || 'unknown'}|${new Date(now).toISOString().slice(0, 10)}|${pepper}`)}`;
     const clearCookie = cookieHeader('', 0, req.secure);
     const sessionCookie = (token) => cookieHeader(token, SESSION_DAYS * 24 * 3600, req.secure);
+    // The robot check (Turnstile): null when it passed or is off, else the answer to send
+    const captchaProblem = async (action) => {
+        if (!verifyCaptcha) return null;
+        const token = typeof body.turnstileToken === 'string' ? body.turnstileToken : '';
+        if (!token || token.length > 2048) return fail(400, 'captcha_required');
+        const outcome = await verifyCaptcha(token, action, req.ip);
+        if (outcome === 'ok') return null;
+        return outcome === 'unavailable' ? fail(503, 'captcha_unavailable') : fail(403, 'captcha_failed');
+    };
 
     switch (req.path) {
         case 'register': {
+            // First, before anything costs a database read or a password hash
+            const captcha = await captchaProblem('register');
+            if (captcha) return captcha;
             const nicknameError = checkNickname(body.nickname);
             if (nicknameError) return fail(400, nicknameError);
             const nickname = body.nickname.trim();
@@ -315,6 +338,12 @@ export async function handleAccount(req, db) {
             const nicknameKey = `nick:${key}`;
             const wait = Math.max(await blockedFor(db, nicknameKey, LIMITS.nickname, now), await blockedFor(db, deviceKey, LIMITS.device, now));
             if (wait) return fail(429, 'too_many_attempts', { retryAfter: wait });
+            // After 2 wrong passwords (this nickname or this device) sign-in also asks for the robot check
+            const failures = Math.max(await attemptsIn(db, nicknameKey, LIMITS.nickname, now), await attemptsIn(db, deviceKey, LIMITS.device, now));
+            if (failures >= LOGIN_CAPTCHA_AFTER) {
+                const captcha = await captchaProblem('login');
+                if (captcha) return captcha;
+            }
             const account = await db.first('SELECT * FROM accounts WHERE nickname_key = ?', [key]);
             if (!account || !(await verifyPassword(account, body.password, pepper))) {
                 await addAttempt(db, nicknameKey, LIMITS.nickname, now);
@@ -339,6 +368,8 @@ export async function handleAccount(req, db) {
         }
 
         case 'recover': {
+            const captcha = await captchaProblem('recover');
+            if (captcha) return captcha;
             if (typeof body.nickname !== 'string' || typeof body.recoveryCode !== 'string') return fail(400, 'missing_fields');
             const key = body.nickname.trim().toLowerCase();
             const nicknameKey = `nick:${key}`;
@@ -466,6 +497,32 @@ export async function handleAccount(req, db) {
 
 // --- Cloudflare glue ---
 
+// Turnstile answers only count for our own pages
+const CAPTCHA_HOSTS = /(^|\.)tvzinhaonline\.pages\.dev$/;
+
+/** The Turnstile check with Cloudflare (siteverify): 'ok', 'failed' or 'unavailable'. */
+export function turnstileVerifier(secret) {
+    if (!secret) return null;
+    return async (token, action, ip) => {
+        const form = new FormData();
+        form.append('secret', secret);
+        form.append('response', token);
+        if (ip) form.append('remoteip', ip);
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 5000);
+        try {
+            const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form, signal: controller.signal });
+            if (!res.ok) return 'unavailable';
+            const data = await res.json();
+            return data.success && data.action === action && CAPTCHA_HOSTS.test(String(data.hostname || '')) ? 'ok' : 'failed';
+        } catch (e) {
+            return 'unavailable';
+        } finally {
+            clearTimeout(timer);
+        }
+    };
+}
+
 /** The D1 binding behind the small interface handleAccount and handleSync use. */
 export function d1Database(d1) {
     return {
@@ -505,7 +562,7 @@ export async function onRequest(context) {
         now: Date.now(),
         secure: url.protocol === 'https:',
         pepper: env.ACCOUNTS_PEPPER || '',
-    }, d1Database(env.DB));
+    }, d1Database(env.DB), { verifyCaptcha: turnstileVerifier(env.TURNSTILE_SECRET) });
     if (result.setCookie) headers['Set-Cookie'] = result.setCookie;
     return new Response(JSON.stringify(result.json), { status: result.status, headers });
 }

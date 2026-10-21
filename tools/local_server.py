@@ -1211,6 +1211,28 @@ def fetch_upstream(target_url, referer, origin, range_header=None, accept=None):
     return None, url
 
 
+# Turnstile (functions/api/account turnstileVerifier). Without TURNSTILE_SECRET in .env the local server behaves like
+# Cloudflare's test keys: the test widget on localhost hands out this dummy token, which always passes
+TURNSTILE_SECRET = load_env_value("TURNSTILE_SECRET")
+TURNSTILE_TEST_TOKEN = "XXXX.DUMMY.TOKEN.XXXX"
+CAPTCHA_HOSTS = re.compile(r"(^|\.)tvzinhaonline\.pages\.dev$")
+
+
+def verify_captcha(token, action, ip):
+    """'ok' | 'failed' | 'unavailable', as the function's turnstileVerifier."""
+    if not TURNSTILE_SECRET:
+        return "ok" if token == TURNSTILE_TEST_TOKEN else "failed"
+    data = urllib.parse.urlencode({"secret": TURNSTILE_SECRET, "response": token, "remoteip": ip or ""}).encode("utf-8")
+    try:
+        req = urllib.request.Request("https://challenges.cloudflare.com/turnstile/v0/siteverify", data=data, method="POST")
+        with urllib.request.urlopen(req, timeout=5) as res:
+            answer = json.loads(res.read().decode("utf-8"))
+    except Exception:
+        return "unavailable"
+    ok = answer.get("success") and answer.get("action") == action and CAPTCHA_HOSTS.search(str(answer.get("hostname") or ""))
+    return "ok" if ok else "failed"
+
+
 # Calls per minute from one IP to /api/resolve and /api/tmdb (same as API_IP_LIMIT in functions/api/resolve.js)
 API_IP_LIMIT = {"max": 300, "windowMs": 60 * 1000}
 _API_IP_WINDOWS = {}
@@ -1530,7 +1552,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             # Plain http here: a Secure cookie would be refused on a phone opening the LAN address
             "secure": False,
             "pepper": ACCOUNTS_PEPPER,
-        }, local_accounts.local_database())
+        }, local_accounts.local_database(), verify_captcha=verify_captcha)
         self.send_account_reply(result)
 
     def handle_sync(self, method):
