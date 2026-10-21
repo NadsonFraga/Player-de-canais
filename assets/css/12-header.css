@@ -416,26 +416,48 @@
     text-overflow: ellipsis;
 }
 
-/* The phone's single menu button: computers keep the three icons */
-.nav-mobile-more,
-.nav-more-divider {
-    display: none;
+/* The Coleção icon while the Coleção is on screen */
+.nav-tool.active {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
 }
 
-/* --- Phones: one round button at the right of the pill (the pill stays fixed at the top) --- */
+/* The profile in use and its switch, at the top of the profile menu */
+.nav-menu-switch {
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: none;
+    color: #e4e4e7;
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.nav-menu-switch:hover,
+.nav-menu-switch:focus-visible {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    outline: none;
+}
+
+/* --- Phones: the same three icons in the pill (search, Coleção, profile) --- */
 @media (max-width: 768px) {
-    .nav-tools-divider,
+    .nav-tools-divider {
+        margin: 0 1px;
+    }
+
     .nav-capsule-tools {
+        gap: 0;
+    }
+
+    /* Esportes is not open yet: it leaves room for the icons until it is */
+    #nav-tab-sports {
         display: none;
-    }
-
-    .nav-more-divider {
-        display: block;
-        margin: 0 2px;
-    }
-
-    .nav-mobile-more {
-        display: inline-flex;
     }
 
     .nav-capsule-item.nav-capsule-brand {
@@ -448,15 +470,14 @@
     }
 
     .nav-tool {
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
     }
 
-    /* The menu opens under the pill, aligned to its right end */
-    .nav-mobile-more .nav-menu {
+    /* The profile menu opens under the pill, aligned to the profile button */
+    .nav-menu {
         top: calc(100% + 12px);
-        right: -6px;
-        left: auto;
+        right: 0;
         width: min(300px, calc(100vw - 24px));
         animation: none;
     }
