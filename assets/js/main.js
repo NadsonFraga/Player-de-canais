@@ -3,19 +3,28 @@
  * Coordinates core state, modular engines, navigation, and exposes TvzinhaActions
  */
 
-import { store } from './core/state.js?v=20261020_1352';
-import { showToast } from './core/toast.js?v=20261020_1352';
-import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261020_1352';
-import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261020_1352';
-import { runWhenHomeIdle } from './core/activity.js?v=20261020_1352';
-import { initMoviesView, openMovieDetailsModal, closeMovieDetailsModal, resetMoviesViewState } from './modules/movies.js?v=20261020_1352';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261020_1352';
-import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261020_1352';
-import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261020_1352';
-import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261020_1352';
-import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261020_1352';
-import { preloadPlayerLibs } from './player/engine.js?v=20261020_1352';
-import { setupSiteFooter } from './modules/footer.js?v=20261020_1352';
+import { store } from './core/state.js?v=20261021_1511';
+import { showToast } from './core/toast.js?v=20261021_1511';
+import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261021_1511';
+import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261021_1511';
+import { runWhenHomeIdle } from './core/activity.js?v=20261021_1511';
+import { initMoviesView, resetMoviesViewState } from './modules/movies.js?v=20261021_1511';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261021_1511';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261021_1511';
+import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261021_1511';
+import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261021_1511';
+import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261021_1511';
+import { preloadPlayerLibs } from './player/engine.js?v=20261021_1511';
+import { setupSiteFooter } from './modules/footer.js?v=20261021_1511';
+import { setupTitlePage, openTitle, titleBack, closeTitlePage, readTitleFromAddress } from './modules/titlePage.js?v=20261021_1511';
+import { setupHeader, openSearch } from './modules/header.js?v=20261021_1511';
+import { setupCollection, renderCollection, openCollection } from './modules/collection.js?v=20261021_1511';
+import { setupAccountPage, openAccountPage } from './modules/accountPage.js?v=20261021_1511';
+import { refreshAccount } from './core/account.js?v=20261021_1511';
+import { setupProfilePage, checkProfileOnStart, openProfilePicker } from './modules/profilePage.js?v=20261021_1511';
+import { setupSync, syncNow } from './core/sync.js?v=20261021_1511';
+import { setupSettingsPage, openSettingsPage } from './modules/settingsPage.js?v=20261021_1511';
+import { installImageFallbacks } from './core/imageFallback.js?v=20261021_1511';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
@@ -97,8 +106,18 @@ function checkAdblockNoticeStatus() {
 Object.defineProperty(window, 'TvzinhaActions', {
     value: Object.freeze({
         selectChannel: selectChannelByName,
-        openMovie: openMovieDetailsModal,
-        closeMovie: closeMovieDetailsModal,
+        // Title page: openTitle('movie' | 'tv' | 'anime', item, { play, episode }); openMovie kept for the test scripts
+        openTitle: openTitle,
+        titleBack: titleBack,
+        closeTitle: closeTitlePage,
+        openSearch: openSearch,
+        openCollection: openCollection,
+        openAccount: openAccountPage,
+        openProfiles: openProfilePicker,
+        syncNow: syncNow,
+        openSettings: openSettingsPage,
+        openMovie: (movie, play = false) => openTitle('movie', movie, { play }),
+        closeMovie: closeTitlePage,
         playEpisode: playSeriesEpisode,
         stopSeries: stopSeriesPlayer,
         switchView: switchAppView,
@@ -119,6 +138,12 @@ Object.defineProperty(window, 'TvzinhaActions', {
  */
 async function bootstrapApp() {
     console.log("[Tvzinha] Bootstrapping modern ES module architecture...");
+
+    // Broken posters and logos fall back to our own images (no inline handlers: the CSP forbids inline script)
+    installImageFallbacks();
+
+    // A title link (?filme=ID, ?serie=ID, ?anime=ID): read now, the first tab switch clears the address
+    const linkedTitle = readTitleFromAddress();
 
     // Initialize tiered history & mobile hardware back button manager
     initHistoryManager({ switchAppView, closeMobileMenu });
@@ -146,6 +171,7 @@ async function bootstrapApp() {
     registerViewHook('animes', () => {
         initAnimesView();
     });
+    registerViewHook('collection', () => renderCollection());
     // Leaving a catalog tab: back to its start page next time (the tab switch already handled the history entry)
     registerViewHook('moviesLeave', () => resetMoviesViewState({ keepHistory: true }));
     registerViewHook('seriesLeave', () => resetSeriesViewState({ keepHistory: true }));
@@ -165,12 +191,25 @@ async function bootstrapApp() {
     // Initialize modern Home Hub & Streaming Showcase
     initHomeView();
     setupSiteFooter();
+    setupTitlePage();
+    setupHeader();
+    setupCollection();
+    setupAccountPage();
+    setupProfilePage();
+    setupSettingsPage({ openAdblock: openAdblockModal });
+    // Only when this browser's copy says someone is signed in: guests never call the server
+    refreshAccount();
+    // Signed in with a profile: what changed on the other devices comes in, and changes here go up
+    setupSync();
 
     // Check adblock onboarding notice
     checkAdblockNoticeStatus();
 
     // Start on Home view by default (aligned with original behavior)
     switchAppView('home');
+    if (linkedTitle) openTitle(linkedTitle.kind, { id: linkedTitle.id });
+    // Signed in with no profile picked yet, or back after 3 hours: "Quem está assistindo?" over the start
+    checkProfileOnStart();
 
     // Preload TMDB catalogs for instantaneous navigation, but only when the browser is idle on the home screen:
     // opening a channel or a title first must not compete with its stream for bandwidth.

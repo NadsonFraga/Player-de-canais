@@ -12,9 +12,28 @@
  * Uses 127.0.0.1 on purpose. The cache version used by the import() below is read from index.html.
  */
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+
+// Test browser profiles are removed when the run ends (left behind, they add up to gigabytes in %TEMP%)
+const tempDirs = [];
+function tempDir(prefix) {
+  const dir = mkdtempSync(prefix);
+  tempDirs.push(dir);
+  return dir;
+}
+process.on("exit", () => {
+  // A browser started from a launcher can outlive the process the test killed: stop whatever still uses our profiles
+  if (tempDirs.length && process.platform === "win32") {
+    const filter = tempDirs.map(d => `$_.CommandLine -like '*${d.split(/[\/]/).pop()}*'`).join(" -or ");
+    try { spawnSync("powershell", ["-NoProfile", "-Command", `Get-CimInstance Win32_Process | Where-Object { ${filter} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: "ignore", timeout: 20000 }); } catch {}
+  }
+  for (const dir of tempDirs) {
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch {}
+  }
+});
+
 
 const BASE = "http://127.0.0.1:8787";
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
@@ -29,7 +48,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const results = [];
 const check = (name, ok, detail = "") => { results.push(ok); console.log(`${ok ? "OK  " : "FAIL"} ${name} ${detail}`); };
 
-const profile = mkdtempSync(join(tmpdir(), "tvz-ui-"));
+const profile = tempDir(join(tmpdir(), "tvz-ui-"));
 const proc = spawn(CHROMIUM, ["--headless=new", `--remote-debugging-port=${PORT}`, "--remote-allow-origins=*", `--user-data-dir=${profile}`,
   "--no-first-run", "--mute-audio", "--autoplay-policy=no-user-gesture-required", "--window-size=1280,800", "about:blank"], { stdio: "ignore" });
 let page;
@@ -112,7 +131,7 @@ const APP_VERSION = (await import('node:fs')).readFileSync(new URL('../index.htm
 await evaluate(`import('/assets/js/modules/series.js?v=${APP_VERSION}').then(m => { window.__series = m; return true; })`);
 await evaluate("(window.TvzinhaActions.switchView('animes'), true)");
 await sleep(1500);
-await evaluate(`window.__series.openSeriesModal({ id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, 'tv', { autoPlaySeason: 9, autoPlayEpisode: 31 }).then(() => true)`);
+await evaluate(`(window.TvzinhaActions.openTitle('anime', { id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, { episode: { season: 9, episode: 31 } }), true)`);
 await sleep(6000);
 await evaluate("(document.querySelector('[data-server=\"native_anime\"]')?.click(), true)");
 await sleep(12000);
@@ -239,7 +258,7 @@ await shot("mgeb-player.png");
 // ---------- continuous list: cards and the player header carry the real episode name
 await evaluate("(window.TvzinhaActions.stopSeries && window.TvzinhaActions.stopSeries(), true)").catch(() => {});
 await sleep(1500);
-await evaluate(`window.__series.openSeriesModal({ id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, 'tv', {}).then(() => true)`);
+await evaluate(`(window.TvzinhaActions.openTitle('anime', { id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }), true)`);
 await sleep(3000);
 await evaluate("(document.getElementById('btn-mode-continuous')?.click(), true)");
 await sleep(4000);
@@ -277,19 +296,19 @@ const exitTitle = await evaluate("document.getElementById('btn-exit-series-playe
 check("exit button names the catalog it leads to (Animes for an anime)", exitTitle === "Sair para Animes", exitTitle);
 await evaluate("(document.getElementById('btn-close-series-player').click(), true)");
 await sleep(1200);
-const afterBack = await evaluate("({ player: !document.getElementById('series-player-view').classList.contains('hidden'), details: !document.getElementById('series-modal').classList.contains('hidden') })");
-check("back arrow returns to the episode list (player closed, details open)", !afterBack.player && afterBack.details, JSON.stringify(afterBack));
+const afterBack = await evaluate("({ player: !document.getElementById('series-player-view').classList.contains('hidden'), details: !document.getElementById('title-page').classList.contains('hidden') })");
+check("back arrow returns to the episode list (player closed, title page open)", !afterBack.player && afterBack.details, JSON.stringify(afterBack));
 await evaluate(`window.__series.playSeriesEpisode({ id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, 2, 6)`);
 await sleep(3000);
 await evaluate("(document.getElementById('btn-exit-series-player').click(), true)");
 await sleep(1500);
-const afterExit = await evaluate("({ player: !document.getElementById('series-player-view').classList.contains('hidden'), details: !document.getElementById('series-modal').classList.contains('hidden'), view: window.TvzinhaActions.store.currentView, locked: document.body.classList.contains('modal-open') })");
-check("exit (X) leaves the player and the details and shows the Animes catalog", !afterExit.player && !afterExit.details && afterExit.view === "animes" && !afterExit.locked, JSON.stringify(afterExit));
+const afterExit = await evaluate("({ player: !document.getElementById('series-player-view').classList.contains('hidden'), details: !document.getElementById('title-page').classList.contains('hidden'), view: window.TvzinhaActions.store.currentView, locked: document.body.classList.contains('modal-open') })");
+check("exit (X) leaves the player and the title page and shows the Animes catalog", !afterExit.player && !afterExit.details && afterExit.view === "animes" && !afterExit.locked, JSON.stringify(afterExit));
 
 // ---------- the case from the screenshot: Fullmetal Alchemist: Brotherhood used to start in Arabic
 await evaluate("(window.TvzinhaActions.stopSeries && window.TvzinhaActions.stopSeries(), true)").catch(() => {});
 await sleep(1500);
-await evaluate(`window.__series.openSeriesModal({ id: 31911, name: 'Fullmetal Alchemist: Brotherhood', original_name: '鋼の錬金術師 FULLMETAL ALCHEMIST', first_air_date: '2009-04-05', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, 'tv', { autoPlaySeason: 1, autoPlayEpisode: 1 }).then(() => true)`);
+await evaluate(`(window.TvzinhaActions.openTitle('anime', { id: 31911, name: 'Fullmetal Alchemist: Brotherhood', original_name: '鋼の錬金術師 FULLMETAL ALCHEMIST', first_air_date: '2009-04-05', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, { episode: { season: 1, episode: 1 } }), true)`);
 await sleep(6000);
 await evaluate("(document.querySelector('[data-server=\"native_anime\"]')?.click(), true)");
 await sleep(12000);
@@ -337,13 +356,13 @@ await sleep(700);
 const afterFrame = await silence();
 check("leaving Canais empties the contingency iframe at once (no audio left behind)", afterFrame.liveFrames === 0 && afterFrame.playingMedia === 0 && afterFrame.activeChannel === null, JSON.stringify(afterFrame));
 
-// ---------- movie player: exit goes to the Filmes catalog; the back-to-details step stays hidden
+// ---------- movie player page: back (title page), reload and exit (Filmes catalog)
 await evaluate("(window.TvzinhaActions.switchView('home'), true)");
 await sleep(1000);
 await evaluate("(window.TvzinhaActions.openMovie({ id: 1022789, title: 'Divertida Mente 2', backdrop_path: null, poster_path: null, overview: '' }, true), true)");
 await sleep(6000);
-const movieButtons = await evaluate("({ hiddenBack: document.getElementById('btn-close-movie-player').hidden, exitTitle: document.getElementById('btn-exit-movie-player').title, modalOpen: !document.getElementById('movie-modal').classList.contains('hidden') })");
-check("movie header shows reload and exit only (back-to-details is hidden)", movieButtons.modalOpen && movieButtons.hiddenBack && movieButtons.exitTitle === "Sair para Filmes", JSON.stringify(movieButtons));
+const movieButtons = await evaluate("({ hiddenBack: document.getElementById('btn-close-movie-player').hidden, exitTitle: document.getElementById('btn-exit-movie-player').title, playerOpen: !document.getElementById('movie-player-view').classList.contains('hidden') })");
+check("movie header shows back, reload and exit", movieButtons.playerOpen && !movieButtons.hiddenBack && movieButtons.exitTitle === "Sair para Filmes", JSON.stringify(movieButtons));
 // an embedded (iframe) server fills the player box instead of the browser's default 150 px
 await evaluate("(document.querySelectorAll('#movie-servers-grid .btn-movie-server:not(.native-direct)')[1]?.click(), true)");
 await sleep(2500);
@@ -351,8 +370,8 @@ const frameBox = await evaluate("(() => { const f = document.getElementById('mov
 check("an iframe server fills the whole player box", frameBox && frameBox.frameH > 200 && Math.abs(frameBox.frameH - frameBox.stageH) <= 2 && Math.abs(frameBox.frameW - frameBox.stageW) <= 2, JSON.stringify(frameBox));
 await evaluate("(document.getElementById('btn-exit-movie-player').click(), true)");
 await sleep(1500);
-const movieAfter = await evaluate("({ modal: !document.getElementById('movie-modal').classList.contains('hidden'), view: window.TvzinhaActions.store.currentView, locked: document.body.classList.contains('modal-open') })");
-check("movie exit (X) closes the player and shows the Filmes catalog", !movieAfter.modal && movieAfter.view === "movies" && !movieAfter.locked, JSON.stringify(movieAfter));
+const movieAfter = await evaluate("({ player: !document.getElementById('movie-player-view').classList.contains('hidden'), page: !document.getElementById('title-page').classList.contains('hidden'), view: window.TvzinhaActions.store.currentView, locked: document.body.classList.contains('modal-open') })");
+check("movie exit (X) closes the player and the title page and shows the Filmes catalog", !movieAfter.player && !movieAfter.page && movieAfter.view === "movies" && !movieAfter.locked, JSON.stringify(movieAfter));
 
 // ---------- series skip segments (TheIntroDB + SkipDB): Game of Thrones S1E1 on the main player
 // Expected: the 100 s opening (the 13 s submission loses), the ending, and no recap in a first episode

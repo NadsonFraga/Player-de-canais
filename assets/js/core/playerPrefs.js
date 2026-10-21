@@ -1,11 +1,15 @@
 /**
- * TVZINHA ONLINE - Player preferences (this browser only).
+ * TVZINHA ONLINE - Player preferences (this browser, per profile when signed in).
  *
  * Kept in their own record, apart from the watch history, so a future login or settings tab can read and sync them
  * as one object. Every read and write survives a blocked or full storage (private windows): defaults are used then.
  */
+import { PLAYER_PREFS_KEY } from './constants.js?v=20261021_1511';
+import { storageKey, stampTime, PROFILE_EVENT } from './profileStore.js?v=20261021_1511';
 
-const PREFS_KEY = 'tvzinha_player_prefs_v1';
+// Fired after a preference is saved (the account sync sends it)
+export const PREFS_EVENT = 'tvzinha:prefs';
+
 // Older single-purpose key for the "Tela" choice, folded into the record on first read
 const LEGACY_FIT_KEY = 'tvz-video-fit';
 
@@ -19,13 +23,16 @@ export const PLAYER_PREF_DEFAULTS = Object.freeze({
 });
 
 let cache = null;
+// Another profile: read its preferences next time
+if (typeof window !== 'undefined') window.addEventListener(PROFILE_EVENT, () => { cache = null; });
 
 function read() {
     if (cache) return cache;
     let stored = {};
     try {
-        stored = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {};
-        if (stored.fit === undefined && localStorage.getItem(LEGACY_FIT_KEY) === 'cover') stored.fit = 'cover';
+        const key = storageKey(PLAYER_PREFS_KEY);
+        stored = JSON.parse(localStorage.getItem(key) || '{}') || {};
+        if (stored.fit === undefined && key === PLAYER_PREFS_KEY && localStorage.getItem(LEGACY_FIT_KEY) === 'cover') stored.fit = 'cover';
     } catch (e) {
         stored = {};
     }
@@ -45,7 +52,9 @@ export function setPlayerPref(key, value) {
     if (prefs[key] === value) return;
     prefs[key] = value;
     try {
-        localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+        localStorage.setItem(storageKey(PLAYER_PREFS_KEY), JSON.stringify(prefs));
+        stampTime('player');
+        window.dispatchEvent(new CustomEvent(PREFS_EVENT));
     } catch (e) {
         // Kept for this page only
     }

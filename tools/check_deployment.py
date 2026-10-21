@@ -98,5 +98,21 @@ for path in ["/assets/js/core/constants.js", "/assets/js/core/tmdb.js", "/assets
     status, body, headers, ms = fetch(path)
     check(f"{path} carries no TMDB key", status == 200 and not re.search(rb"api_key=[0-9a-f]{32}|TMDB_API_KEY\s*=\s*['\"][0-9a-f]{32}", body), f"HTTP {status}")
 
+print("\n== robots and the proxy (Turnstile and signed stream addresses)")
+def post_json(path, payload):
+    conn = http.client.HTTPSConnection(HOST, timeout=60)
+    try:
+        conn.request("POST", path, body=json.dumps(payload), headers={"Content-Type": "application/json", "X-Tvzinha-Request": "1",
+                                                                      "Origin": f"https://{HOST}", "User-Agent": "Mozilla/5.0 DeploymentCheck"})
+        res = conn.getresponse()
+        return res.status, res.read()
+    finally:
+        conn.close()
+# An invalid nickname on purpose: with the check on the answer is captcha_required; if it were off, nothing is created
+status, body = post_json("/api/account/register", {"nickname": "x", "password": "y"})
+check("sign-up without the robot check is refused (TURNSTILE_SECRET set)", status == 400 and b"captcha_required" in body, f"HTTP {status} {body[:60]!r}")
+status, body, headers, ms = fetch("/api/stream?" + urllib.parse.urlencode({"url": "https://example.com/"}))
+check("the stream proxy refuses an address it did not sign", status == 403, f"HTTP {status}")
+
 print(f"\n{'ALL PASSED' if not failures else str(failures) + ' FAILED'}")
 sys.exit(1 if failures else 0)

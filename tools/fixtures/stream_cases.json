@@ -4,214 +4,719 @@
     {
       "name": "media playlist: relative segments go through the proxy",
       "kind": "positive",
-      "request": { "query": { "url": "https://cdn.example.test/hls/ep1/index.m3u8", "referer": "https://mgeb.top/" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "application/vnd.apple.mpegurl" },
-        "body": "#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXTINF:6.0,\nseg1.ts\n#EXTINF:6.0,\nseg2.ts\n#EXT-X-ENDLIST\n" },
-      "expect": { "status": 200, "content_type_prefix_in": ["application/vnd.apple.mpegurl"],
-        "body_contains_proxied": ["https://cdn.example.test/hls/ep1/seg1.ts", "https://cdn.example.test/hls/ep1/seg2.ts"],
-        "upstream_header": { "referer": "https://mgeb.top/" } }
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/hls/ep1/index.m3u8",
+          "referer": "https://mgeb.top/"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/vnd.apple.mpegurl"
+        },
+        "body": "#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXTINF:6.0,\nseg1.ts\n#EXTINF:6.0,\nseg2.ts\n#EXT-X-ENDLIST\n"
+      },
+      "expect": {
+        "status": 200,
+        "content_type_prefix_in": [
+          "application/vnd.apple.mpegurl"
+        ],
+        "body_contains_proxied": [
+          "https://cdn.example.test/hls/ep1/seg1.ts",
+          "https://cdn.example.test/hls/ep1/seg2.ts"
+        ],
+        "upstream_header": {
+          "referer": "https://mgeb.top/"
+        }
+      }
     },
     {
       "name": "master playlist: absolute variant and #EXT-X-KEY URI go through the proxy",
       "kind": "positive",
-      "request": { "query": { "url": "https://cdn.example.test/hls/master.m3u8", "referer": "https://mgeb.top/" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "application/x-mpegURL" },
-        "body": "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=1280x720\nhttps://media.example.test/v720/index.m3u8\n#EXT-X-KEY:METHOD=AES-128,URI=\"key.bin\"\n" },
-      "expect": { "status": 200, "content_type_prefix_in": ["application/vnd.apple.mpegurl"],
-        "body_contains_proxied": ["https://media.example.test/v720/index.m3u8", "https://cdn.example.test/hls/key.bin"] }
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/hls/master.m3u8",
+          "referer": "https://mgeb.top/"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/x-mpegURL"
+        },
+        "body": "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=1280x720\nhttps://media.example.test/v720/index.m3u8\n#EXT-X-KEY:METHOD=AES-128,URI=\"key.bin\"\n"
+      },
+      "expect": {
+        "status": 200,
+        "content_type_prefix_in": [
+          "application/vnd.apple.mpegurl"
+        ],
+        "body_contains_proxied": [
+          "https://media.example.test/v720/index.m3u8",
+          "https://cdn.example.test/hls/key.bin"
+        ]
+      }
     },
     {
       "name": "MP4 Range request: 206 with Content-Range, Range forwarded upstream",
       "kind": "positive",
-      "request": { "query": { "url": "https://files.example.test/movie.mp4", "referer": "https://embedplayer2.xyz/" }, "headers": { "Range": "bytes=0-15" } },
-      "upstream": { "status": 206, "headers": { "Content-Type": "video/mp4", "Content-Range": "bytes 0-15/1000000", "Content-Length": "16", "Accept-Ranges": "bytes" },
-        "body_hex": "000000186674797069736f6d00000200" },
-      "expect": { "status": 206, "content_type_prefix_in": ["video/mp4"], "headers_present": ["content-range"],
-        "upstream_header": { "range": "bytes=0-15" } }
+      "request": {
+        "query": {
+          "url": "https://files.example.test/movie.mp4",
+          "referer": "https://embedplayer2.xyz/"
+        },
+        "headers": {
+          "Range": "bytes=0-15"
+        }
+      },
+      "upstream": {
+        "status": 206,
+        "headers": {
+          "Content-Type": "video/mp4",
+          "Content-Range": "bytes 0-15/1000000",
+          "Content-Length": "16",
+          "Accept-Ranges": "bytes"
+        },
+        "body_hex": "000000186674797069736f6d00000200"
+      },
+      "expect": {
+        "status": 206,
+        "content_type_prefix_in": [
+          "video/mp4"
+        ],
+        "headers_present": [
+          "content-range"
+        ],
+        "upstream_header": {
+          "range": "bytes=0-15"
+        }
+      }
     },
     {
       "name": "HEAD on an MP4: no body",
       "kind": "positive",
-      "request": { "method": "HEAD", "query": { "url": "https://files.example.test/movie.mp4" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "video/mp4", "Content-Length": "1000000", "Accept-Ranges": "bytes" }, "body": "MP4DATA" },
-      "expect": { "status_in": [200, 206], "content_type_prefix_in": ["video/mp4"], "body_empty": true }
+      "request": {
+        "method": "HEAD",
+        "query": {
+          "url": "https://files.example.test/movie.mp4"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "video/mp4",
+          "Content-Length": "1000000",
+          "Accept-Ranges": "bytes"
+        },
+        "body": "MP4DATA"
+      },
+      "expect": {
+        "status_in": [
+          200,
+          206
+        ],
+        "content_type_prefix_in": [
+          "video/mp4"
+        ],
+        "body_empty": true
+      }
     },
     {
       "name": "missing url parameter: 400",
       "kind": "positive",
-      "request": { "query": {} },
-      "upstream": { "status": 200, "body": "never" },
-      "expect": { "status": 400, "upstream_called": false }
+      "request": {
+        "query": {}
+      },
+      "upstream": {
+        "status": 200,
+        "body": "never"
+      },
+      "expect": {
+        "status": 400,
+        "upstream_called": false
+      }
     },
     {
       "name": "TS segment disguised as image/jpeg: served as video, not as an image",
       "kind": "negative",
       "finding": "D2 content type",
-      "request": { "query": { "url": "https://cdn.example.test/hls/seg1.jpeg", "referer": "https://mgeb.top/" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "image/jpeg" }, "body_hex": "47400011100000b00d0001c100000001f0002ab104b2" },
-      "expect": { "status": 200, "content_type_prefix_in": ["video/mp2t", "application/octet-stream"], "headers_present": ["x-content-type-options"] }
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/hls/seg1.jpeg",
+          "referer": "https://mgeb.top/"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "image/jpeg"
+        },
+        "body_hex": "47400011100000b00d0001c100000001f0002ab104b2"
+      },
+      "expect": {
+        "status": 200,
+        "content_type_prefix_in": [
+          "video/mp2t",
+          "application/octet-stream"
+        ],
+        "headers_present": [
+          "x-content-type-options"
+        ]
+      }
     },
     {
       "name": "upstream HTML page: never served as a page on our origin",
       "kind": "negative",
       "finding": "D2 XSS",
-      "request": { "query": { "url": "https://attacker.example.test/p.html" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "text/html; charset=utf-8" }, "body": "<html><script>alert(document.domain)</script></html>" },
-      "expect": { "content_type_prefix_in": ["application/octet-stream"], "headers_present": ["x-content-type-options"], "header_contains": { "content-security-policy": "sandbox" } }
+      "request": {
+        "query": {
+          "url": "https://attacker.example.test/p.html"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8"
+        },
+        "body": "<html><script>alert(document.domain)</script></html>"
+      },
+      "expect": {
+        "content_type_prefix_in": [
+          "application/octet-stream"
+        ],
+        "headers_present": [
+          "x-content-type-options"
+        ],
+        "header_contains": {
+          "content-security-policy": "sandbox"
+        }
+      }
     },
     {
       "name": "upstream JavaScript (service worker payload): neutral type",
       "kind": "negative",
       "finding": "D2 service worker",
-      "request": { "query": { "url": "https://attacker.example.test/sw.js" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "application/javascript", "Service-Worker-Allowed": "/" }, "body": "self.addEventListener('fetch', e => {});" },
-      "expect": { "content_type_prefix_in": ["application/octet-stream"], "headers_absent": ["service-worker-allowed"], "headers_present": ["x-content-type-options"] }
+      "request": {
+        "query": {
+          "url": "https://attacker.example.test/sw.js"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/javascript",
+          "Service-Worker-Allowed": "/"
+        },
+        "body": "self.addEventListener('fetch', e => {});"
+      },
+      "expect": {
+        "content_type_prefix_in": [
+          "application/octet-stream"
+        ],
+        "headers_absent": [
+          "service-worker-allowed"
+        ],
+        "headers_present": [
+          "x-content-type-options"
+        ]
+      }
     },
     {
       "name": "upstream SVG: neutral type",
       "kind": "negative",
       "finding": "D2 XSS",
-      "request": { "query": { "url": "https://attacker.example.test/x.svg" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "image/svg+xml" }, "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"alert(1)\"/>" },
-      "expect": { "content_type_prefix_in": ["application/octet-stream"], "headers_present": ["x-content-type-options"] }
+      "request": {
+        "query": {
+          "url": "https://attacker.example.test/x.svg"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "image/svg+xml"
+        },
+        "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"alert(1)\"/>"
+      },
+      "expect": {
+        "content_type_prefix_in": [
+          "application/octet-stream"
+        ],
+        "headers_present": [
+          "x-content-type-options"
+        ]
+      }
     },
     {
       "name": "dangerous upstream headers are not passed on",
       "kind": "negative",
       "finding": "D2 header injection",
-      "request": { "query": { "url": "https://cdn.example.test/hls/seg2.ts" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "video/mp2t", "Set-Cookie": "session=evil; Path=/", "Refresh": "0;url=https://attacker.example.test/", "Link": "<https://attacker.example.test/x.css>; rel=stylesheet", "Content-Security-Policy": "default-src *", "Service-Worker-Allowed": "/" },
-        "body_hex": "4740001110" },
-      "expect": { "status": 200, "headers_absent": ["set-cookie", "refresh", "link", "service-worker-allowed"], "header_contains": { "content-security-policy": "sandbox" } }
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/hls/seg2.ts"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "video/mp2t",
+          "Set-Cookie": "session=evil; Path=/",
+          "Refresh": "0;url=https://attacker.example.test/",
+          "Link": "<https://attacker.example.test/x.css>; rel=stylesheet",
+          "Content-Security-Policy": "default-src *",
+          "Service-Worker-Allowed": "/"
+        },
+        "body_hex": "4740001110"
+      },
+      "expect": {
+        "status": 200,
+        "headers_absent": [
+          "set-cookie",
+          "refresh",
+          "link",
+          "service-worker-allowed"
+        ],
+        "header_contains": {
+          "content-security-policy": "sandbox"
+        }
+      }
     },
     {
       "name": "WebVTT: tags that could run code are removed",
       "kind": "negative",
       "finding": "N1 subtitle XSS (parity)",
-      "request": { "query": { "url": "https://subs.example.test/ep1.pt.vtt" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "text/vtt" },
-        "body": "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n<i>Eu te amo</i>\n\n00:00:04.000 --> 00:00:06.000\n<img src=x onerror=alert(1)>Olá\n" },
-      "expect": { "status": 200, "content_type_prefix_in": ["text/vtt"], "body_not_contains": ["<img", "onerror"], "body_contains": ["Eu te amo", "Olá"] }
+      "request": {
+        "query": {
+          "url": "https://subs.example.test/ep1.pt.vtt"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/vtt"
+        },
+        "body": "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n<i>Eu te amo</i>\n\n00:00:04.000 --> 00:00:06.000\n<img src=x onerror=alert(1)>Olá\n"
+      },
+      "expect": {
+        "status": 200,
+        "content_type_prefix_in": [
+          "text/vtt"
+        ],
+        "body_not_contains": [
+          "<img",
+          "onerror"
+        ],
+        "body_contains": [
+          "Eu te amo",
+          "Olá"
+        ]
+      }
     },
     {
       "name": "upstream 404: status kept, upstream page not passed on",
       "kind": "negative",
       "finding": "D8 errors",
-      "request": { "query": { "url": "https://cdn.example.test/hls/missing.ts" } },
-      "upstream": { "status": 404, "headers": { "Content-Type": "text/html" }, "body": "<html>secret upstream error page /var/www/app</html>" },
-      "expect": { "status": 404, "body_not_contains": ["secret upstream", "<html"] }
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/hls/missing.ts"
+        }
+      },
+      "upstream": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "text/html"
+        },
+        "body": "<html>secret upstream error page /var/www/app</html>"
+      },
+      "expect": {
+        "status": 404,
+        "body_not_contains": [
+          "secret upstream",
+          "<html"
+        ]
+      }
     },
     {
       "name": "upstream 500: status kept, upstream page not passed on",
       "kind": "negative",
       "finding": "D8 errors",
-      "request": { "query": { "url": "https://cdn.example.test/hls/broken.ts" } },
-      "upstream": { "status": 500, "headers": { "Content-Type": "text/html" }, "body": "<html>Traceback: secret stack trace</html>" },
-      "expect": { "status": 500, "body_not_contains": ["secret stack", "<html"] }
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/hls/broken.ts"
+        }
+      },
+      "upstream": {
+        "status": 500,
+        "headers": {
+          "Content-Type": "text/html"
+        },
+        "body": "<html>Traceback: secret stack trace</html>"
+      },
+      "expect": {
+        "status": 500,
+        "body_not_contains": [
+          "secret stack",
+          "<html"
+        ]
+      }
     },
     {
       "name": "network failure: generic error, no internal message",
       "kind": "negative",
       "finding": "D8 errors",
-      "request": { "query": { "url": "https://down.example.test/a.ts" } },
-      "upstream": { "throw": "connect ECONNREFUSED C:\\secret\\path\\to\\file" },
-      "expect": { "status": 502, "body_not_contains": ["ECONNREFUSED", "secret"] }
+      "request": {
+        "query": {
+          "url": "https://down.example.test/a.ts"
+        }
+      },
+      "upstream": {
+        "throw": "connect ECONNREFUSED C:\\secret\\path\\to\\file"
+      },
+      "expect": {
+        "status": 502,
+        "body_not_contains": [
+          "ECONNREFUSED",
+          "secret"
+        ]
+      }
     },
     {
       "name": "file: target refused before any request",
       "kind": "negative",
       "finding": "N2 scheme",
-      "request": { "query": { "url": "file:///C:/Windows/win.ini" } },
-      "upstream": { "status": 200, "body": "[fonts] local file contents" },
-      "expect": { "status": 400, "upstream_called": false }
+      "request": {
+        "query": {
+          "url": "file:///C:/Windows/win.ini"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "body": "[fonts] local file contents"
+      },
+      "expect": {
+        "status": 400,
+        "upstream_called": false
+      }
     },
     {
       "name": "ftp: target refused before any request",
       "kind": "negative",
       "finding": "N2 scheme",
-      "request": { "query": { "url": "ftp://files.example.test/a.ts" } },
-      "upstream": { "status": 200, "body": "ftp data" },
-      "expect": { "status": 400, "upstream_called": false }
+      "request": {
+        "query": {
+          "url": "ftp://files.example.test/a.ts"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "body": "ftp data"
+      },
+      "expect": {
+        "status": 400,
+        "upstream_called": false
+      }
     },
     {
       "name": "javascript: target refused before any request",
       "kind": "negative",
       "finding": "N2 scheme",
-      "request": { "query": { "url": "javascript:alert(1)" } },
-      "upstream": { "status": 200, "body": "x" },
-      "expect": { "status": 400, "upstream_called": false }
+      "request": {
+        "query": {
+          "url": "javascript:alert(1)"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "body": "x"
+      },
+      "expect": {
+        "status": 400,
+        "upstream_called": false
+      }
     },
     {
       "name": "data: target refused before any request",
       "kind": "negative",
       "finding": "N2 scheme",
-      "request": { "query": { "url": "data:text/html,<script>alert(1)</script>" } },
-      "upstream": { "status": 200, "body": "x" },
-      "expect": { "status": 400, "upstream_called": false }
+      "request": {
+        "query": {
+          "url": "data:text/html,<script>alert(1)</script>"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "body": "x"
+      },
+      "expect": {
+        "status": 400,
+        "upstream_called": false
+      }
     },
     {
       "name": "line break in the referer parameter: refused",
       "kind": "negative",
       "finding": "header injection",
-      "request": { "query": { "url": "https://cdn.example.test/hls/seg1.ts", "referer": "https://a.example.test/\r\nX-Injected: 1" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "video/mp2t" }, "body_hex": "4740" },
-      "expect": { "status": 400, "upstream_called": false }
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/hls/seg1.ts",
+          "referer": "https://a.example.test/\r\nX-Injected: 1"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "video/mp2t"
+        },
+        "body_hex": "4740"
+      },
+      "expect": {
+        "status": 400,
+        "upstream_called": false
+      }
     },
     {
       "name": "oversized playlist (6 MB): refused instead of buffered",
       "kind": "negative",
       "finding": "limits",
-      "request": { "query": { "url": "https://cdn.example.test/hls/huge.m3u8" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "application/vnd.apple.mpegurl" }, "body_repeat": { "text": "#EXTINF:6.0,\nsegment-name-padding.ts\n", "times": 180000 } },
-      "expect": { "status": 502 }
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/hls/huge.m3u8"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/vnd.apple.mpegurl"
+        },
+        "body_repeat": {
+          "text": "#EXTINF:6.0,\nsegment-name-padding.ts\n",
+          "times": 180000
+        }
+      },
+      "expect": {
+        "status": 502
+      }
     },
     {
       "name": "WebVTT: italics, bold and underline kept, other tags dropped",
       "kind": "positive",
-      "request": { "query": { "url": "https://subs.example.test/ep2.pt.vtt" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "text/vtt" },
-        "body": "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n<i>Eu</i> <b>te</b> <U>amo</U> <c.yellow>muito</c>\n" },
-      "expect": { "status": 200, "body_contains": ["<i>Eu</i>", "<b>te</b>", "<u>amo</u>", "muito", "00:00:01.000 --> 00:00:03.000"], "body_not_contains": ["<c.yellow", "</c>"] }
+      "request": {
+        "query": {
+          "url": "https://subs.example.test/ep2.pt.vtt"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/vtt"
+        },
+        "body": "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n<i>Eu</i> <b>te</b> <U>amo</U> <c.yellow>muito</c>\n"
+      },
+      "expect": {
+        "status": 200,
+        "body_contains": [
+          "<i>Eu</i>",
+          "<b>te</b>",
+          "<u>amo</u>",
+          "muito",
+          "00:00:01.000 --> 00:00:03.000"
+        ],
+        "body_not_contains": [
+          "<c.yellow",
+          "</c>"
+        ]
+      }
     },
     {
       "name": "WebVTT: a tag split over two lines is made harmless, timing lines intact",
       "kind": "negative",
       "finding": "N1 subtitle XSS",
-      "request": { "query": { "url": "https://subs.example.test/ep3.pt.vtt" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "text/vtt" },
-        "body": "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n<img src=x\nonerror=alert(1)>Olá\n\n00:00:04.000 --> 00:00:06.000\na < b e c > d\n" },
-      "expect": { "status": 200, "body_not_contains": ["<img", ")>"], "body_contains": ["&lt;img", "Olá", "00:00:04.000 --> 00:00:06.000", "a &lt; b e c &gt; d"] }
+      "request": {
+        "query": {
+          "url": "https://subs.example.test/ep3.pt.vtt"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/vtt"
+        },
+        "body": "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n<img src=x\nonerror=alert(1)>Olá\n\n00:00:04.000 --> 00:00:06.000\na < b e c > d\n"
+      },
+      "expect": {
+        "status": 200,
+        "body_not_contains": [
+          "<img",
+          ")>"
+        ],
+        "body_contains": [
+          "&lt;img",
+          "Olá",
+          "00:00:04.000 --> 00:00:06.000",
+          "a &lt; b e c &gt; d"
+        ]
+      }
     },
     {
       "name": "redirect to a file: address is refused after the first request",
       "kind": "negative",
       "finding": "N6 redirects",
-      "request": { "query": { "url": "https://short.example.test/go/seg.ts" } },
-      "upstream": { "status": 200, "final_url": "file:///C:/Windows/win.ini", "body": "[fonts]" },
-      "expect": { "status": 502, "upstream_calls": 1 }
+      "request": {
+        "query": {
+          "url": "https://short.example.test/go/seg.ts"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "final_url": "file:///C:/Windows/win.ini",
+        "body": "[fonts]"
+      },
+      "expect": {
+        "status": 502,
+        "upstream_calls": 1
+      }
     },
     {
       "name": "anime host: Origin sent together with its Referer",
       "kind": "positive",
-      "request": { "query": { "url": "https://media.example.test/anime/master.m3u8", "referer": "https://zokoanime.video/" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "application/vnd.apple.mpegurl" }, "body": "#EXTM3U\n#EXTINF:6.0,\nseg1.ts\n" },
-      "expect": { "status": 200, "upstream_header": { "referer": "https://zokoanime.video/", "origin": "https://zokoanime.video" } }
+      "request": {
+        "query": {
+          "url": "https://media.example.test/anime/master.m3u8",
+          "referer": "https://zokoanime.video/"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/vnd.apple.mpegurl"
+        },
+        "body": "#EXTM3U\n#EXTINF:6.0,\nseg1.ts\n"
+      },
+      "expect": {
+        "status": 200,
+        "upstream_header": {
+          "referer": "https://zokoanime.video/",
+          "origin": "https://zokoanime.video"
+        }
+      }
     },
     {
       "name": ".ts segment sent by the host as text/html: video/mp2t for TV receivers",
       "kind": "positive",
-      "request": { "query": { "url": "https://cdn.example.test/hls/seg9.ts", "referer": "https://mgeb.top/" } },
-      "upstream": { "status": 200, "headers": { "Content-Type": "text/html" }, "body_hex": "4740001110" },
-      "expect": { "status": 200, "content_type_prefix_in": ["video/mp2t"], "headers_present": ["x-content-type-options", "access-control-allow-origin"] }
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/hls/seg9.ts",
+          "referer": "https://mgeb.top/"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/html"
+        },
+        "body_hex": "4740001110"
+      },
+      "expect": {
+        "status": 200,
+        "content_type_prefix_in": [
+          "video/mp2t"
+        ],
+        "headers_present": [
+          "x-content-type-options",
+          "access-control-allow-origin"
+        ]
+      }
     },
     {
       "name": "playlist after a redirect: relative lines resolve against the final address",
       "kind": "negative",
       "finding": "N6 redirects",
-      "request": { "query": { "url": "https://short.example.test/go/ep1.m3u8" } },
-      "upstream": { "status": 200, "final_url": "https://cdn2.example.test/real/ep1/index.m3u8", "headers": { "Content-Type": "application/vnd.apple.mpegurl" },
-        "body": "#EXTM3U\n#EXTINF:6.0,\nseg1.ts\n#EXT-X-ENDLIST\n" },
-      "expect": { "status": 200, "body_contains_proxied": ["https://cdn2.example.test/real/ep1/seg1.ts"] }
+      "request": {
+        "query": {
+          "url": "https://short.example.test/go/ep1.m3u8"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "final_url": "https://cdn2.example.test/real/ep1/index.m3u8",
+        "headers": {
+          "Content-Type": "application/vnd.apple.mpegurl"
+        },
+        "body": "#EXTM3U\n#EXTINF:6.0,\nseg1.ts\n#EXT-X-ENDLIST\n"
+      },
+      "expect": {
+        "status": 200,
+        "body_contains_proxied": [
+          "https://cdn2.example.test/real/ep1/seg1.ts"
+        ]
+      }
+    },
+    {
+      "name": "unsigned address: refused before any request (the proxy is not open)",
+      "kind": "negative",
+      "signing": "none",
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/video.mp4",
+          "referer": "https://mgeb.top/"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "video/mp4"
+        },
+        "body": "x"
+      },
+      "expect": {
+        "status": 403,
+        "upstream_called": false
+      }
+    },
+    {
+      "name": "signature made for another address: refused before any request",
+      "kind": "negative",
+      "signing": "tampered",
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/video.mp4",
+          "referer": "https://mgeb.top/"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "video/mp4"
+        },
+        "body": "x"
+      },
+      "expect": {
+        "status": 403,
+        "upstream_called": false
+      }
+    },
+    {
+      "name": "expired link: refused before any request",
+      "kind": "negative",
+      "signing": "expired",
+      "request": {
+        "query": {
+          "url": "https://cdn.example.test/video.mp4",
+          "referer": "https://mgeb.top/"
+        }
+      },
+      "upstream": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "video/mp4"
+        },
+        "body": "x"
+      },
+      "expect": {
+        "status": 403,
+        "upstream_called": false
+      }
     }
-  ]
+  ],
+  "about_signing": "Every request is signed by the runners (secret 'test-signing-secret') like /api/resolve does, unless the case sets 'signing': 'none' (no exp/sig), 'tampered' (signature of another address) or 'expired' (a link past its time)."
 }

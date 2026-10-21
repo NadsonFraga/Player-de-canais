@@ -23,7 +23,7 @@ KNOWN_SRI = {
 
 REQUIRED_CSP_DIRECTIVES = [
     ("default-src", ["'self'"]),
-    ("script-src", ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"]),
+    ("script-src", ["'self'", "https://cdn.jsdelivr.net", "https://challenges.cloudflare.com"]),
     ("style-src", ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"]),
     ("font-src", ["'self'", "https://fonts.gstatic.com"]),
     ("img-src", ["'self'", "data:", "blob:", "https://image.tmdb.org"]),
@@ -36,44 +36,27 @@ REQUIRED_CSP_DIRECTIVES = [
     ("base-uri", ["'self'"]),
 ]
 
+# Values that must NOT be in a directive (an injected inline script or handler must never run)
+FORBIDDEN_CSP_VALUES = [
+    ("script-src", ["'unsafe-inline'", "'unsafe-eval'"]),
+]
+
 
 def test_sri_tags():
-    print("== 1. Subresource Integrity (SRI) in index.html (D7)")
+    """hls.js and Artplayer load on demand from player/engine.js (B11): each entry keeps its pinned URL and SRI hash."""
+    print("== 1. Subresource Integrity (SRI) of the player libraries (D7, player/engine.js)")
     failures = 0
-    html = (ROOT / "index.html").read_text(encoding="utf-8")
-
+    engine = (ROOT / "assets" / "js" / "player" / "engine.js").read_text(encoding="utf-8")
     for lib, spec in KNOWN_SRI.items():
-        # Find script tag matching the url pattern
-        pattern = rf'<script\s+[^>]*src=[\'"][^\'"]*{spec["url_pattern"]}[^\'"]*[\'"][^>]*>'
-        m = re.search(pattern, html, re.I)
+        m = re.search(rf"url:\s*'([^']*{spec['url_pattern']}[^']*)',\s*integrity:\s*'([^']+)'", engine)
         if not m:
-            print(f"  FAIL {lib}: script tag not found in index.html")
+            print(f"  FAIL {lib}: pinned URL with integrity not found in engine.js")
             failures += 1
-            continue
-
-        tag = m.group(0)
-        # Check integrity
-        im = re.search(r'integrity=[\'"]([^\'"]+)[\'"]', tag, re.I)
-        if not im:
-            print(f"  FAIL {lib}: missing integrity attribute in {tag}")
-            failures += 1
-            continue
-        actual_hash = im.group(1).strip()
-        hash_ok = actual_hash == spec["expected_hash"]
-        if not hash_ok:
-            print(f"  FAIL {lib}: integrity hash mismatch: expected {spec['expected_hash']}, got {actual_hash}")
+        elif m.group(2) != spec["expected_hash"]:
+            print(f"  FAIL {lib}: integrity {m.group(2)} (expected {spec['expected_hash']})")
             failures += 1
         else:
-            print(f"  OK   {lib}: integrity hash verified ({actual_hash[:24]}...)")
-
-        # Check crossorigin="anonymous"
-        cors_ok = bool(re.search(r'crossorigin=[\'"]anonymous[\'"]', tag, re.I))
-        if not cors_ok:
-            print(f"  FAIL {lib}: missing crossorigin=\"anonymous\" in {tag}")
-            failures += 1
-        else:
-            print(f"  OK   {lib}: crossorigin=\"anonymous\" present")
-
+            print(f"  OK   {lib}: {m.group(1)} with {m.group(2)[:20]}...")
     return failures
 
 
@@ -136,6 +119,15 @@ def test_headers_file():
         else:
             print(f"    OK   directive '{directive}' ({len(tokens)} tokens)")
 
+    for directive, forbidden in FORBIDDEN_CSP_VALUES:
+        dir_match = re.search(rf'{directive}\s+([^;]+)', csp)
+        present = [t for t in forbidden if dir_match and t in dir_match.group(1).split()]
+        if present:
+            print(f"    FAIL directive '{directive}' must not allow {present}")
+            failures += 1
+        else:
+            print(f"    OK   directive '{directive}' allows none of {forbidden}")
+
     return failures
 
 
@@ -173,7 +165,7 @@ def test_local_server_headers():
     h.do_GET()
 
     # Check security headers on /health response
-    for name in ["x-content-type-options", "referrer-policy", "x-frame-options", "permissions-policy"]:
+    for name in ["x-content-type-options", "referrer-policy", "x-frame-options", "permissions-policy", "content-security-policy"]:
         vals = h.response_headers.get(name)
         if vals and len(vals) == 1:
             print(f"  OK   local_server sends {name}: {vals[0]}")

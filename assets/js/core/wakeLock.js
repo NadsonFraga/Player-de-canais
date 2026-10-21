@@ -45,10 +45,6 @@ export function setPlaybackActiveState(active) {
     }
 }
 
-export function getPlaybackActiveState() {
-    return isPlaybackActive;
-}
-
 if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && isPlaybackActive) {

@@ -9,9 +9,28 @@
  * Needs `python tools/local_server.py` on 127.0.0.1:8787 (catalog data from TMDB).
  */
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+// Test browser profiles are removed when the run ends (left behind, they add up to gigabytes in %TEMP%)
+const tempDirs = [];
+function tempDir(prefix) {
+  const dir = mkdtempSync(prefix);
+  tempDirs.push(dir);
+  return dir;
+}
+process.on("exit", () => {
+  // A browser started from a launcher can outlive the process the test killed: stop whatever still uses our profiles
+  if (tempDirs.length && process.platform === "win32") {
+    const filter = tempDirs.map(d => `$_.CommandLine -like '*${d.split(/[\/]/).pop()}*'`).join(" -or ");
+    try { spawnSync("powershell", ["-NoProfile", "-Command", `Get-CimInstance Win32_Process | Where-Object { ${filter} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: "ignore", timeout: 20000 }); } catch {}
+  }
+  for (const dir of tempDirs) {
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch {}
+  }
+});
+
 
 const BASE = "http://127.0.0.1:8787";
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
@@ -22,7 +41,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const results = [];
 const check = (name, ok, detail = "") => { results.push(ok); console.log(`${ok ? "OK  " : "FAIL"} ${name}${detail ? " " + detail : ""}`); };
 
-const profile = mkdtempSync(join(tmpdir(), "tvz-groups-"));
+const profile = tempDir(join(tmpdir(), "tvz-groups-"));
 const port = 9400 + Math.floor(Math.random() * 90);
 const proc = spawn(browserName === "edge" ? EDGE : CHROME, ["--headless=new", `--remote-debugging-port=${port}`, "--remote-allow-origins=*",
   `--user-data-dir=${profile}`, "--no-first-run", "--mute-audio", "--autoplay-policy=no-user-gesture-required", "--window-size=1366,900", "about:blank"], { stdio: "ignore" });
@@ -94,7 +113,7 @@ try {
   // ---------- movie selector
   await evaluate("(window.TvzinhaActions.switchView('movies'), true)");
   await sleep(800);
-  await evaluate("(window.TvzinhaActions.openMovie({ id: 1022789, title: 'Divertida Mente 2', backdrop_path: null, poster_path: null, overview: '' }, false), true)");
+  await evaluate("(window.TvzinhaActions.openMovie({ id: 1022789, title: 'Divertida Mente 2', backdrop_path: null, poster_path: null, overview: '' }, true), true)");
   await waitFor("document.querySelectorAll('#movie-servers-grid .server-group-block').length > 0", 10000);
   const movie = await groupsOf("movie-servers-grid");
   check("movie: groups 'Players' then 'Servidores externos'", movie.length === 2 && movie[0].title === "Players" && movie[1].title === "Servidores externos", JSON.stringify(movie.map(g => g.title)));
@@ -107,7 +126,7 @@ try {
   await evaluate(`import('/assets/js/modules/series.js?v=${VERSION}').then(m => { window.__series = m; return true; })`);
   await evaluate("(window.TvzinhaActions.switchView('animes'), true)");
   await sleep(1000);
-  await evaluate(`window.__series.openSeriesModal({ id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, 'tv', { autoPlaySeason: 1, autoPlayEpisode: 1 }).then(() => true)`);
+  await evaluate(`(window.TvzinhaActions.openTitle('anime', { id: 12971, name: 'Dragon Ball Z', original_name: 'ドラゴンボールZ', first_air_date: '1989-04-26', genre_ids: [16], original_language: 'ja', backdrop_path: null, poster_path: null }, { episode: { season: 1, episode: 1 } }), true)`);
   await waitFor("document.querySelectorAll('#series-servers-grid .server-group-block').length > 0", 15000);
   const anime = await groupsOf("series-servers-grid");
   check("anime: Players has 'Player Principal' and 'Player Animes'", anime[0]?.title === "Players" && anime[0].buttons.join() === "Player Principal,Player Animes", JSON.stringify(anime[0]));

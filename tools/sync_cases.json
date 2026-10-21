@@ -1,0 +1,1199 @@
+{
+ "about": "Account sync cases run against assets/js/core/syncMerge.js + functions/api/sync.js (tools/sync_api_check.mjs) and tools/local_sync.py (tools/test_sync_api.py). Built by a script: change the cases there, not here. Placeholders: {p1} saved values; {now} and {now-N} the step's clock; \"{many:N}\" or \"{many:N:FROM}\" N favorite changes (keys ch<FROM>..). The clock moves 1.1 s before every step unless 'advance' says otherwise.",
+ "now": 1700000000000,
+ "sanitize": [
+  {
+   "name": "library: unknown fields dropped, title trimmed, a poster that is not a TMDB path dropped, year as text",
+   "kind": "library",
+   "key": "movie:603",
+   "now": 1700000000000,
+   "data": {
+    "kind": "movie",
+    "title": "  Matrix  ",
+    "poster_path": "javascript:alert(1)",
+    "backdrop_path": "/bd.jpg",
+    "year": 1999,
+    "watchlist": {
+     "on": 1,
+     "at": 1699999999900
+    },
+    "evil": "<script>",
+    "rating": {
+     "value": 11,
+     "at": 1699999999950
+    }
+   },
+   "expect": {
+    "kind": "movie",
+    "id": 603,
+    "title": "Matrix",
+    "poster_path": null,
+    "backdrop_path": "/bd.jpg",
+    "year": "1999",
+    "watchlist": {
+     "on": true,
+     "at": 1699999999900
+    },
+    "rating": {
+     "value": null,
+     "at": 1699999999950
+    }
+   }
+  },
+  {
+   "name": "library: a long title is cut to 200 characters",
+   "kind": "library",
+   "key": "tv:1",
+   "now": 1700000000000,
+   "data": {
+    "kind": "anime",
+    "title": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+   },
+   "expect": {
+    "kind": "anime",
+    "id": 1,
+    "title": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "poster_path": null,
+    "backdrop_path": null,
+    "year": ""
+   }
+  },
+  {
+   "name": "a time in the future is cut to now",
+   "kind": "favorite",
+   "key": "Globo:Globo SP",
+   "now": 1700000000000,
+   "data": {
+    "on": true,
+    "at": 1700010000000
+   },
+   "expect": {
+    "on": true,
+    "at": 1700000000000
+   }
+  },
+  {
+   "name": "a key that cannot belong to the kind is refused",
+   "kind": "library",
+   "key": "movie:abc",
+   "now": 1700000000000,
+   "data": {
+    "title": "x"
+   },
+   "expect": null
+  },
+  {
+   "name": "a key that would reach an object's prototype is refused",
+   "kind": "favorite",
+   "key": "__proto__",
+   "now": 1700000000000,
+   "data": {
+    "on": true,
+    "at": 1
+   },
+   "expect": null
+  },
+  {
+   "name": "an unknown kind is refused",
+   "kind": "secrets",
+   "key": "x",
+   "now": 1700000000000,
+   "data": {
+    "a": 1
+   },
+   "expect": null
+  },
+  {
+   "name": "a favorite key with a control character is refused",
+   "kind": "favorite",
+   "key": "a\u0000b",
+   "now": 1700000000000,
+   "data": {
+    "on": true,
+    "at": 1
+   },
+   "expect": null
+  },
+  {
+   "name": "progress of a show: bad episode keys dropped, numbers checked, missing season becomes 1",
+   "kind": "progress",
+   "key": "1429",
+   "now": 1700000000000,
+   "data": {
+    "title": "Attack on Titan",
+    "mediaType": "anime",
+    "episode": 5,
+    "episodeTitle": "Ep",
+    "timestamp": 1699999999990,
+    "absolute": "12",
+    "positions": {
+     "1:5": {
+      "position": 600.5,
+      "duration": 1420,
+      "finished": false,
+      "server": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "at": 1699999999990
+     },
+     "bad": {
+      "position": 1
+     },
+     "1:6": "nope"
+    }
+   },
+   "expect": {
+    "id": 1429,
+    "title": "Attack on Titan",
+    "poster_path": null,
+    "backdrop_path": null,
+    "mediaType": "anime",
+    "timestamp": 1699999999990,
+    "season": 1,
+    "episode": 5,
+    "episodeTitle": "Ep",
+    "absolute": 12,
+    "positions": {
+     "1:5": {
+      "position": 600.5,
+      "duration": 1420,
+      "finished": false,
+      "server": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "at": 1699999999990
+     }
+    }
+   }
+  },
+  {
+   "name": "progress of a movie: position fields kept, hidden kept with its time",
+   "kind": "progress",
+   "key": "movie:27205",
+   "now": 1700000000000,
+   "data": {
+    "title": "A Origem",
+    "mediaType": "tv",
+    "position": 900,
+    "duration": 8880,
+    "finished": false,
+    "server": "principal",
+    "at": 1699999999995,
+    "timestamp": 1699999999980,
+    "hidden": true,
+    "hiddenAt": 1699999999999
+   },
+   "expect": {
+    "id": 27205,
+    "title": "A Origem",
+    "poster_path": null,
+    "backdrop_path": null,
+    "mediaType": "movie",
+    "timestamp": 1699999999980,
+    "hidden": true,
+    "hiddenAt": 1699999999999,
+    "position": 900,
+    "duration": 8880,
+    "finished": false,
+    "server": "principal",
+    "at": 1699999999995
+   }
+  },
+  {
+   "name": "player preferences: values out of range fall back, unknown fit is Ajustar",
+   "kind": "prefs",
+   "key": "player",
+   "now": 1700000000000,
+   "data": {
+    "volume": 5,
+    "muted": 0,
+    "playbackRate": 2,
+    "subtitle": "pt-BR",
+    "quality": 1080,
+    "fit": "stretch",
+    "at": 1699999999999,
+    "hack": true
+   },
+   "expect": {
+    "volume": 0.9,
+    "muted": false,
+    "playbackRate": 2,
+    "subtitle": "pt-BR",
+    "quality": 1080,
+    "fit": "contain",
+    "at": 1699999999999
+   }
+  },
+  {
+   "name": "favorite team: text, or null",
+   "kind": "prefs",
+   "key": "team",
+   "now": 1700000000000,
+   "data": {
+    "team": " vasco ",
+    "at": 1699999999999
+   },
+   "expect": {
+    "team": "vasco",
+    "at": 1699999999999
+   }
+  }
+ ],
+ "merge": [
+  {
+   "name": "library: a newer removal wins; an older rating from the other side stays",
+   "kind": "library",
+   "key": "movie:603",
+   "now": 1700000000000,
+   "stored": {
+    "kind": "movie",
+    "title": "Matrix",
+    "year": "1999",
+    "watchlist": {
+     "on": true,
+     "at": 100
+    }
+   },
+   "incoming": {
+    "kind": "movie",
+    "title": "Matrix",
+    "year": "1999",
+    "watchlist": {
+     "on": false,
+     "at": 200
+    },
+    "rating": {
+     "value": 8,
+     "at": 50
+    }
+   },
+   "expect": {
+    "kind": "movie",
+    "id": 603,
+    "title": "Matrix",
+    "poster_path": null,
+    "backdrop_path": null,
+    "year": "1999",
+    "watchlist": {
+     "on": false,
+     "at": 200
+    },
+    "rating": {
+     "value": 8,
+     "at": 50
+    }
+   }
+  },
+  {
+   "name": "library: an older change loses",
+   "kind": "library",
+   "key": "movie:603",
+   "now": 1700000000000,
+   "stored": {
+    "kind": "movie",
+    "title": "Matrix",
+    "year": "1999",
+    "watched": {
+     "on": true,
+     "at": 300
+    }
+   },
+   "incoming": {
+    "kind": "movie",
+    "title": "Matrix",
+    "year": "1999",
+    "watched": {
+     "on": false,
+     "at": 100
+    }
+   },
+   "expect": {
+    "kind": "movie",
+    "id": 603,
+    "title": "Matrix",
+    "poster_path": null,
+    "backdrop_path": null,
+    "year": "1999",
+    "watched": {
+     "on": true,
+     "at": 300
+    }
+   }
+  },
+  {
+   "name": "library: merging a copy with itself changes nothing",
+   "kind": "library",
+   "key": "movie:603",
+   "now": 1700000000000,
+   "stored": {
+    "kind": "movie",
+    "title": "Matrix",
+    "year": "1999",
+    "watchlist": {
+     "on": true,
+     "at": 100
+    },
+    "rating": {
+     "value": 7,
+     "at": 90
+    }
+   },
+   "incoming": {
+    "kind": "movie",
+    "title": "Matrix",
+    "year": "1999",
+    "watchlist": {
+     "on": true,
+     "at": 100
+    },
+    "rating": {
+     "value": 7,
+     "at": 90
+    }
+   },
+   "expect": {
+    "kind": "movie",
+    "id": 603,
+    "title": "Matrix",
+    "poster_path": null,
+    "backdrop_path": null,
+    "year": "1999",
+    "watchlist": {
+     "on": true,
+     "at": 100
+    },
+    "rating": {
+     "value": 7,
+     "at": 90
+    }
+   }
+  },
+  {
+   "name": "progress: watching again after taking it off the rail brings it back",
+   "kind": "progress",
+   "key": "1399",
+   "now": 1700000000000,
+   "stored": {
+    "title": "GoT",
+    "season": 1,
+    "episode": 2,
+    "timestamp": 100,
+    "hidden": true,
+    "hiddenAt": 150,
+    "positions": {}
+   },
+   "incoming": {
+    "title": "GoT",
+    "season": 1,
+    "episode": 3,
+    "timestamp": 200,
+    "positions": {}
+   },
+   "expect": {
+    "id": 1399,
+    "title": "GoT",
+    "poster_path": null,
+    "backdrop_path": null,
+    "mediaType": "tv",
+    "timestamp": 200,
+    "season": 1,
+    "episode": 3,
+    "episodeTitle": "",
+    "absolute": null,
+    "positions": {},
+    "hidden": false,
+    "hiddenAt": 150
+   }
+  },
+  {
+   "name": "progress: taking it off the rail after watching keeps it off",
+   "kind": "progress",
+   "key": "1399",
+   "now": 1700000000000,
+   "stored": {
+    "title": "GoT",
+    "season": 1,
+    "episode": 3,
+    "timestamp": 200,
+    "positions": {}
+   },
+   "incoming": {
+    "title": "GoT",
+    "season": 1,
+    "episode": 3,
+    "timestamp": 200,
+    "hidden": true,
+    "hiddenAt": 300,
+    "positions": {}
+   },
+   "expect": {
+    "id": 1399,
+    "title": "GoT",
+    "poster_path": null,
+    "backdrop_path": null,
+    "mediaType": "tv",
+    "timestamp": 200,
+    "season": 1,
+    "episode": 3,
+    "episodeTitle": "",
+    "absolute": null,
+    "positions": {},
+    "hidden": true,
+    "hiddenAt": 300
+   }
+  },
+  {
+   "name": "progress: each episode position by its own time",
+   "kind": "progress",
+   "key": "1399",
+   "now": 1700000000000,
+   "stored": {
+    "title": "GoT",
+    "season": 1,
+    "episode": 2,
+    "timestamp": 300,
+    "positions": {
+     "1:1": {
+      "position": 100,
+      "duration": 3000,
+      "server": "a",
+      "at": 100
+     },
+     "1:2": {
+      "position": 50,
+      "duration": 3000,
+      "server": "a",
+      "at": 300
+     }
+    }
+   },
+   "incoming": {
+    "title": "GoT",
+    "season": 1,
+    "episode": 1,
+    "timestamp": 250,
+    "positions": {
+     "1:1": {
+      "position": 500,
+      "duration": 3000,
+      "server": "b",
+      "at": 200
+     },
+     "1:2": {
+      "position": 10,
+      "duration": 3000,
+      "server": "b",
+      "at": 250
+     }
+    }
+   },
+   "expect": {
+    "id": 1399,
+    "title": "GoT",
+    "poster_path": null,
+    "backdrop_path": null,
+    "mediaType": "tv",
+    "timestamp": 300,
+    "season": 1,
+    "episode": 2,
+    "episodeTitle": "",
+    "absolute": null,
+    "positions": {
+     "1:1": {
+      "position": 500,
+      "duration": 3000,
+      "finished": false,
+      "server": "b",
+      "at": 200
+     },
+     "1:2": {
+      "position": 50,
+      "duration": 3000,
+      "finished": false,
+      "server": "a",
+      "at": 300
+     }
+    }
+   }
+  },
+  {
+   "name": "progress: \"Começar do início\" (a newer position 0) wins over an older further position",
+   "kind": "progress",
+   "key": "movie:27205",
+   "now": 1700000000000,
+   "stored": {
+    "title": "A Origem",
+    "position": 3000,
+    "duration": 8880,
+    "server": "a",
+    "at": 100,
+    "timestamp": 90
+   },
+   "incoming": {
+    "title": "A Origem",
+    "position": 0,
+    "duration": 8880,
+    "server": "a",
+    "at": 200,
+    "timestamp": 190
+   },
+   "expect": {
+    "id": 27205,
+    "title": "A Origem",
+    "poster_path": null,
+    "backdrop_path": null,
+    "mediaType": "movie",
+    "timestamp": 190,
+    "position": 0,
+    "duration": 8880,
+    "finished": false,
+    "server": "a",
+    "at": 200
+   }
+  },
+  {
+   "name": "progress: a finished movie opened again (newer timestamp) is not finished any more",
+   "kind": "progress",
+   "key": "movie:27205",
+   "now": 1700000000000,
+   "stored": {
+    "title": "A Origem",
+    "position": 8800,
+    "duration": 8880,
+    "finished": true,
+    "server": "a",
+    "at": 100,
+    "timestamp": 90
+   },
+   "incoming": {
+    "title": "A Origem",
+    "position": 8800,
+    "duration": 8880,
+    "finished": false,
+    "server": "a",
+    "at": 100,
+    "timestamp": 300
+   },
+   "expect": {
+    "id": 27205,
+    "title": "A Origem",
+    "poster_path": null,
+    "backdrop_path": null,
+    "mediaType": "movie",
+    "timestamp": 300,
+    "position": 8800,
+    "duration": 8880,
+    "finished": false,
+    "server": "a",
+    "at": 100
+   }
+  },
+  {
+   "name": "library: the same time on both sides is settled by the content, the same way in either order",
+   "kind": "library",
+   "key": "movie:603",
+   "now": 1700000000000,
+   "stored": {
+    "kind": "movie",
+    "title": "Matrix",
+    "year": "1999",
+    "watchlist": {
+     "on": true,
+     "at": 100
+    }
+   },
+   "incoming": {
+    "kind": "movie",
+    "title": "The Matrix",
+    "year": "1999",
+    "watchlist": {
+     "on": false,
+     "at": 100
+    }
+   },
+   "expect": {
+    "kind": "movie",
+    "id": 603,
+    "title": "The Matrix",
+    "poster_path": null,
+    "backdrop_path": null,
+    "year": "1999",
+    "watchlist": {
+     "on": true,
+     "at": 100
+    }
+   }
+  },
+  {
+   "name": "favorite: a newer \"off\" wins",
+   "kind": "favorite",
+   "key": "Globo:Globo SP",
+   "now": 1700000000000,
+   "stored": {
+    "on": true,
+    "at": 100
+   },
+   "incoming": {
+    "on": false,
+    "at": 200
+   },
+   "expect": {
+    "on": false,
+    "at": 200
+   }
+  },
+  {
+   "name": "prefs: the newest whole copy wins",
+   "kind": "prefs",
+   "key": "team",
+   "now": 1700000000000,
+   "stored": {
+    "team": "flamengo",
+    "at": 300
+   },
+   "incoming": {
+    "team": "vasco",
+    "at": 200
+   },
+   "expect": {
+    "team": "flamengo",
+    "at": 300
+   }
+  }
+ ],
+ "devices": {
+  "A": "203.0.113.1",
+  "B": "203.0.113.2",
+  "C": "203.0.113.3"
+ },
+ "steps": [
+  {
+   "name": "account A",
+   "device": "A",
+   "route": "account/register",
+   "body": {
+    "nickname": "SyncUm",
+    "password": "cinema2026"
+   },
+   "expect": {
+    "status": 201
+   },
+   "save": {
+    "p1": "profiles.0.id"
+   }
+  },
+  {
+   "name": "account B (another person)",
+   "device": "B",
+   "route": "account/register",
+   "body": {
+    "nickname": "SyncDois",
+    "password": "cinema2026"
+   },
+   "expect": {
+    "status": 201
+   },
+   "save": {
+    "q1": "profiles.0.id"
+   }
+  },
+  {
+   "name": "signed out",
+   "device": "C",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 0,
+    "changes": []
+   },
+   "expect": {
+    "status": 401,
+    "error": "not_signed_in"
+   }
+  },
+  {
+   "name": "without the site's header",
+   "device": "A",
+   "route": "sync",
+   "header": false,
+   "body": {
+    "profileId": "{p1}",
+    "since": 0,
+    "changes": []
+   },
+   "expect": {
+    "status": 403,
+    "error": "origin_forbidden"
+   }
+  },
+  {
+   "name": "from another site",
+   "device": "A",
+   "route": "sync",
+   "origin": "other",
+   "body": {
+    "profileId": "{p1}",
+    "since": 0,
+    "changes": []
+   },
+   "expect": {
+    "status": 403,
+    "error": "origin_forbidden"
+   }
+  },
+  {
+   "name": "a broken request",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": -1,
+    "changes": []
+   },
+   "expect": {
+    "status": 400,
+    "error": "invalid_request"
+   }
+  },
+  {
+   "name": "another account's profile",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{q1}",
+    "since": 0,
+    "changes": []
+   },
+   "expect": {
+    "status": 404,
+    "error": "not_found"
+   }
+  },
+  {
+   "name": "more than 300 changes at once",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 0,
+    "changes": "{many:301}"
+   },
+   "expect": {
+    "status": 413,
+    "error": "too_many_changes"
+   }
+  },
+  {
+   "name": "first sync of A: three records stored",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 0,
+    "changes": [
+     {
+      "kind": "library",
+      "key": "movie:603",
+      "data": {
+       "kind": "movie",
+       "title": "Matrix",
+       "watchlist": {
+        "on": true,
+        "at": 1699999940000
+       }
+      }
+     },
+     {
+      "kind": "favorite",
+      "key": "Globo:Globo SP",
+      "data": {
+       "on": true,
+       "at": 1699999940000
+      }
+     },
+     {
+      "kind": "progress",
+      "key": "movie:27205",
+      "data": {
+       "title": "A Origem",
+       "position": 900,
+       "duration": 8880,
+       "at": 1699999940000,
+       "timestamp": 1699999940000
+      }
+     }
+    ]
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 3,
+     "changes.length": 3,
+     "more": false
+    }
+   },
+   "save": {
+    "revA": "rev"
+   }
+  },
+  {
+   "name": "a second sync in the same second is refused",
+   "device": "A",
+   "advance": 0,
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 3,
+    "changes": []
+   },
+   "expect": {
+    "status": 429,
+    "error": "too_many_attempts"
+   }
+  },
+  {
+   "name": "device C signs in to account A",
+   "device": "C",
+   "route": "account/login",
+   "body": {
+    "nickname": "syncum",
+    "password": "cinema2026"
+   },
+   "expect": {
+    "status": 200
+   }
+  },
+  {
+   "name": "device C gets everything",
+   "device": "C",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 0,
+    "changes": []
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 3,
+     "changes.length": 3
+    },
+    "record": [
+     {
+      "kind": "library",
+      "key": "movie:603",
+      "path": "data.watchlist.on",
+      "value": true
+     }
+    ]
+   }
+  },
+  {
+   "name": "device C takes the title out of Quero assistir",
+   "device": "C",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 3,
+    "changes": [
+     {
+      "kind": "library",
+      "key": "movie:603",
+      "data": {
+       "kind": "movie",
+       "title": "Matrix",
+       "watchlist": {
+        "on": false,
+        "at": "{now-1000}"
+       }
+      }
+     }
+    ]
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 4,
+     "changes.length": 1
+    }
+   }
+  },
+  {
+   "name": "A gets the removal",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 3,
+    "changes": []
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 4,
+     "changes.length": 1
+    },
+    "record": [
+     {
+      "kind": "library",
+      "key": "movie:603",
+      "path": "data.watchlist.on",
+      "value": false
+     }
+    ]
+   }
+  },
+  {
+   "name": "A sends an older copy: nothing stored, the newer copy comes back",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 4,
+    "changes": [
+     {
+      "kind": "library",
+      "key": "movie:603",
+      "data": {
+       "kind": "movie",
+       "title": "Matrix",
+       "watchlist": {
+        "on": true,
+        "at": 1699999880000
+       }
+      }
+     }
+    ]
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 4,
+     "changes.length": 1
+    },
+    "record": [
+     {
+      "kind": "library",
+      "key": "movie:603",
+      "path": "data.watchlist.on",
+      "value": false
+     }
+    ]
+   }
+  },
+  {
+   "name": "the same change twice gets no new number",
+   "device": "C",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 4,
+    "changes": [
+     {
+      "kind": "favorite",
+      "key": "Globo:Globo SP",
+      "data": {
+       "on": true,
+       "at": 1699999940000
+      }
+     }
+    ]
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 4,
+     "changes.length": 0
+    }
+   }
+  },
+  {
+   "name": "unknown fields and a fake poster are dropped; a future time is cut to now",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 4,
+    "changes": [
+     {
+      "kind": "library",
+      "key": "movie:550",
+      "data": {
+       "kind": "movie",
+       "title": "Clube da Luta",
+       "poster_path": "https://evil.example/x.jpg",
+       "evil": "<img onerror>",
+       "watched": {
+        "on": true,
+        "at": 9000000000000000
+       }
+      }
+     }
+    ]
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 5
+    },
+    "record": [
+     {
+      "kind": "library",
+      "key": "movie:550",
+      "path": "data.poster_path",
+      "value": null
+     },
+     {
+      "kind": "library",
+      "key": "movie:550",
+      "path": "data.evil",
+      "value": null
+     },
+     {
+      "kind": "library",
+      "key": "movie:550",
+      "path": "data.watched.at",
+      "value": "{now}"
+     }
+    ]
+   }
+  },
+  {
+   "name": "300 favorites",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 5,
+    "changes": "{many:300}"
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 305
+    }
+   }
+  },
+  {
+   "name": "300 more",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 305,
+    "changes": "{many:300:300}"
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 605
+    }
+   }
+  },
+  {
+   "name": "a new device gets the first 500, with more to come",
+   "device": "C",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": 0,
+    "changes": []
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "changes.length": 500,
+     "more": true,
+     "rev": 501
+    }
+   },
+   "save": {
+    "page1": "rev"
+   }
+  },
+  {
+   "name": "and then the rest (604 records: the title rewritten took a new number)",
+   "device": "C",
+   "route": "sync",
+   "body": {
+    "profileId": "{p1}",
+    "since": "{page1}",
+    "changes": []
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "changes.length": 104,
+     "more": false,
+     "rev": 605
+    }
+   }
+  },
+  {
+   "name": "a second profile",
+   "device": "A",
+   "route": "account/profiles",
+   "body": {
+    "action": "create",
+    "name": "Mãe",
+    "avatar": "n03"
+   },
+   "expect": {
+    "status": 201
+   },
+   "save": {
+    "p2": "created"
+   }
+  },
+  {
+   "name": "profiles are apart: the new one starts empty",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p2}",
+    "since": 0,
+    "changes": []
+   },
+   "expect": {
+    "status": 200,
+    "json": {
+     "rev": 0,
+     "changes.length": 0
+    }
+   }
+  },
+  {
+   "name": "remove it",
+   "device": "A",
+   "route": "account/profiles",
+   "body": {
+    "action": "remove",
+    "id": "{p2}"
+   },
+   "expect": {
+    "status": 200
+   }
+  },
+  {
+   "name": "a removed profile no longer syncs",
+   "device": "A",
+   "route": "sync",
+   "body": {
+    "profileId": "{p2}",
+    "since": 0,
+    "changes": []
+   },
+   "expect": {
+    "status": 404,
+    "error": "not_found"
+   }
+  },
+  {
+   "name": "only POST",
+   "device": "A",
+   "route": "sync",
+   "method": "GET",
+   "origin": "none",
+   "expect": {
+    "status": 405,
+    "error": "method_not_allowed"
+   }
+  }
+ ]
+}

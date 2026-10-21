@@ -11,9 +11,28 @@
  * Needs `python tools/local_server.py` on 127.0.0.1:8787 and internet (real sources; the movie is an MP4).
  */
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+// Test browser profiles are removed when the run ends (left behind, they add up to gigabytes in %TEMP%)
+const tempDirs = [];
+function tempDir(prefix) {
+  const dir = mkdtempSync(prefix);
+  tempDirs.push(dir);
+  return dir;
+}
+process.on("exit", () => {
+  // A browser started from a launcher can outlive the process the test killed: stop whatever still uses our profiles
+  if (tempDirs.length && process.platform === "win32") {
+    const filter = tempDirs.map(d => `$_.CommandLine -like '*${d.split(/[\/]/).pop()}*'`).join(" -or ");
+    try { spawnSync("powershell", ["-NoProfile", "-Command", `Get-CimInstance Win32_Process | Where-Object { ${filter} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: "ignore", timeout: 20000 }); } catch {}
+  }
+  for (const dir of tempDirs) {
+    try { rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } catch {}
+  }
+});
+
 
 const BASE = "http://127.0.0.1:8787";
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
@@ -48,7 +67,7 @@ function rpc(ws, isBidi) {
 
 /** Fresh muted browser: { evaluate, navigate, close }. */
 async function launch(name) {
-  const profile = mkdtempSync(join(tmpdir(), `tvz-continue-${name}-`));
+  const profile = tempDir(join(tmpdir(), `tvz-continue-${name}-`));
   const port = 9150 + Math.floor(Math.random() * 40);
   if (name === "firefox") {
     writeFileSync(join(profile, "user.js"), 'user_pref("media.volume_scale", "0.0");\nuser_pref("media.autoplay.default", 0);\n');
@@ -173,7 +192,7 @@ try {
   await removeCard(MOVIE.title);
   await removeCard("Breaking Bad");
   await sleep(400);
-  const modalOpen = await b.evaluate("Boolean(document.getElementById('movie-modal') && !document.getElementById('movie-modal').classList.contains('hidden'))");
+  const modalOpen = await b.evaluate("Boolean(document.getElementById('movie-player-view') && !document.getElementById('movie-player-view').classList.contains('hidden'))");
   const afterRemove = (await b.evaluate(RAIL)).map(c => c.title);
   const kept = await b.evaluate(`(() => { const p = JSON.parse(localStorage.getItem('tvzinha_watch_progress_v1')); const m = p['movie:${MOVIE.id}'];
     return { movieHidden: m.hidden, moviePosition: m.position, showHidden: p[1396].hidden }; })()`);

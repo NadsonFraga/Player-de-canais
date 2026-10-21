@@ -17,104 +17,7 @@
     <meta name="theme-color" content="#080808">
     
     <!-- Anti-Popup & Anti-Hijack Guard (Synchronous Head Bootstrap) -->
-    <script>
-      (function() {
-        'use strict';
-        const _nativeOpen = window.open ? window.open.bind(window) : null;
-        let _contingencyActive = false;
-        let _userInteractingWithIframe = false;
-        let _touchTimer = null;
-
-        // 1. Canal seguro e imutável para ações intencionais (ex: "Abrir em Nova Aba")
-        Object.defineProperty(window, 'tvzinhaSafeOpen', {
-          value: function(url, target, features) {
-            if (_nativeOpen && url) {
-              return _nativeOpen(url, target || '_blank', features || 'noopener,noreferrer');
-            }
-            return null;
-          },
-          writable: false,
-          configurable: false
-        });
-
-        // 2. Interceptador de popups com bypass para Artplayer e bloqueio silencioso
-        window.open = function(url, target, features) {
-          try {
-            const stack = (new Error()).stack || '';
-            if (stack.includes('artplayer') || stack.includes('Artplayer')) {
-              return _nativeOpen ? _nativeOpen(url, target, features) : null;
-            }
-          } catch (e) {}
-          console.warn('[Tvzinha Shield] Popup externo bloqueado em background:', url);
-          return null;
-        };
-
-        // 3. Controle imutável do estado de contingência/iframes
-        Object.defineProperty(window, 'tvzinhaSetContingencyState', {
-          value: function(isActive) {
-            _contingencyActive = Boolean(isActive);
-            if (!isActive) {
-              _userInteractingWithIframe = false;
-              if (_touchTimer) {
-                clearTimeout(_touchTimer);
-                _touchTimer = null;
-              }
-            }
-          },
-          writable: false,
-          configurable: false
-        });
-
-        // 4. Guarda imutável e idempotente para iframes (Desktop + Mobile/Touch)
-        Object.defineProperty(window, 'tvzinhaArmIframeGuard', {
-          value: function(iframeEl) {
-            if (!iframeEl || iframeEl._tvzinhaGuarded) return;
-            iframeEl._tvzinhaGuarded = true;
-
-            // Desktop (Mouse Hover)
-            iframeEl.addEventListener('mouseenter', function() {
-              _userInteractingWithIframe = true;
-            });
-            iframeEl.addEventListener('mouseleave', function() {
-              _userInteractingWithIframe = false;
-            });
-
-            // Mobile / Touch / Smart TV
-            iframeEl.addEventListener('touchstart', function() {
-              _userInteractingWithIframe = true;
-              if (_touchTimer) clearTimeout(_touchTimer);
-            }, { passive: true });
-
-            iframeEl.addEventListener('touchend', function() {
-              if (_touchTimer) clearTimeout(_touchTimer);
-              _touchTimer = setTimeout(function() {
-                _userInteractingWithIframe = false;
-              }, 3000);
-            }, { passive: true });
-          },
-          writable: false,
-          configurable: false
-        });
-
-        // Reset imediato se o usuário clicar na interface nativa da Tvzinha
-        document.addEventListener('click', function() {
-          _userInteractingWithIframe = false;
-          if (_touchTimer) {
-            clearTimeout(_touchTimer);
-            _touchTimer = null;
-          }
-        }, true);
-
-        // Bloqueio estrito de sequestro: só desarma saída se estiver em contingência + interagindo com o iframe
-        window.addEventListener('beforeunload', function(e) {
-          if (_contingencyActive && _userInteractingWithIframe) {
-            e.preventDefault();
-            e.returnValue = '';
-            return '';
-          }
-        });
-      })();
-    </script>
+    <script src="assets/js/guard.js?v=20261021_1511"></script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -122,28 +25,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261020_1352">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261020_1352">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261020_1352">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261020_1352">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261020_1352">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261020_1352">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261020_1352">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261020_1352">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261020_1352">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261020_1352">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/11-title-page.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/12-header.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/13-collection.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/14-account.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/15-profiles.css?v=20261021_1511">
+    <link rel="stylesheet" href="assets/css/16-settings.css?v=20261021_1511">
 </head>
 
 <body>
     <!-- Floating Glass Nav Capsule (Top Central - Nuvio Style) -->
     <nav id="floating-nav-capsule" class="floating-nav-capsule" aria-label="Navegação Principal">
-        <button id="nav-tab-home" class="nav-capsule-item active" data-view="home" aria-label="Aba Início">
-            <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-            <span>Início</span>
+        <button id="nav-tab-home" class="nav-capsule-item nav-capsule-brand active" data-view="home" aria-label="Início" title="Início">
+            <img src="assets/logos/fav/icon-detailed.svg" alt="" width="26" height="26">
         </button>
+        <span class="nav-capsule-divider" aria-hidden="true"></span>
         <button id="nav-tab-tv" class="nav-capsule-item" data-view="tv" aria-label="Aba Canais de TV">
             <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
@@ -179,15 +85,87 @@
             </svg>
             <span>Animes</span>
         </button>
-        <button id="nav-tab-sports" class="nav-capsule-item" data-view="sports" aria-label="Aba Esportes">
+        <button id="nav-tab-sports" class="nav-capsule-item is-soon" data-view="sports" aria-label="Aba Esportes (em breve)" title="Esportes (em breve)">
             <svg class="nav-capsule-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polygon points="12 6 16.5 9.5 15 14.5 9 14.5 7.5 9.5 12 6"></polygon>
             </svg>
             <span>Esportes</span>
-            <span class="nav-capsule-badge">Em Breve</span>
         </button>
+
+        <span class="nav-capsule-divider nav-tools-divider" aria-hidden="true"></span>
+        <!-- Search, Coleção and the profile menu: the same three icons on computers and phones -->
+        <div id="nav-capsule-tools" class="nav-capsule-tools">
+            <button id="btn-nav-search" class="nav-tool" type="button" aria-label="Buscar" title="Buscar (atalho: /)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+            <button id="btn-nav-collection" class="nav-tool" type="button" aria-label="Coleção" title="Coleção">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16"></path><path d="M8 7v13"></path><path d="M12 5v15"></path><path d="M15.5 6.5l4 13.5"></path></svg>
+            </button>
+            <div class="nav-menu-wrap">
+                <button id="btn-nav-profile" class="nav-tool nav-tool-avatar" type="button" aria-label="Perfil" title="Perfil" aria-haspopup="true" aria-expanded="false" aria-controls="nav-profile-menu">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg>
+                </button>
+                <div id="nav-profile-menu" class="nav-menu hidden" role="menu" aria-label="Perfil">
+                    <!-- The profile in use, with Trocar (signed in) next to it -->
+                    <div class="nav-menu-head">
+                        <span id="nav-menu-avatar" class="nav-menu-avatar" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg></span>
+                        <span class="nav-menu-head-text">
+                            <strong id="nav-menu-profile-name">Visitante</strong>
+                            <span id="nav-menu-profile-sub">Perfil deste aparelho</span>
+                            <span id="nav-menu-sync" class="nav-menu-sync" aria-live="polite" hidden></span>
+                        </span>
+                        <button type="button" id="btn-menu-switch" class="nav-menu-switch" data-menu-action="profiles" aria-label="Trocar perfil" title="Trocar perfil" hidden>Trocar</button>
+                    </div>
+                    <button type="button" id="btn-menu-account" class="nav-menu-item" role="menuitem" data-menu-action="account">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                        <span>Entrar ou criar conta</span>
+                    </button>
+                    <button type="button" class="nav-menu-item is-soon" role="menuitem" aria-disabled="true" data-menu-action="watchparty">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        <span>Watch Party</span>
+                        <span class="nav-menu-note">em breve</span>
+                    </button>
+                    <button type="button" class="nav-menu-item is-soon" role="menuitem" aria-disabled="true" data-menu-action="premium">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 18h20"></path><path d="M3 18l2-11 5 5 2-7 2 7 5-5 2 11"></path></svg>
+                        <span>Premium</span>
+                        <span class="nav-menu-note">em breve</span>
+                    </button>
+                    <div class="nav-menu-sep" role="separator"></div>
+                    <button type="button" id="btn-menu-settings" class="nav-menu-item" role="menuitem" data-menu-action="settings">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <span>Configurações</span>
+                    </button>
+                    <button id="btn-menu-signout" type="button" class="nav-menu-item" role="menuitem" data-menu-action="signout" hidden>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <span>Sair da conta</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </nav>
+
+    <!-- Global search (modules/header.js): movies, series, animes, channels and people -->
+    <div id="search-overlay" class="search-overlay hidden" role="dialog" aria-modal="true" aria-label="Buscar">
+        <div class="search-panel">
+            <div class="search-head">
+                <label class="search-field">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input id="global-search-input" type="search" placeholder="Buscar filmes, séries, animes, canais e pessoas" autocomplete="off" spellcheck="false" aria-label="Buscar">
+                </label>
+                <button id="btn-close-search" class="btn-player-icon" type="button" title="Fechar busca" aria-label="Fechar busca"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            <div class="search-kinds" role="tablist" aria-label="Categoria">
+                <button type="button" class="search-kind active" role="tab" aria-selected="true" data-search-kind="all">Tudo</button>
+                <button type="button" class="search-kind" role="tab" aria-selected="false" data-search-kind="movie">Filmes</button>
+                <button type="button" class="search-kind" role="tab" aria-selected="false" data-search-kind="tv">Séries</button>
+                <button type="button" class="search-kind" role="tab" aria-selected="false" data-search-kind="anime">Animes</button>
+                <button type="button" class="search-kind" role="tab" aria-selected="false" data-search-kind="channel">Canais</button>
+                <button type="button" class="search-kind" role="tab" aria-selected="false" data-search-kind="person">Pessoas</button>
+            </div>
+            <div id="search-results" class="search-results" aria-live="polite"></div>
+        </div>
+    </div>
 
     <!-- View 0: Home Hub Streaming Showcase -->
     <main id="view-home" class="view-home" aria-label="Central de Início">
@@ -967,7 +945,7 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
                             </svg>
-                            <span>Assistir Episódios</span>
+                            <span>Assistir Agora</span>
                         </button>
                     </div>
                 </div>
@@ -1257,7 +1235,7 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
                             </svg>
-                            <span>Assistir Episódios</span>
+                            <span>Assistir Agora</span>
                         </button>
                     </div>
                 </div>
@@ -1519,6 +1497,20 @@
     </main>
 
     <!-- Site footer (Início, Filmes, Séries, Animes; Canais keeps its own layout): modules/footer.js -->
+    <!-- Coleção (modules/collection.js): Assistindo, Quero assistir, Assistidos, Avaliados, Canais favoritos -->
+    <main id="view-collection" class="view-collection hidden" aria-labelledby="collection-heading">
+        <div class="collection-wrap">
+            <header class="collection-header">
+                <h1 id="collection-heading" class="collection-heading">Coleção</h1>
+                <p class="collection-sub">Fica salva neste aparelho.</p>
+            </header>
+            <div id="collection-tabs" class="collection-tabs" role="tablist" aria-label="Listas da Coleção"></div>
+            <div id="collection-filters" class="collection-filters" role="group" aria-label="Tipo"></div>
+            <div id="collection-grid" class="title-card-grid collection-grid"></div>
+            <p id="collection-empty" class="collection-empty hidden"></p>
+        </div>
+    </main>
+
     <footer id="site-footer" class="site-footer">
         <button id="btn-footer-adblock" class="site-footer-tip" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1745,28 +1737,390 @@
         </div>
     </div>
 
-    <!-- Movie Details & Server Selector Modal -->
-    <div id="movie-modal" class="movie-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="movie-modal-title">
-        <div class="movie-modal-card">
-            <button id="btn-close-movie-modal" class="btn-movie-modal-close" aria-label="Fechar janela" title="Fechar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
+    <!-- Title page: every movie, series and anime opens here in full screen (modules/titlePage.js) -->
+    <section id="title-page" class="title-page hidden" aria-labelledby="title-page-name" tabindex="-1">
+        <button id="btn-title-back" class="title-page-back" type="button" title="Voltar" aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
 
-            <!-- Media / Player Area -->
-            <div class="movie-modal-media-area" id="movie-modal-media-area">
-                <div id="movie-modal-backdrop-box" class="movie-modal-backdrop-box">
-                    <img id="movie-modal-backdrop-img" src="" alt="Capa panorâmica" class="movie-modal-backdrop-img">
-                    <div class="movie-modal-backdrop-gradient"></div>
+        <div id="title-loading" class="title-loading hidden" role="status" aria-label="Carregando">
+            <span class="title-loading-ring" aria-hidden="true"></span>
+        </div>
+
+        <div id="title-detail" class="title-detail">
+            <div class="title-hero">
+                <div class="title-hero-backdrop" aria-hidden="true">
+                    <img id="title-backdrop" class="hidden" alt="">
                 </div>
-                <div id="movie-modal-player-container" class="movie-modal-player-container hidden">
+                <div class="title-hero-content">
+                    <div class="title-hero-main">
+                        <img id="title-logo" class="title-logo hidden" alt="">
+                        <h1 id="title-page-name" class="title-name"></h1>
+                        <div id="title-genres" class="title-genres"></div>
+
+                        <div class="title-actions">
+                            <button id="btn-title-play" class="title-play" type="button">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"></polygon></svg>
+                                <span id="title-play-label">Assistir</span>
+                            </button>
+                            <button id="btn-title-watchlist" class="title-action" type="button" aria-pressed="false" title="Quero assistir" aria-label="Quero assistir">
+                                <svg class="icon-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <svg class="icon-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </button>
+                            <button id="btn-title-watched" class="title-action" type="button" aria-pressed="false" title="Marcar como assistido" aria-label="Marcar como assistido">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                            <div class="title-rate-wrap">
+                                <button id="btn-title-rate" class="title-action title-action-rate" type="button" aria-expanded="false" aria-controls="title-rate-panel" title="Avaliar" aria-label="Avaliar">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2.5 14.9 8.6 21.5 9.4 16.6 13.9 17.9 20.5 12 17.2 6.1 20.5 7.4 13.9 2.5 9.4 9.1 8.6"></polygon></svg>
+                                    <span id="title-rate-value" class="title-rate-value"></span>
+                                </button>
+                                <div id="title-rate-panel" class="title-rate-panel hidden" role="group" aria-label="Avaliar">
+                                    <div id="title-rate-stars" class="title-rate-stars"></div>
+                                    <div class="title-rate-footer">
+                                        <span id="title-rate-hint" class="title-rate-hint"></span>
+                                        <button id="btn-title-rate-clear" class="title-rate-clear hidden" type="button">Remover nota</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="title-meta" class="title-meta"></div>
+                        <p id="title-credit-line" class="title-credit-line"></p>
+                        <p id="title-overview" class="title-overview"></p>
+                        <button id="btn-title-more" class="title-more hidden" type="button">Ler mais</button>
+                    </div>
+
+                    <aside class="title-hero-side">
+                        <dl id="title-facts" class="title-facts"></dl>
+                        <div id="title-companies" class="title-companies"></div>
+                    </aside>
+                </div>
+            </div>
+
+            <div class="title-body">
+                <section id="title-episodes-section" class="title-section hidden" aria-labelledby="title-episodes-heading">
+                    <h2 id="title-episodes-heading" class="title-section-heading">Episódios</h2>
+                    <!-- Mode Switcher: Arcs vs Continuous (Essential for Long-Running Animes) -->
+                    <div class="series-mode-switcher" id="series-mode-switcher">
+                        <button type="button" id="btn-mode-arcs" class="btn-mode-switch active">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            <span>Temporadas & Arcos</span>
+                        </button>
+                        <button type="button" id="btn-mode-continuous" class="btn-mode-switch">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                            <span>Lista Contínua</span>
+                        </button>
+                    </div>
+
+                    <!-- Panel 1: Seasons & Arcs Grid (Default) -->
+                    <div id="series-arcs-panel" class="series-panel-content">
+                        <div class="series-season-bar-clean">
+                            <div class="series-season-selector-clean">
+                                <div class="season-select-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                                        <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                                    </svg>
+                                    <span>Temporada</span>
+                                </div>
+                                <div class="custom-select-wrapper">
+                                    <select id="series-season-select" class="series-season-select" aria-label="Selecione a Temporada"></select>
+                                </div>
+                            </div>
+                            <span id="series-season-episodes-total" class="season-episodes-count"></span>
+                        </div>
+
+                        <div id="series-episodes-grid" class="series-episodes-grid">
+                            <!-- Populated dynamically with clean episode cards -->
+                        </div>
+                    </div>
+
+                    <!-- Panel 2: Continuous Navigation Panel -->
+                    <div id="series-continuous-panel" class="series-panel-content hidden">
+                        <div class="continuous-search-bar">
+                            <div class="continuous-input-box">
+                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="series-quick-ep-search" class="continuous-ep-input" placeholder="Digitar número do episódio...">
+                                <button id="btn-go-to-ep" class="btn-continuous-go" type="button">Ir</button>
+                            </div>
+                            <div id="series-chunks-container" class="continuous-chunks-scroller">
+                                <!-- Populated with batch chunks 1-50, 51-100, etc. -->
+                            </div>
+                        </div>
+                        <div id="series-continuous-grid" class="series-episodes-grid">
+                            <!-- Populated with continuous episodes -->
+                        </div>
+                    </div>
+                </section>
+
+                <section id="title-trailers-section" class="title-section hidden" aria-labelledby="title-trailers-heading">
+                    <div class="title-row-head">
+                        <h2 id="title-trailers-heading" class="title-section-heading">Trailers</h2>
+                        <div class="title-row-arrows">
+                            <button class="btn-carousel-arrow" type="button" data-row="title-trailers" data-dir="-1" aria-label="Voltar trailers"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                            <button class="btn-carousel-arrow" type="button" data-row="title-trailers" data-dir="1" aria-label="Avançar trailers"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                        </div>
+                    </div>
+                    <div id="title-trailers" class="title-row title-row-trailers"></div>
+                </section>
+
+                <section id="title-cast-section" class="title-section hidden" aria-labelledby="title-cast-heading">
+                    <div class="title-row-head">
+                        <h2 id="title-cast-heading" class="title-section-heading">Elenco</h2>
+                        <div class="title-row-arrows">
+                            <button class="btn-carousel-arrow" type="button" data-row="title-cast" data-dir="-1" aria-label="Voltar elenco"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                            <button class="btn-carousel-arrow" type="button" data-row="title-cast" data-dir="1" aria-label="Avançar elenco"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                        </div>
+                    </div>
+                    <div id="title-cast" class="title-row title-row-cast"></div>
+                </section>
+
+                <section id="title-collection-section" class="title-section hidden" aria-labelledby="title-collection-heading">
+                    <div class="title-row-head">
+                        <h2 id="title-collection-heading" class="title-section-heading"></h2>
+                        <div class="title-row-arrows">
+                            <button class="btn-carousel-arrow" type="button" data-row="title-collection" data-dir="-1" aria-label="Voltar coleção"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                            <button class="btn-carousel-arrow" type="button" data-row="title-collection" data-dir="1" aria-label="Avançar coleção"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                        </div>
+                    </div>
+                    <div id="title-collection" class="title-row title-row-posters"></div>
+                </section>
+
+                <section id="title-recs-section" class="title-section hidden" aria-labelledby="title-recs-heading">
+                    <div class="title-row-head">
+                        <h2 id="title-recs-heading" class="title-section-heading">Você pode gostar</h2>
+                        <div class="title-row-arrows">
+                            <button class="btn-carousel-arrow" type="button" data-row="title-recs" data-dir="-1" aria-label="Voltar recomendações"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                            <button class="btn-carousel-arrow" type="button" data-row="title-recs" data-dir="1" aria-label="Avançar recomendações"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                        </div>
+                    </div>
+                    <div id="title-recs" class="title-row title-row-posters"></div>
+                </section>
+            </div>
+        </div>
+
+        <!-- A person's or a production company's titles (stacked on the title page) -->
+        <div id="title-list" class="title-list hidden">
+            <header class="title-list-header">
+                <img id="title-list-avatar" class="title-list-avatar hidden" alt="">
+                <div class="title-list-text">
+                    <span id="title-list-kicker" class="title-list-kicker"></span>
+                    <h1 id="title-list-name" class="title-list-name"></h1>
+                </div>
+            </header>
+            <div id="title-list-grid" class="title-card-grid"></div>
+            <button id="btn-title-list-more" class="title-list-more hidden" type="button">Carregar mais</button>
+        </div>
+
+        <!-- The site footer moves here while the page is open -->
+        <div id="title-footer-slot"></div>
+    </section>
+
+    <!-- Trailer: a small YouTube player over the title page -->
+    <div id="trailer-modal" class="trailer-modal hidden" role="dialog" aria-modal="true" aria-labelledby="trailer-modal-title">
+        <div class="trailer-modal-card">
+            <div class="trailer-modal-bar">
+                <span id="trailer-modal-title" class="trailer-modal-title">Trailer</span>
+                <a id="trailer-modal-youtube" class="trailer-modal-youtube" href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer">
+                    <span>Abrir no YouTube</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                </a>
+                <button id="btn-close-trailer" class="btn-player-icon" type="button" title="Fechar trailer" aria-label="Fechar trailer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            <div id="trailer-modal-frame" class="trailer-modal-frame"></div>
+        </div>
+    </div>
+
+    <!-- Configurações: topics on the left, the chosen one on the right; phones show the list, then one topic (modules/settingsPage.js) -->
+    <section id="settings-page" class="settings-page hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <button id="btn-settings-back" class="title-page-back account-back" type="button" title="Voltar" aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+        <div class="settings-layout">
+            <aside class="settings-side">
+                <h1 id="settings-title" class="settings-title">Configurações</h1>
+                <nav id="settings-nav" class="settings-nav" role="tablist" aria-label="Tópicos" aria-orientation="vertical">
+                <button type="button" class="settings-nav-item" role="tab" id="settings-tab-account" data-settings-section="account" aria-controls="settings-panel" aria-selected="false">
+                    <span class="settings-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5"></path></svg></span>
+                    <span class="settings-nav-label">Conta</span>
+                    <span class="settings-nav-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+                </button>
+                <button type="button" class="settings-nav-item" role="tab" id="settings-tab-profiles" data-settings-section="profiles" aria-controls="settings-panel" aria-selected="false">
+                    <span class="settings-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+                    <span class="settings-nav-label">Perfis</span>
+                    <span class="settings-nav-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+                </button>
+                <button type="button" class="settings-nav-item" role="tab" id="settings-tab-player" data-settings-section="player" aria-controls="settings-panel" aria-selected="false">
+                    <span class="settings-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg></span>
+                    <span class="settings-nav-label">Player</span>
+                    <span class="settings-nav-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+                </button>
+                <button type="button" class="settings-nav-item" role="tab" id="settings-tab-sync" data-settings-section="sync" aria-controls="settings-panel" aria-selected="false">
+                    <span class="settings-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></span>
+                    <span class="settings-nav-label">Sincronização</span>
+                    <span class="settings-nav-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+                </button>
+                <button type="button" class="settings-nav-item" role="tab" id="settings-tab-about" data-settings-section="about" aria-controls="settings-panel" aria-selected="false">
+                    <span class="settings-nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
+                    <span class="settings-nav-label">Sobre</span>
+                    <span class="settings-nav-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+                </button>
+                </nav>
+            </aside>
+            <div id="settings-panel" class="settings-panel" role="tabpanel" tabindex="-1"></div>
+        </div>
+    </section>
+
+    <!-- Account: Entrar, Criar conta, Esqueci a senha and the recovery code (modules/accountPage.js) -->
+    <section id="account-page" class="account-page hidden" role="dialog" aria-modal="true" aria-labelledby="account-title">
+        <button id="btn-account-back" class="title-page-back account-back" type="button" title="Voltar" aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+        <div class="account-card">
+            <div class="account-brand">
+                <img src="assets/logos/fav/icon-detailed.svg" alt="" width="34" height="34">
+                <span>Tvzinha Online</span>
+            </div>
+
+            <div id="account-form-view" class="account-view">
+                <div class="account-switch" role="tablist" aria-label="Conta">
+                    <span class="account-switch-glider" aria-hidden="true"></span>
+                    <button type="button" class="account-switch-option active" role="tab" aria-selected="true" data-account-view="signin">Entrar</button>
+                    <button type="button" class="account-switch-option" role="tab" aria-selected="false" data-account-view="signup">Criar conta</button>
+                </div>
+
+                <form id="account-form" class="account-form" novalidate>
+                    <h1 id="account-title" class="account-title">Entrar</h1>
+                    <p id="account-lead" class="account-lead">Sua Coleção e seu progresso em qualquer aparelho.</p>
+
+                    <label class="account-field">
+                        <span class="account-label">Apelido</span>
+                        <input id="account-nickname" class="account-input" type="text" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="20" required>
+                        <small id="account-nickname-hint" class="account-hint"></small>
+                    </label>
+
+                    <label class="account-field" id="account-code-field" hidden>
+                        <span class="account-label">Código de recuperação</span>
+                        <input id="account-code-input" class="account-input account-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" placeholder="XXXX-XXXX-XXXX-XXXX">
+                    </label>
+
+                    <div class="account-field">
+                        <label class="account-label" for="account-password" id="account-password-label">Senha</label>
+                        <div class="account-input-wrap">
+                            <input id="account-password" class="account-input" type="password" name="password" autocomplete="current-password" maxlength="200" required>
+                            <button id="btn-account-eye" class="account-eye" type="button" aria-label="Mostrar senha" aria-pressed="false"><svg class="icon-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg class="icon-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 4.06-5.06"></path><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg></button>
+                        </div>
+                        <div id="account-strength" class="account-strength" hidden>
+                            <span class="account-strength-bar"><span></span></span>
+                            <span id="account-strength-label" class="account-strength-label"></span>
+                        </div>
+                        <ul id="account-rules" class="account-rules" hidden>
+                            <li data-rule="length"><span class="account-rule-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Pelo menos 8 caracteres</span></li>
+                            <li data-rule="letter"><span class="account-rule-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Uma letra</span></li>
+                            <li data-rule="number"><span class="account-rule-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Um número</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- The robot check (Cloudflare Turnstile): invisible unless it needs a click -->
+                    <div id="account-turnstile" class="account-turnstile"></div>
+                    <p id="account-error" class="account-error" role="alert"></p>
+
+                    <button id="btn-account-submit" class="account-submit" type="submit">
+                        <span id="account-submit-label">Entrar</span>
+                        <span class="account-spinner" aria-hidden="true"></span>
+                    </button>
+
+                    <button id="btn-account-forgot" class="account-link" type="button" data-account-view="recover">Esqueci a senha</button>
+                    <button id="btn-account-remembered" class="account-link" type="button" data-account-view="signin" hidden>Voltar para Entrar</button>
+                    <p id="account-terms" class="account-terms" hidden>Ao criar a conta, você concorda com os <button type="button" class="account-inline-link" data-legal="terms">Termos de uso</button> e a <button type="button" class="account-inline-link" data-legal="privacy">Política de Privacidade</button>.</p>
+                </form>
+            </div>
+
+            <div id="account-code-view" class="account-view" hidden>
+                <h1 class="account-title">Guarde seu código de recuperação</h1>
+                <p class="account-lead">Sem e-mail, ele é a única forma de voltar à conta se você esquecer a senha. Ele aparece só agora: anote ou copie para um lugar seguro.</p>
+                <div id="account-code" class="account-code" aria-live="polite"></div>
+                <button id="btn-account-copy" class="account-secondary" type="button">Copiar código</button>
+                <button id="btn-account-code-done" class="account-submit" type="button"><span>Guardei o código</span></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Profiles: Quem está assistindo?, Gerenciar perfis, the editor and the guest data question (modules/profilePage.js) -->
+    <section id="profile-page" class="profile-page hidden" role="dialog" aria-modal="true" aria-labelledby="profile-title">
+        <button id="btn-profile-back" class="title-page-back account-back" type="button" title="Voltar" aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+
+        <div id="profile-pick-view" class="profile-view">
+            <h1 id="profile-title" class="profile-title">Quem está assistindo?</h1>
+            <div id="profile-grid" class="profile-grid" role="list"></div>
+            <button id="btn-profile-manage" class="account-secondary profile-manage" type="button">Gerenciar perfis</button>
+            <button id="btn-profile-signout" class="account-link profile-signout" type="button">Sair da conta</button>
+        </div>
+
+        <div id="profile-edit-view" class="profile-view" hidden>
+            <div class="account-card profile-card">
+                <h1 id="profile-edit-title" class="account-title">Editar perfil</h1>
+                <div class="profile-edit-top">
+                    <img id="profile-edit-preview" class="profile-avatar profile-edit-preview" src="assets/img/avatars/l01.svg" alt="" width="88" height="88" draggable="false">
+                    <div class="account-field profile-edit-field">
+                        <label class="account-label" for="profile-name">Nome</label>
+                        <input id="profile-name" class="account-input" type="text" maxlength="20" autocomplete="off" spellcheck="false" enterkeyhint="done">
+                        <div id="profile-name-hint" class="account-hint" aria-live="polite"></div>
+                    </div>
+                </div>
+                <div class="profile-avatar-tabs" role="tablist" aria-label="Avatares">
+                    <button type="button" class="profile-avatar-tab active" role="tab" aria-selected="true" data-avatar-set="faces">Ilustrados</button>
+                    <button type="button" class="profile-avatar-tab" role="tab" aria-selected="false" data-avatar-set="icons">Ícones</button>
+                </div>
+                <div id="profile-avatar-grid" class="profile-avatar-grid" role="radiogroup" aria-label="Avatar"></div>
+                <p id="profile-edit-error" class="account-error" role="alert"></p>
+                <button id="btn-profile-save" class="account-submit" type="button">
+                    <span id="btn-profile-save-label">Salvar</span>
+                    <span class="account-spinner" aria-hidden="true"></span>
+                </button>
+                <button id="btn-profile-remove" class="account-link profile-remove" type="button">Excluir perfil</button>
+            </div>
+        </div>
+
+        <div id="profile-confirm-view" class="profile-view" hidden>
+            <div class="account-card profile-card">
+                <h1 id="profile-confirm-title" class="account-title">Excluir o perfil?</h1>
+                <p class="account-lead">A Coleção, o progresso e as preferências deste perfil neste aparelho também serão apagados. Não dá para desfazer.</p>
+                <p id="profile-confirm-error" class="account-error" role="alert"></p>
+                <button id="btn-profile-confirm-remove" class="account-submit profile-danger" type="button">
+                    <span>Excluir perfil</span>
+                    <span class="account-spinner" aria-hidden="true"></span>
+                </button>
+                <button id="btn-profile-confirm-cancel" class="account-secondary" type="button">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="profile-guest-view" class="profile-view" hidden>
+            <div class="account-card profile-card profile-guest-card">
+                <img id="profile-guest-avatar" class="profile-avatar profile-guest-avatar" src="assets/img/avatars/l01.svg" alt="" width="88" height="88" draggable="false">
+                <h1 id="profile-guest-title" class="account-title">Levar o que está neste aparelho?</h1>
+                <p class="account-lead">A Coleção, o progresso e os canais favoritos salvos aqui sem conta passam a valer para este perfil. Eles continuam no aparelho para quando você usar o site sem entrar.</p>
+                <button id="btn-profile-guest-yes" class="account-submit" type="button"><span>Sim, levar para o perfil</span></button>
+                <button id="btn-profile-guest-no" class="account-secondary" type="button">Começar vazio</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Movie player page: full screen over the title page (movies.js playMovie) -->
+    <div id="movie-player-view" class="movie-modal-backdrop player-page hidden" role="dialog" aria-modal="true" aria-labelledby="movie-player-server-title">
+        <div class="movie-modal-card player-page-card is-playing">
+            <div class="movie-modal-media-area" id="movie-modal-media-area">
+                <div id="movie-modal-player-container" class="movie-modal-player-container">
                     <div class="movie-player-top-bar">
-                        <span id="movie-player-server-title" class="movie-player-server-title">Servidor 1</span>
+                        <button id="btn-close-movie-player" class="btn-player-icon" type="button" title="Voltar ao filme" aria-label="Voltar ao filme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+                        <span id="movie-player-server-title" class="movie-player-server-title">Carregando filme...</span>
                         <div class="movie-player-actions">
-                            <!-- Back-to-details step used only by the device Back button (history manager); the visible exit is the X -->
-                            <button id="btn-close-movie-player" class="btn-player-icon" type="button" hidden title="Voltar aos detalhes" aria-label="Voltar aos detalhes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
                             <button id="btn-reload-movie-player" class="btn-player-icon" type="button" title="Recarregar player" aria-label="Recarregar player"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
                             <button id="btn-exit-movie-player" class="btn-player-icon danger" type="button" title="Sair para Filmes" aria-label="Sair para Filmes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                         </div>
@@ -1781,19 +2135,7 @@
                 </div>
             </div>
 
-            <!-- Modal Content & Server Options -->
             <div class="movie-modal-body">
-                <div class="movie-modal-header-info">
-                    <h2 id="movie-modal-title" class="movie-modal-title"></h2>
-                    <div class="movie-modal-meta-row">
-                        <span id="movie-modal-year" class="movie-modal-badge"></span>
-                        <span id="movie-modal-rating" class="movie-modal-badge rating"></span>
-                        <div id="movie-modal-genres" class="movie-modal-genres"></div>
-                    </div>
-                    <p id="movie-modal-overview" class="movie-modal-overview"></p>
-                </div>
-
-                <!-- Servers Grid -->
                 <div class="movie-servers-section">
                     <div class="movie-servers-title">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1809,114 +2151,9 @@
         </div>
     </div>
 
-    <!-- Series & Animes Details & Episode Selection Modal -->
-    <div id="series-modal" class="movie-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="series-modal-title">
-        <div class="movie-modal-card series-modal-card">
-            <button id="btn-close-series-modal" class="btn-movie-modal-close" aria-label="Fechar janela" title="Fechar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-
-            <!-- Media Header Area -->
-            <div class="movie-modal-media-area" id="series-modal-media-area">
-                <div id="series-modal-backdrop-box" class="movie-modal-backdrop-box">
-                    <img id="series-modal-backdrop-img" src="" alt="Capa panorâmica da série" class="movie-modal-backdrop-img">
-                    <div class="movie-modal-backdrop-gradient"></div>
-                    <div class="movie-modal-play-cta">
-                        <button id="btn-series-modal-direct-play" class="btn-cinema-primary" aria-label="Assistir episódio">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                            </svg>
-                            <span id="series-modal-direct-play-label">Assistir Agora</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Body & Episode Selection (Aligned with Movie Modal) -->
-            <div class="movie-modal-body series-modal-body">
-                <div class="movie-modal-header-info">
-                    <h2 id="series-modal-title" class="movie-modal-title"></h2>
-                    <div class="movie-modal-meta-row">
-                        <span id="series-modal-year" class="movie-modal-badge"></span>
-                        <span id="series-modal-rating" class="movie-modal-badge rating"></span>
-                        <span id="series-modal-seasons-count" class="movie-modal-badge seasons-badge"></span>
-                        <div id="series-modal-genres" class="movie-modal-genres"></div>
-                    </div>
-                    <p id="series-modal-overview" class="movie-modal-overview"></p>
-                </div>
-
-                <!-- Mode Switcher: Arcs vs Continuous (Essential for Long-Running Animes) -->
-                <div class="series-mode-switcher" id="series-mode-switcher">
-                    <button type="button" id="btn-mode-arcs" class="btn-mode-switch active">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="14" width="7" height="7"></rect>
-                            <rect x="3" y="14" width="7" height="7"></rect>
-                        </svg>
-                        <span>Temporadas & Arcos</span>
-                    </button>
-                    <button type="button" id="btn-mode-continuous" class="btn-mode-switch">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="8" y1="6" x2="21" y2="6"></line>
-                            <line x1="8" y1="12" x2="21" y2="12"></line>
-                            <line x1="8" y1="18" x2="21" y2="18"></line>
-                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                        </svg>
-                        <span>Lista Contínua</span>
-                    </button>
-                </div>
-
-                <!-- Panel 1: Seasons & Arcs Grid (Default) -->
-                <div id="series-arcs-panel" class="series-panel-content">
-                    <div class="series-season-bar-clean">
-                        <div class="series-season-selector-clean">
-                            <div class="season-select-title">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-                                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-                                </svg>
-                                <span>Selecione a Temporada:</span>
-                            </div>
-                            <div class="custom-select-wrapper">
-                                <select id="series-season-select" class="series-season-select" aria-label="Selecione a Temporada"></select>
-                            </div>
-                        </div>
-                        <span id="series-season-episodes-total" class="season-episodes-count"></span>
-                    </div>
-
-                    <div id="series-episodes-grid" class="series-episodes-grid">
-                        <!-- Populated dynamically with clean episode cards -->
-                    </div>
-                </div>
-
-                <!-- Panel 2: Continuous Navigation Panel -->
-                <div id="series-continuous-panel" class="series-panel-content hidden">
-                    <div class="continuous-search-bar">
-                        <div class="continuous-input-box">
-                            <input type="text" inputmode="numeric" pattern="[0-9]*" id="series-quick-ep-search" class="continuous-ep-input" placeholder="Digitar número do episódio...">
-                            <button id="btn-go-to-ep" class="btn-continuous-go" type="button">Ir</button>
-                        </div>
-                        <div id="series-chunks-container" class="continuous-chunks-scroller">
-                            <!-- Populated with batch chunks 1-50, 51-100, etc. -->
-                        </div>
-                    </div>
-                    <div id="series-continuous-grid" class="series-episodes-grid">
-                        <!-- Populated with continuous episodes -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Dedicated Unified Modal Player View for Series and Animes Episodes -->
-    <div id="series-player-view" class="movie-modal-backdrop series-player-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="series-player-current-ep">
-        <div class="movie-modal-card series-player-modal-card is-playing">
+    <!-- Series and anime player page: full screen over the title page (series.js openEpisode) -->
+    <div id="series-player-view" class="movie-modal-backdrop series-player-modal-backdrop player-page hidden" role="dialog" aria-modal="true" aria-labelledby="series-player-current-ep">
+        <div class="movie-modal-card series-player-modal-card player-page-card is-playing">
             <!-- Media / Player Area -->
             <div class="movie-modal-media-area series-modal-media-area">
                 <div class="movie-player-top-bar series-player-top-bar">
@@ -2012,7 +2249,7 @@
     <!-- Streaming Engine V3: Hls.js & Artplayer load on demand with Subresource Integrity (D7, B11), see ensurePlayerLibs() in engine.js -->
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261020_1352"></script>
+    <script type="module" src="assets/js/main.js?v=20261021_1511"></script>
 </body>
 
 </html>
