@@ -90,7 +90,7 @@ def main():
         if re.search(r"hash|salt|token", json.dumps(payload), re.I):
             problems.append("a secret field in the answer")
         for name, field in step.get("save", {}).items():
-            saved[name] = payload.get(field)
+            saved[name] = pick(payload, field)
         if problems:
             failed += 1
         print(f"{'FAIL' if problems else 'OK  '} {step['name']}" + (" -> " + "; ".join(problems) if problems else ""))

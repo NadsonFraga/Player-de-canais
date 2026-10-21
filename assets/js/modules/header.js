@@ -7,20 +7,23 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261021_0210';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261021_0210';
-import { fetchTmdb } from '../core/tmdb.js?v=20261021_0210';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0210';
-import { showToast } from '../core/toast.js?v=20261021_0210';
-import { syncPageLock } from '../core/activity.js?v=20261021_0210';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261021_0210';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_0210';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261021_0210';
-import { isAnimeShow } from './series.js?v=20261021_0210';
-import { selectChannelByName } from './channels.js?v=20261021_0210';
-import { openCollection } from './collection.js?v=20261021_0210';
-import { getAccount, signOut, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0210';
-import { openAccountPage } from './accountPage.js?v=20261021_0210';
+import { store } from '../core/state.js?v=20261021_0250';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261021_0250';
+import { fetchTmdb } from '../core/tmdb.js?v=20261021_0250';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0250';
+import { showToast } from '../core/toast.js?v=20261021_0250';
+import { syncPageLock } from '../core/activity.js?v=20261021_0250';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261021_0250';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_0250';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261021_0250';
+import { isAnimeShow } from './series.js?v=20261021_0250';
+import { selectChannelByName } from './channels.js?v=20261021_0250';
+import { openCollection } from './collection.js?v=20261021_0250';
+import { getAccount, getActiveProfile, signOut, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0250';
+import { PROFILE_EVENT } from '../core/profileStore.js?v=20261021_0250';
+import { avatarSrc } from '../core/avatars.js?v=20261021_0250';
+import { openAccountPage } from './accountPage.js?v=20261021_0250';
+import { openProfilePicker } from './profilePage.js?v=20261021_0250';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -290,32 +293,34 @@ function renderResults(box, split, channels) {
 
 // --- Setup ---
 
-/** The profile menu and the pill's profile button follow the account (signed in or Visitante). */
+/** The profile menu and the pill's profile button follow the account: the profile in use, or Visitante. */
 function renderAccount() {
-    const { signedIn, account, profiles } = getAccount();
-    const profile = signedIn ? (profiles[0] || { name: account.nickname }) : null;
+    const { signedIn, account } = getAccount();
+    const profile = getActiveProfile();
     const name = document.getElementById('nav-menu-profile-name');
     const sub = document.getElementById('nav-menu-profile-sub');
-    if (name) name.textContent = profile ? profile.name : 'Visitante';
-    if (sub) sub.textContent = profile ? `Conta ${account.nickname}` : 'Perfil deste aparelho';
+    if (name) name.textContent = profile ? profile.name : signedIn ? account.nickname : 'Visitante';
+    if (sub) sub.textContent = signedIn ? `Conta ${account.nickname}` : 'Perfil deste aparelho';
     document.getElementById('btn-menu-account')?.toggleAttribute('hidden', signedIn);
     document.getElementById('btn-menu-signout')?.toggleAttribute('hidden', !signedIn);
-    // Signed in: the profile's initial in a colored circle (the avatars of step 4b replace it)
-    const initial = profile ? Array.from(profile.name.trim())[0].toUpperCase() : '';
+    document.getElementById('btn-menu-switch')?.toggleAttribute('hidden', !signedIn);
+    // Signed in: the profile's avatar in place of the line icon, in the pill and in the menu
     [document.getElementById('btn-nav-profile'), document.getElementById('nav-menu-avatar')].forEach(el => {
         if (!el) return;
-        el.classList.toggle('has-initial', signedIn);
-        let letter = el.querySelector('.nav-initial');
-        if (signedIn) {
-            if (!letter) {
-                letter = document.createElement('span');
-                letter.className = 'nav-initial';
-                letter.setAttribute('aria-hidden', 'true');
-                el.appendChild(letter);
+        el.classList.toggle('has-avatar', Boolean(profile));
+        let image = el.querySelector('.nav-avatar');
+        if (profile) {
+            if (!image) {
+                image = document.createElement('img');
+                image.className = 'nav-avatar';
+                image.alt = '';
+                image.draggable = false;
+                el.appendChild(image);
             }
-            letter.textContent = initial;
-        } else if (letter) {
-            letter.remove();
+            const src = avatarSrc(profile.avatar);
+            if (image.getAttribute('src') !== src) image.setAttribute('src', src);
+        } else if (image) {
+            image.remove();
         }
     });
     const button = document.getElementById('btn-nav-profile');
@@ -348,9 +353,8 @@ export function setupHeader() {
         });
     });
 
-    // Profile menu: Entrar ou criar conta and Sair work; the rest says what it will be
+    // Profile menu: Trocar, Entrar ou criar conta and Sair work; the rest says what it will be
     const SOON = {
-        profiles: 'Os perfis chegam em breve: cada conta vai ter os seus.',
         watchparty: 'Watch Party em breve: assistir junto com amigos, ao mesmo tempo.',
         premium: 'Premium em breve.',
         settings: 'As configurações do site chegam em breve, numa tela própria.'
@@ -362,6 +366,8 @@ export function setupHeader() {
         if (action === 'account') {
             // The page's history layer goes in after the menu's has left, or the menu's Back would undo it
             runNavBatch(() => closeMenu(), () => openAccountPage('signin'));
+        } else if (action === 'profiles') {
+            runNavBatch(() => closeMenu(), () => openProfilePicker());
         } else if (action === 'signout') {
             closeMenu();
             await signOut();
@@ -372,6 +378,7 @@ export function setupHeader() {
     });
     renderAccount();
     window.addEventListener(ACCOUNT_EVENT, renderAccount);
+    window.addEventListener(PROFILE_EVENT, renderAccount);
 
     // A click outside closes the menu; Esc closes it and gives the focus back to its button
     document.addEventListener('click', (e) => {

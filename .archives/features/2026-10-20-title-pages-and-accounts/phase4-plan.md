@@ -1,6 +1,6 @@
 # Phase 4 plan: account, profiles, sync and the Configurações screen
 
-> **Status:** decisions answered on 2026-10-21 (below); avatars still open. Nothing is implemented.
+> **Status:** 4a implemented and approved on staging (2026-10-21). 4b implemented (detail at the end), on staging for the manual tests.
 > Part of the big feature (`plan.md` in this folder). Built on the 2026-10-19 decisions (G7, G7b, F10 in `backlog.md`) and
 > the review points listed there; the 2026-10-19 draft (`features/2026-10-19-user-accounts-and-cloud-sync/plan.md`) is
 > reference only (it used e-mail, a single blob per category and a max() merge that undoes removals).
@@ -150,3 +150,66 @@ nothing new.
    the site was last used more than 3 hours before; within 3 hours the same profile continues.
 9. The account flow must feel very fluid (instant feedback, transitions, no jumps): it is the first thing people see.
    A review of the fluidity of the whole site comes later (backlog F13).
+
+## Step 4b in detail (written 2026-10-21, after 4a was approved)
+
+Branch `feat/profiles` from `staging`.
+
+### Server
+
+- `POST /api/account/profiles` with `{ action, ... }`, signed in only, answers the full profile list:
+  - `create { name, avatar }`: up to 5 profiles (`profiles_full` after that).
+  - `update { id, name?, avatar? }`: rename and/or change the avatar.
+  - `remove { id }`: marks `deleted_at` (4c tells the other devices); the last profile cannot be removed (`profile_last`).
+- Rules: name 1 to 20 characters after trimming, unique inside the account without case (`profile_name_taken`);
+  avatar one of the ids the site ships (`avatar_unknown` otherwise); another account's profile answers `not_found`.
+- Same code in `functions/api/account/[[path]].js` and `tools/local_accounts.py`; new cases in `tools/accounts_cases.json`
+  run against both.
+
+### Avatars
+
+- 24 illustrated faces, both styles CC0 (license checked on dicebear.com/licenses on 2026-10-21): 12 "Lorelei"
+  (Lisa Wischofsky) and 12 "Notionists" (Zoish), plus 8 of our own line icons (TV, film, popcorn, star, ...), each on a
+  color of one palette.
+- Generated once by `tools/make_avatars.mjs` and committed as small SVG files in `assets/img/avatars/` (no request to
+  DiceBear at run time). Ids: `l01`-`l12`, `n01`-`n12`, `i01`-`i08`; the server keeps the same list. The 4a default `a01`
+  maps to `l01`.
+- Loaded only where shown: the active avatar in the pill and menu, the rest only by the picker and the editor.
+- Credit line in Sobre / Termos (4d): "Avatares Lorelei (Lisa Wischofsky) e Notionists (Zoish), CC0".
+
+### Data per profile on the device
+
+- One helper, `core/profileStore.js`: `storageKey(base)` gives `base` for guests and `base:<profileId>` when signed
+  in. Per profile: library, watch progress, channel favorites, favorite team, player preferences. Shared by the device:
+  TMDB caches, ad-block notice, sidebar width, the account cache.
+- Every read and write goes through it (series.js reads and writes the progress directly today: it moves to
+  `core/watchProgress.js`).
+- Switching profile fires `tvzinha:profile`: the stores drop their memory copies (player prefs cache, favorites and team
+  in the store) and the screens redraw (Início rows, Coleção, channel stars, header); the site goes to Início.
+- First use of a profile on a device that has guest data: "Levar o que está neste aparelho para o perfil X?" (Sim /
+  Começar vazio). Sim copies the guest data into the profile; the guest data stays. (Brought forward from 4c because 4b is
+  where the profile keys appear; 4c then sends it up.)
+- Sign out keeps the profile copies in 4b: with no sync yet, removing them would lose data. The removal (decision 4)
+  turns on in 4c, once the data is on the server.
+
+### Screens
+
+- **Quem está assistindo?** Full screen, avatars in a row (wrapping on phones) with the names, "Adicionar perfil" while
+  under 5, "Gerenciar perfis". Opens after creating the account (after "Guardei o código"), after signing in, from
+  "Trocar" in the menu, and on opening the site when the last use was more than 3 hours before. After sign-in or the
+  3-hour mark a profile must be chosen (Back does nothing there); from "Trocar", Back closes it.
+- **Gerenciar perfis:** a pencil on each avatar; the editor has the name, the avatar grid (Ilustrados / Ícones) and
+  "Excluir perfil" with a confirmation (not shown for the last profile). "Adicionar perfil" opens the same editor empty.
+- Menu: the avatar and name of the active profile at the top, "Trocar" enabled; the pill shows the avatar instead of the
+  initial.
+- Works with the TV remote; transitions as on the account page; phone layout.
+
+### Tests
+
+- API: the new cases (5 profiles then refused, duplicate name, unknown avatar, last profile, another account's profile,
+  removed profile gone from `me`), JavaScript and Python.
+- Browser, new `tools/profile_check.mjs` (Chrome and Firefox): picker after sign-in, add and edit a profile, data kept
+  apart (a title saved in one profile is missing in the other), Trocar, the 3-hour rule, the guest data question, phone
+  width, Back rules.
+- `account_check`, `header_check`, `collection_check`, `continue_watching_check`, `title_page_check` and the player
+  suites (the storage keys change under them).

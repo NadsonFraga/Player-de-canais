@@ -9,6 +9,9 @@
  *   POST password        { currentPassword, newPassword }        -> other sessions signed out
  *   POST recovery-code   { password }                            -> a new recovery code
  *   POST delete          { password }                            -> the account and everything in it removed
+ *   POST profiles        { action: create, name, avatar }        -> the profiles (up to 5), with the new one's id
+ *                        { action: update, id, name?, avatar? }
+ *                        { action: remove, id }                  (never the last one)
  *
  * The session lives in an HttpOnly cookie (scripts in the page cannot read it); the database keeps only a hash of it.
  * Writes must come from this same origin with the X-Tvzinha-Request header (other sites cannot post for the user).
@@ -31,6 +34,13 @@ export const LIMITS = {
     register: { max: 10, windowMs: 60 * 60 * 1000 },  // accounts created from one device
 };
 export const COOKIE_NAME = 'tvz_session';
+// The avatars the site ships (assets/img/avatars/<id>.svg): illustrated faces (l, n) and our line icons (i)
+export const AVATARS = [
+    ...Array.from({ length: 12 }, (_, i) => `l${String(i + 1).padStart(2, '0')}`),
+    ...Array.from({ length: 12 }, (_, i) => `n${String(i + 1).padStart(2, '0')}`),
+    ...Array.from({ length: 8 }, (_, i) => `i${String(i + 1).padStart(2, '0')}`),
+];
+export const DEFAULT_AVATAR = 'l01';
 const RECOVERY_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // no 0/O, 1/I/L
 
 const encoder = new TextEncoder();
@@ -54,6 +64,16 @@ export function checkPassword(password, nickname = '') {
     if (!/[A-Za-zÀ-ÿ]/.test(password)) return 'password_letter';
     if (!/[0-9]/.test(password)) return 'password_number';
     if (nickname && password.trim().toLowerCase() === String(nickname).trim().toLowerCase()) return 'password_is_nickname';
+    return null;
+}
+
+/** null when valid, else an error code. 1 to 20 letters (any language), numbers, spaces, dot, dash, underscore or '. */
+export function checkProfileName(name) {
+    if (typeof name !== 'string') return 'profile_name_invalid';
+    const value = name.trim();
+    if (!value) return 'profile_name_short';
+    if ([...value].length > 20) return 'profile_name_long';
+    if (!/^[\p{L}\p{N} ._'-]+$/u.test(value)) return 'profile_name_chars';
     return null;
 }
 
@@ -190,7 +210,8 @@ async function currentSession(db, cookieText, now) {
 
 async function profilesOf(db, accountId) {
     const rows = await db.all('SELECT id, name, avatar, position FROM profiles WHERE account_id = ? AND deleted_at IS NULL ORDER BY position, created_at', [accountId]);
-    return rows.map(p => ({ id: p.id, name: p.name, avatar: p.avatar }));
+    // Profiles from before the avatar set (4a saved 'a01') show the default
+    return rows.map(p => ({ id: p.id, name: p.name, avatar: AVATARS.includes(p.avatar) ? p.avatar : DEFAULT_AVATAR }));
 }
 
 async function accountView(db, account) {
@@ -257,7 +278,7 @@ export async function handleAccount(req, db) {
                 recovery_hash, recovery_salt, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [accountId, nickname, key, password.hash, password.salt, password.iterations, pepper ? 1 : 0, recovery.hash, recovery.salt, now, now]);
             await db.run('INSERT INTO profiles (id, account_id, name, avatar, position, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, ?)',
-                [crypto.randomUUID(), accountId, nickname, 'a01', now, now]);
+                [crypto.randomUUID(), accountId, nickname, DEFAULT_AVATAR, now, now]);
             await addAttempt(db, registerKey, LIMITS.register, now);
             const token = await createSession(db, accountId, now);
             const account = await db.first('SELECT * FROM accounts WHERE id = ?', [accountId]);
@@ -366,6 +387,52 @@ export async function handleAccount(req, db) {
             await db.run('DELETE FROM attempts WHERE key = ?', [nicknameKey]);
             await db.run('DELETE FROM accounts WHERE id = ?', [account.id]);
             return reply(200, { ok: true }, clearCookie);
+        }
+
+        case 'profiles': {
+            const session = await currentSession(db, req.cookie, now);
+            if (!session) return fail(401, 'not_signed_in');
+            const accountId = session.account.id;
+            const list = await db.all('SELECT id, name, position FROM profiles WHERE account_id = ? AND deleted_at IS NULL', [accountId]);
+            const nameTaken = (name, exceptId) => list.some(p => p.id !== exceptId && p.name.toLowerCase() === name.toLowerCase());
+            const checkAvatar = (avatar) => (AVATARS.includes(avatar) ? null : 'avatar_unknown');
+            const renewCookie = session.renewed ? sessionCookie(session.token) : null;
+            let createdId = null;
+
+            if (body.action === 'create') {
+                if (list.length >= MAX_PROFILES) return fail(409, 'profiles_full');
+                const nameError = checkProfileName(body.name) || checkAvatar(body.avatar);
+                if (nameError) return fail(400, nameError);
+                const name = body.name.trim();
+                if (nameTaken(name, null)) return fail(409, 'profile_name_taken');
+                createdId = crypto.randomUUID();
+                const position = list.reduce((max, p) => Math.max(max, p.position), -1) + 1;
+                await db.run('INSERT INTO profiles (id, account_id, name, avatar, position, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [createdId, accountId, name, body.avatar, position, now, now]);
+            } else if (body.action === 'update' || body.action === 'remove') {
+                const profile = list.find(p => p.id === body.id);
+                if (!profile) return fail(404, 'not_found');
+                if (body.action === 'remove') {
+                    if (list.length <= 1) return fail(409, 'profile_last');
+                    // Kept as removed (the sync tells the other devices); its synced data goes now
+                    await db.run('UPDATE profiles SET deleted_at = ?, updated_at = ? WHERE id = ?', [now, now, profile.id]);
+                    await db.run('DELETE FROM records WHERE profile_id = ?', [profile.id]);
+                    await db.run('DELETE FROM counters WHERE profile_id = ?', [profile.id]);
+                } else {
+                    const hasName = body.name !== undefined;
+                    const hasAvatar = body.avatar !== undefined;
+                    if (!hasName && !hasAvatar) return fail(400, 'missing_fields');
+                    const error = (hasName && checkProfileName(body.name)) || (hasAvatar && checkAvatar(body.avatar));
+                    if (error) return fail(400, error);
+                    if (hasName && nameTaken(body.name.trim(), profile.id)) return fail(409, 'profile_name_taken');
+                    if (hasName) await db.run('UPDATE profiles SET name = ?, updated_at = ? WHERE id = ?', [body.name.trim(), now, profile.id]);
+                    if (hasAvatar) await db.run('UPDATE profiles SET avatar = ?, updated_at = ? WHERE id = ?', [body.avatar, now, profile.id]);
+                }
+            } else {
+                return fail(400, 'unknown_action');
+            }
+            const view = await accountView(db, session.account);
+            return reply(createdId ? 201 : 200, createdId ? { ...view, created: createdId } : view, renewCookie);
         }
 
         default:

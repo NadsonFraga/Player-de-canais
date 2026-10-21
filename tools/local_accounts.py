@@ -15,6 +15,7 @@ import re
 import secrets
 import sqlite3
 import threading
+import unicodedata
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +30,9 @@ LIMITS = {
     "register": {"max": 10, "windowMs": 60 * 60 * 1000},
 }
 COOKIE_NAME = "tvz_session"
+# The avatars the site ships (assets/img/avatars/<id>.svg): illustrated faces (l, n) and our line icons (i)
+AVATARS = [f"l{i:02d}" for i in range(1, 13)] + [f"n{i:02d}" for i in range(1, 13)] + [f"i{i:02d}" for i in range(1, 9)]
+DEFAULT_AVATAR = "l01"
 RECOVERY_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 SCHEMA_PATH = Path(__file__).with_name("accounts_schema.sql")
 
@@ -59,6 +63,20 @@ def check_password(password, nickname=""):
         return "password_number"
     if nickname and password.strip().lower() == str(nickname).strip().lower():
         return "password_is_nickname"
+    return None
+
+
+def check_profile_name(name):
+    if not isinstance(name, str):
+        return "profile_name_invalid"
+    value = name.strip()
+    if not value:
+        return "profile_name_short"
+    if len(value) > 20:
+        return "profile_name_long"
+    # Same as /^[\p{L}\p{N} ._'-]+$/u in the function: letters and numbers of any language
+    if not all(unicodedata.category(ch)[0] in "LN" or ch in " ._'-" for ch in value):
+        return "profile_name_chars"
     return None
 
 
@@ -157,7 +175,8 @@ def current_session(db, cookie_text, now):
 
 def profiles_of(db, account_id):
     rows = db.all("SELECT id, name, avatar, position FROM profiles WHERE account_id = ? AND deleted_at IS NULL ORDER BY position, created_at", [account_id])
-    return [{"id": p["id"], "name": p["name"], "avatar": p["avatar"]} for p in rows]
+    # Profiles from before the avatar set (4a saved 'a01') show the default
+    return [{"id": p["id"], "name": p["name"], "avatar": p["avatar"] if p["avatar"] in AVATARS else DEFAULT_AVATAR} for p in rows]
 
 
 def account_view(db, account):
@@ -232,7 +251,7 @@ def handle_account(req, db):
                [account_id, nickname, key, password["hash"], password["salt"], password["iterations"], 1 if pepper else 0,
                 recovery["hash"], recovery["salt"], now, now])
         db.run("INSERT INTO profiles (id, account_id, name, avatar, position, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, ?)",
-               [str(uuid.uuid4()), account_id, nickname, "a01", now, now])
+               [str(uuid.uuid4()), account_id, nickname, DEFAULT_AVATAR, now, now])
         add_attempt(db, register_key, LIMITS["register"], now)
         token = create_session(db, account_id, now)
         account = db.first("SELECT * FROM accounts WHERE id = ?", [account_id])
@@ -334,6 +353,65 @@ def handle_account(req, db):
         db.run("DELETE FROM attempts WHERE key = ?", [nickname_key])
         db.run("DELETE FROM accounts WHERE id = ?", [account["id"]])
         return reply(200, {"ok": True}, clear_cookie)
+
+    if path == "profiles":
+        session = current_session(db, req.get("cookie"), now)
+        if not session:
+            return fail(401, "not_signed_in")
+        account_id = session["account"]["id"]
+        rows = db.all("SELECT id, name, position FROM profiles WHERE account_id = ? AND deleted_at IS NULL", [account_id])
+
+        def name_taken(name, except_id):
+            return any(p["id"] != except_id and p["name"].lower() == name.lower() for p in rows)
+
+        def check_avatar(avatar):
+            return None if avatar in AVATARS else "avatar_unknown"
+
+        renew_cookie = session_cookie(session["token"]) if session["renewed"] else None
+        created_id = None
+        action = body.get("action")
+
+        if action == "create":
+            if len(rows) >= MAX_PROFILES:
+                return fail(409, "profiles_full")
+            error = check_profile_name(body.get("name")) or check_avatar(body.get("avatar"))
+            if error:
+                return fail(400, error)
+            name = body["name"].strip()
+            if name_taken(name, None):
+                return fail(409, "profile_name_taken")
+            created_id = str(uuid.uuid4())
+            position = max([p["position"] for p in rows], default=-1) + 1
+            db.run("INSERT INTO profiles (id, account_id, name, avatar, position, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                   [created_id, account_id, name, body["avatar"], position, now, now])
+        elif action in ("update", "remove"):
+            profile = next((p for p in rows if p["id"] == body.get("id")), None)
+            if not profile:
+                return fail(404, "not_found")
+            if action == "remove":
+                if len(rows) <= 1:
+                    return fail(409, "profile_last")
+                db.run("UPDATE profiles SET deleted_at = ?, updated_at = ? WHERE id = ?", [now, now, profile["id"]])
+                db.run("DELETE FROM records WHERE profile_id = ?", [profile["id"]])
+                db.run("DELETE FROM counters WHERE profile_id = ?", [profile["id"]])
+            else:
+                has_name = "name" in body
+                has_avatar = "avatar" in body
+                if not has_name and not has_avatar:
+                    return fail(400, "missing_fields")
+                error = (has_name and check_profile_name(body["name"])) or (has_avatar and check_avatar(body["avatar"]))
+                if error:
+                    return fail(400, error)
+                if has_name and name_taken(body["name"].strip(), profile["id"]):
+                    return fail(409, "profile_name_taken")
+                if has_name:
+                    db.run("UPDATE profiles SET name = ?, updated_at = ? WHERE id = ?", [body["name"].strip(), now, profile["id"]])
+                if has_avatar:
+                    db.run("UPDATE profiles SET avatar = ?, updated_at = ? WHERE id = ?", [body["avatar"], now, profile["id"]])
+        else:
+            return fail(400, "unknown_action")
+        view = account_view(db, session["account"])
+        return reply(201 if created_id else 200, {**view, "created": created_id} if created_id else view, renew_cookie)
 
     return fail(404, "not_found")
 
