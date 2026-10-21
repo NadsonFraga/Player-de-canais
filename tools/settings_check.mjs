@@ -216,6 +216,8 @@ try {
   await b.evaluate(type("settings-current-password", "Errada2026"));
   await b.evaluate(type("settings-new-password", newPassword));
   const ticked = await b.evaluate("document.querySelectorAll('#settings-panel .settings-rules .is-met').length");
+  // The saved password is never filled in for a confirmation (an unlocked computer must not change the account)
+  const noFill = await b.evaluate("['settings-current-password'].every(id => document.getElementById(id).autocomplete === 'new-password')");
   await b.shot("settings-password.png");
   await b.evaluate(act("save-password"));
   const wrong = await waitFor(b, `${ERROR} === 'Senha incorreta.'`, 8000);
@@ -224,12 +226,13 @@ try {
   const saved = await waitFor(b, "!document.querySelector('#settings-panel .settings-form')", 8000);
   const oldLogin = await b.evaluate(post("login", { nickname, password }));
   const newLogin = await b.evaluate(post("login", { nickname, password: newPassword }));
-  check("signed in: every topic, the nickname; Trocar senha refuses a wrong current password, then the new one replaces the old",
-    signedNav === "account,profiles,player,sync,about" && identity === nickname && ticked === 3 && wrong !== null && saved !== null && oldLogin === 401 && newLogin === 200,
+  check("signed in: every topic, the nickname; the confirmation field is not filled by the browser; Trocar senha refuses a wrong current password, then the new one replaces the old",
+    signedNav === "account,profiles,player,sync,about" && identity === nickname && ticked === 3 && noFill && wrong !== null && saved !== null && oldLogin === 401 && newLogin === 200,
     JSON.stringify({ signedNav, identity, ticked, oldLogin, newLogin }));
 
   // 4. A new recovery code
   await b.evaluate(act("open-code"));
+  const codeNoFill = await b.evaluate("document.getElementById('settings-code-password').autocomplete === 'new-password'");
   await b.evaluate(type("settings-code-password", newPassword));
   await b.evaluate(act("make-code"));
   const shown = await waitFor(b, "/^[A-Z2-9]{4}(-[A-Z2-9]{4}){3}$/.test((document.getElementById('settings-code') || {}).textContent || '')", 10000);
@@ -239,7 +242,7 @@ try {
   const stays = await b.evaluate(`(${SETTINGS_OPEN}) && Boolean(document.getElementById('settings-code'))`);
   await b.evaluate(act("code-done"));
   const oldCode = await b.evaluate(post("recover", { nickname, recoveryCode: firstCode, newPassword: "Outra2028" }));
-  check("a new recovery code is shown once, stays on Back, and the old code is refused", shown !== null && stays && oldCode === 401, JSON.stringify({ stays, oldCode }));
+  check("a new recovery code is shown once, stays on Back, and the old code is refused", codeNoFill && shown !== null && stays && oldCode === 401, JSON.stringify({ stays, oldCode }));
 
   // 5. Sincronizar agora; Gerenciar perfis
   await b.evaluate(section("sync"));
@@ -278,6 +281,7 @@ try {
   const profileId = await b.evaluate("JSON.parse(localStorage.getItem('tvzinha_profile_v1')).profileId");
   await openSettings(b);
   await b.evaluate(act("open-delete"));
+  const deleteNoFill = await b.evaluate("document.getElementById('settings-delete-password').autocomplete === 'new-password'");
   await b.evaluate(type("settings-delete-password", newPassword));
   await b.shot("settings-delete.png");
   await b.evaluate(act("delete-account"));
@@ -292,7 +296,7 @@ try {
   const leftovers = await b.evaluate(`Object.keys(localStorage).filter(k => k.endsWith(':' + ${JSON.stringify(profileId)})).length`);
   const loginAfter = await b.evaluate(post("login", { nickname, password: newPassword }));
   check("Apagar conta: Cancelar keeps it; confirmed, the account is gone and its copies leave the device",
-    asked !== null && kept2 !== "Visitante" && gone !== null && leftovers === 0 && loginAfter === 401, JSON.stringify({ kept2, leftovers, loginAfter }));
+    deleteNoFill && asked !== null && kept2 !== "Visitante" && gone !== null && leftovers === 0 && loginAfter === 401, JSON.stringify({ kept2, leftovers, loginAfter }));
 } catch (e) {
   check("run without errors", false, e.message);
 } finally {
