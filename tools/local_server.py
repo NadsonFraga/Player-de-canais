@@ -5,12 +5,17 @@ Mirrors the exact behavior of Cloudflare Pages Functions (/api/resolve and /api/
 for zero-friction local testing on port 8787.
 """
 
+from pathlib import Path
 import os
 import sys
 import re
 import json
 import math
 import base64
+import hashlib
+import hmac
+import ipaddress
+import socket
 import time
 import urllib.parse
 import urllib.request
@@ -52,6 +57,25 @@ def load_tmdb_api_key():
 TMDB_API_KEY = load_tmdb_api_key()
 # Optional server secret for the account hashes (functions/api/account/[[path]].js reads env.ACCOUNTS_PEPPER)
 ACCOUNTS_PEPPER = load_env_value("ACCOUNTS_PEPPER")
+
+
+def load_site_csp():
+    """The Content-Security-Policy of the "/*" block in _headers (what Cloudflare sends), or "" when absent."""
+    try:
+        lines = (Path(__file__).resolve().parent.parent / "_headers").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ""
+    in_all = False
+    for line in lines:
+        if line and not line[0].isspace():
+            in_all = line.strip() == "/*"
+            continue
+        if in_all and line.strip().lower().startswith("content-security-policy:"):
+            return line.split(":", 1)[1].strip()
+    return ""
+
+
+SITE_CSP = load_site_csp()
 if not TMDB_API_KEY:
     print("[LocalServer] TMDB_API_KEY not set (environment or .env): catalogs and /api/tmdb will fail", file=sys.stderr)
 
@@ -1187,6 +1211,99 @@ def fetch_upstream(target_url, referer, origin, range_header=None, accept=None):
     return None, url
 
 
+# Calls per minute from one IP to /api/resolve and /api/tmdb (same as API_IP_LIMIT in functions/api/resolve.js)
+API_IP_LIMIT = {"max": 300, "windowMs": 60 * 1000}
+_API_IP_WINDOWS = {}
+
+
+def api_ip_blocked_for(ip, now=None):
+    now = now if now is not None else int(time.time() * 1000)
+    key = ip or "unknown"
+    entry = _API_IP_WINDOWS.get(key)
+    if not entry or now - entry["start"] > API_IP_LIMIT["windowMs"]:
+        entry = {"start": now, "count": 0}
+        _API_IP_WINDOWS[key] = entry
+    entry["count"] += 1
+    if entry["count"] > API_IP_LIMIT["max"]:
+        return -(-(entry["start"] + API_IP_LIMIT["windowMs"] - now) // 1000)
+    return 0
+
+
+# Signed proxy addresses (same as functions/api/stream.js): HMAC of exp, url, referer and origin
+STREAM_LINK_TTL_S = 24 * 3600
+_STREAM_SECRET = load_env_value("STREAM_SIGNING_KEY") or ACCOUNTS_PEPPER
+
+
+def stream_signing_key():
+    """The HMAC key for proxy addresses, or None when no secret is set (the proxy stays open)."""
+    return f"tvzinha-stream|{_STREAM_SECRET}".encode("utf-8") if _STREAM_SECRET else None
+
+
+def link_signature(key, exp, url, referer, origin):
+    mac = hmac.new(key, f"{exp}\n{url}\n{referer}\n{origin}".encode("utf-8"), hashlib.sha256).digest()[:16]
+    return base64.urlsafe_b64encode(mac).decode("ascii").rstrip("=")
+
+
+def proxied_stream_url(proxy_base, key, url, referer="", origin="", exp=None):
+    out = f"{proxy_base}?url={urllib.parse.quote(url, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
+    if origin:
+        out += f"&origin={urllib.parse.quote(origin, safe='')}"
+    if key:
+        expires = exp or int(time.time()) + STREAM_LINK_TTL_S
+        out += f"&exp={expires}&sig={link_signature(key, expires, url, referer, origin)}"
+    return out
+
+
+def link_is_valid(key, params, url, referer, origin):
+    if not key:
+        return True
+    try:
+        exp = int(params.get("exp", [""])[0])
+    except ValueError:
+        return False
+    now = int(time.time())
+    if exp < now or exp > now + 2 * STREAM_LINK_TTL_S:
+        return False
+    return hmac.compare_digest(params.get("sig", [""])[0], link_signature(key, exp, url, referer, origin))
+
+
+def is_private_address(url):
+    """True when the address points at this computer or the local network (the local proxy must not reach them;
+    Cloudflare refuses them by itself)."""
+    try:
+        host = urllib.parse.urlparse(url).hostname or ""
+        infos = socket.getaddrinfo(host, None)
+    except (OSError, ValueError, UnicodeError):
+        # Not resolvable: the request fails by itself
+        return False
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0].split("%")[0])
+        except ValueError:
+            return True
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            return True
+    return False
+
+
+# The same private paths as functions/_middleware.js, plus any dot-file or dot-folder (.env, .git) that only exists here
+BLOCKED_PREFIXES = ["/.archives/", "/tools/", "/docs/", "/.github/", "/.git/", "/scratch/", "/.agents/"]
+BLOCKED_FILES = ["/claude.md", "/gemini.md", "/agents.md", "/.gitignore", "/_headers"]
+
+
+def is_blocked_path(raw_path):
+    try:
+        path = urllib.parse.unquote(raw_path, errors="strict")
+    except UnicodeDecodeError:
+        return True
+    path = re.sub(r"/{2,}", "/", path.lower().replace("\\", "/"))
+    if path in BLOCKED_FILES:
+        return True
+    if any(path.startswith(prefix) or path == prefix[:-1] for prefix in BLOCKED_PREFIXES):
+        return True
+    return any(part.startswith(".") and part != ".well-known" for part in path.split("/") if part)
+
+
 def is_allowed_origin(origin: str) -> bool:
     """Checks whether an Origin header is permitted to access /api/resolve (D5)."""
     if not origin:
@@ -1205,9 +1322,8 @@ def is_allowed_origin(origin: str) -> bool:
             return True
         if re.match(r"^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$", host):
             return True
-        if host == "pages.dev" or host.endswith(".pages.dev"):
-            return True
-        if host == "tvzinha.online" or host.endswith(".tvzinha.online"):
+        # Our site and its previews only (any other *.pages.dev site is someone else's)
+        if host == "tvzinhaonline.pages.dev" or host.endswith(".tvzinhaonline.pages.dev"):
             return True
         return False
     except Exception:
@@ -1241,6 +1357,16 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         if content_type:
             self.send_header("Content-Type", content_type)
 
+    def send_not_found(self):
+        """Private files answer 404 as if they did not exist (functions/_middleware.js)."""
+        body = b"Not found"
+        self.send_response(404)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Pragma", "no-cache")
@@ -1254,6 +1380,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()")
         if b"x-frame-options" not in already_sent:
             self.send_header("X-Frame-Options", "SAMEORIGIN")
+        # The production CSP from _headers ("/*" block); /api/stream sends its own sandbox policy
+        if b"content-security-policy" not in already_sent and SITE_CSP:
+            self.send_header("Content-Security-Policy", SITE_CSP)
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -1274,6 +1403,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             path = parsed.path
             params = urllib.parse.parse_qs(parsed.query)
 
+            if not path.startswith("/api/") and is_blocked_path(self.path.split("?", 1)[0]):
+                self.send_not_found()
+                return
             if path == "/api/stream":
                 self.handle_stream(params, is_head=True)
             elif path == "/api/resolve":
@@ -1303,6 +1435,18 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             path = parsed.path
             params = urllib.parse.parse_qs(parsed.query)
 
+            if not path.startswith("/api/") and is_blocked_path(self.path.split("?", 1)[0]):
+                self.send_not_found()
+                return
+            if path in ("/api/resolve", "/api/tmdb"):
+                wait = api_ip_blocked_for(self.client_address[0] if self.client_address else "")
+                if wait:
+                    self.send_response(429)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Retry-After", str(wait))
+                    self.end_headers()
+                    self.wfile.write(b'{"success":false,"error":"too_many_requests"}')
+                    return
             if path == "/api/resolve":
                 origin = self.headers.get("Origin")
                 if not is_allowed_origin(origin):
@@ -1478,11 +1622,18 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         total_episodes = int(total_param) if total_param.isdigit() else 0
         mal_id = params.get("mal_id", [""])[0]
         imdb_id = params.get("imdb_id", [""])[0]
+        # Identifiers go into other sites' addresses: digits only (IMDb: "tt" + digits)
+        if (media_id and not re.fullmatch(r"\d{1,9}", media_id)) or (mal_id and not re.fullmatch(r"\d{1,9}", mal_id)) \
+                or (imdb_id and not re.fullmatch(r"tt\d{1,10}", imdb_id)):
+            self.send_json(400, {"success": False, "error": "Invalid media identifier"}, origin)
+            return
         # aniskip_only=1: only the MyAnimeList entry and its episode number (skip times for anime played from another host)
         aniskip_only = params.get("aniskip_only", [""])[0] == "1"
 
         host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
         proxy_base = f"http://{host_header}/api/stream"
+        # Proxy addresses are signed: the proxy takes no address it did not get from here
+        stream_key = stream_signing_key()
 
         cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}_{original_title_param}_{year_value}_{absolute_episode}_{total_episodes}_{season_name_param}_{aniskip_only}"
         now = time.time()
@@ -1539,14 +1690,14 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 result = {"success": True, "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": effective_episode, "ready": True}}
             elif zoko_data:
                 master_url = zoko_data["src"]
-                stream_url = f"{proxy_base}?url={urllib.parse.quote(master_url, safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}"
+                stream_url = proxied_stream_url(proxy_base, stream_key, master_url, "https://zokoanime.video/")
                 
                 # Proxy URLs, keeping only Portuguese and English
                 subtitles = normalize_subtitles([
                     {
                         "lang": s.get("lang", ""),
                         "label": s.get("label", ""),
-                        "url": f"{proxy_base}?url={urllib.parse.quote(s.get('src', ''), safe='')}&referer={urllib.parse.quote('https://zokoanime.video/', safe='')}",
+                        "url": proxied_stream_url(proxy_base, stream_key, s.get("src", ""), "https://zokoanime.video/"),
                     }
                     for s in zoko_data.get("subtitles", [])
                 ])
@@ -1648,7 +1799,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     if "peliculaplay.com" in raw_file or "cache/hls" in raw_file or "mgeb.top" in raw_file:
                         referer = "https://mgeb.top/"
 
-                    final_stream_url = direct_clean_url if is_direct_mp4 else f"{proxy_base}?url={urllib.parse.quote(raw_file, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
+                    final_stream_url = direct_clean_url if is_direct_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
                     source_type = s.get("type") or ("hls" if ".m3u8" in raw_file else "mp4")
                     # Every HLS segment through the proxy is one function call (~450 an hour of video). The player tries
                     # the host first and falls back to the proxy, so hosts that need their Referer still play
@@ -1742,6 +1893,16 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         if not is_http_url(target_url) or re.search(r"[\r\n]", referer + origin):
             self.send_stream_error(400, "bad_request", is_head)
             return
+        # Only addresses this site made (signed by /api/resolve or by this proxy for a playlist's parts)
+        signing_key = stream_signing_key()
+        if not link_is_valid(signing_key, params, target_url, referer, origin):
+            self.send_stream_error(403, "forbidden", is_head)
+            return
+        link_exp = int(params.get("exp", ["0"])[0]) if signing_key else None
+        # Never this computer or the local network (Cloudflare refuses them by itself)
+        if is_private_address(target_url):
+            self.send_stream_error(403, "forbidden", is_head)
+            return
 
         # Custom referer override or automatic provider detection
         if not referer:
@@ -1797,8 +1958,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 proxy_base = f"http://{host_header}/api/stream"
 
                 def proxied(uri):
-                    absolute = urllib.parse.urljoin(final_url, uri)
-                    return f"{proxy_base}?url={urllib.parse.quote(absolute, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
+                    # The playlist's parts expire with the playlist
+                    return proxied_stream_url(proxy_base, signing_key, urllib.parse.urljoin(final_url, uri), referer, exp=link_exp)
 
                 rewritten_lines = []
                 for line in raw.decode("utf-8", errors="ignore").split("\n"):

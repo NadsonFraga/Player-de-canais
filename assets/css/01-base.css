@@ -119,7 +119,6 @@ body.modal-open {
     background: var(--text-muted);
 }
 
-
 /* Base Layout */
 .app-layout {
     display: flex;

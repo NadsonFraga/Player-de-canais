@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261021_0957';
-import { showToast } from '../core/toast.js?v=20261021_0957';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261021_0957';
-import { buildFeedRows } from '../core/feedRows.js?v=20261021_0957';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261021_0957';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261021_0957';
-import { getUiSvg } from '../core/icons.js?v=20261021_0957';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261021_0957';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_0957';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0957';
-import { fetchTmdb } from '../core/tmdb.js?v=20261021_0957';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261021_0957';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261021_0957';
-import { resumeStartTime } from '../core/resume.js?v=20261021_0957';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261021_0957';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261021_0957';
+} from '../core/constants.js?v=20261021_1129';
+import { showToast } from '../core/toast.js?v=20261021_1129';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261021_1129';
+import { buildFeedRows } from '../core/feedRows.js?v=20261021_1129';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261021_1129';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261021_1129';
+import { getUiSvg } from '../core/icons.js?v=20261021_1129';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261021_1129';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_1129';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_1129';
+import { fetchTmdb } from '../core/tmdb.js?v=20261021_1129';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261021_1129';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261021_1129';
+import { resumeStartTime } from '../core/resume.js?v=20261021_1129';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261021_1129';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261021_1129';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -193,7 +193,7 @@ function createMovieCardElement(movie) {
     const safeRating = escapeHtml(rating);
 
     card.innerHTML = `
-        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
         <div class="movie-poster-overlay">
             <h4 class="movie-card-title" title="${safeTitleAttr}">${safeTitle}</h4>
             <div class="movie-card-meta">
@@ -486,7 +486,7 @@ function populateDirectorsTrack(trackId, directors) {
         const safeKnownFor = escapeHtml(director.knownFor || '');
 
         card.innerHTML = `
-            <img class="director-avatar" src="${safePhoto}" alt="${safeNameAttr}" loading="lazy" onerror="this.src='assets/logos/fav/icon-detailed.svg'">
+            <img class="director-avatar" src="${safePhoto}" alt="${safeNameAttr}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
             <h4 class="director-name">${safeName}</h4>
             <span class="director-meta">${safeKnownFor}</span>
         `;
@@ -525,7 +525,7 @@ function populateStudiosTrack(trackId, studios) {
 
         card.innerHTML = `
             <div class="studio-logo-wrapper">
-                <img class="studio-logo-img" src="${safeLogo}" alt="${safeNameAttr}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                <img class="studio-logo-img" src="${safeLogo}" alt="${safeNameAttr}" loading="lazy" data-fallback="show-next">
                 <span class="studio-fallback-name" style="display:none;">${safeBadge}</span>
             </div>
             <h4 class="studio-name">${safeName}</h4>

@@ -235,3 +235,30 @@ Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
 | 8 | (Optional, with a test account) Conta -> Apagar conta | Asks the password and confirms in red; the account is gone | |
 | Fix (user, 2026-10-21): the browser filled the saved password into Trocar senha, Gerar código and Apagar conta. Those confirmation fields are now `autocomplete="new-password"` with their own names and the 1Password/LastPass/Bitwarden ignore marks, so the confirmation means something on an unlocked computer; Entrar keeps autofill. Checked in `settings_check` | 8/8 Chrome, 8/8 Firefox |
 
+## Security review and dead code (`feat/security-review` -> `staging`)
+
+**Date:** 2026-10-21 · Findings, decisions and fixes in `security-review.md` (this folder).
+
+### Automated (local server with the new code)
+
+| Check | Result |
+|---|---|
+| `tools/xss_app_check.mjs` (new: malicious TMDB titles, names, posters, overviews, Coleção, progress and favorites on the real screens) | 4/4 Chrome, 4/4 Firefox; 0/4 against the old staging code (proves the test catches it) |
+| `tools/test_stream_proxy.py --strict` (signed addresses; 3 new negative cases) | 29/29 production and local |
+| `tools/test_resolve_cors.py` (only our origins) | 0 failures |
+| `tools/test_security_headers.py` (no `'unsafe-inline'` for scripts; SRI read from `engine.js`; the local server sends the CSP) | 0 failures |
+| `sync_api_check` / `test_sync_api` (reserved keys refused) and `accounts_api_check` / `test_accounts_api` | 48/48 and 48/48; 62/62 and 62/62 |
+| HTTP attack probe (files, headers, injection, CSRF, sessions, sync data, proxies, SSRF, identifiers, limits) | 54 OK; what remains is by design (requests without Origin, now limited per IP) or a kept decision (login timing) |
+| `account_check`, `profile_check`, `sync_check`, `settings_check`, `header_check`, `title_page_check`, `collection_check`, `continue_watching_check` (all under the strict CSP, movies through the signed proxy) | 17/17, 15/15, 8/8, 8/8, 26/26, 28/28, 16/16, 9/9 (Chrome); Firefox: settings 8/8, sync 8/8, title 28/28 |
+| `player_touch_check` / `player_ui_check` (pointed at the new server) | 17/17; DBZ T9E31 request checks (known, B21) |
+
+### Manual (user, on staging)
+
+| # | Steps | Expected | Result |
+|---|---|---|---|
+| 1 | Início, Filmes, Séries, Animes, Canais | Everything as before (posters, broken posters fall back to the site's icon, logos, rows) | |
+| 2 | Play a movie, a series episode and an anime episode on the Player Principal; one on Player Animes | They play (addresses are now signed) | |
+| 3 | A TV channel | Plays | |
+| 4 | Transmitir (Android) on a movie | Web Video Caster plays it | |
+| 5 | Phone: the same quick round | As before | |
+
