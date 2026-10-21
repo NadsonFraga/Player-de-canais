@@ -87,6 +87,13 @@ Data: one request per page through `/api/tmdb`, with `append_to_response` (movie
 - Settings menu: Continuar assistindo, ad-block and DNS tips, Privacidade, Termos de uso, DMCA.
 - Global search: overlay, results from 2 letters after a 0.35 s pause, categories Tudo, Filmes, Séries, Animes, Canais, Pessoas; one /api/tmdb call per search (channels searched locally); the tab searches with filters stay.
 
+### Header revision (user, 2026-10-20, during phase 3)
+
+- The pill ends with three icons on computers and phones: search (always there), Coleção (one tap, in place of the settings icon) and profile.
+- The profile menu holds the account only: the profile in use at the top with a "Trocar" switch (profiles per account, phase 4), then Entrar ou criar conta, Watch Party (creating and joining, later), Premium (later) and Configurações (a screen of its own with every site setting, later). Until they exist they are marked em breve.
+- Privacidade, Termos, DMCA and the ad-block tips leave the menus (they are in the footer). "Continuar assistindo" is the Coleção's Assistindo tab and the row on Início.
+- Phones hide Esportes until it opens, so the three icons fit a 360 px screen.
+
 ## Phase 3: Coleção (`feat/collection`)
 
 - New "Coleção" screen (from the avatar and gear menus) with tabs: Assistindo (from the watch progress), Quero assistir, Assistidos, Avaliados, Canais favoritos; filter Filmes / Séries / Animes.

@@ -105,12 +105,12 @@ Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
 
 | # | Steps | Expected | Result |
 |---|---|---|---|
-| 1 | Profile menu (computer) or the round button (phone) -> Coleção | The Coleção opens with tabs Assistindo, Quero assistir, Assistidos, Avaliados, Canais favoritos, each with its count | |
+| 1 | The Coleção icon in the pill (computer and phone) | The Coleção opens with tabs Assistindo, Quero assistir, Assistidos, Avaliados, Canais favoritos, each with its count; the icon lights up there | |
 | 2 | Mark a few titles with +, eye and stars on their pages, favorite a channel in Canais | Each shows up in its tab, newest first; Avaliados shows the score | |
 | 3 | Filter Filmes / Séries / Animes | Only that kind stays | |
 | 4 | The X on a card | It leaves that list (the title page buttons agree) | |
 | 5 | Click a card in each tab | Assistindo resumes where it stopped; the others open the title page; Back returns to the Coleção | |
-| 6 | "Continuar assistindo" in the menu | Opens the Coleção on Assistindo | |
+| 6 | The pill on computer and phone: search, Coleção, profile; the profile menu | Profile at the top with "Trocar"; Entrar ou criar conta, Watch Party, Premium and Configurações marked em breve (each says what it will be); no legal or tips items (they are in the footer); Esportes hidden on phones until it opens | |
 | 7 | Watch a movie to the credits (or jump close to the end) on the Player Principal | "Gostou de ...?" card in the player (also in fullscreen); a star saves the score; "Agora não" closes it; the movie becomes Assistido | |
 | 8 | The last episode of a finished series (e.g. Breaking Bad T5:E16) to the end | Same card for the series; the series becomes Assistido and leaves "Continuar assistindo" | |
 | 9 | Phone and Firefox: items 1, 3 and 7 | Same as Chrome on a computer | |
