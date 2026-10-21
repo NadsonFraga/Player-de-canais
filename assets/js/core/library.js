@@ -10,8 +10,8 @@
  * `rating.value` is 1 to 10 (5 stars with halves, the Trakt and Letterboxd scale); null when removed.
  * Animes are TV titles (`tv:<id>`); `kind` keeps 'anime' only to show them in the right place.
  */
-import { LIBRARY_KEY } from './constants.js?v=20261021_1502';
-import { storageKey, PROFILE_EVENT } from './profileStore.js?v=20261021_1502';
+import { LIBRARY_KEY } from './constants.js?v=20261021_1511';
+import { storageKey, PROFILE_EVENT } from './profileStore.js?v=20261021_1511';
 
 // Fired whenever the library changes, so screens redraw without importing each other
 export const LIBRARY_EVENT = 'tvzinha:library';
