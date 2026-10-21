@@ -46,9 +46,10 @@ function loadScript() {
 
 /**
  * A check drawn in `container` for `action` ('register', 'recover', 'login').
- * { token(timeoutMs) -> Promise<string|null>, unavailable, reset(), remove() }: a token is good for one try.
+ * { token(timeoutMs) -> Promise<string|null>, unavailable, failed, reset(), remove() }: a token is good for one try.
+ * `onToken(token)`: each new token (for example once the person ticks the box Cloudflare showed).
  */
-export function createCheck(container, action) {
+export function createCheck(container, action, { onToken = null } = {}) {
     let widgetId = null;
     let current = null;
     let failed = false;
@@ -71,6 +72,7 @@ export function createCheck(container, action) {
                 current = token;
                 failed = false;
                 settle(token);
+                if (onToken) onToken(token);
             },
             'error-callback': () => {
                 failed = true;
@@ -91,8 +93,11 @@ export function createCheck(container, action) {
         get unavailable() {
             return unavailable;
         },
+        get failed() {
+            return failed;
+        },
         /** The token, waiting for it up to `timeoutMs`; null when the check failed or did not answer. */
-        token(timeoutMs = 15000) {
+        token(timeoutMs = 10000) {
             if (current) return Promise.resolve(current);
             if (failed || unavailable) return Promise.resolve(null);
             return new Promise(resolve => {
