@@ -3,13 +3,13 @@
  * Fetches and renders match schedule feeds with team crest resolution and custom team picker
  */
 
-import { store } from '../core/state.js?v=20261021_0957';
-import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261021_0957';
-import { getUiSvg } from '../core/icons.js?v=20261021_0957';
-import { storageKey } from '../core/profileStore.js?v=20261021_0957';
-import { showToast } from '../core/toast.js?v=20261021_0957';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_0957';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0957';
+import { store } from '../core/state.js?v=20261021_1129';
+import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261021_1129';
+import { getUiSvg } from '../core/icons.js?v=20261021_1129';
+import { storageKey } from '../core/profileStore.js?v=20261021_1129';
+import { showToast } from '../core/toast.js?v=20261021_1129';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261021_1129';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_1129';
 
 let matchesRefreshTimer = null;
 let isTeamModalInitialized = false;
@@ -213,7 +213,7 @@ export async function openTeamSelectModal() {
         card.innerHTML = `
             ${checkHtml}
             <div class="team-card-crest-wrapper">
-                <img src="${safeCrest}" alt="${safeTeamNameAttr}" class="team-card-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
+                <img src="${safeCrest}" alt="${safeTeamNameAttr}" class="team-card-crest" loading="lazy" data-fallback-src="assets/logos/fav/favicon.svg">
             </div>
             <span class="team-card-name">${safeTeamName}</span>
         `;
@@ -397,7 +397,7 @@ export async function renderMatchesSection() {
         const teamCrest = resolveClientTeamCrest(currentTeamId, teamData);
         const safeTeamCrest = escapeAttr(teamCrest);
         const safeTeamNameAttr = escapeAttr(teamData.name || '');
-        badgeEl.innerHTML = `<img src="${safeTeamCrest}" alt="${safeTeamNameAttr}" class="team-header-crest matches-header-crest" onerror="this.src='${KNOWN_TEAM_CRESTS['brasil']}'">`;
+        badgeEl.innerHTML = `<img src="${safeTeamCrest}" alt="${safeTeamNameAttr}" class="team-header-crest matches-header-crest" data-fallback-src="${escapeAttr(KNOWN_TEAM_CRESTS['brasil'])}">`;
     }
     if (titleEl) titleEl.textContent = `Próximos Jogos - ${teamData.name}`;
     if (hintEl) hintEl.textContent = `Agenda atualizada do ${teamData.name} (via ge.globo)`;
@@ -465,7 +465,7 @@ export async function renderMatchesSection() {
             <div class="match-duel">
                 <div class="duel-team duel-mandante">
                     <div class="duel-badge-wrapper">
-                        <img src="${safeMandanteEscudo}" alt="${safeMandanteNomeAttr}" class="match-team-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
+                        <img src="${safeMandanteEscudo}" alt="${safeMandanteNomeAttr}" class="match-team-crest" loading="lazy" data-fallback-src="assets/logos/fav/favicon.svg">
                     </div>
                     <span class="duel-team-name">${safeMandanteNome}</span>
                 </div>
@@ -480,7 +480,7 @@ export async function renderMatchesSection() {
                 </div>
                 <div class="duel-team duel-visitante">
                     <div class="duel-badge-wrapper">
-                        <img src="${safeVisitanteEscudo}" alt="${safeVisitanteNomeAttr}" class="match-team-crest" loading="lazy" onerror="this.src='assets/logos/fav/favicon.svg'">
+                        <img src="${safeVisitanteEscudo}" alt="${safeVisitanteNomeAttr}" class="match-team-crest" loading="lazy" data-fallback-src="assets/logos/fav/favicon.svg">
                     </div>
                     <span class="duel-team-name">${safeVisitanteNome}</span>
                 </div>

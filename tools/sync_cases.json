@@ -83,6 +83,17 @@
    "expect": null
   },
   {
+   "name": "a key that would reach an object's prototype is refused",
+   "kind": "favorite",
+   "key": "__proto__",
+   "now": 1700000000000,
+   "data": {
+    "on": true,
+    "at": 1
+   },
+   "expect": null
+  },
+  {
    "name": "an unknown kind is refused",
    "kind": "secrets",
    "key": "x",

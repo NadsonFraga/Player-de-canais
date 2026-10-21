@@ -28,9 +28,10 @@ ORIGIN_CASES = [
     ("http://172.31.255.255:8787", True, "private LAN 172.31.x.x upper"),
     ("https://tvzinhaonline.pages.dev", True, "production pages.dev domain"),
     ("https://feat-security.tvzinhaonline.pages.dev", True, "preview pages.dev subdomain"),
-    ("https://other-branch.pages.dev", True, "any pages.dev branch preview"),
-    ("https://tvzinha.online", True, "custom domain"),
-    ("https://sub.tvzinha.online", True, "custom subdomain"),
+    ("https://other-branch.pages.dev", False, "someone else's pages.dev site"),
+    ("https://tvzinhaonline-evil.pages.dev", False, "pages.dev site with a look-alike name"),
+    ("https://tvzinha.online", False, "a domain that is not ours"),
+    ("https://sub.tvzinha.online", False, "subdomain of a domain that is not ours"),
     # Negative / unauthorized cases
     ("https://evil.com", False, "arbitrary external website"),
     ("https://attacker.pages.dev.evil.com", False, "evil domain spoofing pages.dev suffix"),

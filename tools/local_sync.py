@@ -12,6 +12,8 @@ from local_accounts import (SESSION_DAYS, add_attempt, blocked_for, cookie_heade
 SYNC_KINDS = ["library", "progress", "favorite", "prefs"]
 MAX_RECORD_BYTES = 16 * 1024
 MAX_POSITIONS = 40
+# Names that would reach an object's prototype in the page (same as syncMerge.js)
+RESERVED_KEYS = ("__proto__", "constructor", "prototype")
 SYNC_LIMITS = {
     "secondMs": 1000,
     "hour": {"max": 120, "windowMs": 60 * 60 * 1000},
@@ -117,7 +119,7 @@ def valid_key(kind, key):
     if kind == "progress":
         return bool(re.fullmatch(r"(movie:)?\d{1,9}", key))
     if kind == "favorite":
-        return 1 <= len(key.encode("utf-16-le")) // 2 <= 120 and not re.search(r"[\x00-\x1f\x7f]", key)
+        return 1 <= len(key.encode("utf-16-le")) // 2 <= 120 and not re.search(r"[\x00-\x1f\x7f]", key) and key not in RESERVED_KEYS
     if kind == "prefs":
         return key in ("player", "team")
     return False

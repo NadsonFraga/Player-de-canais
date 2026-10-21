@@ -7,16 +7,16 @@
  * whose data the site reads (core/profileStore.js) and goes to Início. The first time a profile is used on a device
  * that has guest data, the page asks whether that data goes with it.
  */
-import { getAccount, getActiveProfile, createProfile, updateProfile, removeProfile, profileNameProblem, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0957';
-import { leaveAccount } from '../core/sync.js?v=20261021_0957';
-import { activeProfileId, setActiveProfile, timeSinceLastUse, touchProfile, shouldAskAboutGuestData, markGuestDataAsked, copyGuestDataTo, removeProfileData } from '../core/profileStore.js?v=20261021_0957';
-import { AVATAR_FACES, AVATAR_ICONS, DEFAULT_AVATAR, avatarSrc, freeAvatar } from '../core/avatars.js?v=20261021_0957';
-import { showToast } from '../core/toast.js?v=20261021_0957';
-import { syncPageLock } from '../core/activity.js?v=20261021_0957';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0957';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_0957';
-import { switchAppView } from '../navigation/router.js?v=20261021_0957';
-import { isTitlePageOpen, exitTitleTo } from './titlePage.js?v=20261021_0957';
+import { getAccount, getActiveProfile, createProfile, updateProfile, removeProfile, profileNameProblem, ACCOUNT_EVENT } from '../core/account.js?v=20261021_1129';
+import { leaveAccount } from '../core/sync.js?v=20261021_1129';
+import { activeProfileId, setActiveProfile, timeSinceLastUse, touchProfile, shouldAskAboutGuestData, markGuestDataAsked, copyGuestDataTo, removeProfileData } from '../core/profileStore.js?v=20261021_1129';
+import { AVATAR_FACES, AVATAR_ICONS, DEFAULT_AVATAR, avatarSrc, freeAvatar } from '../core/avatars.js?v=20261021_1129';
+import { showToast } from '../core/toast.js?v=20261021_1129';
+import { syncPageLock } from '../core/activity.js?v=20261021_1129';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_1129';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261021_1129';
+import { switchAppView } from '../navigation/router.js?v=20261021_1129';
+import { isTitlePageOpen, exitTitleTo } from './titlePage.js?v=20261021_1129';
 
 const MAX_PROFILES = 5;
 // Away longer than this: the picker asks again who is watching

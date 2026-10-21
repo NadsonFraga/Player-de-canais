@@ -80,29 +80,10 @@
         padding: 68px 14px 24px 14px;
     }
 
-    .welcome-hero {
-        padding: 18px 16px;
-        margin-top: 4px;
-        gap: 12px;
-    }
-
-    .welcome-hero-text p {
-        font-size: 0.82rem;
-    }
-
     /* Catalog & Hub Views Spacing on Mobile */
     .view-movies,
     .view-home {
         padding-top: 48px; /* Clean spacing for top navigation capsule */
-    }
-
-    .movies-spotlight-header {
-        padding: 14px 14px 10px 14px;
-        background: #080808;
-    }
-
-    .movies-search-input-box {
-        height: 44px;
     }
 
     .movies-search-input {
@@ -217,15 +198,6 @@
     .movies-carousels-container {
         padding: 0;
         gap: 20px;
-    }
-
-    .movies-section-header {
-        padding: 0 14px;
-        margin-bottom: 8px;
-    }
-
-    .movies-row-title {
-        font-size: 1.05rem;
     }
 
     .movies-row-badge {
@@ -417,13 +389,6 @@
         align-items: center;
         gap: 6px;
         flex-shrink: 0;
-    }
-
-    .btn-player-action-mini {
-        padding: 5px 9px;
-        font-size: 0.72rem;
-        gap: 4px;
-        white-space: nowrap;
     }
 
     /* Keep Artplayer control icons within mobile viewport bounds */

@@ -20,6 +20,7 @@
 export const SYNC_KINDS = ['library', 'progress', 'favorite', 'prefs'];
 export const MAX_RECORD_BYTES = 16 * 1024;
 export const MAX_POSITIONS = 40;
+const RESERVED_KEYS = ['__proto__', 'constructor', 'prototype'];
 
 // --- Small checks ---
 
@@ -55,7 +56,8 @@ export function validKey(kind, key) {
     if (typeof key !== 'string') return false;
     if (kind === 'library') return /^(movie|tv):\d{1,9}$/.test(key);
     if (kind === 'progress') return /^(movie:)?\d{1,9}$/.test(key);
-    if (kind === 'favorite') return key.length >= 1 && key.length <= 120 && !/[\u0000-\u001f\u007f]/.test(key);
+    // Names that would reach an object's prototype when used as a property are never keys
+    if (kind === 'favorite') return key.length >= 1 && key.length <= 120 && !/[\u0000-\u001f\u007f]/.test(key) && !RESERVED_KEYS.includes(key);
     if (kind === 'prefs') return key === 'player' || key === 'team';
     return false;
 }

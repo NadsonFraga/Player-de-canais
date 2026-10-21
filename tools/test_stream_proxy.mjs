@@ -10,6 +10,22 @@ import { readFileSync } from "node:fs";
 const fixtures = JSON.parse(readFileSync(new URL("./fixtures/stream_cases.json", import.meta.url), "utf8"));
 const proxy = await import(new URL("../functions/api/stream.js", import.meta.url));
 const BASE = "http://127.0.0.1:8787/api/stream";
+// The proxy only takes signed addresses: the runners sign each case like /api/resolve does (see fixtures about_signing)
+const ENV = { STREAM_SIGNING_KEY: "test-signing-secret" };
+const signingKey = await proxy.streamSigningKey(ENV);
+
+/** The case's query with exp and sig added (or not, or wrong), as /api/resolve would make it. */
+async function signedQuery(testCase) {
+  const query = { ...(testCase.request.query || {}) };
+  const mode = testCase.signing || "valid";
+  if (!query.url || mode === "none") return query;
+  const url = mode === "tampered" ? query.url + "?other" : query.url;
+  const exp = mode === "expired" ? Math.floor(Date.now() / 1000) - 60 : null;
+  const link = new URL(await proxy.proxiedStreamUrl(BASE, signingKey, url, query.referer || "", { origin: query.origin || "", exp }));
+  query.exp = link.searchParams.get("exp");
+  query.sig = link.searchParams.get("sig");
+  return query;
+}
 
 function upstreamBody(up) {
   if (up.body_hex) return Buffer.from(up.body_hex, "hex");
@@ -36,12 +52,12 @@ for (const testCase of fixtures.cases) {
   };
 
   const method = (testCase.request.method || "GET").toUpperCase();
-  const query = new URLSearchParams(testCase.request.query || {}).toString();
+  const query = new URLSearchParams(await signedQuery(testCase)).toString();
   const request = new Request(`${BASE}${query ? "?" + query : ""}`, { method, headers: testCase.request.headers || {} });
   const observation = { name: testCase.name };
   try {
     const handler = method === "HEAD" && proxy.onRequestHead ? proxy.onRequestHead : proxy.onRequestGet;
-    const res = await handler({ request, env: {} });
+    const res = await handler({ request, env: ENV });
     observation.status = res.status;
     observation.headers = Object.fromEntries(res.headers);
     observation.body = method === "HEAD" ? "" : await res.text();
