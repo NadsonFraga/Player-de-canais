@@ -3,7 +3,7 @@
  * Implements strict hierarchical back navigation across all tabs, searches, modals, drawers, and active media.
  */
 
-import { store } from '../core/state.js?v=20261021_0046';
+import { store } from '../core/state.js?v=20261021_0145';
 
 let navigationDepth = 0;
 let isProgrammaticBack = false;
@@ -140,6 +140,11 @@ function runAfterBatchSettled() {
     if (callback) callback();
 }
 
+/** True while the browser's Back (popstate) is being handled: its history entry is already gone. */
+export function isHandlingBack() {
+    return isHandlingPopState;
+}
+
 /**
  * Resets navigation state to clean Home root.
  * Called when the user clicks 'Home' tab directly from any view.
@@ -234,6 +239,16 @@ export function handleBackButton() {
         const btnCloseLegal = document.getElementById("btn-close-legal-modal");
         if (btnCloseLegal) {
             btnCloseLegal.click();
+            return true;
+        }
+    }
+
+    // 2.55 Account page (Entrar, Criar conta, the recovery code), over the title page
+    const accountPage = document.getElementById("account-page");
+    if (accountPage && !accountPage.classList.contains("hidden")) {
+        const btnAccountBack = document.getElementById("btn-account-back");
+        if (btnAccountBack) {
+            btnAccountBack.click();
             return true;
         }
     }

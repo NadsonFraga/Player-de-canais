@@ -116,3 +116,28 @@ Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
 | 7 | Watch a movie to the credits (or jump close to the end) on the Player Principal | "Gostou de ...?" card in the player (also in fullscreen); a star saves the score; "Agora não" closes it; the movie becomes Assistido | |
 | 8 | The last episode of a finished series (e.g. Breaking Bad T5:E16) to the end | Same card for the series; the series becomes Assistido and leaves "Continuar assistindo" | |
 | 9 | Phone and Firefox: items 1, 3 and 7 | Same as Chrome on a computer | |
+
+## Phase 4a: accounts (`feat/accounts` -> `staging`)
+
+**Date:** 2026-10-21 · **Staging:** https://staging.tvzinhaonline.pages.dev (needs the D1 databases and the `DB` binding)
+
+### Automated
+
+| Check | Result |
+|---|---|
+| `tools/accounts_api_check.mjs` (the Cloudflare function with Node's SQLite) and `tools/test_accounts_api.py` (the local mirror): the same 38 cases from `tools/accounts_cases.json` (rules, duplicate nickname, origin and header, attempt limits, password change signing out other devices, recovery code once and loosely typed, logout, delete, routes and methods; no secret in any answer; HttpOnly cookie) | 38/38 and 38/38 |
+| Password hashes identical in JavaScript and Python (with and without pepper) | PASS |
+| `tools/account_check.mjs` (new, browser): guest menu, live rules and strength, recovery code kept on Back, signed-in menu and initial, reload keeps the session (cookie unreadable by the page), Sair, wrong password, Esqueci a senha, phone width, test account deleted | 15/15 Chrome, 15/15 Firefox (local server) |
+| `header_check.mjs`, `title_page_check.mjs` | 26/26, 28/28 |
+| `collection_check.mjs` | 15/16: the movie stays paused right after it starts in the test browser; production does the same today (not from this feature, see the chat of 2026-10-21) |
+
+### Manual (user, on staging, after the databases exist)
+
+| # | Steps | Expected | Result |
+|---|---|---|---|
+| 1 | Profile menu -> Entrar ou criar conta -> Criar conta | Rules ticked while typing, strength bar, button only works with the rules met; line with Termos and Privacidade links | |
+| 2 | Create the account | Recovery code in large type, Copiar works, Back keeps the screen, "Guardei o código" closes it; menu shows the profile, Sair, and the initial in the pill | |
+| 3 | Reload; open the site on the phone and sign in there | Still signed in after the reload; the phone signs in with the nickname in any case | |
+| 4 | Sair; a wrong password; the right one | Visitante again; "Apelido ou senha incorretos."; signed in | |
+| 5 | Esqueci a senha with the code | New password saved, a new code shown | |
+| 6 | Five wrong passwords in a row | "Muitas tentativas. Tente de novo em N minutos." | |
