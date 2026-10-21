@@ -5,7 +5,7 @@
  * in localStorage to draw the menu at once; /api/account/me confirms it in the background. Guests never call the
  * server (no cost): /me runs only when that copy says someone is signed in.
  */
-import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261021_0145';
+import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261021_0210';
 
 const CACHE_KEY = 'tvzinha_account_v1';
 export const ACCOUNT_EVENT = 'tvzinha:account';
