@@ -205,3 +205,32 @@ Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
 | 5 | Sair on the phone | Visitante; the account's Coleção leaves the phone; entering again brings it back | |
 | 6 | Two profiles: save something in each, check on the other device | Each profile keeps its own | |
 
+**Phase 4c approved by the user on 2026-10-21** (manual sync tests on staging fine; the timing as built confirmed, no polling while a tab is open).
+
+## Phase 4d: Configurações, Privacidade and Termos (`feat/settings` -> `staging`)
+
+**Date:** 2026-10-21 · **Staging:** https://staging.tvzinhaonline.pages.dev (no database or API change)
+
+### Automated
+
+| Check | Result |
+|---|---|
+| `tools/settings_check.mjs` (new): guests (Conta with Entrar ou criar conta, Player, Sobre); a player choice kept after a reload; Privacidade tells what the account keeps; Trocar senha (wrong current refused, rules ticked, the old password stops working); a new recovery code shown once, kept on Back, the old code refused; Sincronizar agora; Gerenciar perfis over Configurações and Back returns; phones (list, topic in full, Back to the list, Back closes); Apagar conta (Cancelar keeps it; confirmed, the account is gone and its copies leave the device) | 8/8 Chrome, 8/8 Firefox |
+| `account_check`, `profile_check`, `sync_check` | 17/17, 15/15, 8/8 |
+| `header_check` (the guest menu assertion updated: Configurações works, Trocar only with an account) | 26/26 |
+| `title_page_check`, `collection_check`, `player_touch_check` | 28/28, 16/16, 17/17 |
+| `player_ui_check` | DBZ T9E31 request checks fail (known, B21) |
+
+### Manual (user, on staging)
+
+| # | Steps | Expected | Result |
+|---|---|---|---|
+| 1 | Computer: menu -> Configurações | Topics on the left, Conta on the right; switching topics changes only the right side | |
+| 2 | Player: change Legenda, Qualidade, Tela, Velocidade; open a movie | The player starts with the choices; changing them in the player shows in Configurações too | |
+| 3 | Conta -> Trocar senha; then the phone | The phone asks to sign in again; the new password works | |
+| 4 | Conta -> Gerar novo código | Code shown once with Copiar; "Guardei o código" closes it | |
+| 5 | Sincronização -> Sincronizar agora; Perfis -> Gerenciar perfis | "Sincronizado agora"; the profile page opens in edit mode and Back returns | |
+| 6 | Sobre -> Privacidade, Termos, Dicas para bloquear anúncios | The new texts about the account; the tips open | |
+| 7 | Phone: Configurações | The list of topics; a topic opens in full and Back returns to the list | |
+| 8 | (Optional, with a test account) Conta -> Apagar conta | Asks the password and confirms in red; the account is gone | |
+

@@ -172,7 +172,8 @@ try {
   check("profile menu opens and Back closes it (page stays)", profileOpen && profileClosed !== null);
   await b.evaluate("(document.getElementById('btn-nav-profile').click(), true)");
   const menu = await b.evaluate("({ switch: Boolean(document.querySelector('#nav-profile-menu .nav-menu-head .nav-menu-switch')), items: [...document.querySelectorAll('#nav-profile-menu .nav-menu-item')].map(i => i.dataset.menuAction + (i.classList.contains('is-soon') ? '*' : '')).join(',') })");
-  check("profile menu (guest): the profile with its switch, Entrar ou criar conta, then Watch Party, Premium and Configurações (em breve)", menu.switch && menu.items === "account,watchparty*,premium*,settings*,signout", JSON.stringify(menu));
+  // Trocar shows only with an account; Configurações works for guests too
+  check("profile menu (guest): Entrar ou criar conta, Watch Party and Premium (em breve), Configurações; no Trocar", menu.switch && menu.items === "account,watchparty*,premium*,settings,signout", JSON.stringify(menu));
   await b.evaluate("(document.querySelector('#nav-profile-menu [data-menu-action=\"watchparty\"]').click(), true)");
   await sleep(300);
   const soon = await b.evaluate("document.getElementById('app-toast').textContent");

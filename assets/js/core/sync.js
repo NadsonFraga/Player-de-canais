@@ -12,15 +12,15 @@
  * Guests never sync. Errors wait longer each time (30 s up to 10 min); the server's limits are respected (one request a
  * second per account, and its "wait N seconds").
  */
-import { STREAM_ENGINE_API_BASE, LIBRARY_KEY, WATCH_PROGRESS_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY } from './constants.js?v=20261021_0614';
-import { activeProfileId, notifyProfileData, removeProfileData, readPersonalTimes, writePersonalTimes, PROFILE_EVENT } from './profileStore.js?v=20261021_0614';
-import { getAccount, signOut, refreshAccount, ACCOUNT_EVENT } from './account.js?v=20261021_0614';
-import { sanitizeRecord, mergeRecord, stableStringify } from './syncMerge.js?v=20261021_0614';
-import { LIBRARY_EVENT } from './library.js?v=20261021_0614';
-import { PROGRESS_EVENT } from './watchProgress.js?v=20261021_0614';
-import { PREFS_EVENT, PLAYER_PREF_DEFAULTS } from './playerPrefs.js?v=20261021_0614';
-import { store } from './state.js?v=20261021_0614';
-import { confirmDialog } from './confirmDialog.js?v=20261021_0614';
+import { STREAM_ENGINE_API_BASE, LIBRARY_KEY, WATCH_PROGRESS_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY } from './constants.js?v=20261021_0948';
+import { activeProfileId, notifyProfileData, removeProfileData, readPersonalTimes, writePersonalTimes, PROFILE_EVENT } from './profileStore.js?v=20261021_0948';
+import { getAccount, signOut, refreshAccount, deleteAccount, ACCOUNT_EVENT } from './account.js?v=20261021_0948';
+import { sanitizeRecord, mergeRecord, stableStringify } from './syncMerge.js?v=20261021_0948';
+import { LIBRARY_EVENT } from './library.js?v=20261021_0948';
+import { PROGRESS_EVENT } from './watchProgress.js?v=20261021_0948';
+import { PREFS_EVENT, PLAYER_PREF_DEFAULTS } from './playerPrefs.js?v=20261021_0948';
+import { store } from './state.js?v=20261021_0948';
+import { confirmDialog } from './confirmDialog.js?v=20261021_0948';
 
 export const SYNC_EVENT = 'tvzinha:sync';
 const SYNC_STATE_KEY = 'tvzinha_sync_v1';
@@ -394,16 +394,29 @@ export async function leaveAccount() {
         });
         if (!leave) return false;
     }
+    await signOut();
+    forgetProfiles(profiles);
+    return true;
+}
+
+/** The account's copies leave this device (signed out or deleted); the guest data stays. */
+function forgetProfiles(profiles) {
     clearTimeout(timer);
     timer = null;
     timerAt = 0;
-    await signOut();
     for (const profile of profiles) {
         removeProfileData(profile.id);
         removeSyncState(profile.id);
     }
     setStatus('idle', 0);
-    return true;
+}
+
+/** Apagar conta (Configurações): on the server, then its copies on this device. Resolves the server's answer. */
+export async function deleteAccountHere(password) {
+    const { profiles } = getAccount();
+    const result = await deleteAccount(password);
+    if (result.status === 200) forgetProfiles(profiles);
+    return result;
 }
 
 export function setupSync() {

@@ -6,8 +6,8 @@
  * server (no cost): /me runs only when that copy says someone is signed in.
  * Profiles: the list comes with the account; which one is in use on this device lives in core/profileStore.js.
  */
-import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261021_0614';
-import { activeProfileId, setActiveProfile } from './profileStore.js?v=20261021_0614';
+import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261021_0948';
+import { activeProfileId, setActiveProfile } from './profileStore.js?v=20261021_0948';
 
 const CACHE_KEY = 'tvzinha_account_v1';
 export const ACCOUNT_EVENT = 'tvzinha:account';
@@ -103,6 +103,25 @@ export async function refreshAccount() {
     else if (result.status === 401) setState({ signedIn: false, account: null, profiles: [] });
     // Other failures (offline, server busy) keep the copy: the person stays signed in until the server says otherwise
     return getAccount();
+}
+
+// --- Configurações: password, recovery code, deleting the account ---
+
+/** The other devices are signed out by the server; this one stays. */
+export function changePassword(currentPassword, newPassword) {
+    return call('password', { currentPassword, newPassword });
+}
+
+/** A new recovery code ({ recoveryCode }); the old one stops working. */
+export function renewRecoveryCode(password) {
+    return call('recovery-code', { password });
+}
+
+/** Deletes the account and everything in it on the server; signed out here when it worked. */
+export async function deleteAccount(password) {
+    const result = await call('delete', { password });
+    if (result.status === 200) setState({ signedIn: false, account: null, profiles: [] });
+    return result;
 }
 
 // --- Profiles (create, rename, avatar, remove); the answer is the full list ---
