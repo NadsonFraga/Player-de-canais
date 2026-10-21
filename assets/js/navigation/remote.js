@@ -3,8 +3,8 @@
  * Purely DOM-based spatial navigation with Euclidean 2D distance calculation
  */
 
-import { store } from '../core/state.js?v=20261021_0046';
-import { handleBackButton } from './historyManager.js?v=20261021_0046';
+import { store } from '../core/state.js?v=20261021_0145';
+import { handleBackButton } from './historyManager.js?v=20261021_0145';
 
 export function setupTvRemoteNavigation() {
     function getFocusableElements() {
@@ -17,6 +17,15 @@ export function setupTvRemoteNavigation() {
             '.search-kind',
             '.search-channel',
             '.search-person',
+            '#btn-account-back',
+            '.account-switch-option',
+            '.account-input',
+            '#btn-account-eye',
+            '#btn-account-submit',
+            '.account-link',
+            '.account-inline-link',
+            '#btn-account-copy',
+            '#btn-account-code-done',
             '.collection-tab',
             '.collection-filter',
             '.collection-remove',
@@ -150,9 +159,11 @@ export function setupTvRemoteNavigation() {
         const key = e.key;
 
         if (key === 'Escape' || key === 'Back' || key === 'BrowserBack') {
-            // Global search: the same step as the Back button
+            // Global search and the account page: the same step as the Back button
             const searchOverlay = document.getElementById("search-overlay");
-            if (searchOverlay && !searchOverlay.classList.contains("hidden") && !e.defaultPrevented) {
+            const accountPage = document.getElementById("account-page");
+            const overlayOpen = [searchOverlay, accountPage].some(el => el && !el.classList.contains("hidden"));
+            if (overlayOpen && !e.defaultPrevented) {
                 e.preventDefault();
                 handleBackButton();
                 return;

@@ -19,13 +19,16 @@ import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import local_accounts  # noqa: E402  (mirror of functions/api/account/[[path]].js)
+
 PORT = 8787
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
 
-def load_tmdb_api_key():
-    """TMDB key (D3): the TMDB_API_KEY environment variable, else the git-ignored .env file at the project root."""
-    key = os.environ.get("TMDB_API_KEY", "").strip()
+def load_env_value(wanted):
+    """A secret: the environment variable `wanted`, else the git-ignored .env file at the project root."""
+    key = os.environ.get(wanted, "").strip()
     if key:
         return key
     env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
@@ -33,14 +36,21 @@ def load_tmdb_api_key():
         with open(env_path, encoding="utf-8") as env_file:
             for line in env_file:
                 name, sep, value = line.strip().partition("=")
-                if sep and name.strip() == "TMDB_API_KEY":
+                if sep and name.strip() == wanted:
                     return value.strip().strip('"').strip("'")
     except OSError:
         pass
     return ""
 
 
+def load_tmdb_api_key():
+    """TMDB key (D3): the TMDB_API_KEY environment variable, else the git-ignored .env file at the project root."""
+    return load_env_value("TMDB_API_KEY")
+
+
 TMDB_API_KEY = load_tmdb_api_key()
+# Optional server secret for the account hashes (functions/api/account/[[path]].js reads env.ACCOUNTS_PEPPER)
+ACCOUNTS_PEPPER = load_env_value("ACCOUNTS_PEPPER")
 if not TMDB_API_KEY:
     print("[LocalServer] TMDB_API_KEY not set (environment or .env): catalogs and /api/tmdb will fail", file=sys.stderr)
 
@@ -1303,6 +1313,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.handle_resolve(params, origin=origin)
             elif path == "/api/tmdb":
                 self.handle_tmdb(params, origin=self.headers.get("Origin"))
+            elif path.startswith("/api/account/"):
+                self.handle_account("GET", path)
             elif path == "/api/stream":
                 self.handle_stream(params, is_head=False)
             elif path == "/health":
@@ -1328,6 +1340,57 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
             except Exception:
                 pass
+
+    def do_POST(self):
+        try:
+            path = urllib.parse.urlparse(self.path).path
+            if path.startswith("/api/account/"):
+                self.handle_account("POST", path)
+            else:
+                self.send_response(404)
+                self.end_headers()
+        except Exception as e:
+            print(f"[LocalServer] Error in do_POST: {e}", file=sys.stderr)
+            try:
+                self.send_response(500)
+                self.end_headers()
+            except Exception:
+                pass
+
+    def handle_account(self, method, path):
+        """/api/account/*: same answers as functions/api/account/[[path]].js. No CORS headers: only this site reads them."""
+        body = None
+        if method == "POST":
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(min(length, 8192)) if length else b""
+            body, error = local_accounts.parse_body(raw)
+            if error:
+                self.send_account_reply({"status": 413 if error == "too_large" else 400, "json": {"error": error}, "setCookie": None})
+                return
+        host = self.headers.get("Host") or "127.0.0.1:8787"
+        result = local_accounts.handle_account({
+            "method": method,
+            "path": path[len("/api/account/"):],
+            "body": body,
+            "cookie": self.headers.get("Cookie") or "",
+            "origin": self.headers.get("Origin"),
+            "requestOrigin": f"http://{host}",
+            "customHeader": self.headers.get("X-Tvzinha-Request"),
+            "ip": self.client_address[0] if self.client_address else "",
+            "now": int(time.time() * 1000),
+            # Plain http here: a Secure cookie would be refused on a phone opening the LAN address
+            "secure": False,
+            "pepper": ACCOUNTS_PEPPER,
+        }, local_accounts.local_database())
+        self.send_account_reply(result)
+
+    def send_account_reply(self, result):
+        self.send_response(result["status"])
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        if result.get("setCookie"):
+            self.send_header("Set-Cookie", result["setCookie"])
+        self.end_headers()
+        self.wfile.write(json.dumps(result["json"]).encode("utf-8"))
 
     def send_json(self, status, payload, origin=None):
         body = payload if isinstance(payload, bytes) else json.dumps(payload).encode("utf-8")

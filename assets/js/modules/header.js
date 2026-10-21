@@ -7,18 +7,20 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261021_0046';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261021_0046';
-import { fetchTmdb } from '../core/tmdb.js?v=20261021_0046';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0046';
-import { showToast } from '../core/toast.js?v=20261021_0046';
-import { syncPageLock } from '../core/activity.js?v=20261021_0046';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261021_0046';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_0046';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261021_0046';
-import { isAnimeShow } from './series.js?v=20261021_0046';
-import { selectChannelByName } from './channels.js?v=20261021_0046';
-import { openCollection } from './collection.js?v=20261021_0046';
+import { store } from '../core/state.js?v=20261021_0145';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261021_0145';
+import { fetchTmdb } from '../core/tmdb.js?v=20261021_0145';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_0145';
+import { showToast } from '../core/toast.js?v=20261021_0145';
+import { syncPageLock } from '../core/activity.js?v=20261021_0145';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261021_0145';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_0145';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261021_0145';
+import { isAnimeShow } from './series.js?v=20261021_0145';
+import { selectChannelByName } from './channels.js?v=20261021_0145';
+import { openCollection } from './collection.js?v=20261021_0145';
+import { getAccount, signOut, ACCOUNT_EVENT } from '../core/account.js?v=20261021_0145';
+import { openAccountPage } from './accountPage.js?v=20261021_0145';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -288,6 +290,38 @@ function renderResults(box, split, channels) {
 
 // --- Setup ---
 
+/** The profile menu and the pill's profile button follow the account (signed in or Visitante). */
+function renderAccount() {
+    const { signedIn, account, profiles } = getAccount();
+    const profile = signedIn ? (profiles[0] || { name: account.nickname }) : null;
+    const name = document.getElementById('nav-menu-profile-name');
+    const sub = document.getElementById('nav-menu-profile-sub');
+    if (name) name.textContent = profile ? profile.name : 'Visitante';
+    if (sub) sub.textContent = profile ? `Conta ${account.nickname}` : 'Perfil deste aparelho';
+    document.getElementById('btn-menu-account')?.toggleAttribute('hidden', signedIn);
+    document.getElementById('btn-menu-signout')?.toggleAttribute('hidden', !signedIn);
+    // Signed in: the profile's initial in a colored circle (the avatars of step 4b replace it)
+    const initial = profile ? Array.from(profile.name.trim())[0].toUpperCase() : '';
+    [document.getElementById('btn-nav-profile'), document.getElementById('nav-menu-avatar')].forEach(el => {
+        if (!el) return;
+        el.classList.toggle('has-initial', signedIn);
+        let letter = el.querySelector('.nav-initial');
+        if (signedIn) {
+            if (!letter) {
+                letter = document.createElement('span');
+                letter.className = 'nav-initial';
+                letter.setAttribute('aria-hidden', 'true');
+                el.appendChild(letter);
+            }
+            letter.textContent = initial;
+        } else if (letter) {
+            letter.remove();
+        }
+    });
+    const button = document.getElementById('btn-nav-profile');
+    if (button) button.setAttribute('aria-label', profile ? `Perfil ${profile.name}` : 'Perfil');
+}
+
 export function setupHeader() {
     const tools = document.getElementById('nav-capsule-tools');
     if (!tools || tools.dataset.ready === '1') return;
@@ -314,18 +348,30 @@ export function setupHeader() {
         });
     });
 
-    // Profile menu: everything in it is still on its way; each item says what it will be
+    // Profile menu: Entrar ou criar conta and Sair work; the rest says what it will be
     const SOON = {
-        profiles: 'Os perfis chegam com a conta: cada conta vai ter os seus.',
-        account: 'A conta chega em breve. Por enquanto, tudo fica salvo neste aparelho.',
+        profiles: 'Os perfis chegam em breve: cada conta vai ter os seus.',
         watchparty: 'Watch Party em breve: assistir junto com amigos, ao mesmo tempo.',
         premium: 'Premium em breve.',
         settings: 'As configurações do site chegam em breve, numa tela própria.'
     };
-    document.getElementById('nav-profile-menu')?.addEventListener('click', (e) => {
+    document.getElementById('nav-profile-menu')?.addEventListener('click', async (e) => {
         const item = e.target.closest('[data-menu-action]');
-        if (item && SOON[item.dataset.menuAction]) showToast(SOON[item.dataset.menuAction]);
+        if (!item) return;
+        const action = item.dataset.menuAction;
+        if (action === 'account') {
+            // The page's history layer goes in after the menu's has left, or the menu's Back would undo it
+            runNavBatch(() => closeMenu(), () => openAccountPage('signin'));
+        } else if (action === 'signout') {
+            closeMenu();
+            await signOut();
+            showToast('Você saiu da conta. A conta continua salva: é só entrar de novo.');
+        } else if (SOON[action]) {
+            showToast(SOON[action]);
+        }
     });
+    renderAccount();
+    window.addEventListener(ACCOUNT_EVENT, renderAccount);
 
     // A click outside closes the menu; Esc closes it and gives the focus back to its button
     document.addEventListener('click', (e) => {
