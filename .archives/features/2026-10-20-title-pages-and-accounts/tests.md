@@ -233,4 +233,5 @@ Version `20261020_1857`, commit `5f2feaf`, merged into `staging` as `55f5f38`.
 | 6 | Sobre -> Privacidade, Termos, Dicas para bloquear anúncios | The new texts about the account; the tips open | |
 | 7 | Phone: Configurações | The list of topics; a topic opens in full and Back returns to the list | |
 | 8 | (Optional, with a test account) Conta -> Apagar conta | Asks the password and confirms in red; the account is gone | |
+| Fix (user, 2026-10-21): the browser filled the saved password into Trocar senha, Gerar código and Apagar conta. Those confirmation fields are now `autocomplete="new-password"` with their own names and the 1Password/LastPass/Bitwarden ignore marks, so the confirmation means something on an unlocked computer; Entrar keeps autofill. Checked in `settings_check` | 8/8 Chrome, 8/8 Firefox |
 
