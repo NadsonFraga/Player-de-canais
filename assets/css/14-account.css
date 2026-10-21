@@ -218,11 +218,13 @@
     padding-right: 48px;
 }
 
+/* Centered with margins, not transform: the focus style (04-sports.css) replaces the transform of a focused button */
 .account-eye {
     position: absolute;
-    top: 50%;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
     right: 6px;
-    transform: translateY(-50%);
     width: 36px;
     height: 36px;
     border: none;

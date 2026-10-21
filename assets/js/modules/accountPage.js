@@ -6,11 +6,11 @@
  * still decides. After creating the account or recovering it, the new recovery code is shown and the page only closes
  * through "Guardei o código".
  */
-import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_0145';
-import { showToast } from '../core/toast.js?v=20261021_0145';
-import { syncPageLock } from '../core/activity.js?v=20261021_0145';
-import { pushNavLayer, popNavLayer, isHandlingBack } from '../navigation/historyManager.js?v=20261021_0145';
-import { openLegalSection } from './footer.js?v=20261021_0145';
+import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261021_0210';
+import { showToast } from '../core/toast.js?v=20261021_0210';
+import { syncPageLock } from '../core/activity.js?v=20261021_0210';
+import { pushNavLayer, popNavLayer, isHandlingBack } from '../navigation/historyManager.js?v=20261021_0210';
+import { openLegalSection } from './footer.js?v=20261021_0210';
 
 const MESSAGES = {
     nickname_short: 'O apelido precisa ter pelo menos 3 caracteres.',
@@ -297,6 +297,8 @@ export function setupAccountPage() {
 
     document.getElementById('account-form').addEventListener('submit', submit);
     document.getElementById('account-form').addEventListener('input', updateLiveChecks);
+    // The press keeps the focus (and the phone keyboard) in the password field
+    document.getElementById('btn-account-eye').addEventListener('mousedown', e => e.preventDefault());
     document.getElementById('btn-account-eye').addEventListener('click', () => {
         const password = document.getElementById('account-password');
         setPasswordVisible(password.type === 'password');
