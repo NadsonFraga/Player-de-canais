@@ -1837,33 +1837,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
                 }
 
-        # Route 3: Cinecat (Ultra-Fast 1080p HLS)
-        if not result and requested_source == "cinecat" and media_id:
-            cinecat_data = timed("cinecat", local_providers.fetch_cinecat, media_id, media_type, season, episode)
-            if cinecat_data and cinecat_data.get("sources"):
-                s = cinecat_data["sources"][0]
-                stream_url = proxied_stream_url(proxy_base, stream_key, s["file"], s["referer"])
-                result = {
-                    "success": True,
-                    "title": cinecat_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
-                    "category": media_type,
-                    "audio": "original",
-                    "provider": "cinecat",
-                    "primary_source": {
-                        "label": s["label"],
-                        "type": "hls",
-                        "stream_url": stream_url,
-                        "direct_url": s["file"],
-                        "raw_url": s["file"],
-                        "headers": {"Referer": s["referer"]},
-                        "quality": 1080
-                    },
-                    "fallback_sources": [],
-                    "subtitles": [],
-                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
-                }
-
-        # Route 4: Rive (4K HDR Multi-Engine)
+        # Route 3: Rive (4K HDR Multi-Engine)
         if not result and requested_source == "rive" and media_id:
             rive_data = timed("rive", local_providers.fetch_rive, media_id, media_type, season, episode)
             if rive_data and rive_data.get("sources"):

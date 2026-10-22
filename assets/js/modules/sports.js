@@ -3,13 +3,13 @@
  * Fetches and renders match schedule feeds with team crest resolution and custom team picker
  */
 
-import { store } from '../core/state.js?v=20261022_1014';
-import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261022_1014';
-import { getUiSvg } from '../core/icons.js?v=20261022_1014';
-import { storageKey } from '../core/profileStore.js?v=20261022_1014';
-import { showToast } from '../core/toast.js?v=20261022_1014';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261022_1014';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261022_1014';
+import { store } from '../core/state.js?v=20261022_1109';
+import { FAVORITE_TEAM_KEY, KNOWN_TEAM_CRESTS, GITHUB_RAW_FEED_URL } from '../core/constants.js?v=20261022_1109';
+import { getUiSvg } from '../core/icons.js?v=20261022_1109';
+import { storageKey } from '../core/profileStore.js?v=20261022_1109';
+import { showToast } from '../core/toast.js?v=20261022_1109';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261022_1109';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261022_1109';
 
 let matchesRefreshTimer = null;
 let isTeamModalInitialized = false;

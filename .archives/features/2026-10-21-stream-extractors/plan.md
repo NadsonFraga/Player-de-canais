@@ -47,18 +47,17 @@ tools/extractors/
   2. Document endpoints, parameters, and quirks in `tools/extractors/<provider>/README.md`.
   3. Create standalone CLI extractor `extract.mjs` to test and validate resolution across sample titles.
   4. Measure TTFF (Time-To-First-Frame), bitrate, stability, and whether Cloudflare stream proxy (`/api/stream`) is required or if direct playback is possible.
-- **Completed Extractors**:
-  - `tools/extractors/movy/` (Movy / Wecollege API with `mvm1` PRNG cipher).
-  - `tools/extractors/rive/` (Rive / ValhallaStream with double-hash `secretKey`).
-  - `tools/extractors/cinecat/` (Cinecat / `cdn.hls.lol` with direct REST endpoints).
+- **Active Extractors**:
   - `tools/extractors/fenixflix/` (FenixFlix / Stremio REST API with native **PT-BR Dublado** 4K/1080p multi-engine aggregation - primary contingency for MGEB).
-
+  - `tools/extractors/rive/` (Rive / ValhallaStream with double-hash `secretKey` and prioritized 4K HDR Vanguard/Apogee engines).
+  - `tools/extractors/movy/` (Movy / Wecollege API with `mvm1` PRNG cipher and FHD CDN).
+  - *Note*: Cinecat / totallyacdn.org retired and moved to `.archives/old/extractors/cinecat/` due to upstream WAF blocking Cloudflare datacenter/Warp IPs with 403.
 
 ### Phase 3: Hybrid Runtime Resolvers (Client-Side & Server Stream Signing)
-- **Root Cause Discovered on Staging**: Upstream providers (`fenixhub.online`, `cdn.hls.lol`, `backend.rivestream.app`, `api.wecollege.net`) run behind Cloudflare. Cloudflare Pages Functions inject `CF-Worker: staging.tvzinhaonline.pages.dev` headers and egress from datacenter IPs, causing upstreams to block with 403 or return empty streams (`streams: []`).
-- **Solution**: All 4 upstream APIs have `Access-Control-Allow-Origin: *`. Moving extraction logic to the client browser (`assets/js/player/clientProviders.js`) eliminates Cloudflare-to-Cloudflare blocks, executes with 0ms server overhead, and leverages the user's residential IP.
-- Add `/api/resolve?action=sign` and `/api/resolve?action=sign_batch` to `functions/api/resolve.js` and mirror identically in `tools/local_server.py` to sign proxy URLs for streams needing custom `Referer` headers (`embedplayer2.xyz`, `totallyacdn.org`, `valhallastream.com`, `zenoak.top`).
-- Create `assets/js/player/clientProviders.js` implementing client-side extraction for FenixFlix, Cinecat, Rive, and Movy.
+- **Root Cause Discovered on Staging**: Upstream providers run behind Cloudflare. Cloudflare Pages Functions inject `CF-Worker` headers and egress from datacenter IPs, causing upstreams to block with 403 or return empty streams (`streams: []`).
+- **Solution**: Upstream APIs have `Access-Control-Allow-Origin: *`. Moving extraction logic to the client browser (`assets/js/player/clientProviders.js`) eliminates Cloudflare-to-Cloudflare blocks, executes with 0ms server overhead, and leverages the user's residential IP.
+- Add `/api/resolve?action=sign` and `/api/resolve?action=sign_batch` to `functions/api/resolve.js` and mirror identically in `tools/local_server.py` to sign proxy URLs for streams needing custom `Referer` headers (`embedplayer2.xyz`, `valhallastream.com`, `zenoak.top`).
+- Create `assets/js/player/clientProviders.js` implementing client-side extraction for FenixFlix, Rive, and Movy.
 - Wire `clientProviders.js` into `resolveDirectStream` in `assets/js/player/engine.js`.
 - Add unit/regression tests for signing and client extraction in `tools/`.
 
