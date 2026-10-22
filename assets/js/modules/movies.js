@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261022_1109';
-import { showToast } from '../core/toast.js?v=20261022_1109';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261022_1109';
-import { buildFeedRows } from '../core/feedRows.js?v=20261022_1109';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261022_1109';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261022_1109';
-import { getUiSvg } from '../core/icons.js?v=20261022_1109';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261022_1109';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261022_1109';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261022_1109';
-import { fetchTmdb } from '../core/tmdb.js?v=20261022_1109';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261022_1109';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261022_1109';
-import { resumeStartTime } from '../core/resume.js?v=20261022_1109';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261022_1109';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261022_1109';
+} from '../core/constants.js?v=20261022_1758';
+import { showToast } from '../core/toast.js?v=20261022_1758';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261022_1758';
+import { buildFeedRows } from '../core/feedRows.js?v=20261022_1758';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261022_1758';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261022_1758';
+import { getUiSvg } from '../core/icons.js?v=20261022_1758';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261022_1758';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261022_1758';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261022_1758';
+import { fetchTmdb } from '../core/tmdb.js?v=20261022_1758';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261022_1758';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261022_1758';
+import { resumeStartTime } from '../core/resume.js?v=20261022_1758';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261022_1758';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261022_1758';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;

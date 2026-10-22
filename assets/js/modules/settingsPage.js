@@ -6,19 +6,19 @@
  * state when shown (and again when the account, the profile, the preferences or the sync change), in grouped cards of
  * rows. Guests see Conta (Entrar ou criar conta), Player and Sobre.
  */
-import { getAccount, getActiveProfile, changePassword, renewRecoveryCode, passwordRules, passwordStrength, ACCOUNT_EVENT } from '../core/account.js?v=20261022_1109';
-import { leaveAccount, deleteAccountHere, syncNow, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261022_1109';
-import { getPlayerPrefs, setPlayerPref, PREFS_EVENT } from '../core/playerPrefs.js?v=20261022_1109';
-import { PROFILE_EVENT } from '../core/profileStore.js?v=20261022_1109';
-import { avatarSrc } from '../core/avatars.js?v=20261022_1109';
-import { confirmDialog } from '../core/confirmDialog.js?v=20261022_1109';
-import { showToast } from '../core/toast.js?v=20261022_1109';
-import { syncPageLock } from '../core/activity.js?v=20261022_1109';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261022_1109';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261022_1109';
-import { openLegalSection } from './footer.js?v=20261022_1109';
-import { openAccountPage } from './accountPage.js?v=20261022_1109';
-import { openProfilePicker } from './profilePage.js?v=20261022_1109';
+import { getAccount, getActiveProfile, changePassword, renewRecoveryCode, passwordRules, passwordStrength, ACCOUNT_EVENT } from '../core/account.js?v=20261022_1758';
+import { leaveAccount, deleteAccountHere, syncNow, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261022_1758';
+import { getPlayerPrefs, setPlayerPref, PREFS_EVENT } from '../core/playerPrefs.js?v=20261022_1758';
+import { PROFILE_EVENT } from '../core/profileStore.js?v=20261022_1758';
+import { avatarSrc } from '../core/avatars.js?v=20261022_1758';
+import { confirmDialog } from '../core/confirmDialog.js?v=20261022_1758';
+import { showToast } from '../core/toast.js?v=20261022_1758';
+import { syncPageLock } from '../core/activity.js?v=20261022_1758';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261022_1758';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261022_1758';
+import { openLegalSection } from './footer.js?v=20261022_1758';
+import { openAccountPage } from './accountPage.js?v=20261022_1758';
+import { openProfilePicker } from './profilePage.js?v=20261022_1758';
 
 const SECTIONS = {
     account: 'Conta',
@@ -44,7 +44,7 @@ const MESSAGES = {
 
 const PLAYER_CHOICES = [
     { pref: 'subtitle', title: 'Legenda', sub: 'Usada quando o título tem essa legenda.', options: [[null, 'Automática'], ['pt-BR', 'Português'], ['en', 'Inglês'], ['off', 'Desligada']] },
-    { pref: 'quality', title: 'Qualidade', sub: 'Automática escolhe a melhor que a sua conexão aguenta.', options: [['auto', 'Automática'], [1080, '1080p'], [720, '720p'], [480, '480p']] },
+    { pref: 'quality', title: 'Qualidade', sub: 'Automática escolhe a melhor que a sua conexão aguenta.', options: [['auto', 'Automática'], [2160, '4K (2160p)'], [1440, '1440p (2K)'], [1080, '1080p'], [720, '720p'], [480, '480p']] },
     { pref: 'fit', title: 'Tela', sub: 'Preencher corta as bordas para ocupar a tela toda.', options: [['contain', 'Ajustar'], ['cover', 'Preencher']] },
     { pref: 'playbackRate', title: 'Velocidade', sub: 'Velocidade inicial dos vídeos.', options: [[0.75, '0,75x'], [1, 'Normal'], [1.25, '1,25x'], [1.5, '1,5x'], [2, '2x']] }
 ];
