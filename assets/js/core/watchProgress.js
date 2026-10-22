@@ -7,8 +7,8 @@
  * TMDB movie and TV ids overlap, so movies get their own prefix. `hidden` + `hiddenAt` take an entry off the rail
  * without erasing its times; watching it again (a newer `timestamp`) brings it back.
  */
-import { WATCH_PROGRESS_KEY } from './constants.js?v=20261021_1511';
-import { storageKey, PROFILE_EVENT } from './profileStore.js?v=20261021_1511';
+import { WATCH_PROGRESS_KEY } from './constants.js?v=20261022_0158';
+import { storageKey, PROFILE_EVENT } from './profileStore.js?v=20261022_0158';
 
 // Fired whenever the store changes, so the rail redraws without the modules importing each other
 export const PROGRESS_EVENT = 'tvzinha:progress';

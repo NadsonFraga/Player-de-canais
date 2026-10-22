@@ -3,15 +3,15 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261021_1511';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261021_1511';
-import { showToast } from '../core/toast.js?v=20261021_1511';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261021_1511';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261021_1511';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261021_1511';
-import { formatClock } from '../core/resume.js?v=20261021_1511';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261021_1511';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261021_1511';
+import { store } from '../core/state.js?v=20261022_0158';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261022_0158';
+import { showToast } from '../core/toast.js?v=20261022_0158';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261022_0158';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261022_0158';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261022_0158';
+import { formatClock } from '../core/resume.js?v=20261022_0158';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261022_0158';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261022_0158';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -906,7 +906,7 @@ const resolveCache = new Map();
 /**
  * Resolves direct media stream via local or remote proxy API
  */
-export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', original_title = '', year = '', season_name = '', mal_id = null, imdb_id = null, absolute_episode = '', total_episodes = '', aniskip_only = false }) {
+export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', original_title = '', year = '', season_name = '', mal_id = null, imdb_id = null, absolute_episode = '', total_episodes = '', aniskip_only = false, source = '' }) {
     // The player libraries download while the sources are looked up
     if (!aniskip_only) ensurePlayerLibs().catch(() => { /* the mount shows the error */ });
     const params = new URLSearchParams();
@@ -924,6 +924,7 @@ export async function resolveDirectStream({ id, type, season = 1, episode = 1, l
     if (mal_id) params.set("mal_id", mal_id);
     if (imdb_id) params.set("imdb_id", imdb_id);
     if (aniskip_only) params.set("aniskip_only", "1");
+    if (source) params.set("source", source);
 
     const url = `${STREAM_ENGINE_API_BASE}/api/resolve?${params.toString()}`;
 
