@@ -200,7 +200,7 @@ export async function onRequestOptions(context) {
     status: 204,
     headers: {
       "Access-Control-Allow-Origin": origin || "*",
-      "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, HEAD, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Range, Content-Type, Accept, User-Agent, Referer, Origin",
       "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
       "Access-Control-Max-Age": "86400",
@@ -1148,6 +1148,49 @@ function normalizeSubtitles(tracks) {
   }));
 }
 
+export async function onRequestPost(context) {
+  const { request } = context;
+  const origin = request.headers.get("Origin");
+  if (!isAllowedOrigin(origin)) {
+    return new Response(JSON.stringify({ success: false, error: "CORS origin forbidden" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+    });
+  }
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": origin || "*",
+    "Vary": "Origin",
+  };
+  const urlObj = new URL(request.url);
+  const action = urlObj.searchParams.get("action");
+  if (action === "sign" || action === "sign_batch") {
+    try {
+      const body = await request.json();
+      const items = Array.isArray(body) ? body : (Array.isArray(body && body.items) ? body.items : [body]);
+      const proxyBase = `${urlObj.origin}/api/stream`;
+      const streamKey = await streamSigningKey(context.env);
+      const signed = await Promise.all(items.map(async item => {
+        if (!item || !item.url) return null;
+        const signedUrl = await proxiedStreamUrl(proxyBase, streamKey, item.url, item.referer || "", { origin: item.origin || "" });
+        return { ...item, signed_url: signedUrl };
+      }));
+      return new Response(JSON.stringify({ success: true, items: signed.filter(Boolean) }), {
+        status: 200,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ success: false, error: "Invalid JSON payload" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    }
+  }
+  return new Response(JSON.stringify({ success: false, error: "Not supported" }), {
+    status: 405,
+    headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+  });
+}
+
 export async function onRequestGet(context) {
   const { request } = context;
   tmdbApiKey = (context.env && context.env.TMDB_API_KEY) || "";
@@ -1171,6 +1214,26 @@ export async function onRequestGet(context) {
   }
 
   const urlObj = new URL(request.url);
+  const action = urlObj.searchParams.get("action");
+
+  if (action === "sign") {
+    const targetUrl = urlObj.searchParams.get("url");
+    const referer = urlObj.searchParams.get("referer") || "";
+    const customOrigin = urlObj.searchParams.get("target_origin") || "";
+    if (!targetUrl) {
+      return new Response(JSON.stringify({ success: false, error: "Missing url parameter" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    }
+    const proxyBase = `${urlObj.origin}/api/stream`;
+    const streamKey = await streamSigningKey(context.env);
+    const signedUrl = await proxiedStreamUrl(proxyBase, streamKey, targetUrl, referer, { origin: customOrigin });
+    return new Response(JSON.stringify({ success: true, signed_url: signedUrl }), {
+      status: 200,
+      headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+    });
+  }
 
   const id = urlObj.searchParams.get("id");
   const type = urlObj.searchParams.get("type") || "movie"; // 'movie' | 'serie' | 'anime'

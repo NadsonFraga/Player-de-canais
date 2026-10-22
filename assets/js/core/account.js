@@ -6,8 +6,8 @@
  * server (no cost): /me runs only when that copy says someone is signed in.
  * Profiles: the list comes with the account; which one is in use on this device lives in core/profileStore.js.
  */
-import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261022_0158';
-import { activeProfileId, setActiveProfile } from './profileStore.js?v=20261022_0158';
+import { STREAM_ENGINE_API_BASE } from './constants.js?v=20261022_1014';
+import { activeProfileId, setActiveProfile } from './profileStore.js?v=20261022_1014';
 
 const CACHE_KEY = 'tvzinha_account_v1';
 export const ACCOUNT_EVENT = 'tvzinha:account';

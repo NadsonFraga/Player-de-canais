@@ -3,15 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261022_0158';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261022_0158';
-import { showToast } from '../core/toast.js?v=20261022_0158';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261022_0158';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261022_0158';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261022_0158';
-import { formatClock } from '../core/resume.js?v=20261022_0158';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261022_0158';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261022_0158';
+import { store } from '../core/state.js?v=20261022_1014';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261022_1014';
+import { showToast } from '../core/toast.js?v=20261022_1014';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261022_1014';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261022_1014';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261022_1014';
+import { formatClock } from '../core/resume.js?v=20261022_1014';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261022_1014';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261022_1014';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261022_1014';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -906,9 +907,34 @@ const resolveCache = new Map();
 /**
  * Resolves direct media stream via local or remote proxy API
  */
-export async function resolveDirectStream({ id, type, season = 1, episode = 1, lang = 'dub', title = '', original_title = '', year = '', season_name = '', mal_id = null, imdb_id = null, absolute_episode = '', total_episodes = '', aniskip_only = false, source = '' }) {
+export async function resolveDirectStream(options = {}) {
+    const { id, type, season = 1, episode = 1, lang = 'dub', title = '', original_title = '', year = '', season_name = '', mal_id = null, imdb_id = null, absolute_episode = '', total_episodes = '', aniskip_only = false, source = '' } = options;
     // The player libraries download while the sources are looked up
-    if (!aniskip_only) ensurePlayerLibs().catch(() => { /* the mount shows the error */ });
+    if (typeof window !== 'undefined' && !aniskip_only) ensurePlayerLibs().catch(() => { /* the mount shows the error */ });
+
+    // Client-side extraction for direct providers (bypasses Cloudflare cross-zone blocks)
+    if (!aniskip_only && source && CLIENT_PROVIDERS.includes(source)) {
+        const clientKey = `client_${source}_${id}_${imdb_id}_${type}_${season}_${episode}_${lang}`;
+        const cached = resolveCache.get(clientKey);
+        if (cached && Date.now() - cached.at < RESOLVE_CACHE_TTL_MS) return cached.promise;
+
+        const promise = (async () => {
+            try {
+                const data = await resolveClientProvider(source, options);
+                return data && data.success ? data : null;
+            } catch (err) {
+                console.error(`[StreamEngine] Erro ao resolver stream client-side (${source}):`, err);
+                return null;
+            }
+        })();
+
+        resolveCache.set(clientKey, { at: Date.now(), promise });
+        promise.then(data => {
+            if (!data && resolveCache.get(clientKey)?.promise === promise) resolveCache.delete(clientKey);
+        });
+        return promise;
+    }
+
     const params = new URLSearchParams();
     if (id) params.set("id", id);
     if (type) params.set("type", type);

@@ -54,13 +54,17 @@ tools/extractors/
   - `tools/extractors/fenixflix/` (FenixFlix / Stremio REST API with native **PT-BR Dublado** 4K/1080p multi-engine aggregation - primary contingency for MGEB).
 
 
-### Phase 3: Integration into Runtime Resolvers
-- Wire the validated extractor(s) into `functions/api/resolve.js` and mirror identically in `tools/local_server.py`.
-- Add provider fallback order / source grouping in player engine (`assets/js/player/engine.js`).
-- Add tests to `tools/test_resolve_cors.py` and create unit tests for the new resolver.
+### Phase 3: Hybrid Runtime Resolvers (Client-Side & Server Stream Signing)
+- **Root Cause Discovered on Staging**: Upstream providers (`fenixhub.online`, `cdn.hls.lol`, `backend.rivestream.app`, `api.wecollege.net`) run behind Cloudflare. Cloudflare Pages Functions inject `CF-Worker: staging.tvzinhaonline.pages.dev` headers and egress from datacenter IPs, causing upstreams to block with 403 or return empty streams (`streams: []`).
+- **Solution**: All 4 upstream APIs have `Access-Control-Allow-Origin: *`. Moving extraction logic to the client browser (`assets/js/player/clientProviders.js`) eliminates Cloudflare-to-Cloudflare blocks, executes with 0ms server overhead, and leverages the user's residential IP.
+- Add `/api/resolve?action=sign` and `/api/resolve?action=sign_batch` to `functions/api/resolve.js` and mirror identically in `tools/local_server.py` to sign proxy URLs for streams needing custom `Referer` headers (`embedplayer2.xyz`, `totallyacdn.org`, `valhallastream.com`, `zenoak.top`).
+- Create `assets/js/player/clientProviders.js` implementing client-side extraction for FenixFlix, Cinecat, Rive, and Movy.
+- Wire `clientProviders.js` into `resolveDirectStream` in `assets/js/player/engine.js`.
+- Add unit/regression tests for signing and client extraction in `tools/`.
 
 ### Phase 4: Staging Deploy & Validation
 - Run full test suite: `python tools/check_js.py`, `node --check`, security headers, resolve tests.
 - Bump version stamp via `python tools/bump_version.py`.
-- Merge into `staging` with `--no-ff` and push.
-- Test against https://staging.tvzinhaonline.pages.dev and deliver manual test matrix.
+- Push to `staging` branch.
+- Verify live playback on `https://staging.tvzinhaonline.pages.dev` across test titles (*Homem-Aranha: Um Novo Dia*, *Clube da Luta*, *Breaking Bad*, etc.) for each provider.
+
