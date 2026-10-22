@@ -1297,9 +1297,12 @@ export async function onRequestGet(context) {
     }
   }
 
+  let providerDebug = null;
+
   // ROTA 2: FenixFlix (PT-BR Dublado)
   if (!result && requestedSource === "fenixflix" && (id || imdbId)) {
     const fenixData = await timed("fenixflix", resolveFenixFlix({ id, imdbId, type, season, episode, audio: "dubbed" }));
+    providerDebug = fenixData?.debug || null;
     if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
       const parsedSources = await Promise.all(fenixData.sources.map(async (s, idx) => {
         const rawFile = (s.file || "").trim();
@@ -1339,6 +1342,7 @@ export async function onRequestGet(context) {
     const tmdbId = /^\d+$/.test(id) ? id : null;
     if (tmdbId) {
       const cinecatData = await timed("cinecat", resolveCinecat({ tmdbId, type, season, episode }));
+      providerDebug = cinecatData?.debug || null;
       if (cinecatData && cinecatData.sources && cinecatData.sources.length > 0) {
         const s = cinecatData.sources[0];
         const finalStreamUrl = await proxied(s.file, s.referer);
@@ -1572,6 +1576,7 @@ export async function onRequestGet(context) {
     success: false,
     error: `No direct streams resolved on ${requestedSource} for the requested title.`,
     provider: requestedSource,
+    debug: providerDebug,
     reason: type === "anime" && lang === "sub" ? "anime_not_found" : (mgebEpisodeMismatch ? "episode_mismatch" : "no_sources"),
     fallback_recommended: true,
   }), {

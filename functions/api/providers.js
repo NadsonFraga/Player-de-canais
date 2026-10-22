@@ -17,16 +17,23 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
+  const debug = { endpoint, status: null, statusText: null, error: null, streams: 0, body: null };
 
   try {
     const res = await fetch(endpoint, {
       headers: { "User-Agent": USER_AGENT, "Accept": "application/json" },
       signal: controller.signal
     });
-    if (!res.ok) return null;
+    debug.status = res.status;
+    debug.statusText = res.statusText;
+    if (!res.ok) {
+      debug.body = (await res.text()).slice(0, 300);
+      return { title: "", sources: [], debug };
+    }
     const data = await res.json();
     const rawStreams = Array.isArray(data.streams) ? data.streams : [];
-    if (!rawStreams.length) return null;
+    debug.streams = rawStreams.length;
+    if (!rawStreams.length) return { title: "", sources: [], debug };
 
     const parsed = rawStreams
       .filter(s => s && s.url && typeof s.url === "string")
@@ -70,10 +77,12 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
 
     return {
       title: data.title || "",
-      sources: filtered
+      sources: filtered,
+      debug
     };
   } catch (err) {
-    return null;
+    debug.error = err.message || String(err);
+    return { title: "", sources: [], debug };
   } finally {
     clearTimeout(timer);
   }
@@ -90,6 +99,7 @@ export async function resolveCinecat({ tmdbId, type, season = 1, episode = 1 }) 
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 6000);
+  const debug = { endpoint, status: null, error: null, body: null };
 
   try {
     const res = await fetch(endpoint, {
@@ -100,9 +110,13 @@ export async function resolveCinecat({ tmdbId, type, season = 1, episode = 1 }) 
       },
       signal: controller.signal
     });
-    if (!res.ok) return null;
+    debug.status = res.status;
+    if (!res.ok) {
+      debug.body = (await res.text()).slice(0, 300);
+      return { title: "", sources: [], debug };
+    }
     const data = await res.json();
-    if (!data.found || !data.url) return null;
+    if (!data.found || !data.url) return { title: "", sources: [], debug: { ...debug, data } };
 
     return {
       title: data.title || "",
@@ -114,10 +128,12 @@ export async function resolveCinecat({ tmdbId, type, season = 1, episode = 1 }) 
           type: "hls",
           referer: "https://cinecat.eu/"
         }
-      ]
+      ],
+      debug
     };
   } catch (err) {
-    return null;
+    debug.error = err.message || String(err);
+    return { title: "", sources: [], debug };
   } finally {
     clearTimeout(timer);
   }
