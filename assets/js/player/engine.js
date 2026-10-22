@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261022_1109';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261022_1109';
-import { showToast } from '../core/toast.js?v=20261022_1109';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261022_1109';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261022_1109';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261022_1109';
-import { formatClock } from '../core/resume.js?v=20261022_1109';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261022_1109';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261022_1109';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261022_1109';
+import { store } from '../core/state.js?v=20261022_1758';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261022_1758';
+import { showToast } from '../core/toast.js?v=20261022_1758';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261022_1758';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261022_1758';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261022_1758';
+import { formatClock } from '../core/resume.js?v=20261022_1758';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261022_1758';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261022_1758';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261022_1758';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -704,7 +704,8 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
                             manifestLoadingTimeOut: 10000,
                             manifestLoadingMaxRetry: 3,
                             levelLoadingTimeOut: 10000,
-                            levelLoadingMaxRetry: 3
+                            levelLoadingMaxRetry: 3,
+                            abrEwmaDefaultEstimate: 50000000
                         });
                         hls.loadSource(url);
                         hls.attachMedia(video);
@@ -712,6 +713,19 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
 
                         hls.on(window.Hls.Events.MANIFEST_PARSED, (event, data) => {
                             if (data.levels && data.levels.length > 1) {
+                                let bestIdx = 0;
+                                let bestScore = -1;
+                                data.levels.forEach((lvl, idx) => {
+                                    const height = lvl.height || (lvl.width ? Math.round(lvl.width * 9 / 16) : 0);
+                                    const score = (height * 10000000) + (lvl.bitrate || 0);
+                                    if (score > bestScore) {
+                                        bestScore = score;
+                                        bestIdx = idx;
+                                    }
+                                });
+                                hls.startLevel = bestIdx;
+                                hls.currentLevel = -1;
+
                                 const audioSelectors = data.levels.map((lvl, idx) => ({
                                     default: idx === hls.currentLevel,
                                     html: `${lvl.height ? lvl.height + 'p' : 'Auto'} (${Math.round(lvl.bitrate / 1000)}k)`,
@@ -1576,7 +1590,8 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                             enableWorker: true,
                             backBufferLength: 60,
                             maxBufferLength: 30,
-                            maxMaxBufferLength: 60
+                            maxMaxBufferLength: 60,
+                            abrEwmaDefaultEstimate: 50000000
                         });
                         hls.loadSource(url);
                         hls.attachMedia(video);
@@ -2373,9 +2388,48 @@ function updateQualityIndicators(session) {
 
 function applyLockedLevel(session) {
     const hls = session.hls;
-    if (!hls || session.autoMode || !session.lockedQuality) return;
-    const levelIndex = hls.levels.findIndex(lvl => hlsLevelQuality(lvl) === session.lockedQuality);
-    if (levelIndex >= 0) hls.currentLevel = levelIndex;
+    if (!hls || !Array.isArray(hls.levels) || !hls.levels.length) return;
+
+    // Helper: find best (highest resolution/bitrate) level index
+    const getBestLevelIndex = () => {
+        let bestIdx = 0;
+        let bestScore = -1;
+        hls.levels.forEach((lvl, idx) => {
+            const height = lvl.height || (lvl.width ? Math.round(lvl.width * 9 / 16) : 0);
+            const score = (height * 10000000) + (lvl.bitrate || 0);
+            if (score > bestScore) {
+                bestScore = score;
+                bestIdx = idx;
+            }
+        });
+        return bestIdx;
+    };
+
+    if (!session.autoMode && session.lockedQuality) {
+        const exactIdx = hls.levels.findIndex(lvl => hlsLevelQuality(lvl) === session.lockedQuality);
+        if (exactIdx >= 0) {
+            hls.currentLevel = exactIdx;
+            return;
+        }
+        let bestIdx = -1;
+        let bestQ = -1;
+        hls.levels.forEach((lvl, idx) => {
+            const q = hlsLevelQuality(lvl) || 0;
+            if (q <= session.lockedQuality && q > bestQ) {
+                bestQ = q;
+                bestIdx = idx;
+            }
+        });
+        if (bestIdx >= 0) {
+            hls.currentLevel = bestIdx;
+            return;
+        }
+    }
+
+    // Auto mode: optimistic start at the highest available quality
+    const bestIdx = getBestLevelIndex();
+    hls.startLevel = bestIdx;
+    hls.currentLevel = -1;
 }
 
 /**
