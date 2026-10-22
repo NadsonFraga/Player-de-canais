@@ -1373,7 +1373,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(status)
         allow_origin = origin if origin else "*"
         self.send_header("Access-Control-Allow-Origin", allow_origin)
-        self.send_header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Range, Content-Type, Accept, User-Agent, Referer, Origin")
         self.send_header("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges")
         self.send_header("Vary", "Origin")
@@ -1514,7 +1514,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         try:
             path = urllib.parse.urlparse(self.path).path
-            if path.startswith("/api/account/"):
+            if path == "/api/resolve":
+                self.handle_resolve_post()
+            elif path.startswith("/api/account/"):
                 self.handle_account("POST", path)
             elif path == "/api/sync":
                 self.handle_sync("POST")
@@ -1528,6 +1530,39 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
             except Exception:
                 pass
+
+    def handle_resolve_post(self):
+        origin = self.headers.get("Origin")
+        if not is_allowed_origin(origin):
+            self.send_response(403)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b'{"success":false,"error":"CORS origin forbidden"}')
+            return
+        parsed = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        action = params.get("action", [""])[0]
+        if action in ("sign", "sign_batch"):
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(min(length, 65536)) if length else b""
+            try:
+                body = json.loads(raw.decode("utf-8")) if raw else {}
+            except Exception:
+                self.send_json(400, {"success": False, "error": "Invalid JSON"}, origin)
+                return
+            items = body if isinstance(body, list) else (body.get("items") if isinstance(body.get("items"), list) else [body])
+            host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
+            proxy_base = f"http://{host_header}/api/stream"
+            stream_key = stream_signing_key()
+            signed = []
+            for item in items:
+                if not item or not isinstance(item, dict) or not item.get("url"):
+                    continue
+                signed_url = proxied_stream_url(proxy_base, stream_key, item["url"], item.get("referer", ""), origin=item.get("origin", ""))
+                signed.append({**item, "signed_url": signed_url})
+            self.send_json(200, {"success": True, "items": signed}, origin)
+            return
+        self.send_json(400, {"success": False, "error": "Unsupported action"}, origin)
 
     def handle_account(self, method, path):
         """/api/account/*: same answers as functions/api/account/[[path]].js. No CORS headers: only this site reads them."""
@@ -1627,6 +1662,22 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json(502, {"error": "tmdb_unreachable"}, origin)
 
     def handle_resolve(self, params, origin=None):
+        host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
+        proxy_base = f"http://{host_header}/api/stream"
+        stream_key = stream_signing_key()
+
+        action = params.get("action", [""])[0]
+        if action == "sign":
+            target_url = params.get("url", [""])[0]
+            referer = params.get("referer", [""])[0]
+            target_origin = params.get("target_origin", [""])[0]
+            if not target_url:
+                self.send_json(400, {"success": False, "error": "Missing url parameter"}, origin)
+                return
+            signed_url = proxied_stream_url(proxy_base, stream_key, target_url, referer, origin=target_origin)
+            self.send_json(200, {"success": True, "signed_url": signed_url}, origin)
+            return
+
         media_id = params.get("id", [""])[0]
         media_type = params.get("type", ["movie"])[0]
         season = int(params.get("season", ["1"])[0])
@@ -1652,11 +1703,6 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             return
         # aniskip_only=1: only the MyAnimeList entry and its episode number (skip times for anime played from another host)
         aniskip_only = params.get("aniskip_only", [""])[0] == "1"
-
-        host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
-        proxy_base = f"http://{host_header}/api/stream"
-        # Proxy addresses are signed: the proxy takes no address it did not get from here
-        stream_key = stream_signing_key()
 
         cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}_{original_title_param}_{year_value}_{absolute_episode}_{total_episodes}_{season_name_param}_{aniskip_only}"
         now = time.time()
