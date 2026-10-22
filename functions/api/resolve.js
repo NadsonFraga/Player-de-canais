@@ -150,6 +150,7 @@ function firstThenMerge(lookups, windowMs) {
 }
 
 import { streamSigningKey, proxiedStreamUrl } from "./stream.js";
+import { resolveFenixFlix, resolveCinecat, resolveRive, resolveMovy } from "./providers.js";
 
 // Calls per minute from one IP to /api/resolve and /api/tmdb, counted in this isolate's memory (free, approximate):
 // many title pages and catalog rows fit; a script hammering the routes does not
@@ -1222,8 +1223,12 @@ export async function onRequestGet(context) {
     }
   };
 
+  // Determine requested provider (mgeb, fenixflix, rive, movy, cinecat, anime_native)
+  const requestedSource = urlObj.searchParams.get("source") || (type === "anime" && lang === "sub" ? "anime_native" : "mgeb");
+  const imdbId = urlObj.searchParams.get("imdb_id");
+
   // ROTA 1: Anime Legendado (ZokoAnime)
-  if (type === "anime" && lang === "sub") {
+  if (requestedSource === "anime_native" || (type === "anime" && lang === "sub" && requestedSource === "mgeb")) {
     let malIds = [];
     if (!malId && titleParam) {
       malIds = await timed("mal", getMalCandidates(titleParam, originalTitleParam, season, seasonNameParam, yearParam));
@@ -1279,6 +1284,7 @@ export async function onRequestGet(context) {
         title: titleParam || `Anime Ep ${episode}`,
         category: "anime",
         audio: "subtitled",
+        provider: "anime_native",
         primary_source: zokoSource,
         fallback_sources: [],
         subtitles,
@@ -1291,10 +1297,138 @@ export async function onRequestGet(context) {
     }
   }
 
-  // ROTA 2: Filmes, Séries ou Anime Dublado (MGEB)
-  const imdbId = urlObj.searchParams.get("imdb_id");
+  // ROTA 2: FenixFlix (PT-BR Dublado)
+  if (!result && requestedSource === "fenixflix" && (id || imdbId)) {
+    const fenixData = await timed("fenixflix", resolveFenixFlix({ id, imdbId, type, season, episode, audio: "dubbed" }));
+    if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
+      const parsedSources = await Promise.all(fenixData.sources.map(async (s, idx) => {
+        const rawFile = (s.file || "").trim();
+        const isDirectMp4 = rawFile.includes(".mp4") && (rawFile.includes("fontedecanais") || rawFile.includes("57lgoe65efxo71.com"));
+        const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, "https://").replace(/:80\//, "/") : rawFile;
+        const referer = s.referer || "https://embedplayer2.xyz/";
+        const finalStreamUrl = isDirectMp4 ? directCleanUrl : await proxied(rawFile, referer);
+        const sourceType = s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4");
+        const directUrl = !isDirectMp4 && sourceType === "hls" && /^https:\/\//i.test(rawFile) ? rawFile : null;
+        return {
+          label: s.label || `FenixFlix ${s.quality}p`,
+          type: sourceType,
+          stream_url: finalStreamUrl,
+          direct_url: directUrl,
+          raw_url: directCleanUrl,
+          headers: { "Referer": referer },
+          quality: s.quality || 1080
+        };
+      }));
+      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, () => 90, type === "serie"));
+      result = {
+        success: true,
+        title: fenixData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
+        category: type,
+        audio: "dubbed",
+        provider: "fenixflix",
+        primary_source: rankedSources[0],
+        fallback_sources: rankedSources.slice(1),
+        subtitles: [],
+        aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
+      };
+    }
+  }
+
+  // ROTA 3: Cinecat (Ultra-Fast 1080p HLS)
+  if (!result && requestedSource === "cinecat" && id) {
+    const tmdbId = /^\d+$/.test(id) ? id : null;
+    if (tmdbId) {
+      const cinecatData = await timed("cinecat", resolveCinecat({ tmdbId, type, season, episode }));
+      if (cinecatData && cinecatData.sources && cinecatData.sources.length > 0) {
+        const s = cinecatData.sources[0];
+        const finalStreamUrl = await proxied(s.file, s.referer);
+        const sourceObj = {
+          label: s.label,
+          type: "hls",
+          stream_url: finalStreamUrl,
+          direct_url: s.file,
+          raw_url: s.file,
+          headers: { "Referer": s.referer },
+          quality: 1080
+        };
+        result = {
+          success: true,
+          title: cinecatData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
+          category: type,
+          audio: "original",
+          provider: "cinecat",
+          primary_source: sourceObj,
+          fallback_sources: [],
+          subtitles: [],
+          aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
+        };
+      }
+    }
+  }
+
+  // ROTA 4: Rive (4K HDR Multi-Engine)
+  if (!result && requestedSource === "rive" && id) {
+    const tmdbId = /^\d+$/.test(id) ? id : null;
+    if (tmdbId) {
+      const riveData = await timed("rive", resolveRive({ tmdbId, type, season, episode }));
+      if (riveData && riveData.sources && riveData.sources.length > 0) {
+        const parsedSources = await Promise.all(riveData.sources.map(async (s) => ({
+          label: s.label,
+          type: "hls",
+          stream_url: await proxied(s.file, s.referer),
+          direct_url: s.file,
+          raw_url: s.file,
+          headers: { "Referer": s.referer },
+          quality: s.quality || 2160
+        })));
+        result = {
+          success: true,
+          title: titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
+          category: type,
+          audio: "original",
+          provider: "rive",
+          primary_source: parsedSources[0],
+          fallback_sources: parsedSources.slice(1),
+          subtitles: [],
+          aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
+        };
+      }
+    }
+  }
+
+  // ROTA 5: Movy (Wecollege CDN)
+  if (!result && requestedSource === "movy" && id) {
+    const tmdbId = /^\d+$/.test(id) ? id : null;
+    if (tmdbId) {
+      const movyData = await timed("movy", resolveMovy({ tmdbId, type, season, episode, imdbId }));
+      if (movyData && movyData.sources && movyData.sources.length > 0) {
+        const parsedSources = await Promise.all(movyData.sources.map(async (s) => ({
+          label: s.label,
+          type: "hls",
+          stream_url: await proxied(s.file, s.referer),
+          direct_url: s.file,
+          raw_url: s.file,
+          headers: { "Referer": s.referer },
+          quality: s.quality || 1080
+        })));
+        result = {
+          success: true,
+          title: titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
+          category: type,
+          audio: "original",
+          provider: "movy",
+          primary_source: parsedSources[0],
+          fallback_sources: parsedSources.slice(1),
+          subtitles: [],
+          aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
+        };
+      }
+    }
+  }
+
+  // ROTA 6: MGEB (Player Principal Atual)
   let mgebEpisodeMismatch = false;
-  if (!result && (id || imdbId) && !(type === "anime" && lang === "sub")) {
+  if (!result && requestedSource === "mgeb" && (id || imdbId)) {
     const mgebType = type === "anime" ? "serie" : type;
     const givenImdb = imdbId && imdbId.startsWith("tt") ? imdbId : null;
     const tmdbId = id && /^\d+$/.test(id) ? id : null;
@@ -1436,7 +1570,8 @@ export async function onRequestGet(context) {
 
   return new Response(JSON.stringify({
     success: false,
-    error: "No direct streams resolved for the requested title.",
+    error: `No direct streams resolved on ${requestedSource} for the requested title.`,
+    provider: requestedSource,
     reason: type === "anime" && lang === "sub" ? "anime_not_found" : (mgebEpisodeMismatch ? "episode_mismatch" : "no_sources"),
     fallback_recommended: true,
   }), {
