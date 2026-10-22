@@ -27,6 +27,7 @@ from socketserver import ThreadingMixIn
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import local_accounts  # noqa: E402  (mirror of functions/api/account/[[path]].js)
 import local_sync  # noqa: E402  (mirror of functions/api/sync.js)
+import local_providers  # noqa: E402  (mirror of functions/api/providers.js)
 
 PORT = 8787
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -1686,8 +1687,11 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         result = None
 
+        source_param = params.get("source", [""])[0]
+        requested_source = source_param or ("anime_native" if (media_type == "anime" and lang == "sub") else "mgeb")
+
         # Route 1: Anime Subtitled via ZokoAnime
-        if media_type == "anime" and lang == "sub":
+        if requested_source == "anime_native" or (media_type == "anime" and lang == "sub" and requested_source == "mgeb"):
             mal_ids = []
             if not mal_id and title_param:
                 mal_ids = timed("mal", get_mal_candidates, title_param, original_title_param, season, season_name_param, year_value)
@@ -1742,6 +1746,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     "title": title_param or f"Anime Ep {episode}",
                     "category": "anime",
                     "audio": "subtitled",
+                    "provider": "anime_native",
                     "primary_source": zoko_source,
                     "fallback_sources": [],
                     "subtitles": subtitles,
@@ -1752,9 +1757,119 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     },
                 }
 
-        # Route 2: Movies, Series or Anime Dubbed via MGEB (never for subtitled anime: independent players)
+        # Route 2: FenixFlix (PT-BR Dublado)
+        if not result and requested_source == "fenixflix" and (media_id or imdb_id):
+            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, imdb_id, media_type, season, episode, "dubbed")
+            if fenix_data and fenix_data.get("sources"):
+                parsed = []
+                for s in fenix_data["sources"]:
+                    raw_file = s["file"].strip()
+                    referer = s.get("referer", "https://embedplayer2.xyz/")
+                    is_mp4 = ".mp4" in raw_file and ("fontedecanais" in raw_file or "57lgoe65efxo71.com" in raw_file)
+                    clean_url = re.sub(r'^http://', 'https://', raw_file).replace(':80/', '/') if is_mp4 else raw_file
+                    stream_url = clean_url if is_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
+                    is_hls = s.get("type") == "hls" or ".m3u8" in raw_file
+                    parsed.append({
+                        "label": s.get("label", f"FenixFlix {s.get('quality', 1080)}p"),
+                        "type": "hls" if is_hls else "mp4",
+                        "stream_url": stream_url,
+                        "direct_url": raw_file if (not is_mp4 and is_hls and raw_file.startswith("https://")) else None,
+                        "raw_url": clean_url,
+                        "headers": {"Referer": referer},
+                        "quality": s.get("quality", 1080)
+                    })
+                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: 90, media_type == "serie")
+                result = {
+                    "success": True,
+                    "title": fenix_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
+                    "category": media_type,
+                    "audio": "dubbed",
+                    "provider": "fenixflix",
+                    "primary_source": ranked[0],
+                    "fallback_sources": ranked[1:],
+                    "subtitles": [],
+                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
+                }
+
+        # Route 3: Cinecat (Ultra-Fast 1080p HLS)
+        if not result and requested_source == "cinecat" and media_id:
+            cinecat_data = timed("cinecat", local_providers.fetch_cinecat, media_id, media_type, season, episode)
+            if cinecat_data and cinecat_data.get("sources"):
+                s = cinecat_data["sources"][0]
+                stream_url = proxied_stream_url(proxy_base, stream_key, s["file"], s["referer"])
+                result = {
+                    "success": True,
+                    "title": cinecat_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
+                    "category": media_type,
+                    "audio": "original",
+                    "provider": "cinecat",
+                    "primary_source": {
+                        "label": s["label"],
+                        "type": "hls",
+                        "stream_url": stream_url,
+                        "direct_url": s["file"],
+                        "raw_url": s["file"],
+                        "headers": {"Referer": s["referer"]},
+                        "quality": 1080
+                    },
+                    "fallback_sources": [],
+                    "subtitles": [],
+                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
+                }
+
+        # Route 4: Rive (4K HDR Multi-Engine)
+        if not result and requested_source == "rive" and media_id:
+            rive_data = timed("rive", local_providers.fetch_rive, media_id, media_type, season, episode)
+            if rive_data and rive_data.get("sources"):
+                parsed = [{
+                    "label": s["label"],
+                    "type": "hls",
+                    "stream_url": proxied_stream_url(proxy_base, stream_key, s["file"], s["referer"]),
+                    "direct_url": s["file"],
+                    "raw_url": s["file"],
+                    "headers": {"Referer": s["referer"]},
+                    "quality": s.get("quality", 2160)
+                } for s in rive_data["sources"]]
+                result = {
+                    "success": True,
+                    "title": title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
+                    "category": media_type,
+                    "audio": "original",
+                    "provider": "rive",
+                    "primary_source": parsed[0],
+                    "fallback_sources": parsed[1:],
+                    "subtitles": [],
+                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
+                }
+
+        # Route 5: Movy (Wecollege CDN)
+        if not result and requested_source == "movy" and media_id:
+            movy_data = timed("movy", local_providers.fetch_movy, media_id, media_type, season, episode, imdb_id)
+            if movy_data and movy_data.get("sources"):
+                parsed = [{
+                    "label": s["label"],
+                    "type": "hls",
+                    "stream_url": proxied_stream_url(proxy_base, stream_key, s["file"], s["referer"]),
+                    "direct_url": s["file"],
+                    "raw_url": s["file"],
+                    "headers": {"Referer": s["referer"]},
+                    "quality": s.get("quality", 1080)
+                } for s in movy_data["sources"]]
+                result = {
+                    "success": True,
+                    "title": title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
+                    "category": media_type,
+                    "audio": "original",
+                    "provider": "movy",
+                    "primary_source": parsed[0],
+                    "fallback_sources": parsed[1:],
+                    "subtitles": [],
+                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
+                }
+
+        # Route 6: MGEB (Player Principal Atual)
         mgeb_episode_mismatch = [False]
-        if not result and (media_id or imdb_id) and not (media_type == "anime" and lang == "sub"):
+        if not result and requested_source == "mgeb" and (media_id or imdb_id):
             mgeb_type = "serie" if media_type == "anime" else media_type
             given_imdb = imdb_id if (imdb_id and imdb_id.startswith("tt")) else None
             tmdb_id = media_id if (media_id and str(media_id).isdigit()) else None
