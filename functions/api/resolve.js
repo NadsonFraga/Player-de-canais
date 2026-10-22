@@ -150,7 +150,7 @@ function firstThenMerge(lookups, windowMs) {
 }
 
 import { streamSigningKey, proxiedStreamUrl } from "./stream.js";
-import { resolveFenixFlix, resolveCinecat, resolveRive, resolveMovy } from "./providers.js";
+import { resolveFenixFlix, resolveRive, resolveMovy } from "./providers.js";
 
 // Calls per minute from one IP to /api/resolve and /api/tmdb, counted in this isolate's memory (free, approximate):
 // many title pages and catalog rows fit; a script hammering the routes does not
@@ -1286,7 +1286,7 @@ export async function onRequestGet(context) {
     }
   };
 
-  // Determine requested provider (mgeb, fenixflix, rive, movy, cinecat, anime_native)
+  // Determine requested provider (mgeb, fenixflix, rive, movy, anime_native)
   const requestedSource = urlObj.searchParams.get("source") || (type === "anime" && lang === "sub" ? "anime_native" : "mgeb");
   const imdbId = urlObj.searchParams.get("imdb_id");
 
@@ -1400,40 +1400,7 @@ export async function onRequestGet(context) {
     }
   }
 
-  // ROTA 3: Cinecat (Ultra-Fast 1080p HLS)
-  if (!result && requestedSource === "cinecat" && id) {
-    const tmdbId = /^\d+$/.test(id) ? id : null;
-    if (tmdbId) {
-      const cinecatData = await timed("cinecat", resolveCinecat({ tmdbId, type, season, episode }));
-      providerDebug = cinecatData?.debug || null;
-      if (cinecatData && cinecatData.sources && cinecatData.sources.length > 0) {
-        const s = cinecatData.sources[0];
-        const finalStreamUrl = await proxied(s.file, s.referer);
-        const sourceObj = {
-          label: s.label,
-          type: "hls",
-          stream_url: finalStreamUrl,
-          direct_url: s.file,
-          raw_url: s.file,
-          headers: { "Referer": s.referer },
-          quality: 1080
-        };
-        result = {
-          success: true,
-          title: cinecatData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
-          category: type,
-          audio: "original",
-          provider: "cinecat",
-          primary_source: sourceObj,
-          fallback_sources: [],
-          subtitles: [],
-          aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
-        };
-      }
-    }
-  }
-
-  // ROTA 4: Rive (4K HDR Multi-Engine)
+  // ROTA 3: Rive (4K HDR Multi-Engine)
   if (!result && requestedSource === "rive" && id) {
     const tmdbId = /^\d+$/.test(id) ? id : null;
     if (tmdbId) {

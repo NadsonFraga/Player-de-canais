@@ -74,7 +74,6 @@ export const MOVIE_SERVERS = [
     { id: 'native_fenix',   name: 'FenixFlix (Dublado)',      isNative: true, source: 'fenixflix' },
     { id: 'native_rive',    name: 'Rive (Original / 4K)',     isNative: true, source: 'rive' },
     { id: 'native_movy',    name: 'Movy (Original / FHD)',    isNative: true, source: 'movy' },
-    { id: 'native_cinecat', name: 'Cinecat (Original / HLS)', isNative: true, source: 'cinecat' },
     { id: 'mgeb',           name: 'Servidor 1 (MGEB)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
     { id: 'superflix',      name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.quest/filme/${id}` },
     { id: 'myembed',        name: 'Servidor 3 (MyEmbed)', buildUrl: (id) => `https://myembed.biz/filme/${id}` },

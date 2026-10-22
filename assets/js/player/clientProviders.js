@@ -1,12 +1,12 @@
 /**
- * Tvzinha Online - Client-Side Stream Extractors (FenixFlix, Cinecat, Rive, Movy)
+ * Tvzinha Online - Client-Side Stream Extractors (FenixFlix, Rive, Movy)
  * 
  * Executes directly in the user's browser to bypass Cloudflare-to-Cloudflare WAF / CF-Worker blocks,
  * utilizing the user's residential/mobile IP with open CORS (Access-Control-Allow-Origin: *).
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261022_1014';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261022_1109';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -194,70 +194,6 @@ export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', seaso
 }
 
 
-/* ============================================================
- * 2. CINECAT (Ultra-Fast 1080p HLS)
- * ============================================================ */
-
-export async function resolveCinecatClient({ id, type = 'movie', season = 1, episode = 1, title = '' }) {
-  const isSeries = type === 'series' || type === 'serie' || type === 'tv';
-  const tmdbId = /^\d+$/.test(id) ? id : null;
-  if (!tmdbId) {
-    return { success: false, error: 'Cinecat requer ID numérico do TMDB', provider: 'cinecat', reason: 'invalid_id' };
-  }
-
-  const endpoint = isSeries
-    ? `https://cdn.hls.lol/content/series/${tmdbId}/${season}/${episode}`
-    : `https://cdn.hls.lol/content/movie/${tmdbId}`;
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 7000);
-
-  try {
-    const res = await fetch(endpoint, {
-      headers: {
-        'Origin': 'https://cinecat.eu',
-        'Referer': 'https://cinecat.eu/'
-      },
-      signal: controller.signal
-    });
-    if (!res.ok) {
-      return { success: false, error: `Cinecat retornou HTTP ${res.status}`, provider: 'cinecat', reason: 'no_sources' };
-    }
-    const data = await res.json();
-    if (!data.found || !data.url) {
-      return { success: false, error: 'Cinecat sem stream para este título', provider: 'cinecat', reason: 'no_sources' };
-    }
-
-    const signedUrl = await signStreamUrl(data.url, 'https://cinecat.eu/');
-
-    const sourceObj = {
-      label: 'Cinecat [1080p HLS]',
-      type: 'hls',
-      stream_url: signedUrl,
-      direct_url: data.url,
-      raw_url: data.url,
-      headers: { 'Referer': 'https://cinecat.eu/' },
-      quality: 1080
-    };
-
-    return {
-      success: true,
-      title: data.title || title || (type === 'movie' ? 'Filme' : `Série T${season}E${episode}`),
-      category: type,
-      audio: 'original',
-      provider: 'cinecat',
-      primary_source: sourceObj,
-      fallback_sources: [],
-      subtitles: [],
-      aniskip: { mal_id: null, episode, ready: false }
-    };
-  } catch (err) {
-    console.error('[ClientProviders] Erro Cinecat:', err);
-    return { success: false, error: err.message || 'Erro ao carregar Cinecat', provider: 'cinecat', reason: 'error' };
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 
 /* ============================================================
@@ -340,8 +276,8 @@ function generateRiveSecretKey(id) {
 }
 
 const RIVE_SERVICES = [
-  "mirage", "vanguard", "apogee", "velocity", "ignite",
-  "tampa", "meridian", "savannah", "solstice", "primevids"
+  "vanguard", "apogee", "velocity", "ignite", "tampa",
+  "meridian", "savannah", "solstice", "primevids", "mirage"
 ];
 
 export async function resolveRiveClient({ id, type = 'movie', season = 1, episode = 1, title = '' }) {
@@ -631,14 +567,12 @@ export async function resolveMovyClient({ id, type = 'movie', season = 1, episod
  * 5. UNIFIED DISPATCHER
  * ============================================================ */
 
-export const CLIENT_PROVIDERS = ['fenixflix', 'cinecat', 'rive', 'movy'];
+export const CLIENT_PROVIDERS = ['fenixflix', 'rive', 'movy'];
 
 export async function resolveClientProvider(source, options) {
   switch (source) {
     case 'fenixflix':
       return resolveFenixFlixClient(options);
-    case 'cinecat':
-      return resolveCinecatClient(options);
     case 'rive':
       return resolveRiveClient(options);
     case 'movy':

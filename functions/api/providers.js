@@ -1,6 +1,6 @@
 /**
  * Tvzinha Online - Multi-Provider Native Stream Extractors for /api/resolve
- * Implements FenixFlix, Cinecat, Rive, and Movy resolvers.
+ * Implements FenixFlix, Rive, and Movy resolvers.
  */
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
@@ -88,56 +88,6 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
   }
 }
 
-/* ============================================================
- * 2. CINECAT (Ultra-Fast HLS Direct Stream)
- * ============================================================ */
-export async function resolveCinecat({ tmdbId, type, season = 1, episode = 1 }) {
-  const isSeries = type === "series" || type === "serie" || type === "tv";
-  const endpoint = isSeries
-    ? `https://cdn.hls.lol/content/series/${tmdbId}/${season}/${episode}`
-    : `https://cdn.hls.lol/content/movie/${tmdbId}`;
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 6000);
-  const debug = { endpoint, status: null, error: null, body: null };
-
-  try {
-    const res = await fetch(endpoint, {
-      headers: {
-        "User-Agent": USER_AGENT,
-        "Origin": "https://cinecat.eu",
-        "Referer": "https://cinecat.eu/"
-      },
-      signal: controller.signal
-    });
-    debug.status = res.status;
-    if (!res.ok) {
-      debug.body = (await res.text()).slice(0, 300);
-      return { title: "", sources: [], debug };
-    }
-    const data = await res.json();
-    if (!data.found || !data.url) return { title: "", sources: [], debug: { ...debug, data } };
-
-    return {
-      title: data.title || "",
-      sources: [
-        {
-          label: "Cinecat [1080p HLS]",
-          file: data.url,
-          quality: 1080,
-          type: "hls",
-          referer: "https://cinecat.eu/"
-        }
-      ],
-      debug
-    };
-  } catch (err) {
-    debug.error = err.message || String(err);
-    return { title: "", sources: [], debug };
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 /* ============================================================
  * 3. RIVE (4K HDR Multi-Engine Aggregator)

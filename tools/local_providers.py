@@ -67,39 +67,7 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
         return None
 
 
-# 2. CINECAT
-def fetch_cinecat(tmdb_id, media_type, season=1, episode=1):
-    is_series = media_type in ("series", "serie", "tv")
-    url = f"https://cdn.hls.lol/content/series/{tmdb_id}/{season}/{episode}" if is_series else f"https://cdn.hls.lol/content/movie/{tmdb_id}"
-
-    headers = {
-        "User-Agent": USER_AGENT,
-        "Origin": "https://cinecat.eu",
-        "Referer": "https://cinecat.eu/"
-    }
-    req = urllib.request.Request(url, headers=headers)
-    try:
-        with urllib.request.urlopen(req, timeout=6) as res:
-            if res.status != 200:
-                return None
-            data = json.loads(res.read().decode("utf-8"))
-            if not data.get("found") or not data.get("url"):
-                return None
-            return {
-                "title": data.get("title", ""),
-                "sources": [{
-                    "label": "Cinecat [1080p HLS]",
-                    "file": data["url"],
-                    "quality": 1080,
-                    "type": "hls",
-                    "referer": "https://cinecat.eu/"
-                }]
-            }
-    except Exception:
-        return None
-
-
-# 3. RIVE
+# 2. RIVE
 RIVE_SALT_TOKENS = [
     "r0V1d-s3cr3t-t0k3n-99", "k9X2m-v1d30-pr0v1d3r-42", "z7B4q-str34m-k3y-2024",
     "m3N8p-fl1x-s3cur1ty-77", "w5K1v-pl4y3r-h4sh-88", "p2L9x-b4ck3nd-t0k3n-33",
