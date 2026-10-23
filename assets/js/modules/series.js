@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261022_1758';
-import { showToast } from '../core/toast.js?v=20261022_1758';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261022_1758';
-import { buildFeedRows } from '../core/feedRows.js?v=20261022_1758';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261022_1758';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261022_1758';
-import { resumeStartTime } from '../core/resume.js?v=20261022_1758';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261022_1758';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261022_1758';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261022_1758';
-import { fetchTmdb } from '../core/tmdb.js?v=20261022_1758';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261022_1758';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261022_1758';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261022_1758';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261022_1758';
+} from '../core/constants.js?v=20261023_1040';
+import { showToast } from '../core/toast.js?v=20261023_1040';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261023_1040';
+import { buildFeedRows } from '../core/feedRows.js?v=20261023_1040';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261023_1040';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1040';
+import { resumeStartTime } from '../core/resume.js?v=20261023_1040';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261023_1040';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261023_1040';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261023_1040';
+import { fetchTmdb } from '../core/tmdb.js?v=20261023_1040';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261023_1040';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261023_1040';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261023_1040';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261023_1040';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -1667,7 +1667,6 @@ const SERIES_SERVER_OPTIONS = [
     { id: 'native_anime',   name: 'Anime Nativo (Legendado)', isNative: true, animeOnly: true, source: 'anime_native' },
     { id: 'native_direct',  name: 'Player Principal (MGEB)',  isNative: true, source: 'mgeb' },
     { id: 'native_fenix',   name: 'FenixFlix (Dublado)',      isNative: true, source: 'fenixflix' },
-    { id: 'native_rive',    name: 'Rive (Original / 4K)',     isNative: true, source: 'rive' },
     { id: 'native_movy',    name: 'Movy (Original / FHD)',    isNative: true, source: 'movy' },
     { id: 'mgeb',          name: 'Servidor 1 (MGEB)' },
     { id: 'superflix',     name: 'Servidor 2 (SuperFlix)' },
@@ -1700,6 +1699,19 @@ function renderSeriesServerButtons(showItem) {
             btn.classList.add("active");
             activeSeriesPlaying.server = server.id;
             activeSeriesPlaying.userSelectedServer = true;
+
+            // Immediate teardown of current playback in 0ms
+            atomicPlayerReset();
+            removeSeriesIframe();
+            const seriesArt = document.getElementById("series-artplayer-container");
+            const seriesLoader = document.getElementById("series-theater-loader");
+            if (seriesArt) {
+                seriesArt.innerHTML = "";
+                seriesArt.classList.add("hidden");
+            }
+            const playerName = server.name || 'Servidor';
+            setLoaderText(seriesLoader, `Conectando ao ${playerName}...`);
+            if (seriesLoader) seriesLoader.classList.remove("hidden");
 
             if (activeSeriesPlaying.show) {
                 openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: activeSeriesPlaying.episodeNumber }, { keepPosition: true });

@@ -675,8 +675,13 @@ def probe_hls(url, referer):
                     seg = probe_first_segment(variant_url, media_text, referer, True)
                     broken = seg["broken"]
                     measured = quality_class(*seg["res"]) if seg["res"] else None
-                    if measured and top["quality"] and measured != top["quality"]:
-                        qualities = [measured] + [q for q in qualities if q < measured]
+                    if measured:
+                        if not top["quality"]:
+                            qualities = [measured] + [q for q in qualities if q != measured]
+                        elif measured < top["quality"]:
+                            # Real frame size is lower than advertised in playlist: downgrade fake resolution
+                            qualities = [measured] + [q for q in qualities if q < measured]
+                        # When measured >= top["quality"], keep the playlist's declared ladder so Hls.js levels match 1:1
         except Exception:
             pass  # The variant check is best effort
         return {"qualities": qualities, "multi": len(variants) > 1, "broken": broken, "synthetic": synthetic,
@@ -770,10 +775,18 @@ def is_low_trust_source(src):
     return bool(src.get("synthetic")) or is_mirror_source(src)
 
 
+def is_cam_source(src):
+    """Detects CAM / TeleSync / Cinema recording markers in stream labels, titles and URLs."""
+    text = f"{src.get('label') or ''} {src.get('title') or ''} {src.get('raw_url') or ''}"
+    clean = re.sub(r"\.ts(?:[?#]|$)", " ", text, flags=re.I)
+    return bool(re.search(r"\b(cam|camrip|telesync|telecine|hdts|hdtc|hdcam|cinema|gravado)\b", clean, re.I) or
+                re.search(r"(?:[_\W]|^)(?:ts-?rip|hd-?ts)(?:[_\W]|$)", clean, re.I))
+
+
 def is_trusted_top_source(src):
     """A measured, healthy 1080p+ HLS from a trusted host: no need to wait for the others."""
     return (src.get("probed") and src.get("alive") and (src.get("quality") or 0) >= 1080
-            and src.get("kind", "").startswith("hls") and not is_low_trust_source(src))
+            and src.get("kind", "").startswith("hls") and not is_low_trust_source(src) and not is_cam_source(src))
 
 
 def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=False):
@@ -812,6 +825,7 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
     indexed.sort(key=lambda x: (
         -int(x[1]["alive"]),
         int(bool(x[1].get("duration_mismatch"))),
+        int(is_cam_source(x[1])),
         -(x[1]["quality"] or 0),
         int(is_low_trust_source(x[1])),
         KIND_RANK[x[1]["kind"]],
@@ -1837,30 +1851,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
                 }
 
-        # Route 3: Rive (4K HDR Multi-Engine)
-        if not result and requested_source == "rive" and media_id:
-            rive_data = timed("rive", local_providers.fetch_rive, media_id, media_type, season, episode)
-            if rive_data and rive_data.get("sources"):
-                parsed = [{
-                    "label": s["label"],
-                    "type": "hls",
-                    "stream_url": proxied_stream_url(proxy_base, stream_key, s["file"], s["referer"]),
-                    "direct_url": s["file"],
-                    "raw_url": s["file"],
-                    "headers": {"Referer": s["referer"]},
-                    "quality": s.get("quality", 2160)
-                } for s in rive_data["sources"]]
-                result = {
-                    "success": True,
-                    "title": title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
-                    "category": media_type,
-                    "audio": "original",
-                    "provider": "rive",
-                    "primary_source": parsed[0],
-                    "fallback_sources": parsed[1:],
-                    "subtitles": [],
-                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
-                }
+
 
         # Route 5: Movy (Wecollege CDN)
         if not result and requested_source == "movy" and media_id:
@@ -1973,19 +1964,17 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
                 def score_source(src):
                     url = src.get("raw_url", "").lower()
-                    # Tier 1: Proven robust datacenter-safe HLS CDNs (Score 95)
-                    if "cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url:
+                    # Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
+                    if ("cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url
+                            or "fontedecanais" in url or "57lgoe65efxo71.com" in url):
                         return 95
-                    # Tier 2: Direct sanitized HTTPS MP4 (Score 90 - Fast, zero-WAF, native seeking)
-                    if "fontedecanais" in url or "57lgoe65efxo71.com" in url:
-                        return 90
-                    # Tier 3: Standard generic HLS streams (Score 80)
+                    # Tier 2: Standard generic HLS streams (Score 80)
                     if ".m3u8" in url:
                         return 80
-                    # Tier 4: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
+                    # Tier 3: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
                     if "playercdn" in url or "workers.dev" in url or "powestream" in url:
                         return 60
-                    # Tier 5: Other MP4 streams (Score 50)
+                    # Tier 4: Other MP4 streams (Score 50)
                     if ".mp4" in url:
                         return 50
                     return 10

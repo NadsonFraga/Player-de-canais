@@ -72,7 +72,6 @@ export const FAMOUS_STUDIOS = [
 export const MOVIE_SERVERS = [
     { id: 'native_direct',  name: 'Player Principal (MGEB)',  isNative: true, source: 'mgeb' },
     { id: 'native_fenix',   name: 'FenixFlix (Dublado)',      isNative: true, source: 'fenixflix' },
-    { id: 'native_rive',    name: 'Rive (Original / 4K)',     isNative: true, source: 'rive' },
     { id: 'native_movy',    name: 'Movy (Original / FHD)',    isNative: true, source: 'movy' },
     { id: 'mgeb',           name: 'Servidor 1 (MGEB)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
     { id: 'superflix',      name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.quest/filme/${id}` },
