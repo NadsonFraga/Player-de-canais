@@ -710,7 +710,11 @@ async function probeHls(url, referer) {
   // Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
   const length = hlsPlaylistDuration(text);
   const seg = await probeFirstSegment(url, text, referer, true);
-  const q = seg.res ? qualityClass(seg.res.width, seg.res.height) : null;
+  let q = seg.res ? qualityClass(seg.res.width, seg.res.height) : null;
+  const isExplicitSd = url.includes("-sd.") || url.includes("/sd/") || url.includes("-sd-") || url.includes("_480p");
+  const isExplicitLd = url.includes("-ld.") || url.includes("/ld/") || url.includes("-ld-") || url.includes("_360p");
+  if (q && q > 480 && isExplicitSd) q = 480;
+  if (q && q > 360 && isExplicitLd) q = 360;
   return { qualities: q ? [q] : [], broken: seg.broken, duration: length.seconds, empty: length.segments === 0 };
 }
 
@@ -719,7 +723,9 @@ async function probeHls(url, referer) {
  * kind (hls-multi | hls-single | mp4-range | mp4 | unknown) and alive.
  */
 async function probeSource(src) {
-  const isHls = src.type === "hls" || (src.raw_url || "").includes(".m3u8");
+  const rawUrl = src.raw_url || "";
+  const isHls = src.type === "hls" || rawUrl.includes(".m3u8");
+  const isDirectMp4 = rawUrl.includes(".mp4") && (rawUrl.includes("fontedecanais") || rawUrl.includes("57lgoe65efxo71.com"));
   const referer = src.headers ? src.headers.Referer : "";
   const isProxied = (src.stream_url || "").includes("/api/stream");
   let qualities = [];
@@ -729,7 +735,7 @@ async function probeSource(src) {
   let duration = null;
   try {
     if (isHls) {
-      const r = await probeHls(src.raw_url, referer);
+      const r = await probeHls(rawUrl, referer);
       if (r.dead) {
         alive = !isProxied;
       } else {
@@ -742,18 +748,22 @@ async function probeSource(src) {
         if (r.broken || r.empty) alive = false;
       }
     } else {
-      const r = await probeMp4(src.raw_url, referer);
+      const r = await probeMp4(rawUrl, referer);
       if (r.dead) {
         alive = !isProxied;
       } else {
-        const q = r.res ? qualityClass(r.res.width, r.res.height) : null;
+        const q = r.res ? qualityClass(r.res.width, r.res.height) : (isDirectMp4 ? 1080 : null);
         qualities = q ? [q] : [];
-        kind = r.ranged ? "mp4-range" : "mp4";
+        kind = r.ranged || isDirectMp4 ? "mp4-range" : "mp4";
         duration = r.duration || null;
       }
     }
   } catch (e) {
     // Timeouts and network errors leave the source as unknown but playable
+    if (isDirectMp4) {
+      qualities = [1080];
+      kind = "mp4-range";
+    }
   }
   qualities.sort((a, b) => b - a);
   return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, probed: true };
