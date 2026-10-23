@@ -714,7 +714,7 @@ def probe_source(src):
     is_direct_mp4 = is_direct_mp4_source(src)
     referer = (src.get("headers") or {}).get("Referer", "")
     is_proxied = "/api/stream" in src.get("stream_url", "")
-    qualities, kind, alive, synthetic, duration = ([1080], "mp4-range", True, False, None) if is_direct_mp4 else ([], "unknown", True, False, None)
+    qualities, kind, alive, synthetic, duration = ([], "mp4-range" if is_direct_mp4 else "unknown", True, False, None)
     try:
         if is_hls:
             r = probe_hls(raw, referer)
@@ -733,22 +733,16 @@ def probe_source(src):
             r = probe_mp4(raw, referer)
             if r.get("dead"):
                 alive = not is_proxied
-                if is_direct_mp4:
-                    qualities = [1080]
-                    kind = "mp4-range"
             else:
-                q = quality_class(*r["res"]) if r.get("res") else (1080 if is_direct_mp4 else None)
-                qualities = [q] if q else ([1080] if is_direct_mp4 else [])
+                q = quality_class(*r["res"]) if r.get("res") else None
+                qualities = [q] if q else []
                 kind = "mp4-range" if (r.get("ranged") or is_direct_mp4) else "mp4"
                 duration = r.get("duration") or None
     except Exception as e:
-        # Timeouts and network errors leave the source as unknown but playable
-        if is_direct_mp4:
-            qualities = [1080]
-            kind = "mp4-range"
+        qualities = []
         print(f"[LocalServer] Probe failed for {raw[:80]}: {e}", file=sys.stderr)
     qualities = sorted(qualities, reverse=True)
-    return {**src, "quality": qualities[0] if qualities else (1080 if is_direct_mp4 else None),
+    return {**src, "quality": qualities[0] if qualities else None,
             "qualities": qualities, "kind": kind, "alive": alive, "synthetic": synthetic,
             "duration": duration, "duration_mismatch": False, "probed": True}
 
@@ -823,8 +817,8 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
     from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
     results = [{
         **s,
-        "quality": 1080 if is_direct_mp4_source(s) else None,
-        "qualities": [1080] if is_direct_mp4_source(s) else [],
+        "quality": None,
+        "qualities": [],
         "kind": "mp4-range" if is_direct_mp4_source(s) else "unknown",
         "alive": True,
         "synthetic": False,

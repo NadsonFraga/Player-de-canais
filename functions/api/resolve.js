@@ -739,7 +739,7 @@ async function probeSource(src) {
   const isDirectMp4 = isDirectMp4Source(src);
   const referer = src.headers ? src.headers.Referer : "";
   const isProxied = (src.stream_url || "").includes("/api/stream");
-  let qualities = isDirectMp4 ? [1080] : [];
+  let qualities = [];
   let kind = isDirectMp4 ? "mp4-range" : "unknown";
   let alive = true;
   let synthetic = false;
@@ -762,26 +762,18 @@ async function probeSource(src) {
       const r = await probeMp4(rawUrl, referer);
       if (r.dead) {
         alive = !isProxied;
-        if (isDirectMp4) {
-          qualities = [1080];
-          kind = "mp4-range";
-        }
       } else {
-        const q = r.res ? qualityClass(r.res.width, r.res.height) : (isDirectMp4 ? 1080 : null);
-        qualities = q ? [q] : (isDirectMp4 ? [1080] : []);
+        const q = r.res ? qualityClass(r.res.width, r.res.height) : null;
+        qualities = q ? [q] : [];
         kind = r.ranged || isDirectMp4 ? "mp4-range" : "mp4";
         duration = r.duration || null;
       }
     }
   } catch (e) {
-    // Timeouts and network errors leave the source as unknown but playable
-    if (isDirectMp4) {
-      qualities = [1080];
-      kind = "mp4-range";
-    }
+    qualities = [];
   }
   qualities.sort((a, b) => b - a);
-  return { ...src, quality: qualities[0] || (isDirectMp4 ? 1080 : null), qualities, kind, alive, synthetic, duration, duration_mismatch: false, probed: true };
+  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, probed: true };
 }
 
 // Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
@@ -858,8 +850,8 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths 
     const isDirect = isDirectMp4Source(s);
     return {
       ...s,
-      quality: isDirect ? 1080 : null,
-      qualities: isDirect ? [1080] : [],
+      quality: null,
+      qualities: [],
       kind: isDirect ? "mp4-range" : "unknown",
       alive: true,
       synthetic: false,

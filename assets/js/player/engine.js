@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261023_1231';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1231';
-import { showToast } from '../core/toast.js?v=20261023_1231';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1231';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261023_1231';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261023_1231';
-import { formatClock } from '../core/resume.js?v=20261023_1231';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261023_1231';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261023_1231';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261023_1231';
+import { store } from '../core/state.js?v=20261023_1459';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1459';
+import { showToast } from '../core/toast.js?v=20261023_1459';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1459';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261023_1459';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261023_1459';
+import { formatClock } from '../core/resume.js?v=20261023_1459';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261023_1459';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261023_1459';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261023_1459';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1640,7 +1640,10 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                         [window.Hls.Events.MANIFEST_LOADED, window.Hls.Events.LEVEL_LOADED]
                             .forEach(name => hls.on(name, markData));
 
-                        hls.on(window.Hls.Events.LEVEL_SWITCHED, () => {
+                        hls.on(window.Hls.Events.LEVEL_SWITCHED, (event, data) => {
+                            if (data && typeof data.level === 'number') {
+                                session.activeHlsLevel = data.level;
+                            }
                             if (isSessionLive(session, token)) updateQualityIndicators(session);
                         });
 
@@ -2208,9 +2211,8 @@ function hlsLevelQuality(level) {
 }
 
 /**
- * Builds the unified quality map: resolutions of the playing source first
- * (switching inside it needs no remount), then resolutions only offered by
- * other sources, in ranked order.
+ * Builds the quality map for the currently playing source (intra-stream levels).
+ * Switching levels inside the active stream does not require a player remount.
  */
 function buildQualityEntries(session) {
     const entries = new Map();
@@ -2225,16 +2227,9 @@ function buildQualityEntries(session) {
         for (const l of levels) {
             if (!entries.has(l.quality)) entries.set(l.quality, { sourceIndex: session.currentIndex, levelIndex: l.levelIndex });
         }
-    } else if (current.quality) {
+    } else if (current && current.quality) {
         entries.set(current.quality, { sourceIndex: session.currentIndex, levelIndex: -1 });
     }
-
-    session.sources.forEach((src, idx) => {
-        if (idx === session.currentIndex || session.failed.has(idx) || !src.alive) return;
-        for (const q of src.qualities) {
-            if (!entries.has(q)) entries.set(q, { sourceIndex: idx, levelIndex: null });
-        }
-    });
 
     return new Map([...entries.entries()].sort((a, b) => b[0] - a[0]));
 }
@@ -2242,8 +2237,9 @@ function buildQualityEntries(session) {
 /** Quality class currently on screen (active HLS level, or the measured frame). */
 function activeQuality(session) {
     const hls = session.hls;
-    if (hls && Array.isArray(hls.levels) && hls.currentLevel >= 0) {
-        const q = hlsLevelQuality(hls.levels[hls.currentLevel]);
+    const lvlIdx = (hls && hls.currentLevel >= 0) ? hls.currentLevel : (session.activeHlsLevel != null ? session.activeHlsLevel : -1);
+    if (hls && Array.isArray(hls.levels) && lvlIdx >= 0 && hls.levels[lvlIdx]) {
+        const q = hlsLevelQuality(hls.levels[lvlIdx]);
         if (q) return q;
     }
     const video = session.art && session.art.video;
@@ -2251,7 +2247,7 @@ function activeQuality(session) {
         const q = qualityClass(video.videoWidth, video.videoHeight);
         if (q) return q;
     }
-    return session.sources[session.currentIndex].quality;
+    return (session.sources && session.sources[session.currentIndex]?.quality) || null;
 }
 
 function autoLabel(session) {
@@ -2264,6 +2260,20 @@ function refreshQualityMenu(session) {
     if (!art) return;
     const entries = buildQualityEntries(session);
     session.qualityEntries = entries;
+
+    // Checkmark reconciliation: ensure locked quality matches an available option
+    if (!session.autoMode && session.lockedQuality) {
+        if (!entries.has(session.lockedQuality)) {
+            const available = [...entries.keys()].sort((a, b) => b - a);
+            const matched = available.find(q => q <= session.lockedQuality) || available[0];
+            if (matched) {
+                session.lockedQuality = matched;
+            } else {
+                session.autoMode = true;
+                session.lockedQuality = null;
+            }
+        }
+    }
 
     const selector = [{
         html: autoLabel(session),
@@ -2468,11 +2478,6 @@ function selectNativeQuality(session, value) {
     if (value === 'auto') {
         session.autoMode = true;
         session.lockedQuality = null;
-        const bestIdx = nextPlayableIndex(session);
-        if (bestIdx >= 0 && bestIdx !== session.currentIndex) {
-            remountFromMenu(session, bestIdx);
-            return 'Automático';
-        }
         if (session.hls) session.hls.currentLevel = -1;
         updateQualityIndicators(session);
         return qualityTooltip(session);

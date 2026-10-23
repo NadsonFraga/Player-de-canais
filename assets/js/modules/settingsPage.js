@@ -6,19 +6,19 @@
  * state when shown (and again when the account, the profile, the preferences or the sync change), in grouped cards of
  * rows. Guests see Conta (Entrar ou criar conta), Player and Sobre.
  */
-import { getAccount, getActiveProfile, changePassword, renewRecoveryCode, passwordRules, passwordStrength, ACCOUNT_EVENT } from '../core/account.js?v=20261023_1231';
-import { leaveAccount, deleteAccountHere, syncNow, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261023_1231';
-import { getPlayerPrefs, setPlayerPref, PREFS_EVENT } from '../core/playerPrefs.js?v=20261023_1231';
-import { PROFILE_EVENT } from '../core/profileStore.js?v=20261023_1231';
-import { avatarSrc } from '../core/avatars.js?v=20261023_1231';
-import { confirmDialog } from '../core/confirmDialog.js?v=20261023_1231';
-import { showToast } from '../core/toast.js?v=20261023_1231';
-import { syncPageLock } from '../core/activity.js?v=20261023_1231';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261023_1231';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261023_1231';
-import { openLegalSection } from './footer.js?v=20261023_1231';
-import { openAccountPage } from './accountPage.js?v=20261023_1231';
-import { openProfilePicker } from './profilePage.js?v=20261023_1231';
+import { getAccount, getActiveProfile, changePassword, renewRecoveryCode, passwordRules, passwordStrength, ACCOUNT_EVENT } from '../core/account.js?v=20261023_1459';
+import { leaveAccount, deleteAccountHere, syncNow, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261023_1459';
+import { getPlayerPrefs, setPlayerPref, PREFS_EVENT } from '../core/playerPrefs.js?v=20261023_1459';
+import { PROFILE_EVENT } from '../core/profileStore.js?v=20261023_1459';
+import { avatarSrc } from '../core/avatars.js?v=20261023_1459';
+import { confirmDialog } from '../core/confirmDialog.js?v=20261023_1459';
+import { showToast } from '../core/toast.js?v=20261023_1459';
+import { syncPageLock } from '../core/activity.js?v=20261023_1459';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261023_1459';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261023_1459';
+import { openLegalSection } from './footer.js?v=20261023_1459';
+import { openAccountPage } from './accountPage.js?v=20261023_1459';
+import { openProfilePicker } from './profilePage.js?v=20261023_1459';
 
 const SECTIONS = {
     account: 'Conta',

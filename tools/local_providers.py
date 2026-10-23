@@ -35,10 +35,16 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
                 quality = 1080
                 if "4k" in text or "2160p" in text:
                     quality = 2160
+                elif "1440p" in text or "2k" in text:
+                    quality = 1440
+                elif "1080p" in text or "fhd" in text or "full hd" in text or "fullhd" in text:
+                    quality = 1080
                 elif "720p" in text or "hd" in text:
                     quality = 720
-                elif "480p" in text:
+                elif "480p" in text or "sd" in text:
                     quality = 480
+                elif "360p" in text:
+                    quality = 360
 
                 is_dubbed = "dublado" in text or "nacional" in text
                 is_subbed = "legendado" in text

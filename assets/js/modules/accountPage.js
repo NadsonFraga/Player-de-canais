@@ -8,13 +8,13 @@
  * Robots: Criar conta and Esqueci a senha carry the Turnstile check (core/turnstile.js); Entrar adds it when the server
  * asks (after 2 wrong passwords) and then sends again by itself.
  */
-import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261023_1231';
-import { showToast } from '../core/toast.js?v=20261023_1231';
-import { syncPageLock } from '../core/activity.js?v=20261023_1231';
-import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261023_1231';
-import { openLegalSection } from './footer.js?v=20261023_1231';
-import { openProfilePicker } from './profilePage.js?v=20261023_1231';
-import { createCheck } from '../core/turnstile.js?v=20261023_1231';
+import { register, signIn, recoverAccount, nicknameProblem, passwordRules, passwordStrength } from '../core/account.js?v=20261023_1459';
+import { showToast } from '../core/toast.js?v=20261023_1459';
+import { syncPageLock } from '../core/activity.js?v=20261023_1459';
+import { pushNavLayer, popNavLayer, isHandlingBack, runNavBatch } from '../navigation/historyManager.js?v=20261023_1459';
+import { openLegalSection } from './footer.js?v=20261023_1459';
+import { openProfilePicker } from './profilePage.js?v=20261023_1459';
+import { createCheck } from '../core/turnstile.js?v=20261023_1459';
 
 const MESSAGES = {
     nickname_short: 'O apelido precisa ter pelo menos 3 caracteres.',
