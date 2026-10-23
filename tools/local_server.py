@@ -691,6 +691,12 @@ def probe_hls(url, referer):
     length = hls_playlist_duration(text)
     seg = probe_first_segment(url, text, referer, True)
     q = quality_class(*seg["res"]) if seg["res"] else None
+    is_explicit_sd = "-sd." in url or "/sd/" in url or "-sd-" in url or "_480p" in url
+    is_explicit_ld = "-ld." in url or "/ld/" in url or "-ld-" in url or "_360p" in url
+    if q and q > 480 and is_explicit_sd:
+        q = 480
+    if q and q > 360 and is_explicit_ld:
+        q = 360
     return {"qualities": [q] if q else [], "broken": seg["broken"], "duration": length["seconds"],
             "empty": length["segments"] == 0}
 
@@ -699,6 +705,7 @@ def probe_source(src):
     """Adds quality, qualities, kind and alive to a source dict (returns a new dict)."""
     raw = src.get("raw_url", "")
     is_hls = src.get("type") == "hls" or ".m3u8" in raw
+    is_direct_mp4 = ".mp4" in raw and ("fontedecanais" in raw or "57lgoe65efxo71.com" in raw)
     referer = (src.get("headers") or {}).get("Referer", "")
     is_proxied = "/api/stream" in src.get("stream_url", "")
     qualities, kind, alive, synthetic, duration = [], "unknown", True, False, None
@@ -716,12 +723,15 @@ def probe_source(src):
             if r.get("broken") or r.get("empty"):
                 alive = False
         else:
-            q = quality_class(*r["res"]) if r.get("res") else None
+            q = quality_class(*r["res"]) if r.get("res") else (1080 if is_direct_mp4 else None)
             qualities = [q] if q else []
-            kind = "mp4-range" if r.get("ranged") else "mp4"
+            kind = "mp4-range" if (r.get("ranged") or is_direct_mp4) else "mp4"
             duration = r.get("duration") or None
     except Exception as e:
         # Timeouts and network errors leave the source as unknown but playable
+        if is_direct_mp4:
+            qualities = [1080]
+            kind = "mp4-range"
         print(f"[LocalServer] Probe failed for {raw[:80]}: {e}", file=sys.stderr)
     qualities = sorted(qualities, reverse=True)
     return {**src, "quality": qualities[0] if qualities else None, "qualities": qualities, "kind": kind,

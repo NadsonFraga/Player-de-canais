@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261023_1040';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1040';
-import { showToast } from '../core/toast.js?v=20261023_1040';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1040';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261023_1040';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261023_1040';
-import { formatClock } from '../core/resume.js?v=20261023_1040';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261023_1040';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261023_1040';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261023_1040';
+import { store } from '../core/state.js?v=20261023_1112';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1112';
+import { showToast } from '../core/toast.js?v=20261023_1112';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1112';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261023_1112';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261023_1112';
+import { formatClock } from '../core/resume.js?v=20261023_1112';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261023_1112';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261023_1112';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261023_1112';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1739,7 +1739,16 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         art.on('video:canplay', markStreamSuccess);
         art.on('video:playing', markStreamSuccess);
         art.on('video:playing', () => {
-            if (isSessionLive(session, token)) showResumeNotice(session);
+            if (isSessionLive(session, token)) {
+                showResumeNotice(session);
+                if (session.autoMode && !session.qualitySearchDone && (activeQuality(session) || 0) < 720 && qualitySearchCandidates(session).length) {
+                    setTimeout(() => {
+                        if (isSessionLive(session, token) && (activeQuality(session) || 0) < 720) {
+                            searchBetterQuality(session, false);
+                        }
+                    }, 1500);
+                }
+            }
         });
 
         art.on('video:pause', () => {
@@ -2281,7 +2290,7 @@ function refreshQualityMenu(session) {
         selector,
         onSelect: (item) => {
             if (item.value === 'search') {
-                searchBetterQuality(session);
+                searchBetterQuality(session, true);
                 return qualityTooltip(session);
             }
             setPlayerPref('quality', item.value === 'auto' ? 'auto' : Number(item.value));
@@ -2334,12 +2343,12 @@ function readFrameSize(url, budgetMs) {
  * "Buscar qualidade melhor": measures the candidates while the video keeps playing, lists what it found in the
  * menu, and moves to the best one when it beats what plays (same position), or says nothing better was found.
  */
-async function searchBetterQuality(session) {
+async function searchBetterQuality(session, isManual = false) {
     const candidates = qualitySearchCandidates(session);
     if (session.qualitySearching || !candidates.length) return;
     session.qualitySearching = true;
     refreshQualityMenu(session);
-    showToast('Procurando uma fonte de qualidade melhor...', 4000);
+    if (isManual) showToast('Procurando uma fonte de qualidade melhor...', 4000);
 
     const sizes = await Promise.all(candidates.map(({ src }) => readFrameSize(src.url, QUALITY_SEARCH_BUDGET_MS)));
     session.qualitySearching = false;
@@ -2360,11 +2369,10 @@ async function searchBetterQuality(session) {
         .filter(({ src }) => (src.quality || 0) > playing)
         .sort((a, b) => b.src.quality - a.src.quality)[0];
     if (!best) {
-        showToast('Não encontramos uma qualidade melhor para este título.', 4500);
+        if (isManual) showToast('Não encontramos uma qualidade melhor para este título.', 4500);
         return;
     }
-    showToast(`Fonte em ${qualityText(best.src.quality)} encontrada. Carregando...`, 4000);
-    session.autoMode = false;
+    showToast(`Qualidade melhor encontrada (${qualityText(best.src.quality)}). Carregando...`, 3000);
     session.lockedQuality = best.src.quality;
     session.slowStartIndex = best.idx;
     session.failed.delete(best.idx);
