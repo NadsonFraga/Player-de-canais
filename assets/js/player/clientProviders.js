@@ -6,7 +6,7 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1231';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1459';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -107,8 +107,11 @@ export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', seaso
         const text = `${s.name || ''} ${s.title || ''}`.toLowerCase();
         let quality = 1080;
         if (text.includes('4k') || text.includes('2160p')) quality = 2160;
+        else if (text.includes('1440p') || text.includes('2k')) quality = 1440;
+        else if (text.includes('1080p') || text.includes('fhd') || text.includes('full hd') || text.includes('fullhd')) quality = 1080;
         else if (text.includes('720p') || text.includes('hd')) quality = 720;
-        else if (text.includes('480p')) quality = 480;
+        else if (text.includes('480p') || text.includes('sd')) quality = 480;
+        else if (text.includes('360p')) quality = 360;
 
         const isDubbed = text.includes('dublado') || text.includes('nacional');
         const isSubbed = text.includes('legendado');
@@ -145,7 +148,16 @@ export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', seaso
     // Sign proxy URLs for streams needing referer
     const itemsToSign = filtered.map(s => {
       const rawFile = (s.file || '').trim();
-      const isDirectMp4 = rawFile.includes('.mp4') && (rawFile.includes('fontedecanais') || rawFile.includes('57lgoe65efxo71.com'));
+      const isDirectMp4 = (rawFile.includes('.mp4') || rawFile.includes('/stream/')) && (
+        rawFile.includes('fontedecanais') ||
+        rawFile.includes('57lgoe65efxo71.com') ||
+        rawFile.includes('77zzhf54vdll71.com') ||
+        rawFile.includes('fenixhub.online') ||
+        rawFile.includes('fenixflix') ||
+        rawFile.includes('koyeb.app') ||
+        rawFile.includes('/movies/') ||
+        rawFile.includes('/series/')
+      );
       const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, 'https://').replace(/:80\//, '/') : rawFile;
       const referer = 'https://embedplayer2.xyz/';
       return {

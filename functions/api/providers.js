@@ -41,8 +41,11 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
         const text = `${s.name || ''} ${s.title || ''}`.toLowerCase();
         let quality = 1080;
         if (text.includes("4k") || text.includes("2160p")) quality = 2160;
+        else if (text.includes("1440p") || text.includes("2k")) quality = 1440;
+        else if (text.includes("1080p") || text.includes("fhd") || text.includes("full hd") || text.includes("fullhd")) quality = 1080;
         else if (text.includes("720p") || text.includes("hd")) quality = 720;
-        else if (text.includes("480p")) quality = 480;
+        else if (text.includes("480p") || text.includes("sd")) quality = 480;
+        else if (text.includes("360p")) quality = 360;
 
         const isDubbed = text.includes("dublado") || text.includes("nacional");
         const isSubbed = text.includes("legendado");
