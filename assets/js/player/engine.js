@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261023_1112';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1112';
-import { showToast } from '../core/toast.js?v=20261023_1112';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1112';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261023_1112';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261023_1112';
-import { formatClock } from '../core/resume.js?v=20261023_1112';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261023_1112';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261023_1112';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261023_1112';
+import { store } from '../core/state.js?v=20261023_1231';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1231';
+import { showToast } from '../core/toast.js?v=20261023_1231';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1231';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261023_1231';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261023_1231';
+import { formatClock } from '../core/resume.js?v=20261023_1231';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261023_1231';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261023_1231';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261023_1231';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -2308,9 +2308,10 @@ function refreshQualityMenu(session) {
 function qualitySearchCandidates(session) {
     if (session.qualitySearchDone || (activeQuality(session) || 0) >= 1080) return [];
     const usable = idx => !session.failed.has(idx) || (session.failReasons && session.failReasons[idx] === 'timeout');
+    const playing = activeQuality(session) || 0;
     return session.sources
         .map((src, idx) => ({ src, idx }))
-        .filter(({ src, idx }) => idx !== session.currentIndex && usable(idx) && src.alive && !src.quality && !isHlsSource(src))
+        .filter(({ src, idx }) => idx !== session.currentIndex && usable(idx) && src.alive && (!src.quality || src.quality > playing) && !isHlsSource(src))
         .slice(0, QUALITY_SEARCH_MAX);
 }
 
@@ -2520,6 +2521,18 @@ function measureCurrentQuality(session) {
         return;
     }
     updateQualityIndicators(session);
+
+    // Automatic quality upgrade safeguard: if playing < 720p in Auto mode, silently search for a better quality in background
+    if (session.autoMode && (activeQuality(session) || 0) < 720 && !session.qualitySearching && !session.qualitySearchDone) {
+        if (!session.autoQualityTimer) {
+            session.autoQualityTimer = setTimeout(() => {
+                session.autoQualityTimer = null;
+                if (isSessionLive(session) && session.autoMode && (activeQuality(session) || 0) < 720 && !session.qualitySearchDone) {
+                    searchBetterQuality(session, false);
+                }
+            }, 1500);
+        }
+    }
 }
 
 function canCastToApp() {

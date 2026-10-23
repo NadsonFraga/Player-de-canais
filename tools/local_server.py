@@ -290,8 +290,8 @@ def fetch_zoko(mal_id: str, episode: int = 1):
 PROBE_TIMEOUT_S = 3.5
 PROBE_MAX_SOURCES = 6
 # Probing stops after this budget; sources not measured in time keep host order
-PROBE_BUDGET_S = 2.5
-KIND_RANK = {"hls-multi": 0, "hls-single": 1, "mp4-range": 2, "mp4": 3, "unknown": 4}
+PROBE_BUDGET_S = 3.5
+KIND_RANK = {"hls-multi": 0, "mp4-range": 1, "hls-single": 2, "mp4": 3, "unknown": 4}
 H264_HIGH_PROFILES = {100, 110, 122, 244, 44, 83, 86, 118, 128, 138, 139, 134, 135}
 
 
@@ -701,32 +701,46 @@ def probe_hls(url, referer):
             "empty": length["segments"] == 0}
 
 
+def is_direct_mp4_source(src):
+    """Detects direct MP4 streams hosted on known video CDNs."""
+    raw = (src.get("raw_url") or "").lower()
+    return ".mp4" in raw and ("fontedecanais" in raw or "57lgoe65efxo71.com" in raw or "77zzhf54vdll71.com" in raw or "/movies/" in raw)
+
+
 def probe_source(src):
     """Adds quality, qualities, kind and alive to a source dict (returns a new dict)."""
     raw = src.get("raw_url", "")
     is_hls = src.get("type") == "hls" or ".m3u8" in raw
-    is_direct_mp4 = ".mp4" in raw and ("fontedecanais" in raw or "57lgoe65efxo71.com" in raw)
+    is_direct_mp4 = is_direct_mp4_source(src)
     referer = (src.get("headers") or {}).get("Referer", "")
     is_proxied = "/api/stream" in src.get("stream_url", "")
-    qualities, kind, alive, synthetic, duration = [], "unknown", True, False, None
+    qualities, kind, alive, synthetic, duration = ([1080], "mp4-range", True, False, None) if is_direct_mp4 else ([], "unknown", True, False, None)
     try:
-        r = probe_hls(raw, referer) if is_hls else probe_mp4(raw, referer)
-        if r.get("dead"):
-            alive = not is_proxied
-        elif is_hls:
-            qualities = r["qualities"]
-            kind = "hls-multi" if r.get("multi") else "hls-single"
-            synthetic = bool(r.get("synthetic"))
-            duration = r.get("duration") or None
-            # A broken first segment stalls playback, and a playlist without segments plays
-            # nothing: keep them only as a last resort
-            if r.get("broken") or r.get("empty"):
-                alive = False
+        if is_hls:
+            r = probe_hls(raw, referer)
+            if r.get("dead"):
+                alive = not is_proxied
+            else:
+                qualities = r["qualities"]
+                kind = "hls-multi" if r.get("multi") else "hls-single"
+                synthetic = bool(r.get("synthetic"))
+                duration = r.get("duration") or None
+                # A broken first segment stalls playback, and a playlist without segments plays
+                # nothing: keep them only as a last resort
+                if r.get("broken") or r.get("empty"):
+                    alive = False
         else:
-            q = quality_class(*r["res"]) if r.get("res") else (1080 if is_direct_mp4 else None)
-            qualities = [q] if q else []
-            kind = "mp4-range" if (r.get("ranged") or is_direct_mp4) else "mp4"
-            duration = r.get("duration") or None
+            r = probe_mp4(raw, referer)
+            if r.get("dead"):
+                alive = not is_proxied
+                if is_direct_mp4:
+                    qualities = [1080]
+                    kind = "mp4-range"
+            else:
+                q = quality_class(*r["res"]) if r.get("res") else (1080 if is_direct_mp4 else None)
+                qualities = [q] if q else ([1080] if is_direct_mp4 else [])
+                kind = "mp4-range" if (r.get("ranged") or is_direct_mp4) else "mp4"
+                duration = r.get("duration") or None
     except Exception as e:
         # Timeouts and network errors leave the source as unknown but playable
         if is_direct_mp4:
@@ -734,9 +748,9 @@ def probe_source(src):
             kind = "mp4-range"
         print(f"[LocalServer] Probe failed for {raw[:80]}: {e}", file=sys.stderr)
     qualities = sorted(qualities, reverse=True)
-    return {**src, "quality": qualities[0] if qualities else None, "qualities": qualities, "kind": kind,
-            "alive": alive, "synthetic": synthetic, "duration": duration, "duration_mismatch": False,
-            "probed": True}
+    return {**src, "quality": qualities[0] if qualities else (1080 if is_direct_mp4 else None),
+            "qualities": qualities, "kind": kind, "alive": alive, "synthetic": synthetic,
+            "duration": duration, "duration_mismatch": False, "probed": True}
 
 
 # Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
@@ -807,8 +821,17 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
     different lengths), the early return also needs another source confirming the length, and
     a source whose length disagrees with the others goes after every agreeing live source."""
     from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
-    results = [{**s, "quality": None, "qualities": [], "kind": "unknown", "alive": True,
-                "synthetic": False, "duration": None, "duration_mismatch": False, "probed": False} for s in sources]
+    results = [{
+        **s,
+        "quality": 1080 if is_direct_mp4_source(s) else None,
+        "qualities": [1080] if is_direct_mp4_source(s) else [],
+        "kind": "mp4-range" if is_direct_mp4_source(s) else "unknown",
+        "alive": True,
+        "synthetic": False,
+        "duration": None,
+        "duration_mismatch": False,
+        "probed": False
+    } for s in sources]
     to_probe = sources[:PROBE_MAX_SOURCES]
     if to_probe:
         pool = ThreadPoolExecutor(max_workers=len(to_probe))
@@ -1748,7 +1771,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         if cache_key in RESOLVE_CACHE:
             cached_time, cached_res = RESOLVE_CACHE[cache_key]
-            if now - cached_time < 1800:
+            if now - cached_time < 60:
                 self.send_cors_headers(200, "application/json; charset=utf-8", origin=origin)
                 self.send_header("Server-Timing", 'cache;desc="hit"')
                 self.end_headers()
@@ -1976,7 +1999,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     url = src.get("raw_url", "").lower()
                     # Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
                     if ("cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url
-                            or "fontedecanais" in url or "57lgoe65efxo71.com" in url):
+                            or "fontedecanais" in url or "57lgoe65efxo71.com" in url or "77zzhf54vdll71.com" in url):
                         return 95
                     # Tier 2: Standard generic HLS streams (Score 80)
                     if ".m3u8" in url:

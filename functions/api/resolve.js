@@ -311,8 +311,8 @@ async function resolveZoko(malId, episode = 1) {
 const PROBE_TIMEOUT_MS = 3500;
 const PROBE_MAX_SOURCES = 6;
 // Probing stops after this budget; sources not measured in time keep host order
-const PROBE_BUDGET_MS = 2500;
-const KIND_RANK = { "hls-multi": 0, "hls-single": 1, "mp4-range": 2, "mp4": 3, "unknown": 4 };
+const PROBE_BUDGET_MS = 3500;
+const KIND_RANK = { "hls-multi": 0, "mp4-range": 1, "hls-single": 2, "mp4": 3, "unknown": 4 };
 
 /**
  * Maps a frame size to a standard quality class (2160, 1440, 1080, 720, 480, 360, 240).
@@ -718,6 +718,17 @@ async function probeHls(url, referer) {
   return { qualities: q ? [q] : [], broken: seg.broken, duration: length.seconds, empty: length.segments === 0 };
 }
 
+/** Detects direct MP4 streams hosted on known video CDNs. */
+function isDirectMp4Source(src) {
+  const raw = (src.raw_url || "").toLowerCase();
+  return raw.includes(".mp4") && (
+    raw.includes("fontedecanais") ||
+    raw.includes("57lgoe65efxo71.com") ||
+    raw.includes("77zzhf54vdll71.com") ||
+    raw.includes("/movies/")
+  );
+}
+
 /**
  * Adds quality metadata to a source: quality (top class), qualities (desc),
  * kind (hls-multi | hls-single | mp4-range | mp4 | unknown) and alive.
@@ -725,11 +736,11 @@ async function probeHls(url, referer) {
 async function probeSource(src) {
   const rawUrl = src.raw_url || "";
   const isHls = src.type === "hls" || rawUrl.includes(".m3u8");
-  const isDirectMp4 = rawUrl.includes(".mp4") && (rawUrl.includes("fontedecanais") || rawUrl.includes("57lgoe65efxo71.com"));
+  const isDirectMp4 = isDirectMp4Source(src);
   const referer = src.headers ? src.headers.Referer : "";
   const isProxied = (src.stream_url || "").includes("/api/stream");
-  let qualities = [];
-  let kind = "unknown";
+  let qualities = isDirectMp4 ? [1080] : [];
+  let kind = isDirectMp4 ? "mp4-range" : "unknown";
   let alive = true;
   let synthetic = false;
   let duration = null;
@@ -751,9 +762,13 @@ async function probeSource(src) {
       const r = await probeMp4(rawUrl, referer);
       if (r.dead) {
         alive = !isProxied;
+        if (isDirectMp4) {
+          qualities = [1080];
+          kind = "mp4-range";
+        }
       } else {
         const q = r.res ? qualityClass(r.res.width, r.res.height) : (isDirectMp4 ? 1080 : null);
-        qualities = q ? [q] : [];
+        qualities = q ? [q] : (isDirectMp4 ? [1080] : []);
         kind = r.ranged || isDirectMp4 ? "mp4-range" : "mp4";
         duration = r.duration || null;
       }
@@ -766,7 +781,7 @@ async function probeSource(src) {
     }
   }
   qualities.sort((a, b) => b - a);
-  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, probed: true };
+  return { ...src, quality: qualities[0] || (isDirectMp4 ? 1080 : null), qualities, kind, alive, synthetic, duration, duration_mismatch: false, probed: true };
 }
 
 // Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
@@ -839,7 +854,20 @@ function isTrustedTopSource(src) {
  * a source whose length disagrees with the others goes after every agreeing live source.
  */
 async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths = false) {
-  const results = sources.map(s => ({ ...s, quality: null, qualities: [], kind: "unknown", alive: true, synthetic: false, duration: null, duration_mismatch: false, probed: false }));
+  const results = sources.map(s => {
+    const isDirect = isDirectMp4Source(s);
+    return {
+      ...s,
+      quality: isDirect ? 1080 : null,
+      qualities: isDirect ? [1080] : [],
+      kind: isDirect ? "mp4-range" : "unknown",
+      alive: true,
+      synthetic: false,
+      duration: null,
+      duration_mismatch: false,
+      probed: false,
+    };
+  });
   const toProbe = Math.min(sources.length, PROBE_MAX_SOURCES);
   if (toProbe > 0) {
     await new Promise(resolve => {
@@ -1539,7 +1567,7 @@ export async function onRequestGet(context) {
       function scoreSource(src) {
         const u = (src.raw_url || "").toLowerCase();
         // Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
-        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || u.includes("fontedecanais") || u.includes("57lgoe65efxo71.com")) {
+        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || u.includes("fontedecanais") || u.includes("57lgoe65efxo71.com") || u.includes("77zzhf54vdll71.com")) {
           return 95;
         }
         // Tier 2: Standard generic HLS streams (Score 80)
@@ -1589,7 +1617,7 @@ export async function onRequestGet(context) {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
         ...corsHeaders,
-        "Cache-Control": "public, max-age=1800",
+        "Cache-Control": "public, max-age=60, s-maxage=120",
         "Server-Timing": serverTiming,
       },
     });
