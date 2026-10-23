@@ -1,81 +1,84 @@
 # Stream Ranking & Quality System Refactoring
 
-> **Status:** in planning. Branch `feat/quality-and-ranking-refactor` or directly on `staging`.
+> **Status:** in execution. Branch `staging`.
 
 ## Why
 
-1. **Rive Instability**: The Rive aggregator includes unpredictable third-party engines (`primevids` on `fastcloud.live` and `mirage`) that serve dummy 2m46s troll clips (`bigtits.m3u8`) or YouTube teasers when a title is unreleased or unindexed. The user requested complete removal of Rive across the entire codebase.
-2. **Quality Indicator Bug**: In `engine.js`, `qualityTooltip(session)` reads `session.lockedQuality` instead of the actively playing quality (`activeQuality(session)`). When a user has a 2160p preference, the player settings gear menu falsely displays "Qualidade 2160p" even when the playing source is only 480p or 720p.
-3. **Backend vs Frontend HLS Level Mismatch**: In `probeHls`, when the master playlist declares a lower resolution (e.g. 854x480) but the first TS segment measures higher (e.g. 1280x538), the backend adds 720p to the API response. However, the browser's Hls.js client only parses the raw playlist text (which only has 480p), creating a severe UI mismatch.
-4. **Flawed Ranking & CAM Leaks in MGEB**:
-   - The current ranking algorithm blindly favors `hls-multi` over `mp4` via `KIND_RANK`, even if the HLS stream is low-bitrate 480p and the MP4 is a pristine 720p/1080p WEB-DL.
-   - Low-quality cinema recordings (CAM/TS) hosted on secondary CDNs leak into the primary slot because the ranking algorithm only looks at pixel dimensions without validating bitrate thresholds or audio/video fidelity.
+1. **Audio Language Sovereignty (PT-BR Priority)**:
+   - Some HLS multi-audio streams from aggregators (e.g. MGEB on *Homem-Aranha: Um Novo Dia*) declare multiple tracks (`hi`, `ta`, `te`, `en`, `es`) without Brazilian Portuguese. Serving these on a dubbed request ruins user experience.
+   - Requirement: Discard sources **only when it is 100% certain** they lack Portuguese (i.e. explicit audio tracks are declared and none is PT-BR). Undeclared single-track streams (standard dubbed MP4s) are preserved.
+   - When multi-audio streams contain PT-BR, auto-select the PT-BR track on mount.
+   - Failover must strictly remain within internal player sources (Fonte 1 -> Fonte 2 -> Fonte 3); never jump between external drawer players automatically.
+2. **Ranking Overhaul: ABR Multi-Bitrate vs Single 1080p (Buffering Prevention)**:
+   - Single-bitrate 1080p MP4s or fixed HLS streams often suffer severe buffering and stalls on congested third-party CDNs.
+   - Multi-bitrate HLS streams provide smooth playback via Adaptive Bitrate (ABR).
+   - Add User Preference in Settings ("Modo de Qualidade"): `Equilibrado / Fluidez` (default: favors ABR multi-bitrate) vs `Forçar Resolução Máxima (1080p+)`.
+3. **Smart Quality Menu with Cross-Source Switching & Rollback**:
+   - Only resolutions actually present in verified sources appear in the player quality menu (no phantom resolutions).
+   - If the currently playing source already has that resolution, change `hls.currentLevel` in 0ms (no remount).
+   - If the user explicitly selects a higher resolution available on another source, switch source preserving `currentPlaybackTime`.
+   - If the new source fails or takes > 4s to start, automatically roll back to the previous source with user feedback.
 
 ---
 
-## Phase 1: Complete Rive Removal
+## Phase 1: Audio Language Filtering & Portuguese Auto-Selection
 
-1. **Archive Extractor**:
-   - Move `tools/extractors/rive/` to `.archives/old/extractors/rive/`.
-2. **Remove Client-Side Engine**:
-   - In `assets/js/player/clientProviders.js`: remove `resolveRiveClient`, `generateRiveSecretKey`, `RIVE_SERVICES`, and remove `'rive'` from `CLIENT_PROVIDERS` and `resolveClientProvider`.
-3. **Remove Server Resolvers & Routes**:
-   - In `functions/api/resolve.js`: remove Rive route block and imports.
-   - In `functions/api/providers.js`: remove `resolveRive` function.
-   - In `tools/local_server.py`: remove Route: Rive.
-   - In `tools/local_providers.py`: remove `fetch_rive` and token tables.
-4. **Remove UI References & Constants**:
-   - In `assets/js/core/constants.js`: remove `native_rive` from `MOVIE_SERVERS`.
-   - In `assets/js/modules/series.js`: remove `native_rive` from `SERIES_SERVER_OPTIONS`.
-   - In `tools/extractors/README.md`: remove Rive from active extractors table.
-5. **Verify Clean Removal**:
-   - Grep search to ensure zero remnants of `rive` in active code.
-
----
-
-## Phase 2: Quality System Refactoring (Frontend & Backend)
-
-### Industry Benchmark Analysis
-* **YouTube / Netflix**: Uses ABR but decouples user preference from the active badge. The gear icon tooltip ALWAYS displays the resolution currently rendering on screen (e.g. "1080p HD"). If the user selects a higher resolution not supported by the video, the player automatically clamps to the media's maximum ceiling and displays that ceiling.
-* **Stremio / Video.js / Artplayer**: The quality menu options must 1:1 match the actual tracks available in the media element or Hls.js instance. Backend probing must never promise qualities that Hls.js cannot switch to.
-
-### Technical Redesign
-1. **Frontend Tooltip & Indicators Fix (`engine.js`)**:
-   - Fix `qualityTooltip(session)` to strictly return `qualityText(activeQuality(session))` or `autoLabel(session)`.
-   - Clamp `session.lockedQuality`: if user preferred 2160p but video only has 1080p, the player selects 1080p and displays 1080p, without pretending 2160p exists.
-   - Update `updateQualityIndicators()` to ensure the HD badge (`>= 720p`) reflects the true rendering resolution.
-2. **Backend/Frontend Playlist Synchronization (`probeHls` & `resolve.js` / `local_server.py`)**:
-   - Do NOT inject phantom quality levels into `qualities` that are absent from the playlist variant definitions.
-   - If an HLS master playlist declares variants `[480, 360, 240]`, the backend reports `qualities: [480, 360, 240]`. The true frame size measured on the first segment can override the label of the top variant, but must not introduce unmatched level indices.
+1. **Backend Manifest Audio Parsing (`functions/api/resolve.js` & `tools/local_server.py`)**:
+   - In `probeHls` / `probe_hls`: parse `#EXT-X-MEDIA:TYPE=AUDIO`.
+   - If tracks exist and none is Portuguese: flag `audio_mismatch: true`.
+   - If tracks exist and Portuguese is present: flag `has_pt_audio: true`.
+   - If no tracks declared: `audio_mismatch: false` (single embedded track).
+   - In `rankSourcesByQuality`:
+     - In dubbed mode (`lang !== "sub"`): filter out `audio_mismatch: true` when valid sources exist.
+     - Rank `!audio_mismatch` above `audio_mismatch`.
+     - Rank `has_pt_audio: true` above unverified embedded audio.
+     - In `isTrustedTopSource`: require `!src.audio_mismatch`.
+2. **Frontend Engine Audio Auto-Selection & Failover (`assets/js/player/engine.js`)**:
+   - On `MANIFEST_PARSED` and `AUDIO_TRACKS_UPDATED`:
+     - If multiple audio tracks exist and one is Portuguese, automatically switch `hls.audioTrack` to the PT index.
+     - If multiple audio tracks exist and none is Portuguese during dubbed playback, failover within `session.sources` via `failoverNativeSource(session, 'no_pt_audio')`.
+     - Respect manual user audio selection (`session.userSelectedAudio`).
 
 ---
 
-## Phase 3: Source Filtering & Ranking Overhaul (Anti-CAM & Bitrate-Aware Priority)
+## Phase 2: Quality Mode Preference in Settings (COMPLETED)
 
-### Industry Benchmark Analysis
-* **Stremio / Torrentio / Kodi**: Aggregators penalize CAM / TeleSync / Screener releases by inspecting filename tags, container metadata, and bitrate. A clean 720p/1080p WEB-DL with clean audio is always prioritized over a low-bitrate multi-stream or CAM release.
-
-### Technical Redesign
-1. **Bitrate-Aware Quality Scoring in `rankSourcesByQuality`**:
-   - Invert the blind `KIND_RANK` priority: a high-quality MP4 (`fontedecanais` 720p/1080p, bitrate >= 2.5 Mbps) must rank ABOVE a low-bitrate `hls-multi` (e.g. 480p at 1 Mbps).
-   - Only favor `hls-multi` when the top quality of the HLS stream is `>=` the quality of the MP4 stream.
-2. **Anti-CAM & Low-Fidelity Filtering**:
-   - Add explicit pattern detection for CAM signatures in stream URLs and titles: `\b(cam|ts|telesync|hdcam|cinema|gravado)\b`.
-   - Add bitrate threshold check: if an HLS stream's top variant has bandwidth < 1,200,000 bps (1.2 Mbps) while an alternative source has bandwidth >= 2.5 Mbps, demote the low-bitrate stream.
-3. **Failover & Timeout Resilience**:
-   - Ensure unreachable or slow hosts (> 2.5s probe timeout) do not stall the resolve response.
-   - Maintain seamless failover to backup sources on playback error.
+1. **Core & Settings (`assets/js/core/playerPrefs.js`, `assets/js/modules/settingsPage.js`)**:
+   - Added `quality_mode`: `'balanced'` (default) vs `'highest'`.
+   - Added UI segmented control in Configurações -> Player ("Modo de Reprodução": Equilibrado vs Resolução Máxima).
+2. **Ranking by Quality Mode (`functions/api/resolve.js` & `tools/local_server.py`)**:
+   - Passed `quality_mode` from client to resolver API (`/api/resolve?quality_mode=...`).
+   - Implemented `isHdAbr` / `is_hd_abr` helper (HD HLS multi-bitrate streams >= 720p).
+   - In `balanced` mode: ranks `hls-multi` (HD ABR) above fixed single-bitrate 1080p MP4s to prevent stalls/buffering.
+   - In `highest` mode: ranks raw resolution first (`(b.quality || 0) - (a.quality || 0)`), letting user force 1080p regardless of single/multi bitrate.
+   - Preserved pre-probed sources in `rankSourcesByQuality` to avoid redundant network probes.
+3. **Automated Verification**:
+   - Added test cases in `tools/test_mgeb_rules.py`.
+   - 37/37 checks passed (100% parity between Python and Node.js).
 
 ---
 
-## Phase 4: Verification, Automated & Manual Tests, Staging Deploy
+## Phase 3: Seamless Cross-Source Quality Switching with Rollback (COMPLETED)
 
-1. Test with multiple real titles:
-   - Movies: *Toy Story 4* (TMDB 301528), *Deadpool & Wolverine* (TMDB 533535), *Fight Club* (TMDB 550).
-   - Series: *Breaking Bad* (TMDB 1396), *Arcane* (TMDB 94605).
-   - Anime: *Jujutsu Kaisen*, *Demon Slayer*.
-2. Run automated test suites:
-   - `python tools/test_mgeb_rules.py`
-   - `python tools/bump_version.py --check`
-   - `node --check` syntax validation on all modified JS files.
-3. Deploy to `staging` branch and verify in Chrome and Firefox.
+1. **Frontend Quality Entries (`assets/js/player/engine.js`)**:
+   - `buildQualityEntries`: lists intra-stream levels of active source first (0ms level switch without remount).
+   - Aggregates real, verified qualities from other alive, valid sources (skipping dead and audio-mismatched sources).
+   - No phantom resolutions: only actual resolutions found across sources appear in the menu.
+2. **Cross-Source Switching & 4-Second Safety Rollback**:
+   - When switching to a resolution hosted by another internal source, preserves exact `currentPlaybackTime` into `startTime`.
+   - Arm 4-second safety rollback timer (`session.qualityRollbackTimer`).
+   - If target source plays successfully (`markStreamSuccess`), clears the timer and rollback state.
+   - If target source errors (`video-error`, network, decode) or stalls (> 4s), automatically restores previous source at exact playback time with toast notification (`A qualidade ... não respondeu. Retornando para ...`).
+   - Clean reset in `atomicPlayerReset` and `selectNativeQuality('auto')` to prevent memory leaks or ghost callbacks.
+3. **Verification**:
+   - Automated browser suite (`tools/player_ui_check.mjs`) passed all UI and playback checks in headless Chromium.
+   - Parity suite (`tools/test_mgeb_rules.py`) 37/37 passed.
+
+---
+
+## Phase 4: Verification, Automated Tests, Version Bump & Deploy
+
+1. Test with real titles (*Homem-Aranha*, *Toy Story 4*, *Deadpool & Wolverine*).
+2. Validate parity: `python tools/test_mgeb_rules.py`.
+3. Check versioning: `python tools/bump_version.py --check`.
+4. Staging deploy and verification in Chrome and Firefox.

@@ -648,6 +648,34 @@ async function probeFirstSegment(playlistUrl, text, referer, readResolution) {
 }
 
 /**
+ * Detects whether an audio tag declares Portuguese audio (pt, pt-BR, etc).
+ */
+function isPortugueseAudioTag(line) {
+  const langMatch = line.match(/LANGUAGE=["']?([^"',\s]+)["']?/i);
+  const nameMatch = line.match(/NAME=["']?([^"']+)["']?/i);
+  const lang = (langMatch ? langMatch[1] : "").toLowerCase();
+  const name = (nameMatch ? nameMatch[1] : "").toLowerCase();
+  return /(?:^|[^a-z])(pt|pt-br|pt_br|por)(?:[^a-z]|$)/i.test(lang) ||
+         /portugu[eê]s|dublado|brasil|brazil/i.test(name);
+}
+
+/**
+ * Checks audio tracks declared in an HLS master playlist (#EXT-X-MEDIA:TYPE=AUDIO).
+ * Returns { audioMismatch, hasPtAudio }:
+ * - If no explicit audio tracks: audioMismatch = false, hasPtAudio = false.
+ * - If explicit tracks exist and at least one is Portuguese: audioMismatch = false, hasPtAudio = true.
+ * - If explicit tracks exist and NONE is Portuguese: audioMismatch = true, hasPtAudio = false.
+ */
+function checkHlsAudioTracks(lines) {
+  const audioLines = lines.filter(l => l.startsWith("#EXT-X-MEDIA:TYPE=AUDIO") || (l.startsWith("#EXT-X-MEDIA:") && /TYPE=AUDIO/i.test(l)));
+  if (!audioLines.length) {
+    return { audioMismatch: false, hasPtAudio: false };
+  }
+  const hasPtAudio = audioLines.some(isPortugueseAudioTag);
+  return { audioMismatch: !hasPtAudio, hasPtAudio };
+}
+
+/**
  * Probes an HLS playlist: variants of a master (plus a sanity check of the first
  * segment), or the first TS segment of a media playlist for its frame size.
  */
@@ -671,6 +699,10 @@ async function probeHls(url, referer) {
     // Re-hosting players ("FirePlayer") publish a fixed 360p/720p ladder whatever the real picture is
     const bandwidths = variants.map(v => v.bandwidth).sort((a, b) => a - b).join(",");
     const synthetic = /FirePlayer/i.test(text) || bandwidths === "276000,2048000";
+
+    const audioCheck = checkHlsAudioTracks(lines);
+    const audioMismatch = audioCheck.audioMismatch;
+    const hasPtAudio = audioCheck.hasPtAudio;
 
     // Check the top variant: its first segment must start at byte 0, and its real
     // frame size replaces a declared resolution that is not there
@@ -704,7 +736,7 @@ async function probeHls(url, referer) {
     } catch (e) {
       // The variant check is best effort
     }
-    return { qualities, multi: variants.length > 1, broken, synthetic, duration, empty };
+    return { qualities, multi: variants.length > 1, broken, synthetic, duration, empty, audioMismatch, hasPtAudio };
   }
 
   // Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
@@ -715,7 +747,7 @@ async function probeHls(url, referer) {
   const isExplicitLd = url.includes("-ld.") || url.includes("/ld/") || url.includes("-ld-") || url.includes("_360p");
   if (q && q > 480 && isExplicitSd) q = 480;
   if (q && q > 360 && isExplicitLd) q = 360;
-  return { qualities: q ? [q] : [], broken: seg.broken, duration: length.seconds, empty: length.segments === 0 };
+  return { qualities: q ? [q] : [], broken: seg.broken, duration: length.seconds, empty: length.segments === 0, audioMismatch: false, hasPtAudio: false };
 }
 
 /** Detects direct MP4 streams hosted on known video CDNs. */
@@ -744,6 +776,8 @@ async function probeSource(src) {
   let alive = true;
   let synthetic = false;
   let duration = null;
+  let audioMismatch = false;
+  let hasPtAudio = false;
   try {
     if (isHls) {
       const r = await probeHls(rawUrl, referer);
@@ -754,6 +788,8 @@ async function probeSource(src) {
         kind = r.multi ? "hls-multi" : "hls-single";
         synthetic = Boolean(r.synthetic);
         duration = r.duration || null;
+        audioMismatch = Boolean(r.audioMismatch);
+        hasPtAudio = Boolean(r.hasPtAudio);
         // A broken first segment stalls playback, and a playlist without segments plays
         // nothing: keep them only as a last resort
         if (r.broken || r.empty) alive = false;
@@ -773,7 +809,7 @@ async function probeSource(src) {
     qualities = [];
   }
   qualities.sort((a, b) => b - a);
-  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, probed: true };
+  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, audio_mismatch: audioMismatch, has_pt_audio: hasPtAudio, probed: true };
 }
 
 // Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
@@ -834,7 +870,12 @@ function isCamSource(src) {
 
 /** A measured, healthy 1080p+ HLS from a trusted host: no need to wait for the others. */
 function isTrustedTopSource(src) {
-  return src.probed && src.alive && (src.quality || 0) >= 1080 && src.kind.startsWith("hls") && !isLowTrustSource(src) && !isCamSource(src);
+  return src.probed && src.alive && !src.audio_mismatch && (src.quality || 0) >= 1080 && src.kind.startsWith("hls") && !isLowTrustSource(src) && !isCamSource(src);
+}
+
+/** Detects an adaptive HLS multi-bitrate stream with HD quality (720p+). */
+function isHdAbr(src) {
+  return src.kind === "hls-multi" && (src.quality || 0) >= 720;
 }
 
 /**
@@ -845,8 +886,9 @@ function isTrustedTopSource(src) {
  * different lengths), the early return also needs another source confirming the length, and
  * a source whose length disagrees with the others goes after every agreeing live source.
  */
-async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths = false) {
+async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths = false, isDubbed = true, qualityMode = "balanced") {
   const results = sources.map(s => {
+    if (s.probed) return { ...s };
     const isDirect = isDirectMp4Source(s);
     return {
       ...s,
@@ -857,16 +899,20 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths 
       synthetic: false,
       duration: null,
       duration_mismatch: false,
+      audio_mismatch: false,
+      has_pt_audio: false,
       probed: false,
     };
   });
-  const toProbe = Math.min(sources.length, PROBE_MAX_SOURCES);
-  if (toProbe > 0) {
+  const unprobedIndices = sources.slice(0, PROBE_MAX_SOURCES)
+    .map((s, i) => (s.probed ? -1 : i))
+    .filter(i => i >= 0);
+  if (unprobedIndices.length > 0) {
     await new Promise(resolve => {
-      let pending = toProbe;
+      let pending = unprobedIndices.length;
       const timer = setTimeout(resolve, PROBE_BUDGET_MS);
       const done = () => { clearTimeout(timer); resolve(); };
-      for (let i = 0; i < toProbe; i++) {
+      for (const i of unprobedIndices) {
         probeSource(sources[i]).then(r => {
           results[i] = r;
           pending -= 1;
@@ -876,15 +922,27 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths 
     });
   }
   if (checkLengths) markDurationOutliers(results);
-  return results.slice()
+
+  let candidates = results;
+  if (isDubbed) {
+    const validAudioSources = results.filter(s => s.alive && !s.audio_mismatch);
+    if (validAudioSources.length > 0) {
+      candidates = results.filter(s => !s.audio_mismatch);
+    }
+  }
+
+  return candidates.slice()
     .map((s, i) => ({ s, i }))
     .sort((a, b) => (
       (Number(b.s.alive) - Number(a.s.alive)) ||
+      (Number(a.s.audio_mismatch) - Number(b.s.audio_mismatch)) ||
+      (Number(b.s.has_pt_audio) - Number(a.s.has_pt_audio)) ||
       (Number(a.s.duration_mismatch) - Number(b.s.duration_mismatch)) ||
       (Number(isCamSource(a.s)) - Number(isCamSource(b.s))) ||
+      (qualityMode === "highest" ? 0 : (Number(isHdAbr(b.s)) - Number(isHdAbr(a.s)))) ||
       ((b.s.quality || 0) - (a.s.quality || 0)) ||
       (Number(isLowTrustSource(a.s)) - Number(isLowTrustSource(b.s))) ||
-      (KIND_RANK[a.s.kind] - KIND_RANK[b.s.kind]) ||
+      ((KIND_RANK[a.s.kind] ?? 99) - (KIND_RANK[b.s.kind] ?? 99)) ||
       (tieBreaker(b.s) - tieBreaker(a.s)) ||
       (a.i - b.i)
     ))
@@ -1294,6 +1352,7 @@ export async function onRequestGet(context) {
   const absoluteEpisodeParam = parseInt(urlObj.searchParams.get("absolute_episode") || "0", 10) || 0;
   const totalEpisodesParam = parseInt(urlObj.searchParams.get("total_episodes") || "0", 10) || 0;
   let malId = urlObj.searchParams.get("mal_id");
+  const qualityMode = urlObj.searchParams.get("quality_mode") || "balanced";
   // aniskip_only=1: only the MyAnimeList entry and its episode number (skip times for anime played from another host)
   const aniskipOnly = urlObj.searchParams.get("aniskip_only") === "1";
 
@@ -1430,7 +1489,7 @@ export async function onRequestGet(context) {
           quality: s.quality || 1080
         };
       }));
-      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, () => 90, type === "serie"));
+      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, () => 90, type === "serie", lang !== "sub", qualityMode));
       result = {
         success: true,
         title: fenixData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
@@ -1578,7 +1637,7 @@ export async function onRequestGet(context) {
       }
 
       // Best quality first; the host score only breaks ties between equal qualities
-      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, scoreSource, mgebType === "serie"));
+      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, scoreSource, mgebType === "serie", lang !== "sub", qualityMode));
       const primary = rankedSources[0];
       const fallbacks = rankedSources.slice(1);
 

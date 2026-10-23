@@ -623,6 +623,25 @@ def probe_first_segment(playlist_url, text, referer, read_resolution):
     }
 
 
+def is_portuguese_audio_tag(line):
+    """Detects whether an audio tag declares Portuguese audio (pt, pt-BR, etc)."""
+    lang_m = re.search(r'LANGUAGE=["\']?([^"\',\s]+)["\']?', line, re.I)
+    name_m = re.search(r'NAME=["\']?([^"\']+)["\']?', line, re.I)
+    lang = (lang_m.group(1) if lang_m else "").lower()
+    name = (name_m.group(1) if name_m else "").lower()
+    return bool(re.search(r'(?:^|[^a-z])(pt|pt-br|pt_br|por)(?:[^a-z]|$)', lang, re.I) or
+                re.search(r'portugu[eê]s|dublado|brasil|brazil', name, re.I))
+
+
+def check_hls_audio_tracks(lines):
+    """Checks audio tracks declared in an HLS master playlist (#EXT-X-MEDIA:TYPE=AUDIO)."""
+    audio_lines = [l for l in lines if l.startswith("#EXT-X-MEDIA:TYPE=AUDIO") or (l.startswith("#EXT-X-MEDIA:") and re.search(r"TYPE=AUDIO", l, re.I))]
+    if not audio_lines:
+        return {"audio_mismatch": False, "has_pt_audio": False}
+    has_pt = any(is_portuguese_audio_tag(l) for l in audio_lines)
+    return {"audio_mismatch": not has_pt, "has_pt_audio": has_pt}
+
+
 def probe_hls(url, referer):
     """Probes an HLS playlist: variants of a master (plus a first-segment sanity check),
     or the first TS segment of a media playlist for its frame size."""
@@ -655,6 +674,10 @@ def probe_hls(url, referer):
         bandwidths = ",".join(str(b) for b in sorted(v["bandwidth"] for v in variants))
         synthetic = bool(re.search(r"FirePlayer", text, re.I)) or bandwidths == "276000,2048000"
 
+        audio_check = check_hls_audio_tracks(lines)
+        audio_mismatch = audio_check["audio_mismatch"]
+        has_pt_audio = audio_check["has_pt_audio"]
+
         # Check the top variant: its first segment must start at byte 0, and its real
         # frame size replaces a declared resolution that is not there
         broken = False
@@ -685,7 +708,7 @@ def probe_hls(url, referer):
         except Exception:
             pass  # The variant check is best effort
         return {"qualities": qualities, "multi": len(variants) > 1, "broken": broken, "synthetic": synthetic,
-                "duration": duration, "empty": empty}
+                "duration": duration, "empty": empty, "audio_mismatch": audio_mismatch, "has_pt_audio": has_pt_audio}
 
     # Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
     length = hls_playlist_duration(text)
@@ -698,7 +721,7 @@ def probe_hls(url, referer):
     if q and q > 360 and is_explicit_ld:
         q = 360
     return {"qualities": [q] if q else [], "broken": seg["broken"], "duration": length["seconds"],
-            "empty": length["segments"] == 0}
+            "empty": length["segments"] == 0, "audio_mismatch": False, "has_pt_audio": False}
 
 
 def is_direct_mp4_source(src):
@@ -715,6 +738,8 @@ def probe_source(src):
     referer = (src.get("headers") or {}).get("Referer", "")
     is_proxied = "/api/stream" in src.get("stream_url", "")
     qualities, kind, alive, synthetic, duration = ([], "mp4-range" if is_direct_mp4 else "unknown", True, False, None)
+    audio_mismatch = False
+    has_pt_audio = False
     try:
         if is_hls:
             r = probe_hls(raw, referer)
@@ -725,6 +750,8 @@ def probe_source(src):
                 kind = "hls-multi" if r.get("multi") else "hls-single"
                 synthetic = bool(r.get("synthetic"))
                 duration = r.get("duration") or None
+                audio_mismatch = bool(r.get("audio_mismatch"))
+                has_pt_audio = bool(r.get("has_pt_audio"))
                 # A broken first segment stalls playback, and a playlist without segments plays
                 # nothing: keep them only as a last resort
                 if r.get("broken") or r.get("empty"):
@@ -742,9 +769,19 @@ def probe_source(src):
         qualities = []
         print(f"[LocalServer] Probe failed for {raw[:80]}: {e}", file=sys.stderr)
     qualities = sorted(qualities, reverse=True)
-    return {**src, "quality": qualities[0] if qualities else None,
-            "qualities": qualities, "kind": kind, "alive": alive, "synthetic": synthetic,
-            "duration": duration, "duration_mismatch": False, "probed": True}
+    return {
+        **src,
+        "quality": qualities[0] if qualities else None,
+        "qualities": qualities,
+        "kind": kind,
+        "alive": alive,
+        "synthetic": synthetic,
+        "duration": duration,
+        "duration_mismatch": False,
+        "audio_mismatch": audio_mismatch,
+        "has_pt_audio": has_pt_audio,
+        "probed": True
+    }
 
 
 # Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
@@ -803,11 +840,16 @@ def is_cam_source(src):
 
 def is_trusted_top_source(src):
     """A measured, healthy 1080p+ HLS from a trusted host: no need to wait for the others."""
-    return (src.get("probed") and src.get("alive") and (src.get("quality") or 0) >= 1080
+    return (src.get("probed") and src.get("alive") and not src.get("audio_mismatch") and (src.get("quality") or 0) >= 1080
             and src.get("kind", "").startswith("hls") and not is_low_trust_source(src) and not is_cam_source(src))
 
 
-def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=False):
+def is_hd_abr(src):
+    """Detects an adaptive HLS multi-bitrate stream with HD quality (720p+)."""
+    return src.get("kind") == "hls-multi" and (src.get("quality") or 0) >= 720
+
+
+def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=False, is_dubbed=True, quality_mode="balanced"):
     """Probes sources in parallel within PROBE_BUDGET_S and sorts them best-first.
     Returns early when a trusted 1080p HLS is measured; sources not measured in time stay
     "unknown" and fall back to kind/host order.
@@ -815,7 +857,7 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
     different lengths), the early return also needs another source confirming the length, and
     a source whose length disagrees with the others goes after every agreeing live source."""
     from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
-    results = [{
+    results = [dict(s) if s.get("probed") else {
         **s,
         "quality": None,
         "qualities": [],
@@ -824,12 +866,14 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
         "synthetic": False,
         "duration": None,
         "duration_mismatch": False,
+        "audio_mismatch": False,
+        "has_pt_audio": False,
         "probed": False
     } for s in sources]
-    to_probe = sources[:PROBE_MAX_SOURCES]
+    to_probe = [i for i, s in enumerate(sources[:PROBE_MAX_SOURCES]) if not s.get("probed")]
     if to_probe:
         pool = ThreadPoolExecutor(max_workers=len(to_probe))
-        futures = {pool.submit(probe_source, src): i for i, src in enumerate(to_probe)}
+        futures = {pool.submit(probe_source, sources[i]): i for i in to_probe}
         deadline = time.time() + PROBE_BUDGET_S
         pending = set(futures)
         while pending:
@@ -848,14 +892,24 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
         pool.shutdown(wait=False, cancel_futures=True)
     if check_lengths:
         mark_duration_outliers(results)
-    indexed = list(enumerate(results))
+
+    candidates = results
+    if is_dubbed:
+        valid_audio = [s for s in results if s.get("alive") and not s.get("audio_mismatch")]
+        if valid_audio:
+            candidates = [s for s in results if not s.get("audio_mismatch")]
+
+    indexed = list(enumerate(candidates))
     indexed.sort(key=lambda x: (
         -int(x[1]["alive"]),
+        int(bool(x[1].get("audio_mismatch"))),
+        -int(bool(x[1].get("has_pt_audio"))),
         int(bool(x[1].get("duration_mismatch"))),
         int(is_cam_source(x[1])),
+        (-int(is_hd_abr(x[1]))) if quality_mode != "highest" else 0,
         -(x[1]["quality"] or 0),
         int(is_low_trust_source(x[1])),
-        KIND_RANK[x[1]["kind"]],
+        KIND_RANK.get(x[1]["kind"], 99),
         -tie_breaker(x[1]),
         x[0],
     ))
@@ -1737,6 +1791,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         total_episodes = int(total_param) if total_param.isdigit() else 0
         mal_id = params.get("mal_id", [""])[0]
         imdb_id = params.get("imdb_id", [""])[0]
+        quality_mode = params.get("quality_mode", ["balanced"])[0]
         # Identifiers go into other sites' addresses: digits only (IMDb: "tt" + digits)
         if (media_id and not re.fullmatch(r"\d{1,9}", media_id)) or (mal_id and not re.fullmatch(r"\d{1,9}", mal_id)) \
                 or (imdb_id and not re.fullmatch(r"tt\d{1,10}", imdb_id)):
@@ -1750,10 +1805,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         # Per-step durations exposed as a Server-Timing header (ms)
         timings = {}
 
-        def timed(name, fn, *args):
+        def timed(name, fn, *args, **kwargs):
             started = time.time()
             try:
-                return fn(*args)
+                return fn(*args, **kwargs)
             finally:
                 timings[name] = timings.get(name, 0) + (time.time() - started) * 1000
 
@@ -1865,7 +1920,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         "headers": {"Referer": referer},
                         "quality": s.get("quality", 1080)
                     })
-                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: 90, media_type == "serie")
+                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: 90, media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
                 result = {
                     "success": True,
                     "title": fenix_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
@@ -2007,7 +2062,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     return 10
 
                 # Best quality first; the host score only breaks ties between equal qualities
-                ranked_sources = timed("probe", rank_sources_by_quality, parsed_sources, score_source, mgeb_type == "serie")
+                ranked_sources = timed("probe", rank_sources_by_quality, parsed_sources, score_source, mgeb_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
                 primary = ranked_sources[0]
                 fallbacks = ranked_sources[1:]
 

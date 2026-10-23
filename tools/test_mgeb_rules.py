@@ -128,6 +128,33 @@ CASES = {
         ["Filme Telesync", "https://cdn.example/stream.mp4", True],
         ["Filme HDTC", "https://cdn.example/stream.mp4", True],
     ],
+    "audio": [
+        ["multi-audio without pt", [
+            '#EXTM3U',
+            '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="hi",NAME="Hindi"',
+            '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="en",NAME="English"'
+        ], [True, False]],
+        ["multi-audio with pt-BR", [
+            '#EXTM3U',
+            '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="en",NAME="English"',
+            '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="pt-BR",NAME="Português (Brasil)"'
+        ], [False, True]],
+        ["single embedded audio", [
+            '#EXTM3U',
+            '#EXT-X-STREAM-INF:BANDWIDTH=2000000',
+            'variant.m3u8'
+        ], [False, False]],
+    ],
+    "quality_mode": [
+        ["balanced: hls-multi 720p beats mp4-range 1080p", "balanced", [
+            {"label": "multi720", "kind": "hls-multi", "quality": 720, "alive": True, "probed": True, "raw_url": "https://cdn.example/m.m3u8"},
+            {"label": "mp4_1080", "kind": "mp4-range", "quality": 1080, "alive": True, "probed": True, "raw_url": "https://cdn.example/v.mp4"},
+        ], "multi720"],
+        ["highest: mp4-range 1080p beats hls-multi 720p", "highest", [
+            {"label": "multi720", "kind": "hls-multi", "quality": 720, "alive": True, "probed": True, "raw_url": "https://cdn.example/m.m3u8"},
+            {"label": "mp4_1080", "kind": "mp4-range", "quality": 1080, "alive": True, "probed": True, "raw_url": "https://cdn.example/v.mp4"},
+        ], "mp4_1080"],
+    ],
 }
 
 
@@ -135,7 +162,7 @@ def run_python():
     spec = importlib.util.spec_from_file_location("local_server", ROOT / "tools" / "local_server.py")
     ls = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ls)
-    out = {"merged": [], "title": [], "hls": [], "mvhd": [], "outliers": [], "early_stop": [], "cam": []}
+    out = {"merged": [], "title": [], "hls": [], "mvhd": [], "outliers": [], "early_stop": [], "cam": [], "audio": [], "quality_mode": []}
     for _, detail, s, e, _ in CASES["merged"]:
         mapped = ls.map_merged_episode(ls.regular_season_groups(detail), s, e)
         out["merged"].append(list(mapped) if mapped else None)
@@ -155,6 +182,12 @@ def run_python():
         out["early_stop"].append(bool(ls.can_stop_probing(results)))
     for label, url, _ in CASES["cam"]:
         out["cam"].append(bool(ls.is_cam_source({"label": label, "raw_url": url})))
+    for _, lines, _ in CASES["audio"]:
+        chk = ls.check_hls_audio_tracks(lines)
+        out["audio"].append([chk["audio_mismatch"], chk["has_pt_audio"]])
+    for _, mode, sources, _ in CASES["quality_mode"]:
+        ranked = ls.rank_sources_by_quality(sources, quality_mode=mode)
+        out["quality_mode"].append(ranked[0]["label"])
     return out
 
 
@@ -167,7 +200,7 @@ const casesJson = readFileSync(0, "utf8");
 const tmpPath = join(dirname(file), ".test_mgeb_rules_tmp.mjs");
 const code = readFileSync(file, "utf8") +
   "\nexport { mgebEpisodeMatches, hlsPlaylistDuration, parseMoovDuration, markDurationOutliers, canStopProbing," +
-  " regularSeasonGroups, mapMergedEpisode, isCamSource };\n";
+  " regularSeasonGroups, mapMergedEpisode, isCamSource, checkHlsAudioTracks, rankSourcesByQuality };\n";
 writeFileSync(tmpPath, code, "utf8");
 let m;
 try {
@@ -193,6 +226,14 @@ const out = {
   }),
   early_stop: cases.early_stop.map(([, top, others]) => Boolean(m.canStopProbing([src(top), ...others.map(d => src(d, 720))]))),
   cam: cases.cam.map(([label, url]) => Boolean(m.isCamSource({ label, raw_url: url }))),
+  audio: cases.audio.map(([, lines]) => {
+    const chk = m.checkHlsAudioTracks(lines);
+    return [chk.audioMismatch, chk.hasPtAudio];
+  }),
+  quality_mode: await Promise.all(cases.quality_mode.map(async ([, mode, sources]) => {
+    const ranked = await m.rankSourcesByQuality(sources, () => 0, false, true, mode);
+    return ranked[0].label;
+  })),
 };
 console.log(JSON.stringify(out));
 """
@@ -232,6 +273,10 @@ def check_unit(lang, out):
         check(f"early stop: {case[0]}", got == case[3], f"-> {got}")
     for case, got in zip(CASES["cam"], out["cam"]):
         check(f"cam: '{case[0]}'", got == case[2], f"-> {got}")
+    for case, got in zip(CASES["audio"], out["audio"]):
+        check(f"audio: '{case[0]}'", got == case[2], f"-> mismatch={got[0]}, has_pt={got[1]}")
+    for case, got in zip(CASES["quality_mode"], out["quality_mode"]):
+        check(f"quality_mode: '{case[0]}'", got == case[3], f"-> {got}")
 
 
 py_out = run_python()

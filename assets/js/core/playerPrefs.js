@@ -4,8 +4,8 @@
  * Kept in their own record, apart from the watch history, so a future login or settings tab can read and sync them
  * as one object. Every read and write survives a blocked or full storage (private windows): defaults are used then.
  */
-import { PLAYER_PREFS_KEY } from './constants.js?v=20261023_1459';
-import { storageKey, stampTime, PROFILE_EVENT } from './profileStore.js?v=20261023_1459';
+import { PLAYER_PREFS_KEY } from './constants.js?v=20261023_1931';
+import { storageKey, stampTime, PROFILE_EVENT } from './profileStore.js?v=20261023_1931';
 
 // Fired after a preference is saved (the account sync sends it)
 export const PREFS_EVENT = 'tvzinha:prefs';
@@ -19,6 +19,7 @@ export const PLAYER_PREF_DEFAULTS = Object.freeze({
     playbackRate: 1,
     subtitle: null,       // 'pt-BR' | 'pt' | 'en' | 'off' | null (null: Portuguese, else English)
     quality: 'auto',      // 'auto' or a height such as 1080
+    quality_mode: 'balanced', // 'balanced' (prioritize ABR HLS for smooth playback) | 'highest' (force raw max resolution)
     fit: 'contain',       // 'contain' (Ajustar) | 'cover' (Preencher)
 });
 
