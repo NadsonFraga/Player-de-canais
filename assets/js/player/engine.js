@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261023_1459';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1459';
-import { showToast } from '../core/toast.js?v=20261023_1459';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1459';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261023_1459';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261023_1459';
-import { formatClock } from '../core/resume.js?v=20261023_1459';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261023_1459';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261023_1459';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261023_1459';
+import { store } from '../core/state.js?v=20261023_1931';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1931';
+import { showToast } from '../core/toast.js?v=20261023_1931';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1931';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261023_1931';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261023_1931';
+import { formatClock } from '../core/resume.js?v=20261023_1931';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261023_1931';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261023_1931';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261023_1931';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -393,6 +393,10 @@ export function atomicTvPlayerReset() {
 export function atomicPlayerReset() {
     // Cancels a movie/series mount waiting for the player libraries (the TV reset below cancels a TV one)
     mountEpochs.native += 1;
+    if (activeNativeSession && activeNativeSession.qualityRollbackTimer) {
+        clearTimeout(activeNativeSession.qualityRollbackTimer);
+        activeNativeSession.qualityRollbackTimer = null;
+    }
     reportProgress(activeNativeSession, true);
     // Detach the native session first so events from the instances being destroyed are ignored
     activeNativeSession = null;
@@ -963,8 +967,10 @@ export async function resolveDirectStream(options = {}) {
     if (season_name) params.set("season_name", season_name);
     if (mal_id) params.set("mal_id", mal_id);
     if (imdb_id) params.set("imdb_id", imdb_id);
+    const quality_mode = options.quality_mode || getPlayerPrefs().quality_mode || 'balanced';
     if (aniskip_only) params.set("aniskip_only", "1");
     if (source) params.set("source", source);
+    if (quality_mode) params.set("quality_mode", quality_mode);
 
     const url = `${STREAM_ENGINE_API_BASE}/api/resolve?${params.toString()}`;
 
@@ -1198,7 +1204,7 @@ export function mountNativePlayer(options) {
         return null;
     }
 
-    const { containerId, streamUrl, sources, title, poster, subtitles = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null, aniskip = null, tvskip = null, noRecap = false, onProgress = null, resumeNotice = false } = options;
+    const { containerId, streamUrl, sources, title, poster, audio = 'dubbed', subtitles = [], startTime = 0, onAllFailed = null, onNearEnd = null, getNextUp = null, aniskip = null, tvskip = null, noRecap = false, onProgress = null, resumeNotice = false } = options;
     const normalized = normalizeNativeSources({ sources, streamUrl });
     if (normalized.length === 0) {
         atomicPlayerReset();
@@ -1211,6 +1217,8 @@ export function mountNativePlayer(options) {
         containerId,
         title,
         poster,
+        audio,
+        userSelectedAudio: false,
         subtitles: Array.isArray(subtitles) ? subtitles : [],
         onAllFailed,
         onNearEnd,
@@ -1375,6 +1383,26 @@ function failoverNativeSource(session, reason) {
     }
     session.failed.add(session.currentIndex);
     (session.failReasons || (session.failReasons = {}))[session.currentIndex] = reason;
+
+    // Check if we were in the middle of a manual cross-source quality switch attempt that has a rollback target
+    if (session.qualityRollback) {
+        const rb = session.qualityRollback;
+        session.qualityRollback = null;
+        if (session.qualityRollbackTimer) {
+            clearTimeout(session.qualityRollbackTimer);
+            session.qualityRollbackTimer = null;
+        }
+        const prevIdx = rb.previousSourceIndex;
+        const prevTime = rb.previousPlaybackTime;
+        const failedQuality = rb.targetQuality;
+        const backQuality = session.sources[prevIdx]?.quality;
+        if (backQuality) session.lockedQuality = backQuality;
+        else session.autoMode = true;
+        showToast(`A qualidade ${qualityText(failedQuality)} não respondeu. Retornando para ${qualityText(backQuality) || 'anterior'}...`, 4000);
+        mountNativeSource(session, prevIdx, { startTime: prevTime });
+        return;
+    }
+
     const nextIdx = nextPlayableIndex(session, session.autoMode ? null : session.lockedQuality);
     if (nextIdx < 0) {
         console.warn("[PlayerEngine] Todas as fontes diretas falharam.", reason || '');
@@ -1444,6 +1472,11 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             clearInterval(window.cascadeTimer);
             window.cascadeTimer = null;
         }
+        if (session.qualityRollbackTimer) {
+            clearTimeout(session.qualityRollbackTimer);
+            session.qualityRollbackTimer = null;
+        }
+        session.qualityRollback = null;
         session.statusNote = '';
         setSourceStatus(session, '');
         setPlaybackActiveState(true);
@@ -1613,6 +1646,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
                         hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
                             if (!isSessionLive(session, token)) return;
+                            autoSelectPortugueseAudio(session);
                             applyLockedLevel(session);
                             refreshQualityMenu(session);
                             refreshAudioMenu(session);
@@ -1648,7 +1682,10 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                         });
 
                         hls.on(window.Hls.Events.AUDIO_TRACKS_UPDATED, () => {
-                            if (isSessionLive(session, token)) refreshAudioMenu(session);
+                            if (isSessionLive(session, token)) {
+                                autoSelectPortugueseAudio(session);
+                                refreshAudioMenu(session);
+                            }
                         });
 
                         hls.on(window.Hls.Events.ERROR, (event, data) => {
@@ -2211,24 +2248,54 @@ function hlsLevelQuality(level) {
 }
 
 /**
- * Builds the quality map for the currently playing source (intra-stream levels).
- * Switching levels inside the active stream does not require a player remount.
+ * Builds the quality map across all available, verified sources in session.sources.
+ * 1. Intra-stream levels of the currently playing source take highest precedence
+ *    (switching levels inside the active stream does not require a player remount, 0ms switch).
+ * 2. Real qualities from other alive, verified sources (not audio-mismatched) are added
+ *    so the user can switch to higher/alternate resolutions not present in the active stream.
+ * 3. Phantom resolutions are never shown: only resolutions actually declared in manifests or probed.
  */
 function buildQualityEntries(session) {
     const entries = new Map();
-    const current = session.sources[session.currentIndex];
+    const current = session.sources && session.sources[session.currentIndex];
     const hls = session.hls;
 
+    // 1. Current active stream's intra-stream levels
     if (hls && Array.isArray(hls.levels) && hls.levels.length) {
         const levels = hls.levels
-            .map((lvl, levelIndex) => ({ quality: hlsLevelQuality(lvl) || (hls.levels.length === 1 ? current.quality : null), bitrate: lvl.bitrate || 0, levelIndex }))
+            .map((lvl, levelIndex) => ({
+                quality: hlsLevelQuality(lvl) || (hls.levels.length === 1 ? current?.quality : null),
+                bitrate: lvl.bitrate || 0,
+                levelIndex
+            }))
             .filter(l => l.quality)
             .sort((a, b) => b.bitrate - a.bitrate);
         for (const l of levels) {
-            if (!entries.has(l.quality)) entries.set(l.quality, { sourceIndex: session.currentIndex, levelIndex: l.levelIndex });
+            if (!entries.has(l.quality)) {
+                entries.set(l.quality, { sourceIndex: session.currentIndex, levelIndex: l.levelIndex });
+            }
         }
     } else if (current && current.quality) {
         entries.set(current.quality, { sourceIndex: session.currentIndex, levelIndex: -1 });
+    }
+
+    // 2. Add qualities from other alive, valid sources within the player
+    if (Array.isArray(session.sources)) {
+        session.sources.forEach((src, idx) => {
+            if (idx === session.currentIndex) return;
+            if (src.alive === false || src.audio_mismatch) return;
+            if (session.failed && session.failed.has(idx)) return;
+
+            const qualities = src.qualities && src.qualities.length
+                ? src.qualities
+                : (src.quality ? [src.quality] : []);
+
+            for (const q of qualities) {
+                if (q && !entries.has(q)) {
+                    entries.set(q, { sourceIndex: idx, levelIndex: -1 });
+                }
+            }
+        });
     }
 
     return new Map([...entries.entries()].sort((a, b) => b[0] - a[0]));
@@ -2476,6 +2543,11 @@ function selectNativeQuality(session, value) {
     if (!isSessionLive(session)) return '';
 
     if (value === 'auto') {
+        if (session.qualityRollbackTimer) {
+            clearTimeout(session.qualityRollbackTimer);
+            session.qualityRollbackTimer = null;
+        }
+        session.qualityRollback = null;
         session.autoMode = true;
         session.lockedQuality = null;
         if (session.hls) session.hls.currentLevel = -1;
@@ -2490,12 +2562,36 @@ function selectNativeQuality(session, value) {
     session.lockedQuality = quality;
 
     if (entry.sourceIndex === session.currentIndex) {
+        if (session.qualityRollbackTimer) {
+            clearTimeout(session.qualityRollbackTimer);
+            session.qualityRollbackTimer = null;
+        }
+        session.qualityRollback = null;
         if (session.hls && entry.levelIndex >= 0) session.hls.currentLevel = entry.levelIndex;
         updateQualityIndicators(session);
         return qualityText(quality);
     }
 
     showToast(`Alterando para ${qualityText(quality)}...`, 2000);
+    const resumeAt = currentPlaybackTime(session);
+    const prevIdx = session.currentIndex;
+    session.qualityRollback = {
+        previousSourceIndex: prevIdx,
+        previousPlaybackTime: resumeAt,
+        targetQuality: quality,
+        targetSourceIndex: entry.sourceIndex,
+        token: session.mountToken + 1
+    };
+
+    if (session.qualityRollbackTimer) clearTimeout(session.qualityRollbackTimer);
+    session.qualityRollbackTimer = setTimeout(() => {
+        session.qualityRollbackTimer = null;
+        if (isSessionLive(session) && session.qualityRollback && session.currentIndex === entry.sourceIndex) {
+            console.warn(`[PlayerEngine] Fonte de qualidade ${qualityText(quality)} demorou mais de 4s para iniciar. Executando rollback.`);
+            failoverNativeSource(session, 'quality-timeout');
+        }
+    }, 4000);
+
     remountFromMenu(session, entry.sourceIndex);
     return qualityText(quality);
 }
@@ -2585,6 +2681,48 @@ function installCastSetting(session) {
     });
 }
 
+/**
+ * Detects whether an HLS audio track is Portuguese (pt, pt-BR, etc).
+ */
+function isPortugueseAudioTrack(track) {
+    if (!track) return false;
+    const lang = String(track.lang || '').toLowerCase();
+    const name = String(track.name || '').toLowerCase();
+    return /(?:^|[^a-z])(pt|pt-br|pt_br|por)(?:[^a-z]|$)/i.test(lang) ||
+           /portugu[eê]s|dublado|brasil|brazil/i.test(name);
+}
+
+/**
+ * Automatically selects Brazilian Portuguese audio when available in multi-audio HLS streams.
+ * If explicit audio tracks exist and none is Portuguese (during dubbed playback), failover to
+ * the next source strictly within the active player (session.sources), never jumping players.
+ */
+function autoSelectPortugueseAudio(session) {
+    const hls = session.hls;
+    if (!hls || !Array.isArray(hls.audioTracks) || hls.audioTracks.length <= 1) return;
+    if (session.userSelectedAudio) return;
+
+    const isDubbed = session.audio !== 'subtitled';
+    if (!isDubbed) return;
+
+    const ptIdx = hls.audioTracks.findIndex(isPortugueseAudioTrack);
+    if (ptIdx >= 0) {
+        if (hls.audioTrack !== ptIdx) {
+            console.info(`[PlayerEngine] Faixa de áudio PT-BR detectada (#${ptIdx}: "${hls.audioTracks[ptIdx].name || hls.audioTracks[ptIdx].lang}"). Selecionando automaticamente.`);
+            hls.audioTrack = ptIdx;
+        }
+    } else {
+        console.warn('[PlayerEngine] Nenhuma faixa PT-BR nas faixas declaradas pelo stream:', hls.audioTracks.map(t => t.name || t.lang));
+        if (session.sources && session.sources.length > 1) {
+            const hasOtherSource = session.sources.some((s, idx) => idx !== session.currentIndex && !session.failed.has(idx));
+            if (hasOtherSource) {
+                console.warn(`[PlayerEngine] Fonte ${session.currentIndex + 1} sem áudio PT-BR. Alternando para próxima fonte interna.`);
+                failoverNativeSource(session, 'no_pt_audio');
+            }
+        }
+    }
+}
+
 function refreshAudioMenu(session) {
     const hls = session.hls;
     if (!session.art) return;
@@ -2615,6 +2753,7 @@ function refreshAudioMenu(session) {
         tooltip: hls.audioTracks[hls.audioTrack]?.name || 'Padrão',
         selector,
         onSelect: (item) => {
+            session.userSelectedAudio = true;
             hls.audioTrack = item.trackIndex;
             return item.html;
         }
