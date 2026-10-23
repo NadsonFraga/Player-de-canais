@@ -150,7 +150,7 @@ function firstThenMerge(lookups, windowMs) {
 }
 
 import { streamSigningKey, proxiedStreamUrl } from "./stream.js";
-import { resolveFenixFlix, resolveRive, resolveMovy } from "./providers.js";
+import { resolveFenixFlix, resolveMovy } from "./providers.js";
 
 // Calls per minute from one IP to /api/resolve and /api/tmdb, counted in this isolate's memory (free, approximate):
 // many title pages and catalog rows fit; a script hammering the routes does not
@@ -690,8 +690,14 @@ async function probeHls(url, referer) {
           const seg = await probeFirstSegment(variantUrl, mediaText, referer, true);
           broken = seg.broken;
           const measured = seg.res ? qualityClass(seg.res.width, seg.res.height) : null;
-          if (measured && top.quality && measured !== top.quality) {
-            qualities = [...new Set([measured, ...qualities.filter(q => q < measured)])];
+          if (measured) {
+            if (!top.quality) {
+              qualities = [...new Set([measured, ...qualities])];
+            } else if (measured < top.quality) {
+              // Real frame size is lower than advertised in playlist: downgrade fake resolution
+              qualities = [...new Set([measured, ...qualities.filter(q => q < measured)])];
+            }
+            // When measured >= top.quality, keep the playlist's declared ladder so Hls.js levels match 1:1
           }
         }
       }
@@ -801,9 +807,17 @@ function isLowTrustSource(src) {
   return Boolean(src.synthetic) || isMirrorSource(src);
 }
 
+/** Detects CAM / TeleSync / Cinema recording markers in stream labels, titles and URLs. */
+function isCamSource(src) {
+  const text = `${src.label || ""} ${src.title || ""} ${src.raw_url || ""}`;
+  const clean = text.replace(/\.ts(?:[?#]|$)/gi, " ");
+  return /\b(cam|camrip|telesync|telecine|hdts|hdtc|hdcam|cinema|gravado)\b/i.test(clean) ||
+         /(?:[_\W]|^)(?:ts-?rip|hd-?ts)(?:[_\W]|$)/i.test(clean);
+}
+
 /** A measured, healthy 1080p+ HLS from a trusted host: no need to wait for the others. */
 function isTrustedTopSource(src) {
-  return src.probed && src.alive && (src.quality || 0) >= 1080 && src.kind.startsWith("hls") && !isLowTrustSource(src);
+  return src.probed && src.alive && (src.quality || 0) >= 1080 && src.kind.startsWith("hls") && !isLowTrustSource(src) && !isCamSource(src);
 }
 
 /**
@@ -837,6 +851,7 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths 
     .sort((a, b) => (
       (Number(b.s.alive) - Number(a.s.alive)) ||
       (Number(a.s.duration_mismatch) - Number(b.s.duration_mismatch)) ||
+      (Number(isCamSource(a.s)) - Number(isCamSource(b.s))) ||
       ((b.s.quality || 0) - (a.s.quality || 0)) ||
       (Number(isLowTrustSource(a.s)) - Number(isLowTrustSource(b.s))) ||
       (KIND_RANK[a.s.kind] - KIND_RANK[b.s.kind]) ||
@@ -1286,7 +1301,7 @@ export async function onRequestGet(context) {
     }
   };
 
-  // Determine requested provider (mgeb, fenixflix, rive, movy, anime_native)
+  // Determine requested provider (mgeb, fenixflix, movy, anime_native)
   const requestedSource = urlObj.searchParams.get("source") || (type === "anime" && lang === "sub" ? "anime_native" : "mgeb");
   const imdbId = urlObj.searchParams.get("imdb_id");
 
@@ -1400,35 +1415,7 @@ export async function onRequestGet(context) {
     }
   }
 
-  // ROTA 3: Rive (4K HDR Multi-Engine)
-  if (!result && requestedSource === "rive" && id) {
-    const tmdbId = /^\d+$/.test(id) ? id : null;
-    if (tmdbId) {
-      const riveData = await timed("rive", resolveRive({ tmdbId, type, season, episode }));
-      if (riveData && riveData.sources && riveData.sources.length > 0) {
-        const parsedSources = await Promise.all(riveData.sources.map(async (s) => ({
-          label: s.label,
-          type: "hls",
-          stream_url: await proxied(s.file, s.referer),
-          direct_url: s.file,
-          raw_url: s.file,
-          headers: { "Referer": s.referer },
-          quality: s.quality || 2160
-        })));
-        result = {
-          success: true,
-          title: titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
-          category: type,
-          audio: "original",
-          provider: "rive",
-          primary_source: parsedSources[0],
-          fallback_sources: parsedSources.slice(1),
-          subtitles: [],
-          aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
-        };
-      }
-    }
-  }
+
 
   // ROTA 5: Movy (Wecollege CDN)
   if (!result && requestedSource === "movy" && id) {
@@ -1541,23 +1528,19 @@ export async function onRequestGet(context) {
 
       function scoreSource(src) {
         const u = (src.raw_url || "").toLowerCase();
-        // Tier 1: Proven robust datacenter-safe HLS CDNs (Score 95)
-        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com")) {
+        // Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
+        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || u.includes("fontedecanais") || u.includes("57lgoe65efxo71.com")) {
           return 95;
         }
-        // Tier 2: Direct sanitized HTTPS MP4 (Score 90 - Fast, zero-WAF, native seeking)
-        if (u.includes("fontedecanais") || u.includes("57lgoe65efxo71.com")) {
-          return 90;
-        }
-        // Tier 3: Standard generic HLS streams (Score 80)
+        // Tier 2: Standard generic HLS streams (Score 80)
         if (u.includes(".m3u8")) {
           return 80;
         }
-        // Tier 4: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
+        // Tier 3: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
         if (u.includes("playercdn") || u.includes("workers.dev") || u.includes("powestream")) {
           return 60;
         }
-        // Tier 5: Other MP4 streams (Score 50)
+        // Tier 4: Other MP4 streams (Score 50)
         if (u.includes(".mp4")) {
           return 50;
         }

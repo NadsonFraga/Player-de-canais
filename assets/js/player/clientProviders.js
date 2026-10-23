@@ -1,12 +1,12 @@
 /**
- * Tvzinha Online - Client-Side Stream Extractors (FenixFlix, Rive, Movy)
+ * Tvzinha Online - Client-Side Stream Extractors (FenixFlix, Movy)
  * 
  * Executes directly in the user's browser to bypass Cloudflare-to-Cloudflare WAF / CF-Worker blocks,
  * utilizing the user's residential/mobile IP with open CORS (Access-Control-Allow-Origin: *).
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261022_1758';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1040';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -196,190 +196,7 @@ export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', seaso
 
 
 
-/* ============================================================
- * 3. RIVE (4K HDR Multi-Engine Aggregator)
- * ============================================================ */
 
-const RIVE_SALT_TOKENS = [
-  "4Z7lUo","gwIVSMD","PLmz2elE2v","Z4OFV0","SZ6RZq6Zc","zhJEFYxrz8","FOm7b0","axHS3q4KDq","o9zuXQ","4Aebt",
-  "wgjjWwKKx","rY4VIxqSN","kfjbnSo","2DyrFA1M","YUixDM9B","JQvgEj0","mcuFx6JIek","eoTKe26gL","qaI9EVO1rB","0xl33btZL",
-  "1fszuAU","a7jnHzst6P","wQuJkX","cBNhTJlEOf","KNcFWhDvgT","XipDGjST","PCZJlbHoyt","2AYnMZkqd","HIpJh","KH0C3iztrG",
-  "W81hjts92","rJhAT","NON7LKoMQ","NMdY3nsKzI","t4En5v","Qq5cOQ9H","Y9nwrp","VX5FYVfsf","cE5SJG","x1vj1",
-  "HegbLe","zJ3nmt4OA","gt7rxW57dq","clIE9b","jyJ9g","B5jXjMCSx","cOzZBZTV","FTXGy","Dfh1q1","ny9jqZ2POI",
-  "X2NnMn","MBtoyD","qz4Ilys7wB","68lbOMye","3YUJnmxp","1fv5Imona","PlfvvXD7mA","ZarKfHCaPR","owORnX","dQP1YU",
-  "dVdkx","qgiK0E","cx9wQ","5F9bGa","7UjkKrp","Yvhrj","wYXez5Dg3","pG4GMU","MwMAu","rFRD5wlM"
-];
-
-function generateRiveSecretKey(id) {
-  if (id === undefined) return "rive";
-  try {
-    let t, n;
-    let r = String(id);
-    if (isNaN(Number(id))) {
-      let sum = r.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      t = RIVE_SALT_TOKENS[sum % RIVE_SALT_TOKENS.length] || btoa(r);
-      n = Math.floor((sum % r.length) / 2);
-    } else {
-      let num = Number(id);
-      t = RIVE_SALT_TOKENS[num % RIVE_SALT_TOKENS.length] || btoa(r);
-      n = Math.floor((num % r.length) / 2);
-    }
-    
-    let combined = r.slice(0, n) + t + r.slice(n);
-    
-    function hashPass1(str) {
-      str = String(str);
-      let acc = 0;
-      for (let idx = 0; idx < str.length; idx++) {
-        let code = str.charCodeAt(idx);
-        acc = (code + (acc << 6) + (acc << 16) - acc) >>> 0;
-        let rot = ((acc << (idx % 5)) | (acc >>> (32 - (idx % 5)))) >>> 0;
-        let x = (code << (idx % 7)) | (code >>> (8 - (idx % 7)));
-        acc ^= (rot ^ x) >>> 0;
-        acc = (acc + ((acc >>> 11) ^ (acc << 3))) >>> 0;
-      }
-      acc ^= acc >>> 15;
-      acc = ((acc & 65535) * 49842 + ((((acc >>> 16) * 49842) & 65535) << 16)) >>> 0;
-      acc ^= acc >>> 13;
-      acc = ((acc & 65535) * 40503 + ((((acc >>> 16) * 40503) & 65535) << 16)) >>> 0;
-      acc ^= acc >>> 16;
-      return acc.toString(16).padStart(8, "0");
-    }
-    
-    function hashPass2(str) {
-      str = String(str);
-      let acc = (3735928559 ^ str.length) >>> 0;
-      for (let idx = 0; idx < str.length; idx++) {
-        let code = str.charCodeAt(idx);
-        code ^= (131 * idx + 89 ^ (code << (idx % 5))) & 255;
-        acc = (((acc << 7) | (acc >>> 25)) >>> 0) ^ code;
-        let low = (acc & 65535) * 60205;
-        let high = ((acc >>> 16) * 60205) << 16;
-        acc = (low + high) >>> 0;
-        acc ^= acc >>> 11;
-      }
-      acc ^= acc >>> 15;
-      acc = ((acc & 65535) * 49842 + (((acc >>> 16) * 49842) << 16)) >>> 0;
-      acc ^= acc >>> 13;
-      acc = ((acc & 65535) * 40503 + (((acc >>> 16) * 40503) << 16)) >>> 0;
-      acc ^= acc >>> 16;
-      acc = ((acc & 65535) * 10196 + (((acc >>> 16) * 10196) << 16)) >>> 0;
-      acc ^= acc >>> 15;
-      return acc.toString(16).padStart(8, "0");
-    }
-    
-    const hex = hashPass2(hashPass1(combined));
-    return btoa(hex);
-  } catch (err) {
-    return "topSecret";
-  }
-}
-
-const RIVE_SERVICES = [
-  "vanguard", "apogee", "velocity", "ignite", "tampa",
-  "meridian", "savannah", "solstice", "primevids", "mirage"
-];
-
-export async function resolveRiveClient({ id, type = 'movie', season = 1, episode = 1, title = '' }) {
-  const isSeries = type === 'series' || type === 'serie' || type === 'tv';
-  const tmdbId = /^\d+$/.test(id) ? id : null;
-  if (!tmdbId) {
-    return { success: false, error: 'Rive requer ID numérico do TMDB', provider: 'rive', reason: 'invalid_id' };
-  }
-
-  const secretKey = generateRiveSecretKey(tmdbId);
-  const endpoint = isSeries ? 'tvVideoProvider' : 'movieVideoProvider';
-
-  let foundSources = [];
-  let foundCaptions = [];
-
-  for (const service of RIVE_SERVICES) {
-    const query = new URLSearchParams({
-      requestID: endpoint,
-      id: String(tmdbId),
-      service,
-      secretKey,
-      proxyMode: 'noProxy'
-    });
-    if (isSeries) {
-      query.set('season', String(season));
-      query.set('episode', String(episode));
-    }
-    if (service === 'primevids' || service === 'citadel') {
-      query.set('cb', String(Math.floor(Date.now() / 3e6)));
-    }
-
-    const url = `https://backend.rivestream.app/api/backendfetch?${query.toString()}`;
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'Origin': 'https://watch.rivestream.app',
-          'Referer': 'https://watch.rivestream.app/'
-        }
-      });
-      if (!res.ok) continue;
-      const json = await res.json();
-      const sources = json?.data?.sources || [];
-      const captions = json?.data?.captions || [];
-      if (sources.length > 0) {
-        foundSources = sources;
-        foundCaptions = captions;
-        break; // Found valid stream on preferred high quality service
-      }
-    } catch (e) {
-      // Continue to next service
-    }
-  }
-
-  if (!foundSources.length) {
-    return { success: false, error: 'Rive sem fontes para este título', provider: 'rive', reason: 'no_sources' };
-  }
-
-  // Sign sources
-  const itemsToSign = foundSources.map(s => ({
-    url: s.url,
-    referer: 'https://watch.rivestream.app/',
-    sourceObj: s
-  }));
-
-  const signedResults = await signStreamUrlsBatch(itemsToSign);
-
-  const sources = signedResults.map((item, idx) => {
-    const s = item.sourceObj || foundSources[idx];
-    const quality = s.quality?.includes('4K') ? 2160 : (s.quality?.includes('720') ? 720 : 1080);
-    return {
-      label: `Rive ${s.source || 'Stream'} [${s.quality || '1080p'}]`,
-      type: s.format === 'mp4' ? 'mp4' : 'hls',
-      stream_url: item.signed_url || item.url,
-      direct_url: s.url,
-      raw_url: s.url,
-      headers: { 'Referer': 'https://watch.rivestream.app/' },
-      quality
-    };
-  });
-
-  // Filter subtitles (Portuguese / English)
-  const subtitles = foundCaptions
-    .filter(c => c && c.file && (c.label?.toLowerCase().includes('portuguese') || c.label?.toLowerCase().includes('english')))
-    .map((c, i) => ({
-      lang: c.label?.toLowerCase().includes('portuguese') ? 'pt-BR' : 'en',
-      label: c.label?.toLowerCase().includes('portuguese') ? 'Português' : 'Inglês',
-      default: i === 0,
-      url: c.file
-    }));
-
-  return {
-    success: true,
-    title: title || (type === 'movie' ? 'Filme' : `Série T${season}E${episode}`),
-    category: type,
-    audio: 'original',
-    provider: 'rive',
-    primary_source: sources[0],
-    fallback_sources: sources.slice(1),
-    subtitles,
-    aniskip: { mal_id: null, episode, ready: false }
-  };
-}
 
 
 /* ============================================================
@@ -567,14 +384,12 @@ export async function resolveMovyClient({ id, type = 'movie', season = 1, episod
  * 5. UNIFIED DISPATCHER
  * ============================================================ */
 
-export const CLIENT_PROVIDERS = ['fenixflix', 'rive', 'movy'];
+export const CLIENT_PROVIDERS = ['fenixflix', 'movy'];
 
 export async function resolveClientProvider(source, options) {
   switch (source) {
     case 'fenixflix':
       return resolveFenixFlixClient(options);
-    case 'rive':
-      return resolveRiveClient(options);
     case 'movy':
       return resolveMovyClient(options);
     default:

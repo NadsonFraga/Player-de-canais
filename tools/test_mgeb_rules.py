@@ -120,6 +120,14 @@ CASES = {
         ["trusted alone", 1453.6, [], False],
         ["trusted without length", None, [1453.6], False],
     ],
+    "cam": [
+        ["Opção 1 - CAM", "https://cdn.example/movie_cam.mp4", True],
+        ["Opção 2", "https://cdn.example/hls/segment_001.ts", False],
+        ["Opção 3 - Dublado HD", "https://cdn.example/movie.m3u8", False],
+        ["Cinema Gravado", "https://cdn.example/stream.mp4", True],
+        ["Filme Telesync", "https://cdn.example/stream.mp4", True],
+        ["Filme HDTC", "https://cdn.example/stream.mp4", True],
+    ],
 }
 
 
@@ -127,7 +135,7 @@ def run_python():
     spec = importlib.util.spec_from_file_location("local_server", ROOT / "tools" / "local_server.py")
     ls = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ls)
-    out = {"merged": [], "title": [], "hls": [], "mvhd": [], "outliers": [], "early_stop": []}
+    out = {"merged": [], "title": [], "hls": [], "mvhd": [], "outliers": [], "early_stop": [], "cam": []}
     for _, detail, s, e, _ in CASES["merged"]:
         mapped = ls.map_merged_episode(ls.regular_season_groups(detail), s, e)
         out["merged"].append(list(mapped) if mapped else None)
@@ -145,17 +153,28 @@ def run_python():
     for _, top, others, _ in CASES["early_stop"]:
         results = [src(top)] + [src(d, quality=720) for d in others]
         out["early_stop"].append(bool(ls.can_stop_probing(results)))
+    for label, url, _ in CASES["cam"]:
+        out["cam"].append(bool(ls.is_cam_source({"label": label, "raw_url": url})))
     return out
 
 
 NODE_HARNESS = r"""
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+import { join, dirname } from "node:path";
 const [file] = process.argv.slice(1);
 const casesJson = readFileSync(0, "utf8");
+const tmpPath = join(dirname(file), ".test_mgeb_rules_tmp.mjs");
 const code = readFileSync(file, "utf8") +
   "\nexport { mgebEpisodeMatches, hlsPlaylistDuration, parseMoovDuration, markDurationOutliers, canStopProbing," +
-  " regularSeasonGroups, mapMergedEpisode };\n";
-const m = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
+  " regularSeasonGroups, mapMergedEpisode, isCamSource };\n";
+writeFileSync(tmpPath, code, "utf8");
+let m;
+try {
+  m = await import(pathToFileURL(tmpPath).href);
+} finally {
+  try { unlinkSync(tmpPath); } catch {}
+}
 const cases = JSON.parse(casesJson);
 const src = (d, quality = 1080) => ({ duration: d, alive: true, probed: true, quality, kind: "hls-single",
   raw_url: "https://cdn.example/a.m3u8", synthetic: false, duration_mismatch: false });
@@ -173,6 +192,7 @@ const out = {
     return sources.map(s => s.duration_mismatch);
   }),
   early_stop: cases.early_stop.map(([, top, others]) => Boolean(m.canStopProbing([src(top), ...others.map(d => src(d, 720))]))),
+  cam: cases.cam.map(([label, url]) => Boolean(m.isCamSource({ label, raw_url: url }))),
 };
 console.log(JSON.stringify(out));
 """
@@ -210,6 +230,8 @@ def check_unit(lang, out):
         check(f"outliers {case[0]}", got == case[2], f"-> {got}")
     for case, got in zip(CASES["early_stop"], out["early_stop"]):
         check(f"early stop: {case[0]}", got == case[3], f"-> {got}")
+    for case, got in zip(CASES["cam"], out["cam"]):
+        check(f"cam: '{case[0]}'", got == case[2], f"-> {got}")
 
 
 py_out = run_python()

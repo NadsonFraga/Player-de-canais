@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261022_1758';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261022_1758';
-import { showToast } from '../core/toast.js?v=20261022_1758';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261022_1758';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261022_1758';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261022_1758';
-import { formatClock } from '../core/resume.js?v=20261022_1758';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261022_1758';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261022_1758';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261022_1758';
+import { store } from '../core/state.js?v=20261023_1040';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1040';
+import { showToast } from '../core/toast.js?v=20261023_1040';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1040';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261023_1040';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261023_1040';
+import { formatClock } from '../core/resume.js?v=20261023_1040';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261023_1040';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261023_1040';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261023_1040';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1245,8 +1245,21 @@ export function mountNativePlayer(options) {
     let firstIndex = 0;
     if (typeof prefs.quality === 'number') {
         session.autoMode = false;
-        session.lockedQuality = prefs.quality;
-        const withQuality = normalized.findIndex(src => src.alive !== false && src.qualities.includes(prefs.quality));
+        const allQualities = [...new Set(
+            normalized.filter(s => s.alive !== false).flatMap(s => s.qualities || (s.quality ? [s.quality] : []))
+        )].sort((a, b) => b - a);
+
+        if (allQualities.length > 0) {
+            let matched = allQualities.find(q => q <= prefs.quality);
+            if (!matched) matched = allQualities[0];
+            session.lockedQuality = matched;
+        } else {
+            session.lockedQuality = prefs.quality;
+        }
+
+        const withQuality = normalized.findIndex(src => src.alive !== false && (
+            (src.qualities && src.qualities.includes(session.lockedQuality)) || src.quality === session.lockedQuality
+        ));
         if (withQuality >= 0) firstIndex = withQuality;
     }
     return mountNativeSource(session, firstIndex, { startTime });
@@ -2359,8 +2372,11 @@ async function searchBetterQuality(session) {
 }
 
 function qualityTooltip(session) {
-    if (session.autoMode) return autoLabel(session);
-    return qualityText(session.lockedQuality) || 'Automático';
+    const q = activeQuality(session);
+    if (session.autoMode) {
+        return q ? `Auto (${qualityText(q)})` : 'Automático';
+    }
+    return qualityText(q || session.lockedQuality) || 'Automático';
 }
 
 /** Updates the tooltip, the Auto item text and the HD badge without re-rendering the panel. */
@@ -2422,6 +2438,8 @@ function applyLockedLevel(session) {
         });
         if (bestIdx >= 0) {
             hls.currentLevel = bestIdx;
+            const actualQ = hlsLevelQuality(hls.levels[bestIdx]);
+            if (actualQ) session.lockedQuality = actualQ;
             return;
         }
     }
