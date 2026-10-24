@@ -8,9 +8,11 @@ Legenda: `[feito]` implementado e verificado · `[impl]` implementado, verifica�
 
 ---
 
-## Feat grande entregue (21/10)
+## Feats entregues recentemente
 
-Página do título, topo novo, Coleção, contas, perfis, sincronização, Configurações, revisão de segurança e Turnstile: **em produção desde 21/10**. Resumo em `features/2026-10-20-title-pages-and-accounts/summary.md`; o que ficou para depois está nos itens F12, F13, F14, G7b e S2.
+- **24/10 (staging):** Prioridade de áudio dublado PT-BR no MGEB via CDNs brasileiras (Fontedecanais, 57lgoe, 77zzhf), suporte a range nativo (206) em `77zzhf54vdll71.com`, isenção total de filtragem de áudio PT-BR para Animes e conteúdos legendados (áudio original preservado), correção da persistência de servidor entre animes e remoção do servidor Movy (CORS/WAF). Resumo em `features/2026-10-23-mgeb-audio-priority/summary.md` e `handovers/2026-10-24-mgeb-audio-priority-and-anime-player.md`.
+- **21/10 (produção):** Página do título, topo novo, Coleção, contas, perfis, sincronização, Configurações, revisão de segurança e Turnstile. Resumo em `features/2026-10-20-title-pages-and-accounts/summary.md`.
+
 
 ---
 
