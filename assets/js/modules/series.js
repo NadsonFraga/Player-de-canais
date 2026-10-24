@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261023_1931';
-import { showToast } from '../core/toast.js?v=20261023_1931';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261023_1931';
-import { buildFeedRows } from '../core/feedRows.js?v=20261023_1931';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261023_1931';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261023_1931';
-import { resumeStartTime } from '../core/resume.js?v=20261023_1931';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261023_1931';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261023_1931';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261023_1931';
-import { fetchTmdb } from '../core/tmdb.js?v=20261023_1931';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261023_1931';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261023_1931';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261023_1931';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261023_1931';
+} from '../core/constants.js?v=20261024_1234';
+import { showToast } from '../core/toast.js?v=20261024_1234';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261024_1234';
+import { buildFeedRows } from '../core/feedRows.js?v=20261024_1234';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261024_1234';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261024_1234';
+import { resumeStartTime } from '../core/resume.js?v=20261024_1234';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261024_1234';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261024_1234';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261024_1234';
+import { fetchTmdb } from '../core/tmdb.js?v=20261024_1234';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261024_1234';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261024_1234';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261024_1234';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261024_1234';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -1667,7 +1667,6 @@ const SERIES_SERVER_OPTIONS = [
     { id: 'native_anime',   name: 'Anime Nativo (Legendado)', isNative: true, animeOnly: true, source: 'anime_native' },
     { id: 'native_direct',  name: 'Player Principal (MGEB)',  isNative: true, source: 'mgeb' },
     { id: 'native_fenix',   name: 'FenixFlix (Dublado)',      isNative: true, source: 'fenixflix' },
-    { id: 'native_movy',    name: 'Movy (Original / FHD)',    isNative: true, source: 'movy' },
     { id: 'mgeb',          name: 'Servidor 1 (MGEB)' },
     { id: 'superflix',     name: 'Servidor 2 (SuperFlix)' },
     { id: 'myembed',       name: 'Servidor 3 (MyEmbed)' },
@@ -2561,6 +2560,11 @@ function startEpisodePlayback(context, options = {}) {
         pendingSeriesIframeTimer = null;
     }
 
+    const showChanged = !activeSeriesPlaying.show || String(activeSeriesPlaying.show.id) !== String(showItem.id);
+    if (showChanged) {
+        activeSeriesPlaying.userSelectedServer = false;
+    }
+
     activeSeriesPlaying.show = showItem;
     activeSeriesPlaying.seasonNumber = Number(seasonNumber);
     activeSeriesPlaying.episodeNumber = Number(episodeNumber);
@@ -2620,10 +2624,13 @@ function startEpisodePlayback(context, options = {}) {
 
     const isAnime = context.isAnime;
 
+    const currentServerValid = SERIES_SERVER_OPTIONS.some(s => s.id === activeSeriesPlaying.server && (!s.animeOnly || isAnime));
     if (!isAnime && activeSeriesPlaying.server === 'native_anime') {
         activeSeriesPlaying.server = 'native_direct';
-    } else if (isAnime && !activeSeriesPlaying.userSelectedServer) {
+    } else if (isAnime && (!activeSeriesPlaying.userSelectedServer || showChanged || !currentServerValid)) {
         activeSeriesPlaying.server = 'native_anime';
+    } else if (!currentServerValid) {
+        activeSeriesPlaying.server = isAnime ? 'native_anime' : 'native_direct';
     }
 
     const exitButton = document.getElementById("btn-exit-series-player");
@@ -2863,6 +2870,9 @@ function populateSeriesDrawer() {
  * name), from the show details loaded for it (`genres` instead of `genre_ids`).
  */
 export function isAnimeShow(showItem) {
+    if (showItem && (showItem.kind === 'anime' || showItem.mediaType === 'anime' || showItem.media_type === 'anime')) {
+        return true;
+    }
     const looksAnime = item => Boolean(item && (
         isAsianAnimation(item) ||
         item.original_language === 'ja' ||
@@ -2881,7 +2891,7 @@ function isAsianAnimation(item) {
     if (!genres.includes(16)) return false;
     const lang = item.original_language || '';
     const countries = item.origin_country || [];
-    return lang === 'ja' || lang === 'ko' || lang === 'zh' || countries.includes('JP') || countries.includes('Japan');
+    return lang === 'ja' || lang === 'ko' || lang === 'zh' || countries.includes('JP') || countries.includes('Japan') || countries.includes('KR') || countries.includes('CN');
 }
 
 /** Closes the player and the title page, then shows the catalog tab of this kind (Animes or Séries). */
@@ -2904,6 +2914,9 @@ export function stopSeriesPlayer() {
     setPlaybackActiveState(false);
     atomicPlayerReset();
     removeSeriesIframe();
+    activeSeriesPlaying.userSelectedServer = false;
+    activeSeriesPlaying.show = null;
+    activeSeriesPlaying.server = null;
     const theaterView = document.getElementById("series-player-view");
     const seriesLoader = document.getElementById("series-theater-loader");
     const drawer = document.getElementById("series-player-drawer");

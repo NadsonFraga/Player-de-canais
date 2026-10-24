@@ -6,7 +6,7 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261023_1931';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261024_1234';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -396,7 +396,7 @@ export async function resolveMovyClient({ id, type = 'movie', season = 1, episod
  * 5. UNIFIED DISPATCHER
  * ============================================================ */
 
-export const CLIENT_PROVIDERS = ['fenixflix', 'movy'];
+export const CLIENT_PROVIDERS = ['fenixflix'];
 
 export async function resolveClientProvider(source, options) {
   switch (source) {
