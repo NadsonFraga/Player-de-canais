@@ -154,6 +154,10 @@ CASES = {
             {"label": "multi720", "kind": "hls-multi", "quality": 720, "alive": True, "probed": True, "raw_url": "https://cdn.example/m.m3u8"},
             {"label": "mp4_1080", "kind": "mp4-range", "quality": 1080, "alive": True, "probed": True, "raw_url": "https://cdn.example/v.mp4"},
         ], "mp4_1080"],
+        ["highest: dubbed pt-audio 720p beats unverified 1080p", "highest", [
+            {"label": "en_1080", "kind": "mp4-range", "quality": 1080, "alive": True, "probed": True, "has_pt_audio": False, "raw_url": "https://streamtape.example/v.mp4"},
+            {"label": "pt_720", "kind": "mp4-range", "quality": 720, "alive": True, "probed": True, "has_pt_audio": True, "raw_url": "https://fontedecanais.example/v.mp4"},
+        ], "pt_720"],
     ],
 }
 

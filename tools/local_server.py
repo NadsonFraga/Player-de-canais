@@ -724,10 +724,16 @@ def probe_hls(url, referer):
             "empty": length["segments"] == 0, "audio_mismatch": False, "has_pt_audio": False}
 
 
+def is_brazilian_cdn(url):
+    """Detects verified Brazilian IPTV/VOD CDNs that serve authentic PT-BR audio."""
+    raw = (url or "").lower()
+    return bool("fontedecanais" in raw or "57lgoe65efxo71.com" in raw or "77zzhf54vdll71.com" in raw)
+
+
 def is_direct_mp4_source(src):
     """Detects direct MP4 streams hosted on known video CDNs."""
     raw = (src.get("raw_url") or "").lower()
-    return ".mp4" in raw and ("fontedecanais" in raw or "57lgoe65efxo71.com" in raw or "77zzhf54vdll71.com" in raw or "/movies/" in raw)
+    return ".mp4" in raw and (is_brazilian_cdn(raw) or "/movies/" in raw)
 
 
 def probe_source(src):
@@ -769,6 +775,8 @@ def probe_source(src):
         qualities = []
         print(f"[LocalServer] Probe failed for {raw[:80]}: {e}", file=sys.stderr)
     qualities = sorted(qualities, reverse=True)
+    if is_brazilian_cdn(raw):
+        has_pt_audio = True
     return {
         **src,
         "quality": qualities[0] if qualities else None,
@@ -903,7 +911,7 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
     indexed.sort(key=lambda x: (
         -int(x[1]["alive"]),
         int(bool(x[1].get("audio_mismatch"))),
-        -int(bool(x[1].get("has_pt_audio"))),
+        (-int(bool(x[1].get("has_pt_audio")))) if is_dubbed else 0,
         int(bool(x[1].get("duration_mismatch"))),
         int(is_cam_source(x[1])),
         (-int(is_hd_abr(x[1]))) if quality_mode != "highest" else 0,
@@ -1907,7 +1915,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 for s in fenix_data["sources"]:
                     raw_file = s["file"].strip()
                     referer = s.get("referer", "https://embedplayer2.xyz/")
-                    is_mp4 = ".mp4" in raw_file and ("fontedecanais" in raw_file or "57lgoe65efxo71.com" in raw_file)
+                    is_mp4 = ".mp4" in raw_file and is_brazilian_cdn(raw_file)
                     clean_url = re.sub(r'^http://', 'https://', raw_file).replace(':80/', '/') if is_mp4 else raw_file
                     stream_url = clean_url if is_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
                     is_hls = s.get("type") == "hls" or ".m3u8" in raw_file
@@ -2019,7 +2027,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 parsed_sources = []
                 for idx, s in enumerate(raw_sources):
                     raw_file = s.get("file", "").strip().replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top")
-                    is_direct_mp4 = ".mp4" in raw_file and ("fontedecanais" in raw_file or "57lgoe65efxo71.com" in raw_file)
+                    is_direct_mp4 = ".mp4" in raw_file and is_brazilian_cdn(raw_file)
                     direct_clean_url = raw_file
                     if is_direct_mp4:
                         # Convert to secure HTTPS and strip port :80 to prevent SSL handshake errors
@@ -2048,7 +2056,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     url = src.get("raw_url", "").lower()
                     # Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
                     if ("cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url
-                            or "fontedecanais" in url or "57lgoe65efxo71.com" in url or "77zzhf54vdll71.com" in url):
+                            or is_brazilian_cdn(url)):
                         return 95
                     # Tier 2: Standard generic HLS streams (Score 80)
                     if ".m3u8" in url:

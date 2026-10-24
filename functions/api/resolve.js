@@ -750,15 +750,15 @@ async function probeHls(url, referer) {
   return { qualities: q ? [q] : [], broken: seg.broken, duration: length.seconds, empty: length.segments === 0, audioMismatch: false, hasPtAudio: false };
 }
 
+function isBrazilianCdn(url) {
+  const raw = (url || "").toLowerCase();
+  return raw.includes("fontedecanais") || raw.includes("57lgoe65efxo71.com") || raw.includes("77zzhf54vdll71.com");
+}
+
 /** Detects direct MP4 streams hosted on known video CDNs. */
 function isDirectMp4Source(src) {
   const raw = (src.raw_url || "").toLowerCase();
-  return raw.includes(".mp4") && (
-    raw.includes("fontedecanais") ||
-    raw.includes("57lgoe65efxo71.com") ||
-    raw.includes("77zzhf54vdll71.com") ||
-    raw.includes("/movies/")
-  );
+  return raw.includes(".mp4") && (isBrazilianCdn(raw) || raw.includes("/movies/"));
 }
 
 /**
@@ -809,6 +809,9 @@ async function probeSource(src) {
     qualities = [];
   }
   qualities.sort((a, b) => b - a);
+  if (isBrazilianCdn(rawUrl)) {
+    hasPtAudio = true;
+  }
   return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, audio_mismatch: audioMismatch, has_pt_audio: hasPtAudio, probed: true };
 }
 
@@ -936,7 +939,7 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths 
     .sort((a, b) => (
       (Number(b.s.alive) - Number(a.s.alive)) ||
       (Number(a.s.audio_mismatch) - Number(b.s.audio_mismatch)) ||
-      (Number(b.s.has_pt_audio) - Number(a.s.has_pt_audio)) ||
+      (isDubbed ? (Number(b.s.has_pt_audio) - Number(a.s.has_pt_audio)) : 0) ||
       (Number(a.s.duration_mismatch) - Number(b.s.duration_mismatch)) ||
       (Number(isCamSource(a.s)) - Number(isCamSource(b.s))) ||
       (qualityMode === "highest" ? 0 : (Number(isHdAbr(b.s)) - Number(isHdAbr(a.s)))) ||
@@ -1473,7 +1476,7 @@ export async function onRequestGet(context) {
     if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
       const parsedSources = await Promise.all(fenixData.sources.map(async (s, idx) => {
         const rawFile = (s.file || "").trim();
-        const isDirectMp4 = rawFile.includes(".mp4") && (rawFile.includes("fontedecanais") || rawFile.includes("57lgoe65efxo71.com"));
+        const isDirectMp4 = rawFile.includes(".mp4") && isBrazilianCdn(rawFile);
         const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, "https://").replace(/:80\//, "/") : rawFile;
         const referer = s.referer || "https://embedplayer2.xyz/";
         const finalStreamUrl = isDirectMp4 ? directCleanUrl : await proxied(rawFile, referer);
@@ -1582,7 +1585,7 @@ export async function onRequestGet(context) {
         // Normalize any relative path artifacts from MGEB embed
         rawFile = rawFile.replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top");
 
-        const isDirectMp4 = rawFile.includes(".mp4") && (rawFile.includes("fontedecanais") || rawFile.includes("57lgoe65efxo71.com"));
+        const isDirectMp4 = rawFile.includes(".mp4") && isBrazilianCdn(rawFile);
         let directCleanUrl = rawFile;
         if (isDirectMp4) {
           // Explicitly convert to secure HTTPS and strip port :80 to prevent SSL handshake errors
@@ -1618,7 +1621,7 @@ export async function onRequestGet(context) {
       function scoreSource(src) {
         const u = (src.raw_url || "").toLowerCase();
         // Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
-        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || u.includes("fontedecanais") || u.includes("57lgoe65efxo71.com") || u.includes("77zzhf54vdll71.com")) {
+        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || isBrazilianCdn(u)) {
           return 95;
         }
         // Tier 2: Standard generic HLS streams (Score 80)
