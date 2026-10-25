@@ -158,6 +158,10 @@ CASES = {
             {"label": "en_1080", "kind": "mp4-range", "quality": 1080, "alive": True, "probed": True, "has_pt_audio": False, "raw_url": "https://streamtape.example/v.mp4"},
             {"label": "pt_720", "kind": "mp4-range", "quality": 720, "alive": True, "probed": True, "has_pt_audio": True, "raw_url": "https://fontedecanais.example/v.mp4"},
         ], "pt_720"],
+        ["dubbed: clean 720p beats pt-audio 480p", "balanced", [
+            {"label": "pt_480", "kind": "mp4-range", "quality": 480, "alive": True, "probed": True, "has_pt_audio": True, "raw_url": "https://fontedecanais.example/sd.mp4"},
+            {"label": "clean_720", "kind": "hls-multi", "quality": 720, "alive": True, "probed": True, "has_pt_audio": False, "raw_url": "https://mgeb.example/m.m3u8"},
+        ], "clean_720"],
     ],
 }
 

@@ -934,14 +934,17 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths 
     }
   }
 
+  const isHd = (s) => (s.quality || 0) >= 720;
+
   return candidates.slice()
     .map((s, i) => ({ s, i }))
     .sort((a, b) => (
       (Number(b.s.alive) - Number(a.s.alive)) ||
       (Number(a.s.audio_mismatch) - Number(b.s.audio_mismatch)) ||
-      (isDubbed ? (Number(b.s.has_pt_audio) - Number(a.s.has_pt_audio)) : 0) ||
-      (Number(a.s.duration_mismatch) - Number(b.s.duration_mismatch)) ||
       (Number(isCamSource(a.s)) - Number(isCamSource(b.s))) ||
+      (Number(a.s.duration_mismatch) - Number(b.s.duration_mismatch)) ||
+      (Number(isHd(b.s)) - Number(isHd(a.s))) ||
+      (isDubbed ? (Number(b.s.has_pt_audio) - Number(a.s.has_pt_audio)) : 0) ||
       (qualityMode === "highest" ? 0 : (Number(isHdAbr(b.s)) - Number(isHdAbr(a.s)))) ||
       ((b.s.quality || 0) - (a.s.quality || 0)) ||
       (Number(isLowTrustSource(a.s)) - Number(isLowTrustSource(b.s))) ||

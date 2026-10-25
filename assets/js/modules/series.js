@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261024_1234';
-import { showToast } from '../core/toast.js?v=20261024_1234';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261024_1234';
-import { buildFeedRows } from '../core/feedRows.js?v=20261024_1234';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261024_1234';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261024_1234';
-import { resumeStartTime } from '../core/resume.js?v=20261024_1234';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261024_1234';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261024_1234';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261024_1234';
-import { fetchTmdb } from '../core/tmdb.js?v=20261024_1234';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261024_1234';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261024_1234';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261024_1234';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261024_1234';
+} from '../core/constants.js?v=20261025_1152';
+import { showToast } from '../core/toast.js?v=20261025_1152';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261025_1152';
+import { buildFeedRows } from '../core/feedRows.js?v=20261025_1152';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261025_1152';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261025_1152';
+import { resumeStartTime } from '../core/resume.js?v=20261025_1152';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261025_1152';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261025_1152';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261025_1152';
+import { fetchTmdb } from '../core/tmdb.js?v=20261025_1152';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261025_1152';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261025_1152';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261025_1152';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261025_1152';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -2137,7 +2137,80 @@ function rememberShowDetails(details) {
 
 // One request per show for everything: the title page (cast, trailers, ratings, logo...) and the episode context
 // (external_ids for SkipDB). Same address every time, so the edge cache and this module share it.
-const SHOW_DETAILS_APPEND = 'append_to_response=external_ids,aggregate_credits,videos,recommendations,content_ratings,images&include_image_language=pt,ja,en,null&include_video_language=pt,en,ja,null';
+const SHOW_DETAILS_APPEND = 'append_to_response=external_ids,aggregate_credits,videos,recommendations,content_ratings,images,episode_groups&include_image_language=pt,ja,en,null&include_video_language=pt,en,ja,null';
+
+/**
+ * TMDB lists some anime / shows as one long season (Jujutsu Kaisen: 59 eps in Season 1).
+ * When episode_groups of type 6 ("Seasons") are present, we fetch the real seasons,
+ * replace details.seasons, and pre-cache cachedSeasonsMap with relative and absolute numbers.
+ */
+async function resolveShowSeasons(details) {
+    if (!details || !Array.isArray(details.seasons) || details._seasonsResolved) return;
+    details._seasonsResolved = true;
+
+    const regular = regularSeasonsOf(details);
+    if (regular.length !== 1) return;
+
+    const list = details.episode_groups && Array.isArray(details.episode_groups.results)
+        ? details.episode_groups.results
+        : null;
+    if (!list || list.length === 0) return;
+
+    const candidates = list
+        .filter(g => g.type === 6 && (g.group_count > 1 || !g.group_count))
+        .sort((a, b) => Number(b.name === "Seasons") - Number(a.name === "Seasons"));
+
+    if (candidates.length === 0) return;
+
+    for (const cand of candidates.slice(0, 3)) {
+        try {
+            const groupData = await fetchSeriesEndpoint(`tv/episode_group/${cand.id}`);
+            if (!groupData || !Array.isArray(groupData.groups)) continue;
+
+            const validGroups = groupData.groups
+                .filter(g => (g.episodes || []).length > 0 && !/special|especia|ova|oad|extra/i.test(g.name || ''))
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            if (validGroups.length < 2) continue;
+
+            const newSeasons = [];
+            let cumulative = 0;
+            const originalSeasonPoster = (details.seasons && details.seasons[0] && details.seasons[0].poster_path) || details.poster_path;
+
+            validGroups.forEach((g, gIdx) => {
+                const seasonNum = gIdx + 1;
+                const rawEpisodes = (g.episodes || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+                const sName = (g.name || '').replace(/^Season\s*(\d+)/i, 'Temporada $1') || `Temporada ${seasonNum}`;
+
+                newSeasons.push({
+                    season_number: seasonNum,
+                    name: sName,
+                    episode_count: rawEpisodes.length,
+                    id: g.id || `group_${seasonNum}`,
+                    poster_path: originalSeasonPoster
+                });
+
+                const cacheKey = `${details.id}_${seasonNum}`;
+                cachedSeasonsMap[cacheKey] = rawEpisodes.map((ep, epIdx) => ({
+                    ...ep,
+                    season_number: seasonNum,
+                    episode_number: epIdx + 1,
+                    tmdb_episode_number: ep.episode_number,
+                    absoluteEpisode: cumulative + epIdx + 1
+                }));
+
+                cumulative += rawEpisodes.length;
+            });
+
+            details.seasons = newSeasons;
+            details.number_of_seasons = newSeasons.length;
+            details.number_of_episodes = cumulative;
+            break;
+        } catch (e) {
+            console.warn("[Series] Erro ao resolver grupos de episódios:", e);
+        }
+    }
+}
 
 /** Show details (see SHOW_DETAILS_APPEND), loaded once per show. */
 export async function loadShowDetails(showId) {
@@ -2146,7 +2219,13 @@ export async function loadShowDetails(showId) {
     const id = Number(showId);
     if (!showDetailsRequests.has(id)) {
         showDetailsRequests.set(id, fetchSeriesEndpoint(`tv/${id}?${SHOW_DETAILS_APPEND}`)
-            .then(details => { rememberShowDetails(details); return details; })
+            .then(async (details) => {
+                if (details) {
+                    await resolveShowSeasons(details);
+                    rememberShowDetails(details);
+                }
+                return details;
+            })
             .catch(() => null)
             .finally(() => showDetailsRequests.delete(id)));
     }
@@ -2177,6 +2256,13 @@ export async function resolveEpisodeContext(showRef, target = {}) {
         const mapped = mapAbsoluteEpisodeToSeason(details ? details.seasons : [], Number(target.absolute));
         season = Number(mapped.season);
         episode = Number(mapped.episode);
+    } else if (details && details.seasons) {
+        const seasonObj = (details.seasons || []).find(s => s.season_number === season);
+        if (seasonObj && seasonObj.episode_count && episode > seasonObj.episode_count) {
+            const mapped = mapAbsoluteEpisodeToSeason(details.seasons, episode);
+            season = Number(mapped.season);
+            episode = Number(mapped.episode);
+        }
     }
     let list = [];
     try {
@@ -2765,6 +2851,7 @@ function startEpisodePlayback(context, options = {}) {
                     };
                 },
                 onAllFailed: () => {
+                    atomicPlayerReset();
                     showToast(`Nenhuma fonte do ${playerName} respondeu. Escolha outro player ou um servidor externo abaixo.`);
                     if (seriesArt) {
                         seriesArt.innerHTML = `
@@ -2778,6 +2865,7 @@ function startEpisodePlayback(context, options = {}) {
                 }
             });
         }).catch(err => {
+            atomicPlayerReset();
             if (seriesLoader) seriesLoader.classList.add("hidden");
             showToast(`Não foi possível conectar ao ${playerName}.`);
         });

@@ -907,13 +907,17 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
         if valid_audio:
             candidates = [s for s in results if not s.get("audio_mismatch")]
 
+    def is_hd(s):
+        return (s.get("quality") or 0) >= 720
+
     indexed = list(enumerate(candidates))
     indexed.sort(key=lambda x: (
         -int(x[1]["alive"]),
         int(bool(x[1].get("audio_mismatch"))),
-        (-int(bool(x[1].get("has_pt_audio")))) if is_dubbed else 0,
-        int(bool(x[1].get("duration_mismatch"))),
         int(is_cam_source(x[1])),
+        int(bool(x[1].get("duration_mismatch"))),
+        -int(is_hd(x[1])),
+        (-int(bool(x[1].get("has_pt_audio")))) if is_dubbed else 0,
         (-int(is_hd_abr(x[1]))) if quality_mode != "highest" else 0,
         -(x[1]["quality"] or 0),
         int(is_low_trust_source(x[1])),
