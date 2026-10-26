@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261025_1152';
-import { showToast } from '../core/toast.js?v=20261025_1152';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261025_1152';
-import { buildFeedRows } from '../core/feedRows.js?v=20261025_1152';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261025_1152';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261025_1152';
-import { resumeStartTime } from '../core/resume.js?v=20261025_1152';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261025_1152';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261025_1152';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261025_1152';
-import { fetchTmdb } from '../core/tmdb.js?v=20261025_1152';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261025_1152';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261025_1152';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261025_1152';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261025_1152';
+} from '../core/constants.js?v=20261026_1520';
+import { showToast } from '../core/toast.js?v=20261026_1520';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261026_1520';
+import { buildFeedRows } from '../core/feedRows.js?v=20261026_1520';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261026_1520';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261026_1520';
+import { resumeStartTime } from '../core/resume.js?v=20261026_1520';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261026_1520';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261026_1520';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261026_1520';
+import { fetchTmdb } from '../core/tmdb.js?v=20261026_1520';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261026_1520';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261026_1520';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261026_1520';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261026_1520';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -129,16 +129,18 @@ export function getStoredWatchProgress() {
     return readWatchProgress();
 }
 
-export function saveStoredWatchProgress(show, season, episode, epTitle, mediaType = 'tv', absolute = null) {
+export function saveStoredWatchProgress(show, season, episode, epTitle, mediaType = 'tv', absolute = null, stillPath = null) {
     try {
         const progress = getStoredWatchProgress();
         const previous = progress[show.id];
+        const resolvedStill = stillPath || (previous && previous.still_path) || null;
         progress[show.id] = {
             positions: (previous && previous.positions) || {},
             id: show.id,
             title: show.name || show.title,
             poster_path: show.poster_path,
             backdrop_path: show.backdrop_path,
+            still_path: resolvedStill,
             season: Number(season),
             episode: Number(episode),
             episodeTitle: epTitle || `Episódio ${episode}`,
@@ -242,9 +244,11 @@ export function renderHomeContinueWatching() {
         card.tabIndex = 0;
         card.setAttribute("aria-label", isMovie ? `Continuar ${item.title}` : `Continuar ${item.title} T${item.season}:E${item.episode}`);
 
-        const imgUrl = item.backdrop_path
-            ? `${TMDB_IMG_W500}${item.backdrop_path}`
-            : (item.poster_path ? `${TMDB_IMG_W500}${item.poster_path}` : 'assets/logos/fav/icon-detailed.svg');
+        const imgUrl = (!isMovie && item.still_path)
+            ? `${TMDB_IMG_W500}${item.still_path}`
+            : (item.backdrop_path
+                ? `${TMDB_IMG_W500}${item.backdrop_path}`
+                : (item.poster_path ? `${TMDB_IMG_W500}${item.poster_path}` : 'assets/logos/fav/icon-detailed.svg'));
         const { pct: progressPct, label: timeLabel } = continueTime(isMovie ? item : (item.positions || {})[`${item.season}:${item.episode}`]);
 
         const safeTitle = escapeHtml(item.title || 'Título');
@@ -1115,7 +1119,7 @@ function renderAnimesDiscoveryFeed(data) {
     if (!data) return;
 
     // 1. Hero Showcase
-    const candidates = (data.trending || []).filter(a => a.backdrop_path);
+    const candidates = (data.trending || []).filter(a => a.backdrop_path && a.id !== 65733 && !/doraemon/i.test(a.name || ''));
     heroAnimesList = candidates.length >= 3 ? candidates.slice(0, 5) : (data.trending || []).slice(0, 5);
     if (heroAnimesList.length > 0) {
         currentHeroAnimesIndex = 0;
@@ -2691,6 +2695,7 @@ function startEpisodePlayback(context, options = {}) {
                 Number(activeSeriesPlaying.episodeNumber) === Number(episodeNumber);
             if (!stillThisEpisode) return;
             activeSeriesPlaying.episodeData = { ...match, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
+            saveStoredWatchProgress(showItem, seasonNumber, episodeNumber, match.name, context.isAnime ? 'anime' : 'tv', context.absolute, match.still_path);
             const currentTitleEl = document.getElementById("series-player-current-ep");
             const currentOverviewEl = document.getElementById("series-player-overview");
             if (currentTitleEl) {
@@ -2911,7 +2916,7 @@ function startEpisodePlayback(context, options = {}) {
     }
 
     saveStoredWatchProgress(showItem, seasonNumber, episodeNumber, epData ? epData.name : `Episódio ${episodeNumber}`,
-        context.isAnime ? 'anime' : 'tv', context.absolute);
+        context.isAnime ? 'anime' : 'tv', context.absolute, epData ? epData.still_path : null);
 
     document.querySelectorAll("#series-episodes-grid .series-ep-card").forEach(c => {
         c.classList.remove("is-active-playing");
