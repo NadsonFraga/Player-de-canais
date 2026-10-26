@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261026_1520';
-import { showToast } from '../core/toast.js?v=20261026_1520';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261026_1520';
-import { buildFeedRows } from '../core/feedRows.js?v=20261026_1520';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261026_1520';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261026_1520';
-import { resumeStartTime } from '../core/resume.js?v=20261026_1520';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261026_1520';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261026_1520';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261026_1520';
-import { fetchTmdb } from '../core/tmdb.js?v=20261026_1520';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261026_1520';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261026_1520';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261026_1520';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261026_1520';
+} from '../core/constants.js?v=20261026_1543';
+import { showToast } from '../core/toast.js?v=20261026_1543';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261026_1543';
+import { buildFeedRows } from '../core/feedRows.js?v=20261026_1543';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261026_1543';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261026_1543';
+import { resumeStartTime } from '../core/resume.js?v=20261026_1543';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261026_1543';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261026_1543';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261026_1543';
+import { fetchTmdb } from '../core/tmdb.js?v=20261026_1543';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261026_1543';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261026_1543';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261026_1543';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261026_1543';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -133,7 +133,8 @@ export function saveStoredWatchProgress(show, season, episode, epTitle, mediaTyp
     try {
         const progress = getStoredWatchProgress();
         const previous = progress[show.id];
-        const resolvedStill = stillPath || (previous && previous.still_path) || null;
+        const sameEpisode = previous && Number(previous.season) === Number(season) && Number(previous.episode) === Number(episode);
+        const resolvedStill = stillPath || (sameEpisode ? previous.still_path : null);
         progress[show.id] = {
             positions: (previous && previous.positions) || {},
             id: show.id,
@@ -220,6 +221,49 @@ if (typeof window !== 'undefined') {
     });
 }
 
+/** Resolves an episode still_path from memory or TMDB (used to backfill older items without still_path). */
+export async function resolveEpisodeStill(showId, seasonNumber, episodeNumber) {
+    if (!showId || !seasonNumber || !episodeNumber) return null;
+    try {
+        const sid = Number(showId);
+        const sNum = Number(seasonNumber);
+        const epNum = Number(episodeNumber);
+
+        const cacheKey = `${sid}_${sNum}`;
+        let cached = cachedSeasonsMap[cacheKey];
+        if (Array.isArray(cached)) {
+            const match = cached.find(ep => Number(ep.episode_number) === epNum || Number(ep.tmdb_episode_number) === epNum);
+            if (match && match.still_path) return match.still_path;
+        }
+
+        const details = await loadShowDetails(sid);
+        if (cachedSeasonsMap[cacheKey]) {
+            const match = cachedSeasonsMap[cacheKey].find(ep => Number(ep.episode_number) === epNum || Number(ep.tmdb_episode_number) === epNum);
+            if (match && match.still_path) return match.still_path;
+        }
+
+        const epList = await fetchSeasonEpisodes(sid, sNum);
+        if (Array.isArray(epList)) {
+            const match = epList.find(ep => Number(ep.episode_number) === epNum || Number(ep.tmdb_episode_number) === epNum);
+            if (match && match.still_path) return match.still_path;
+        }
+
+        if (details) {
+            const abs = absoluteEpisodeOf(details, sNum, epNum);
+            if (abs) {
+                const s1List = await fetchSeasonEpisodes(sid, 1);
+                if (Array.isArray(s1List)) {
+                    const match = s1List.find(ep => Number(ep.episode_number) === abs || Number(ep.tmdb_episode_number) === abs);
+                    if (match && match.still_path) return match.still_path;
+                }
+            }
+        }
+    } catch (e) {
+        // Fallback silently
+    }
+    return null;
+}
+
 export function renderHomeContinueWatching() {
     const section = document.getElementById("home-continue-watching-section");
     const track = document.getElementById("home-continue-watching-track");
@@ -284,6 +328,21 @@ export function renderHomeContinueWatching() {
                 <span class="continue-card-time">${timeLabel}</span>
             </div>
         `;
+
+        if (!isMovie && !item.still_path && item.id && item.season && item.episode) {
+            resolveEpisodeStill(item.id, item.season, item.episode).then(still => {
+                if (!still) return;
+                item.still_path = still;
+                const imgEl = card.querySelector(".continue-card-media img");
+                if (imgEl) imgEl.src = `${TMDB_IMG_W500}${still}`;
+                const progress = getStoredWatchProgress();
+                const key = item.key || item.id;
+                if (progress && progress[key]) {
+                    progress[key].still_path = still;
+                    writeWatchProgress(progress, { notify: false });
+                }
+            }).catch(() => {});
+        }
 
         const resumeAction = () => {
             if (isMovie) {

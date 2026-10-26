@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261026_1520';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261026_1520';
-import { showToast } from '../core/toast.js?v=20261026_1520';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261026_1520';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261026_1520';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261026_1520';
-import { formatClock } from '../core/resume.js?v=20261026_1520';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261026_1520';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261026_1520';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261026_1520';
+import { store } from '../core/state.js?v=20261026_1543';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261026_1543';
+import { showToast } from '../core/toast.js?v=20261026_1543';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261026_1543';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261026_1543';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261026_1543';
+import { formatClock } from '../core/resume.js?v=20261026_1543';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261026_1543';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261026_1543';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261026_1543';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {

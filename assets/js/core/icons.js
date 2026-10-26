@@ -1,4 +1,4 @@
-import { escapeHtml, escapeAttr } from './sanitize.js?v=20261026_1520';
+import { escapeHtml, escapeAttr } from './sanitize.js?v=20261026_1543';
 /**
  * TVZINHA ONLINE - Monochromatic UI SVGs & Channel Logos Registry
  */

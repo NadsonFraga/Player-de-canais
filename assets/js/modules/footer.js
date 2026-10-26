@@ -1,8 +1,8 @@
 /**
  * TVZINHA ONLINE - Site footer (Início, Filmes, Séries, Animes) and the legal panel (Privacidade, Termos de uso, DMCA)
  */
-import { switchAppView } from '../navigation/router.js?v=20261026_1520';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261026_1520';
+import { switchAppView } from '../navigation/router.js?v=20261026_1543';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261026_1543';
 
 // Plain text only, written here so the panel needs no other request. Keep the wording accurate: the proxy passes
 // video through our servers without storing it, so "não armazena nem envia" is true and "não hospeda" is not said.

@@ -34,12 +34,12 @@
     `Este título pode conter gravações de cinema até a disponibilização das versões digitais oficiais em alta definição.`
 
 ### 4. Episode Thumbnails in "Continuar Assistindo"
-- **Problem:** The home screen's "Continuar assistindo" rail displayed generic show-level backdrops/posters for episodes rather than the thumbnail (`still_path`) of the specific episode being watched.
+- **Problem:** The home screen's "Continuar assistindo" rail displayed generic show-level backdrops/posters for episodes rather than the thumbnail (`still_path`) of the specific episode being watched. Furthermore, older progress entries stored in `localStorage` lacked `still_path`.
 - **Solution:**
   - In `assets/js/modules/series.js`:
     - Updated `saveStoredWatchProgress()` to persist `still_path` into `progress[show.id]`.
-    - Passed `epData.still_path` when starting playback and when async season metadata resolves.
-    - Updated `renderHomeContinueWatching()` to prioritize `item.still_path` for episodes, providing the actual 16:9 episode thumbnail on the home rail.
+    - Implemented `resolveEpisodeStill(showId, seasonNumber, episodeNumber)` to asynchronously resolve missing `still_path` values from cache, show metadata, regular seasons, or anime episode groups.
+    - Updated `renderHomeContinueWatching()` to prioritize `item.still_path` for episodes, providing the actual 16:9 episode thumbnail on the home rail, and automatically backfill/persist missing stills for pre-existing history cards.
 
 ---
 
