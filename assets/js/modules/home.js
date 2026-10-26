@@ -4,22 +4,22 @@
  * and quick-navigation portals for Movies, Series, Animes, and Live Channels.
  */
 
-import { store } from '../core/state.js?v=20261025_1152';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261025_1152';
+import { store } from '../core/state.js?v=20261026_1520';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261026_1520';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
     TMDB_CACHE_KEY,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY
-} from '../core/constants.js?v=20261025_1152';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261025_1152';
-import { switchAppView } from '../navigation/router.js?v=20261025_1152';
-import { fetchTmdbEndpoint } from './movies.js?v=20261025_1152';
-import { fetchSeriesEndpoint } from './series.js?v=20261025_1152';
-import { openTitle } from './titlePage.js?v=20261025_1152';
-import { selectChannelByName } from './channels.js?v=20261025_1152';
-import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261025_1152';
+} from '../core/constants.js?v=20261026_1520';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261026_1520';
+import { switchAppView } from '../navigation/router.js?v=20261026_1520';
+import { fetchTmdbEndpoint } from './movies.js?v=20261026_1520';
+import { fetchSeriesEndpoint } from './series.js?v=20261026_1520';
+import { openTitle } from './titlePage.js?v=20261026_1520';
+import { selectChannelByName } from './channels.js?v=20261026_1520';
+import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261026_1520';
 
 const TMDB_GENRES = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -272,7 +272,11 @@ function buildHomeHeroShowcase() {
         const raw = localStorage.getItem(TMDB_ANIMES_CACHE_KEY);
         if (raw) {
             const parsed = JSON.parse(raw);
-            const a = parsed?.data?.trending?.[0];
+            const trending = parsed?.data?.trending || [];
+            // Exclude Doraemon (TMDB 65733) and entries without backdrop
+            const candidates = trending.filter(a => a && a.backdrop_path && a.id !== 65733 && !/doraemon/i.test(a.name || ''));
+            // Rank top candidates by strong audience engagement (votes) among top trending
+            const a = candidates.slice(0, 8).sort((x, y) => (Number(y.vote_count) || 0) - (Number(x.vote_count) || 0))[0] || candidates[0];
             if (a && a.backdrop_path) {
                 slides.push({
                     type: 'anime',

@@ -7,25 +7,25 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261025_1152';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261025_1152';
-import { fetchTmdb } from '../core/tmdb.js?v=20261025_1152';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261025_1152';
-import { showToast } from '../core/toast.js?v=20261025_1152';
-import { syncPageLock } from '../core/activity.js?v=20261025_1152';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261025_1152';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261025_1152';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261025_1152';
-import { isAnimeShow } from './series.js?v=20261025_1152';
-import { selectChannelByName } from './channels.js?v=20261025_1152';
-import { openCollection } from './collection.js?v=20261025_1152';
-import { getAccount, getActiveProfile, ACCOUNT_EVENT } from '../core/account.js?v=20261025_1152';
-import { leaveAccount, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261025_1152';
-import { PROFILE_EVENT } from '../core/profileStore.js?v=20261025_1152';
-import { avatarSrc } from '../core/avatars.js?v=20261025_1152';
-import { openAccountPage } from './accountPage.js?v=20261025_1152';
-import { openProfilePicker } from './profilePage.js?v=20261025_1152';
-import { openSettingsPage } from './settingsPage.js?v=20261025_1152';
+import { store } from '../core/state.js?v=20261026_1520';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261026_1520';
+import { fetchTmdb } from '../core/tmdb.js?v=20261026_1520';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261026_1520';
+import { showToast } from '../core/toast.js?v=20261026_1520';
+import { syncPageLock } from '../core/activity.js?v=20261026_1520';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261026_1520';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261026_1520';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261026_1520';
+import { isAnimeShow } from './series.js?v=20261026_1520';
+import { selectChannelByName } from './channels.js?v=20261026_1520';
+import { openCollection } from './collection.js?v=20261026_1520';
+import { getAccount, getActiveProfile, ACCOUNT_EVENT } from '../core/account.js?v=20261026_1520';
+import { leaveAccount, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261026_1520';
+import { PROFILE_EVENT } from '../core/profileStore.js?v=20261026_1520';
+import { avatarSrc } from '../core/avatars.js?v=20261026_1520';
+import { openAccountPage } from './accountPage.js?v=20261026_1520';
+import { openProfilePicker } from './profilePage.js?v=20261026_1520';
+import { openSettingsPage } from './settingsPage.js?v=20261026_1520';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
@@ -244,25 +244,29 @@ async function performSearch(query) {
     renderResults(box, split, channels);
 }
 
+function titleScore(entry) {
+    const item = entry && entry.item;
+    if (!item) return 0;
+    const pop = Number(item.popularity) || 0;
+    const votes = Math.max(10, Number(item.vote_count) || 10);
+    return pop * Math.log10(votes);
+}
+
 function renderResults(box, split, channels) {
     box.innerHTML = '';
-    // Channels first: few, and when the name matches one it is usually what the person wants ("globo")
-    const kinds = searchKind === 'all' ? ['channel', 'movie', 'tv', 'anime', 'person'] : [searchKind];
     let total = 0;
-    kinds.forEach(kind => {
-        const count = kind === 'channel' ? channels.length : split[kind].length;
-        if (count === 0) return;
-        total += count;
-        const group = document.createElement('section');
-        group.className = 'search-group';
-        if (searchKind === 'all') {
+
+    if (searchKind === 'all') {
+        // 1. Live channels first if query matched any
+        if (channels.length > 0) {
+            total += channels.length;
+            const group = document.createElement('section');
+            group.className = 'search-group';
             const heading = document.createElement('h3');
             heading.className = 'search-group-heading';
-            heading.textContent = KIND_LABEL[kind];
+            heading.textContent = KIND_LABEL.channel;
             group.appendChild(heading);
-        }
-        const grid = document.createElement('div');
-        if (kind === 'channel') {
+            const grid = document.createElement('div');
             grid.className = 'search-channel-grid';
             grid.innerHTML = channels.map(c => {
                 const logo = getChannelLogoSrc(c.name);
@@ -271,7 +275,34 @@ function renderResults(box, split, channels) {
                     <span class="search-channel-name">${escapeHtml(c.name)}</span>
                 </button>`;
             }).join('');
-        } else if (kind === 'person') {
+            group.appendChild(grid);
+            box.appendChild(group);
+        }
+
+        // 2. Unified titles (movies, series, animes) without category separation, sorted by relevance/popularity
+        const allTitles = [...split.movie, ...split.tv, ...split.anime];
+        if (allTitles.length > 0) {
+            total += allTitles.length;
+            allTitles.sort((a, b) => titleScore(b) - titleScore(a));
+            const group = document.createElement('section');
+            group.className = 'search-group';
+            const grid = document.createElement('div');
+            grid.className = 'search-title-grid';
+            fillCards(grid, allTitles, { onOpen: (cardKind, item) => closeSearchThen(() => openTitle(cardKind, item)) });
+            group.appendChild(grid);
+            box.appendChild(group);
+        }
+
+        // 3. Persons at bottom if any
+        if (split.person.length > 0) {
+            total += split.person.length;
+            const group = document.createElement('section');
+            group.className = 'search-group';
+            const heading = document.createElement('h3');
+            heading.className = 'search-group-heading';
+            heading.textContent = KIND_LABEL.person;
+            group.appendChild(heading);
+            const grid = document.createElement('div');
             grid.className = 'search-person-grid';
             grid.innerHTML = split.person.slice(0, 12).map(p => `
                 <button type="button" class="title-cast-card search-person" data-search-person="${escapeAttr(p.id)}" data-name="${escapeAttr(p.name)}" data-photo="${escapeAttr(p.profile_path || '')}">
@@ -281,13 +312,45 @@ function renderResults(box, split, channels) {
                     <span class="title-cast-name">${escapeHtml(p.name)}</span>
                     <span class="title-cast-role">${escapeHtml(personLine(p))}</span>
                 </button>`).join('');
-        } else {
-            grid.className = 'search-title-grid';
-            fillCards(grid, split[kind], { onOpen: (cardKind, item) => closeSearchThen(() => openTitle(cardKind, item)) });
+            group.appendChild(grid);
+            box.appendChild(group);
         }
-        group.appendChild(grid);
-        box.appendChild(group);
-    });
+    } else {
+        const count = searchKind === 'channel' ? channels.length : split[searchKind].length;
+        if (count > 0) {
+            total += count;
+            const group = document.createElement('section');
+            group.className = 'search-group';
+            const grid = document.createElement('div');
+            if (searchKind === 'channel') {
+                grid.className = 'search-channel-grid';
+                grid.innerHTML = channels.map(c => {
+                    const logo = getChannelLogoSrc(c.name);
+                    return `<button type="button" class="search-channel" data-channel="${escapeAttr(c.name)}">
+                        <span class="search-channel-logo">${logo ? `<img src="${escapeAttr(logo)}" alt="" loading="lazy">` : ''}</span>
+                        <span class="search-channel-name">${escapeHtml(c.name)}</span>
+                    </button>`;
+                }).join('');
+            } else if (searchKind === 'person') {
+                grid.className = 'search-person-grid';
+                grid.innerHTML = split.person.slice(0, 12).map(p => `
+                    <button type="button" class="title-cast-card search-person" data-search-person="${escapeAttr(p.id)}" data-name="${escapeAttr(p.name)}" data-photo="${escapeAttr(p.profile_path || '')}">
+                        ${p.profile_path
+                            ? `<img class="title-cast-photo" src="${escapeAttr(TMDB_IMG_W185 + p.profile_path)}" alt="" loading="lazy">`
+                            : `<span class="title-cast-photo is-empty" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg></span>`}
+                        <span class="title-cast-name">${escapeHtml(p.name)}</span>
+                        <span class="title-cast-role">${escapeHtml(personLine(p))}</span>
+                    </button>`).join('');
+            } else {
+                grid.className = 'search-title-grid';
+                const items = split[searchKind].slice().sort((a, b) => titleScore(b) - titleScore(a));
+                fillCards(grid, items, { onOpen: (cardKind, item) => closeSearchThen(() => openTitle(cardKind, item)) });
+            }
+            group.appendChild(grid);
+            box.appendChild(group);
+        }
+    }
+
     if (total === 0) box.innerHTML = '<p class="search-status">Nada encontrado. Tente outro nome.</p>';
 }
 
