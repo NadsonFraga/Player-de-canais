@@ -63,6 +63,7 @@ Project documentation folder (replaces the former `docs/`). When resuming work, 
 | 2026-10-20 | [title-pages-and-accounts](features/2026-10-20-title-pages-and-accounts/) | done (big feature: title page, header, Coleção, accounts, profiles, sync, Configurações, security review; production 2026-10-21) |
 | 2026-10-21 | [turnstile](features/2026-10-21-turnstile/) | done (robot check on the account forms; production 2026-10-21) |
 | 2026-10-23 | [mgeb-audio-priority](features/2026-10-23-mgeb-audio-priority/) | done (MGEB dubbed audio priority, Brazilian CDN tagging, Anime player recovery & session cleanup) |
+| 2026-10-26 | [search-and-ui-refinements](features/2026-10-26-search-and-ui-refinements/) | done (unified global search ranking, hero highlights filter, cinema notice cleanup, episode thumbnails) |
 
 Folders before 2026-10-08 were dated from their summaries and commit history; older ones may lack a `summary.md`.
 
