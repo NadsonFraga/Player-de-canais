@@ -176,6 +176,25 @@ def map_merged_episode(groups, season, episode):
     return None
 
 
+def score_season_group_candidate(g):
+    pts = 0
+    gtype = g.get("type")
+    if gtype == 6:
+        pts += 50
+    elif gtype == 4:
+        pts += 40
+    elif gtype == 1:
+        pts += 20
+    name = str(g.get("name") or "").lower()
+    if re.search(r"\bseasons?\b|\btemporadas?\b", name, re.I):
+        pts += 30
+    if re.search(r"\bparts?\b|\bpartes?\b", name, re.I):
+        pts += 25
+    if name in ("seasons", "parts", "original parts"):
+        pts += 15
+    return pts
+
+
 def fetch_season_groups(tmdb_id):
     """The real season split of a show listed as one season on TMDB, or None (cached 24 h)."""
     cached = SEASON_GROUPS_CACHE.get(tmdb_id)
@@ -192,13 +211,13 @@ def fetch_season_groups(tmdb_id):
     try:
         show = get(f"/tv/{tmdb_id}")
         regular = [s for s in show.get("seasons", []) if s.get("season_number", 0) >= 1 and s.get("episode_count", 0) > 0]
-        if len(regular) == 1:
-            candidates = [g for g in get(f"/tv/{tmdb_id}/episode_groups").get("results", []) if g.get("type") == 6]
-            candidates.sort(key=lambda g: g.get("name") != "Seasons")
-            for candidate in candidates[:3]:
-                groups = regular_season_groups(get(f"/tv/episode_group/{candidate['id']}"))
-                if groups:
-                    break
+        candidates = [g for g in get(f"/tv/{tmdb_id}/episode_groups").get("results", []) if g.get("type") in (6, 4, 1) and (g.get("group_count", 0) > 1 or not g.get("group_count"))]
+        candidates.sort(key=score_season_group_candidate, reverse=True)
+        for candidate in candidates[:3]:
+            parsed = regular_season_groups(get(f"/tv/episode_group/{candidate['id']}"))
+            if parsed and (len(regular) == 1 or len(parsed) > len(regular)):
+                groups = parsed
+                break
     except Exception as e:
         print(f"[LocalServer] Season groups failed for TMDB {tmdb_id}: {e}", file=sys.stderr)
         groups = None
@@ -2054,12 +2073,14 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
             mgeb_data = timed("mgeb", lookup_mgeb, season, episode)
             mgeb_episode = (season, episode)
-            # MGEB answered for another episode: the show may be one long season on TMDB and split on MGEB
-            if not mgeb_data and mgeb_episode_mismatch[0] and tmdb_id and mgeb_type == "serie":
+            has_sources = bool(mgeb_data and mgeb_data.get("sources"))
+            # MGEB answered for another episode or has zero sources: the show may be split into parts on MGEB
+            if (not has_sources or mgeb_episode_mismatch[0]) and tmdb_id and mgeb_type == "serie":
                 mapped = map_merged_episode(timed("groups", fetch_season_groups, str(tmdb_id)), season, episode)
                 if mapped and mapped != (season, episode):
-                    mgeb_data = timed("mgeb2", lookup_mgeb, *mapped)
-                    if mgeb_data:
+                    mgeb_data2 = timed("mgeb2", lookup_mgeb, *mapped)
+                    if mgeb_data2 and mgeb_data2.get("sources"):
+                        mgeb_data = mgeb_data2
                         mgeb_episode = mapped
 
             if mgeb_data and mgeb_data.get("sources"):

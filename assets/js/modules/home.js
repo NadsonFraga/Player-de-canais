@@ -4,22 +4,22 @@
  * and quick-navigation portals for Movies, Series, Animes, and Live Channels.
  */
 
-import { store } from '../core/state.js?v=20261027_1010';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261027_1010';
+import { store } from '../core/state.js?v=20261027_1439';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261027_1439';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
     TMDB_CACHE_KEY,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY
-} from '../core/constants.js?v=20261027_1010';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261027_1010';
-import { switchAppView } from '../navigation/router.js?v=20261027_1010';
-import { fetchTmdbEndpoint } from './movies.js?v=20261027_1010';
-import { fetchSeriesEndpoint } from './series.js?v=20261027_1010';
-import { openTitle } from './titlePage.js?v=20261027_1010';
-import { selectChannelByName } from './channels.js?v=20261027_1010';
-import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261027_1010';
+} from '../core/constants.js?v=20261027_1439';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261027_1439';
+import { switchAppView } from '../navigation/router.js?v=20261027_1439';
+import { fetchTmdbEndpoint } from './movies.js?v=20261027_1439';
+import { fetchSeriesEndpoint } from './series.js?v=20261027_1439';
+import { openTitle } from './titlePage.js?v=20261027_1439';
+import { selectChannelByName } from './channels.js?v=20261027_1439';
+import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261027_1439';
 
 const TMDB_GENRES = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
