@@ -4,8 +4,8 @@
  * Built on first use, over everything (layer 1400). It is a history layer: the phone's Back and Esc answer "no"
  * (historyManager.js presses its "no" button).
  */
-import { pushNavLayer, popNavLayer, isHandlingBack } from '../navigation/historyManager.js?v=20261026_1543';
-import { escapeHtml } from './sanitize.js?v=20261026_1543';
+import { pushNavLayer, popNavLayer, isHandlingBack } from '../navigation/historyManager.js?v=20261027_1010';
+import { escapeHtml } from './sanitize.js?v=20261027_1010';
 
 let pending = null;
 

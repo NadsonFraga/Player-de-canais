@@ -144,6 +144,23 @@ CASES = {
             '#EXT-X-STREAM-INF:BANDWIDTH=2000000',
             'variant.m3u8'
         ], [False, False]],
+        ["explicit codecs without audio (mute)", [
+            '#EXTM3U',
+            '#EXT-X-STREAM-INF:BANDWIDTH=912614,RESOLUTION=640x360,CODECS="avc1.64001f"',
+            '360p.m3u8',
+            '#EXT-X-STREAM-INF:BANDWIDTH=2676545,RESOLUTION=1280x720,CODECS="avc1.64001f"',
+            '720p.m3u8'
+        ], [True, False]],
+        ["explicit codecs with audio", [
+            '#EXTM3U',
+            '#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=1280x720,CODECS="avc1.64001f,mp4a.40.2"',
+            '720p.m3u8'
+        ], [False, False]],
+    ],
+    "movie_outliers": [
+        ["movie with 10s dummy trailer", [10, 7200, 7250], [True, False, False]],
+        ["movie all full length", [5400, 7200, 7500], [False, False, False]],
+        ["short film all under 20min", [480, 500, 520], [False, False, False]],
     ],
     "quality_mode": [
         ["balanced: hls-multi 720p beats mp4-range 1080p", "balanced", [
@@ -158,10 +175,10 @@ CASES = {
             {"label": "en_1080", "kind": "mp4-range", "quality": 1080, "alive": True, "probed": True, "has_pt_audio": False, "raw_url": "https://streamtape.example/v.mp4"},
             {"label": "pt_720", "kind": "mp4-range", "quality": 720, "alive": True, "probed": True, "has_pt_audio": True, "raw_url": "https://fontedecanais.example/v.mp4"},
         ], "pt_720"],
-        ["dubbed: clean 720p beats pt-audio 480p", "balanced", [
+        ["dubbed: confirmed pt-audio beats unverified 720p", "balanced", [
             {"label": "pt_480", "kind": "mp4-range", "quality": 480, "alive": True, "probed": True, "has_pt_audio": True, "raw_url": "https://fontedecanais.example/sd.mp4"},
             {"label": "clean_720", "kind": "hls-multi", "quality": 720, "alive": True, "probed": True, "has_pt_audio": False, "raw_url": "https://mgeb.example/m.m3u8"},
-        ], "clean_720"],
+        ], "pt_480"],
     ],
 }
 
@@ -170,7 +187,7 @@ def run_python():
     spec = importlib.util.spec_from_file_location("local_server", ROOT / "tools" / "local_server.py")
     ls = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ls)
-    out = {"merged": [], "title": [], "hls": [], "mvhd": [], "outliers": [], "early_stop": [], "cam": [], "audio": [], "quality_mode": []}
+    out = {"merged": [], "title": [], "hls": [], "mvhd": [], "outliers": [], "movie_outliers": [], "early_stop": [], "cam": [], "audio": [], "quality_mode": []}
     for _, detail, s, e, _ in CASES["merged"]:
         mapped = ls.map_merged_episode(ls.regular_season_groups(detail), s, e)
         out["merged"].append(list(mapped) if mapped else None)
@@ -185,6 +202,10 @@ def run_python():
         sources = [src(d) for d in lengths]
         ls.mark_duration_outliers(sources)
         out["outliers"].append([s["duration_mismatch"] for s in sources])
+    for _, lengths, _ in CASES["movie_outliers"]:
+        sources = [src(d) for d in lengths]
+        ls.mark_movie_duration_outliers(sources)
+        out["movie_outliers"].append([s["duration_mismatch"] for s in sources])
     for _, top, others, _ in CASES["early_stop"]:
         results = [src(top)] + [src(d, quality=720) for d in others]
         out["early_stop"].append(bool(ls.can_stop_probing(results)))
@@ -207,7 +228,7 @@ const [file] = process.argv.slice(1);
 const casesJson = readFileSync(0, "utf8");
 const tmpPath = join(dirname(file), ".test_mgeb_rules_tmp.mjs");
 const code = readFileSync(file, "utf8") +
-  "\nexport { mgebEpisodeMatches, hlsPlaylistDuration, parseMoovDuration, markDurationOutliers, canStopProbing," +
+  "\nexport { mgebEpisodeMatches, hlsPlaylistDuration, parseMoovDuration, markDurationOutliers, markMovieDurationOutliers, canStopProbing," +
   " regularSeasonGroups, mapMergedEpisode, isCamSource, checkHlsAudioTracks, rankSourcesByQuality };\n";
 writeFileSync(tmpPath, code, "utf8");
 let m;
@@ -230,6 +251,11 @@ const out = {
   outliers: cases.outliers.map(([, lengths]) => {
     const sources = lengths.map(d => src(d));
     m.markDurationOutliers(sources);
+    return sources.map(s => s.duration_mismatch);
+  }),
+  movie_outliers: cases.movie_outliers.map(([, lengths]) => {
+    const sources = lengths.map(d => src(d));
+    m.markMovieDurationOutliers(sources);
     return sources.map(s => s.duration_mismatch);
   }),
   early_stop: cases.early_stop.map(([, top, others]) => Boolean(m.canStopProbing([src(top), ...others.map(d => src(d, 720))]))),
@@ -277,6 +303,8 @@ def check_unit(lang, out):
         check(f"mvhd -> {case[1]}", same(got, case[1]), f"-> {got}")
     for case, got in zip(CASES["outliers"], out["outliers"]):
         check(f"outliers {case[0]}", got == case[2], f"-> {got}")
+    for case, got in zip(CASES["movie_outliers"], out["movie_outliers"]):
+        check(f"movie outliers {case[0]}", got == case[2], f"-> {got}")
     for case, got in zip(CASES["early_stop"], out["early_stop"]):
         check(f"early stop: {case[0]}", got == case[3], f"-> {got}")
     for case, got in zip(CASES["cam"], out["cam"]):

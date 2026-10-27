@@ -668,11 +668,30 @@ function isPortugueseAudioTag(line) {
  */
 function checkHlsAudioTracks(lines) {
   const audioLines = lines.filter(l => l.startsWith("#EXT-X-MEDIA:TYPE=AUDIO") || (l.startsWith("#EXT-X-MEDIA:") && /TYPE=AUDIO/i.test(l)));
-  if (!audioLines.length) {
-    return { audioMismatch: false, hasPtAudio: false };
+  if (audioLines.length > 0) {
+    const hasPtAudio = audioLines.some(isPortugueseAudioTag);
+    return { audioMismatch: !hasPtAudio, hasPtAudio, noAudio: false };
   }
-  const hasPtAudio = audioLines.some(isPortugueseAudioTag);
-  return { audioMismatch: !hasPtAudio, hasPtAudio };
+
+  // Check if variants explicitly declare CODECS without any audio codec
+  const streamInfLines = lines.filter(l => l.startsWith("#EXT-X-STREAM-INF"));
+  if (streamInfLines.length > 0) {
+    const variantsWithCodecs = streamInfLines
+      .map(l => l.match(/CODECS=["']([^"']+)["']/i))
+      .filter(Boolean)
+      .map(m => m[1].split(",").map(c => c.trim().toLowerCase()));
+
+    if (variantsWithCodecs.length > 0) {
+      const hasAnyAudioCodec = variantsWithCodecs.some(codecs =>
+        codecs.some(c => /^(mp4a|ac-3|ec-3|opus|vorbis|flac|dts)/i.test(c))
+      );
+      if (!hasAnyAudioCodec) {
+        return { audioMismatch: true, hasPtAudio: false, noAudio: true };
+      }
+    }
+  }
+
+  return { audioMismatch: false, hasPtAudio: false, noAudio: false };
 }
 
 /**
@@ -703,6 +722,7 @@ async function probeHls(url, referer) {
     const audioCheck = checkHlsAudioTracks(lines);
     const audioMismatch = audioCheck.audioMismatch;
     const hasPtAudio = audioCheck.hasPtAudio;
+    const noAudio = Boolean(audioCheck.noAudio);
 
     // Check the top variant: its first segment must start at byte 0, and its real
     // frame size replaces a declared resolution that is not there
@@ -736,7 +756,7 @@ async function probeHls(url, referer) {
     } catch (e) {
       // The variant check is best effort
     }
-    return { qualities, multi: variants.length > 1, broken, synthetic, duration, empty, audioMismatch, hasPtAudio };
+    return { qualities, multi: variants.length > 1, broken, synthetic, duration, empty, audioMismatch, hasPtAudio, noAudio };
   }
 
   // Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
@@ -792,7 +812,7 @@ async function probeSource(src) {
         hasPtAudio = Boolean(r.hasPtAudio);
         // A broken first segment stalls playback, and a playlist without segments plays
         // nothing: keep them only as a last resort
-        if (r.broken || r.empty) alive = false;
+        if (r.broken || r.empty || r.noAudio) alive = false;
       }
     } else {
       const r = await probeMp4(rawUrl, referer);
@@ -835,6 +855,25 @@ function markDurationOutliers(sources) {
   const mid = values.length >> 1;
   const median = values.length % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
   for (const s of measured) s.duration_mismatch = !durationsAgree(s.duration, median);
+  return sources;
+}
+
+const MIN_MOVIE_DURATION_S = 1200; // 20 minutes
+
+/**
+ * For movies, samples or trailers (e.g. 10s dummy streams) masquerade as full-length features.
+ * When at least one measured source is full-length (>= 20 min), shorter ones are flagged.
+ */
+function markMovieDurationOutliers(sources) {
+  const measured = sources.filter(s => s.alive && s.duration > 0);
+  const hasFullLength = measured.some(s => s.duration >= MIN_MOVIE_DURATION_S);
+  if (hasFullLength) {
+    for (const s of measured) {
+      if (s.duration < MIN_MOVIE_DURATION_S) {
+        s.duration_mismatch = true;
+      }
+    }
+  }
   return sources;
 }
 
@@ -924,7 +963,11 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths 
       }
     });
   }
-  if (checkLengths) markDurationOutliers(results);
+  if (checkLengths) {
+    markDurationOutliers(results);
+  } else {
+    markMovieDurationOutliers(results);
+  }
 
   let candidates = results;
   if (isDubbed) {
@@ -943,8 +986,8 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths 
       (Number(a.s.audio_mismatch) - Number(b.s.audio_mismatch)) ||
       (Number(isCamSource(a.s)) - Number(isCamSource(b.s))) ||
       (Number(a.s.duration_mismatch) - Number(b.s.duration_mismatch)) ||
-      (Number(isHd(b.s)) - Number(isHd(a.s))) ||
       (isDubbed ? (Number(b.s.has_pt_audio) - Number(a.s.has_pt_audio)) : 0) ||
+      (Number(isHd(b.s)) - Number(isHd(a.s))) ||
       (qualityMode === "highest" ? 0 : (Number(isHdAbr(b.s)) - Number(isHdAbr(a.s)))) ||
       ((b.s.quality || 0) - (a.s.quality || 0)) ||
       (Number(isLowTrustSource(a.s)) - Number(isLowTrustSource(b.s))) ||

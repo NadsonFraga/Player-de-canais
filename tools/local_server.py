@@ -636,10 +636,27 @@ def is_portuguese_audio_tag(line):
 def check_hls_audio_tracks(lines):
     """Checks audio tracks declared in an HLS master playlist (#EXT-X-MEDIA:TYPE=AUDIO)."""
     audio_lines = [l for l in lines if l.startswith("#EXT-X-MEDIA:TYPE=AUDIO") or (l.startswith("#EXT-X-MEDIA:") and re.search(r"TYPE=AUDIO", l, re.I))]
-    if not audio_lines:
-        return {"audio_mismatch": False, "has_pt_audio": False}
-    has_pt = any(is_portuguese_audio_tag(l) for l in audio_lines)
-    return {"audio_mismatch": not has_pt, "has_pt_audio": has_pt}
+    if audio_lines:
+        has_pt = any(is_portuguese_audio_tag(l) for l in audio_lines)
+        return {"audio_mismatch": not has_pt, "has_pt_audio": has_pt, "no_audio": False}
+
+    # Check if variants explicitly declare CODECS without any audio codec
+    stream_inf_lines = [l for l in lines if l.startswith("#EXT-X-STREAM-INF")]
+    if stream_inf_lines:
+        variants_with_codecs = []
+        for l in stream_inf_lines:
+            m = re.search(r'CODECS=["\']([^"\']+)["\']', l, re.I)
+            if m:
+                variants_with_codecs.append([c.strip().lower() for c in m.group(1).split(",")])
+        if variants_with_codecs:
+            has_any_audio = any(
+                any(re.match(r"^(mp4a|ac-3|ec-3|opus|vorbis|flac|dts)", c, re.I) for c in codecs)
+                for codecs in variants_with_codecs
+            )
+            if not has_any_audio:
+                return {"audio_mismatch": True, "has_pt_audio": False, "no_audio": True}
+
+    return {"audio_mismatch": False, "has_pt_audio": False, "no_audio": False}
 
 
 def probe_hls(url, referer):
@@ -677,6 +694,7 @@ def probe_hls(url, referer):
         audio_check = check_hls_audio_tracks(lines)
         audio_mismatch = audio_check["audio_mismatch"]
         has_pt_audio = audio_check["has_pt_audio"]
+        no_audio = bool(audio_check.get("no_audio"))
 
         # Check the top variant: its first segment must start at byte 0, and its real
         # frame size replaces a declared resolution that is not there
@@ -708,7 +726,8 @@ def probe_hls(url, referer):
         except Exception:
             pass  # The variant check is best effort
         return {"qualities": qualities, "multi": len(variants) > 1, "broken": broken, "synthetic": synthetic,
-                "duration": duration, "empty": empty, "audio_mismatch": audio_mismatch, "has_pt_audio": has_pt_audio}
+                "duration": duration, "empty": empty, "audio_mismatch": audio_mismatch, "has_pt_audio": has_pt_audio,
+                "no_audio": no_audio}
 
     # Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
     length = hls_playlist_duration(text)
@@ -760,7 +779,7 @@ def probe_source(src):
                 has_pt_audio = bool(r.get("has_pt_audio"))
                 # A broken first segment stalls playback, and a playlist without segments plays
                 # nothing: keep them only as a last resort
-                if r.get("broken") or r.get("empty"):
+                if r.get("broken") or r.get("empty") or r.get("no_audio"):
                     alive = False
         else:
             r = probe_mp4(raw, referer)
@@ -813,6 +832,21 @@ def mark_duration_outliers(sources):
     median = values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
     for s in measured:
         s["duration_mismatch"] = not durations_agree(s["duration"], median)
+    return sources
+
+
+MIN_MOVIE_DURATION_S = 1200
+
+
+def mark_movie_duration_outliers(sources):
+    """For movies, samples or trailers (e.g. 10s dummy streams) masquerade as full-length features.
+    When at least one measured source is full-length (>= 20 min), shorter ones are flagged."""
+    measured = [s for s in sources if s.get("alive") and (s.get("duration") or 0) > 0]
+    has_full_length = any(s["duration"] >= MIN_MOVIE_DURATION_S for s in measured)
+    if has_full_length:
+        for s in measured:
+            if s["duration"] < MIN_MOVIE_DURATION_S:
+                s["duration_mismatch"] = True
     return sources
 
 
@@ -900,6 +934,8 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
         pool.shutdown(wait=False, cancel_futures=True)
     if check_lengths:
         mark_duration_outliers(results)
+    else:
+        mark_movie_duration_outliers(results)
 
     candidates = results
     if is_dubbed:
@@ -916,8 +952,8 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
         int(bool(x[1].get("audio_mismatch"))),
         int(is_cam_source(x[1])),
         int(bool(x[1].get("duration_mismatch"))),
-        -int(is_hd(x[1])),
         (-int(bool(x[1].get("has_pt_audio")))) if is_dubbed else 0,
+        -int(is_hd(x[1])),
         (-int(is_hd_abr(x[1]))) if quality_mode != "highest" else 0,
         -(x[1]["quality"] or 0),
         int(is_low_trust_source(x[1])),
