@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261027_1747';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261027_1747';
-import { showToast } from '../core/toast.js?v=20261027_1747';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261027_1747';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261027_1747';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261027_1747';
-import { formatClock } from '../core/resume.js?v=20261027_1747';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261027_1747';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261027_1747';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261027_1747';
+import { store } from '../core/state.js?v=20261027_1758';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261027_1758';
+import { showToast } from '../core/toast.js?v=20261027_1758';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261027_1758';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261027_1758';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261027_1758';
+import { formatClock } from '../core/resume.js?v=20261027_1758';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261027_1758';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261027_1758';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261027_1758';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -2353,6 +2353,7 @@ function refreshQualityMenu(session) {
 
     // Checkmark reconciliation: ensure locked quality matches an available option
     // (If the current playing source is unmeasured, do not prematurely downgrade lockedQuality)
+    const current = session.sources && session.sources[session.currentIndex];
     const currentUnmeasured = current && current.alive !== false && !current.quality;
     if (!session.autoMode && session.lockedQuality && !currentUnmeasured) {
         if (!entries.has(session.lockedQuality)) {
