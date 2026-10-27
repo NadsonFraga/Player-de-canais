@@ -1535,7 +1535,15 @@ export async function onRequestGet(context) {
     if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
       const parsedSources = await Promise.all(fenixData.sources.map(async (s, idx) => {
         const rawFile = (s.file || "").trim();
-        const isDirectMp4 = rawFile.includes(".mp4") && isBrazilianCdn(rawFile);
+        const isDirectMp4 = (rawFile.includes(".mp4") || rawFile.includes("/stream/")) && (
+          isBrazilianCdn(rawFile) ||
+          rawFile.includes("fenixhub") ||
+          rawFile.includes("koyeb.app") ||
+          rawFile.includes("squareweb.app") ||
+          rawFile.includes("fenixbot") ||
+          rawFile.includes("/movies/") ||
+          rawFile.includes("/series/")
+        );
         const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, "https://").replace(/:80\//, "/") : rawFile;
         const referer = s.referer || "https://embedplayer2.xyz/";
         const finalStreamUrl = isDirectMp4 ? directCleanUrl : await proxied(rawFile, referer);

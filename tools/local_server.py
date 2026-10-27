@@ -1974,7 +1974,15 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 for s in fenix_data["sources"]:
                     raw_file = s["file"].strip()
                     referer = s.get("referer", "https://embedplayer2.xyz/")
-                    is_mp4 = ".mp4" in raw_file and is_brazilian_cdn(raw_file)
+                    is_mp4 = (".mp4" in raw_file or "/stream/" in raw_file) and (
+                        is_brazilian_cdn(raw_file)
+                        or "fenixhub" in raw_file
+                        or "koyeb.app" in raw_file
+                        or "squareweb.app" in raw_file
+                        or "fenixbot" in raw_file
+                        or "/movies/" in raw_file
+                        or "/series/" in raw_file
+                    )
                     clean_url = re.sub(r'^http://', 'https://', raw_file).replace(':80/', '/') if is_mp4 else raw_file
                     stream_url = clean_url if is_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
                     is_hls = s.get("type") == "hls" or ".m3u8" in raw_file

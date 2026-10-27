@@ -46,16 +46,36 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
                 elif "360p" in text:
                     quality = 360
 
-                is_dubbed = "dublado" in text or "nacional" in text
-                is_subbed = "legendado" in text
+                is_subbed = "legendado" in text or "subbed" in text
+                is_dubbed = (
+                    "dublado" in text
+                    or "nacional" in text
+                    or "dual" in text
+                    or "multi" in text
+                    or "tri áudio" in text
+                    or "tri audio" in text
+                    or "pt-br" in text
+                    or "ptbr" in text
+                    or ("🇧🇷" in text and not is_subbed)
+                )
                 is_hls = ".m3u8" in u
+                raw_url = (u or "").lower()
+                provider_tier = 2
+                if "fenixhub" in text or "squareweb.app" in raw_url or "koyeb.app" in raw_url or "fenixhub.online" in raw_url or "fenixbot" in raw_url:
+                    provider_tier = 3
+                elif "hollymovies" in text or "embedplayer2" in raw_url:
+                    provider_tier = 1
+                elif "zunder" in text or "zunderflix" in raw_url:
+                    provider_tier = 2
+
                 name = s.get("name") or f"FenixFlix {quality}p"
-                tag = "Dublado" if is_dubbed else ("Legendado" if is_subbed else "Original")
+                tag = "Dual Áudio" if "dual" in text else ("Dublado" if is_dubbed else ("Legendado" if is_subbed else "Original"))
 
                 parsed.append({
                     "label": f"{name} [{tag}]",
                     "file": u,
                     "quality": quality,
+                    "providerTier": provider_tier,
                     "type": "hls" if is_hls else "mp4",
                     "isDubbed": is_dubbed,
                     "isSubbed": is_subbed
@@ -67,7 +87,7 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
                 if dubbed:
                     filtered = dubbed
 
-            filtered.sort(key=lambda s: (s["quality"], 1 if s["type"] == "hls" else 0), reverse=True)
+            filtered.sort(key=lambda s: (s["providerTier"], s["quality"], 1 if s["type"] == "hls" else 0), reverse=True)
             return {"title": data.get("title", ""), "sources": filtered}
     except Exception:
         return None
