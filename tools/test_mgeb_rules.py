@@ -74,6 +74,34 @@ def group_detail(*sizes_and_names):
 JJK = group_detail(("Season 1", 24), ("Season 2", 23), ("Specials", 5, 0), ("Season 3", 12))
 REZERO = group_detail(("Season 1", 25), ("Season 2", 25), ("Specials", 81, 0), ("Season 3", 16), ("Season 4", 19))
 ONE_GROUP = group_detail(("Season 1", 59))
+LUPIN = {
+    "groups": [
+        {
+            "name": "Part 1",
+            "order": 1,
+            "episodes": [
+                {"season_number": 1, "episode_number": i + 1, "order": i}
+                for i in range(5)
+            ],
+        },
+        {
+            "name": "Part 2",
+            "order": 2,
+            "episodes": [
+                {"season_number": 1, "episode_number": i + 6, "order": i}
+                for i in range(5)
+            ],
+        },
+        {
+            "name": "Part 3",
+            "order": 3,
+            "episodes": [
+                {"season_number": 2, "episode_number": i + 1, "order": i}
+                for i in range(7)
+            ],
+        },
+    ]
+}
 
 CASES = {
     # group detail, TMDB season, TMDB episode -> real season/episode (None: no mapping)
@@ -86,6 +114,13 @@ CASES = {
         ["Re:Zero E26", REZERO, 1, 26, [2, 1]],
         ["Re:Zero E51", REZERO, 1, 51, [3, 1]],
         ["only one regular group", ONE_GROUP, 1, 41, None],
+        ["Lupin T1E5 (Part 1)", LUPIN, 1, 5, [1, 5]],
+        ["Lupin T1E6 -> T2E1 (Part 2)", LUPIN, 1, 6, [2, 1]],
+        ["Lupin T1E7 -> T2E2 (Part 2)", LUPIN, 1, 7, [2, 2]],
+        ["Lupin T1E10 -> T2E5 (Part 2)", LUPIN, 1, 10, [2, 5]],
+        ["Lupin T2E1 -> T3E1 (Part 3)", LUPIN, 2, 1, [3, 1]],
+        ["Lupin T2E7 -> T3E7 (Part 3)", LUPIN, 2, 7, [3, 7]],
+        ["Lupin T2E8 (beyond the list)", LUPIN, 2, 8, None],
     ],
     "title": [
         ["One Piece - T1E1 - Eu Sou Luffy!", 1, 62, False],

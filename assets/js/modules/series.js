@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261027_1010';
-import { showToast } from '../core/toast.js?v=20261027_1010';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261027_1010';
-import { buildFeedRows } from '../core/feedRows.js?v=20261027_1010';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261027_1010';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261027_1010';
-import { resumeStartTime } from '../core/resume.js?v=20261027_1010';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261027_1010';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261027_1010';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261027_1010';
-import { fetchTmdb } from '../core/tmdb.js?v=20261027_1010';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261027_1010';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261027_1010';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261027_1010';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261027_1010';
+} from '../core/constants.js?v=20261027_1439';
+import { showToast } from '../core/toast.js?v=20261027_1439';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261027_1439';
+import { buildFeedRows } from '../core/feedRows.js?v=20261027_1439';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261027_1439';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261027_1439';
+import { resumeStartTime } from '../core/resume.js?v=20261027_1439';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261027_1439';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261027_1439';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261027_1439';
+import { fetchTmdb } from '../core/tmdb.js?v=20261027_1439';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261027_1439';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261027_1439';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261027_1439';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261027_1439';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -2202,9 +2202,22 @@ function rememberShowDetails(details) {
 // (external_ids for SkipDB). Same address every time, so the edge cache and this module share it.
 const SHOW_DETAILS_APPEND = 'append_to_response=external_ids,aggregate_credits,videos,recommendations,content_ratings,images,episode_groups&include_image_language=pt,ja,en,null&include_video_language=pt,en,ja,null';
 
+function scoreEpisodeGroupCandidate(g) {
+    let pts = 0;
+    if (g.type === 6) pts += 50;
+    else if (g.type === 4) pts += 40;
+    else if (g.type === 1) pts += 20;
+    const name = String(g.name || "").toLowerCase();
+    if (/\bseasons?\b|\btemporadas?\b/i.test(name)) pts += 30;
+    if (/\bparts?\b|\bpartes?\b/i.test(name)) pts += 25;
+    if (name === "seasons" || name === "parts" || name === "original parts") pts += 15;
+    return pts;
+}
+
 /**
- * TMDB lists some anime / shows as one long season (Jujutsu Kaisen: 59 eps in Season 1).
- * When episode_groups of type 6 ("Seasons") are present, we fetch the real seasons,
+ * TMDB lists some anime / shows as one long season (Jujutsu Kaisen: 59 eps in Season 1)
+ * or collapses multi-part streaming shows into fewer seasons (Lupin, La Casa de Papel).
+ * When episode_groups of type 6 ("Seasons") or type 4 ("Parts") are present, we fetch the real seasons/parts,
  * replace details.seasons, and pre-cache cachedSeasonsMap with relative and absolute numbers.
  */
 async function resolveShowSeasons(details) {
@@ -2212,7 +2225,6 @@ async function resolveShowSeasons(details) {
     details._seasonsResolved = true;
 
     const regular = regularSeasonsOf(details);
-    if (regular.length !== 1) return;
 
     const list = details.episode_groups && Array.isArray(details.episode_groups.results)
         ? details.episode_groups.results
@@ -2220,8 +2232,8 @@ async function resolveShowSeasons(details) {
     if (!list || list.length === 0) return;
 
     const candidates = list
-        .filter(g => g.type === 6 && (g.group_count > 1 || !g.group_count))
-        .sort((a, b) => Number(b.name === "Seasons") - Number(a.name === "Seasons"));
+        .filter(g => [6, 4, 1].includes(g.type) && (g.group_count > 1 || !g.group_count))
+        .sort((a, b) => scoreEpisodeGroupCandidate(b) - scoreEpisodeGroupCandidate(a));
 
     if (candidates.length === 0) return;
 
@@ -2235,6 +2247,9 @@ async function resolveShowSeasons(details) {
                 .sort((a, b) => (a.order || 0) - (b.order || 0));
 
             if (validGroups.length < 2) continue;
+            // Only expand when the episode group divides the show into more granular seasons/parts
+            // than TMDB's collapsed seasons list, or when TMDB lumped multiple parts into a single season
+            if (regular.length > 1 && validGroups.length <= regular.length) continue;
 
             const newSeasons = [];
             let cumulative = 0;
@@ -2243,7 +2258,11 @@ async function resolveShowSeasons(details) {
             validGroups.forEach((g, gIdx) => {
                 const seasonNum = gIdx + 1;
                 const rawEpisodes = (g.episodes || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-                const sName = (g.name || '').replace(/^Season\s*(\d+)/i, 'Temporada $1') || `Temporada ${seasonNum}`;
+                let sName = (g.name || '').trim();
+                sName = sName.replace(/^Season\s*(\d+)/i, 'Temporada $1')
+                             .replace(/^Part\s*(\d+)/i, 'Parte $1')
+                             .replace(/^Parte\s*(\d+)/i, 'Parte $1');
+                if (!sName) sName = `Temporada ${seasonNum}`;
 
                 newSeasons.push({
                     season_number: seasonNum,
@@ -2259,6 +2278,7 @@ async function resolveShowSeasons(details) {
                     season_number: seasonNum,
                     episode_number: epIdx + 1,
                     tmdb_episode_number: ep.episode_number,
+                    tmdb_season_number: ep.season_number,
                     absoluteEpisode: cumulative + epIdx + 1
                 }));
 

@@ -66,6 +66,18 @@ function mapMergedEpisode(groups, season, episode) {
   return null;
 }
 
+function scoreSeasonGroupCandidate(g) {
+  let pts = 0;
+  if (g.type === 6) pts += 50;
+  else if (g.type === 4) pts += 40;
+  else if (g.type === 1) pts += 20;
+  const name = String(g.name || "").toLowerCase();
+  if (/\bseasons?\b|\btemporadas?\b/i.test(name)) pts += 30;
+  if (/\bparts?\b|\bpartes?\b/i.test(name)) pts += 25;
+  if (name === "seasons" || name === "parts" || name === "original parts") pts += 15;
+  return pts;
+}
+
 async function fetchSeasonGroups(tmdbId) {
   const cached = seasonGroupsCache.get(tmdbId);
   if (cached && Date.now() - cached.at < SEASON_GROUPS_TTL_MS) return cached.groups;
@@ -77,14 +89,15 @@ async function fetchSeasonGroups(tmdbId) {
     };
     const show = await get(`/tv/${tmdbId}`);
     const regularSeasons = ((show && show.seasons) || []).filter(s => s.season_number >= 1 && s.episode_count > 0);
-    if (regularSeasons.length === 1) {
-      const list = await get(`/tv/${tmdbId}/episode_groups`);
-      const candidates = ((list && list.results) || [])
-        .filter(g => g.type === 6)
-        .sort((a, b) => Number(b.name === "Seasons") - Number(a.name === "Seasons"));
-      for (const candidate of candidates.slice(0, 3)) {
-        groups = regularSeasonGroups(await get(`/tv/episode_group/${candidate.id}`));
-        if (groups) break;
+    const list = await get(`/tv/${tmdbId}/episode_groups`);
+    const candidates = ((list && list.results) || [])
+      .filter(g => [6, 4, 1].includes(g.type) && (g.group_count > 1 || !g.group_count))
+      .sort((a, b) => scoreSeasonGroupCandidate(b) - scoreSeasonGroupCandidate(a));
+    for (const candidate of candidates.slice(0, 3)) {
+      const parsed = regularSeasonGroups(await get(`/tv/episode_group/${candidate.id}`));
+      if (parsed && (regularSeasons.length === 1 || parsed.length > regularSeasons.length)) {
+        groups = parsed;
+        break;
       }
     }
   } catch (e) {
@@ -1616,12 +1629,16 @@ export async function onRequestGet(context) {
 
     let mgebData = await timed("mgeb", lookupMgeb(season, episode));
     let mgebEpisode = { season, episode };
-    // MGEB answered for another episode: the show may be one long season on TMDB and split on MGEB
-    if (!mgebData && mgebEpisodeMismatch && tmdbId && mgebType === "serie") {
+    const hasSources = (d) => Boolean(d && d.sources && d.sources.length > 0);
+    // MGEB answered for another episode or has zero sources: the show may be split into parts on MGEB
+    if ((!hasSources(mgebData) || mgebEpisodeMismatch) && tmdbId && mgebType === "serie") {
       const mapped = mapMergedEpisode(await timed("groups", fetchSeasonGroups(tmdbId)), season, episode);
       if (mapped && (mapped.season !== season || mapped.episode !== episode)) {
-        mgebData = await timed("mgeb2", lookupMgeb(mapped.season, mapped.episode));
-        if (mgebData) mgebEpisode = mapped;
+        const mgebData2 = await timed("mgeb2", lookupMgeb(mapped.season, mapped.episode));
+        if (hasSources(mgebData2)) {
+          mgebData = mgebData2;
+          mgebEpisode = mapped;
+        }
       }
     }
 
