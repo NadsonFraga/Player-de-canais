@@ -4,14 +4,14 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261027_1758';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261027_1758';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261027_1758';
-import { showToast } from '../core/toast.js?v=20261027_1758';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261027_1758';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261027_1758';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261027_1758';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261027_1758';
+import { store } from '../core/state.js?v=20261027_1830';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261027_1830';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261027_1830';
+import { showToast } from '../core/toast.js?v=20261027_1830';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261027_1830';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261027_1830';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261027_1830';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261027_1830';
 
 /**
  * Counts available direct and contingency options for a channel
