@@ -47,16 +47,39 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
         else if (text.includes("480p") || text.includes("sd")) quality = 480;
         else if (text.includes("360p")) quality = 360;
 
-        const isDubbed = text.includes("dublado") || text.includes("nacional");
-        const isSubbed = text.includes("legendado");
+        const isSubbed = text.includes("legendado") || text.includes("subbed");
+        const isDubbed = text.includes("dublado") ||
+                         text.includes("nacional") ||
+                         text.includes("dual") ||
+                         text.includes("multi") ||
+                         text.includes("tri áudio") ||
+                         text.includes("tri audio") ||
+                         text.includes("pt-br") ||
+                         text.includes("ptbr") ||
+                         (text.includes("🇧🇷") && !isSubbed);
         const isHls = s.url.includes(".m3u8");
 
-        // Clean label
+        // Provider trust tier:
+        // 3: FenixHub official library master (fenixhub, koyeb, squareweb, fenixbot)
+        // 2: Verified mirrors (zunder)
+        // 1: Third-party scrapers (hollymovies / embedplayer2 with deceptive 1080p tags & 480p real streams)
+        const rawUrl = (s.url || "").toLowerCase();
+        let providerTier = 2;
+        if (text.includes("fenixhub") || rawUrl.includes("squareweb.app") || rawUrl.includes("koyeb.app") || rawUrl.includes("fenixhub.online") || rawUrl.includes("fenixbot")) {
+          providerTier = 3;
+        } else if (text.includes("hollymovies") || rawUrl.includes("embedplayer2")) {
+          providerTier = 1;
+        } else if (text.includes("zunder") || rawUrl.includes("zunderflix")) {
+          providerTier = 2;
+        }
+
+        const tag = isDubbed ? (text.includes("dual") ? "Dual Áudio" : "Dublado") : (isSubbed ? "Legendado" : "Original");
         const cleanName = s.name || `FenixFlix ${quality}p`;
         return {
-          label: `${cleanName} [${isDubbed ? 'Dublado' : (isSubbed ? 'Legendado' : 'Original')}]`,
+          label: `${cleanName} [${tag}]`,
           file: s.url,
           quality,
+          providerTier,
           type: isHls ? "hls" : "mp4",
           isDubbed,
           isSubbed
@@ -70,8 +93,9 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
       if (dubbed.length > 0) filtered = dubbed;
     }
 
-    // Sort: 2160 > 1080 > 720, prefer HLS over raw MP4
+    // Sort: Provider tier > Quality > HLS tie-breaker within identical tier & resolution
     filtered.sort((a, b) => {
+      if (b.providerTier !== a.providerTier) return b.providerTier - a.providerTier;
       if (b.quality !== a.quality) return b.quality - a.quality;
       if (a.type === "hls" && b.type !== "hls") return -1;
       if (b.type === "hls" && a.type !== "hls") return 1;

@@ -6,7 +6,7 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261027_1713';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261027_1747';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -113,15 +113,40 @@ export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', seaso
         else if (text.includes('480p') || text.includes('sd')) quality = 480;
         else if (text.includes('360p')) quality = 360;
 
-        const isDubbed = text.includes('dublado') || text.includes('nacional');
-        const isSubbed = text.includes('legendado');
+        const isSubbed = text.includes('legendado') || text.includes('subbed');
+        const isDubbed = text.includes('dublado') ||
+                         text.includes('nacional') ||
+                         text.includes('dual') ||
+                         text.includes('multi') ||
+                         text.includes('tri áudio') ||
+                         text.includes('tri audio') ||
+                         text.includes('pt-br') ||
+                         text.includes('ptbr') ||
+                         (text.includes('🇧🇷') && !isSubbed);
         const isHls = s.url.includes('.m3u8');
         const cleanName = s.name || `FenixFlix ${quality}p`;
 
+        // Provider trust tier:
+        // 3: FenixHub official library master (fenixhub, koyeb, squareweb, fenixbot)
+        // 2: Verified mirrors (zunder)
+        // 1: Third-party scrapers (hollymovies / embedplayer2 with deceptive 1080p tags & 480p real streams)
+        const rawUrl = (s.url || '').toLowerCase();
+        let providerTier = 2;
+        if (text.includes('fenixhub') || rawUrl.includes('squareweb.app') || rawUrl.includes('koyeb.app') || rawUrl.includes('fenixhub.online') || rawUrl.includes('fenixbot')) {
+          providerTier = 3;
+        } else if (text.includes('hollymovies') || rawUrl.includes('embedplayer2')) {
+          providerTier = 1;
+        } else if (text.includes('zunder') || rawUrl.includes('zunderflix')) {
+          providerTier = 2;
+        }
+
+        const tag = isDubbed ? (text.includes('dual') ? 'Dual Áudio' : 'Dublado') : (isSubbed ? 'Legendado' : 'Original');
+
         return {
-          label: `${cleanName} [${isDubbed ? 'Dublado' : (isSubbed ? 'Legendado' : 'Original')}]`,
+          label: `${cleanName} [${tag}]`,
           file: s.url,
           quality,
+          providerTier,
           type: isHls ? 'hls' : 'mp4',
           isDubbed,
           isSubbed
@@ -135,7 +160,11 @@ export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', seaso
     }
 
     filtered.sort((a, b) => {
+      // 1. Official library master vs untrusted scraper (FenixHub > Zunder > Hollymovies)
+      if (b.providerTier !== a.providerTier) return b.providerTier - a.providerTier;
+      // 2. Declared/detected resolution
       if (b.quality !== a.quality) return b.quality - a.quality;
+      // 3. Prefer adaptive HLS within identical tier & resolution
       if (a.type === 'hls' && b.type !== 'hls') return -1;
       if (b.type === 'hls' && a.type !== 'hls') return 1;
       return 0;
@@ -155,6 +184,8 @@ export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', seaso
         rawFile.includes('fenixhub.online') ||
         rawFile.includes('fenixflix') ||
         rawFile.includes('koyeb.app') ||
+        rawFile.includes('squareweb.app') ||
+        rawFile.includes('fenixbot') ||
         rawFile.includes('/movies/') ||
         rawFile.includes('/series/')
       );
