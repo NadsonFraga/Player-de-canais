@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261027_1439';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261027_1439';
-import { showToast } from '../core/toast.js?v=20261027_1439';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261027_1439';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261027_1439';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261027_1439';
-import { formatClock } from '../core/resume.js?v=20261027_1439';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261027_1439';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261027_1439';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261027_1439';
+import { store } from '../core/state.js?v=20261027_1713';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261027_1713';
+import { showToast } from '../core/toast.js?v=20261027_1713';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261027_1713';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261027_1713';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261027_1713';
+import { formatClock } from '../core/resume.js?v=20261027_1713';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261027_1713';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261027_1713';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261027_1713';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1257,22 +1257,40 @@ export function mountNativePlayer(options) {
     let firstIndex = 0;
     if (typeof prefs.quality === 'number') {
         session.autoMode = false;
-        const allQualities = [...new Set(
-            normalized.filter(s => s.alive !== false).flatMap(s => s.qualities || (s.quality ? [s.quality] : []))
-        )].sort((a, b) => b - a);
+        session.lockedQuality = prefs.quality;
 
-        if (allQualities.length > 0) {
-            let matched = allQualities.find(q => q <= prefs.quality);
-            if (!matched) matched = allQualities[0];
-            session.lockedQuality = matched;
-        } else {
-            session.lockedQuality = prefs.quality;
-        }
+        const primary = normalized[0];
+        const primaryUnmeasured = primary && primary.alive !== false && !primary.quality;
 
-        const withQuality = normalized.findIndex(src => src.alive !== false && (
-            (src.qualities && src.qualities.includes(session.lockedQuality)) || src.quality === session.lockedQuality
+        // Check if an alternative source explicitly satisfies the preferred quality
+        const withExactQuality = normalized.findIndex(src => src.alive !== false && (
+            (src.qualities && src.qualities.includes(prefs.quality)) || src.quality === prefs.quality
         ));
-        if (withQuality >= 0) firstIndex = withQuality;
+
+        if (withExactQuality >= 0) {
+            firstIndex = withExactQuality;
+            session.lockedQuality = prefs.quality;
+        } else if (primaryUnmeasured && prefs.quality >= 720) {
+            // The primary source chosen by backend has not been probed yet (e.g. direct Brazilian CDN MP4).
+            // Do not downgrade to a known lower-quality source (e.g. 480p) before giving the primary source a chance.
+            // Its actual resolution will be measured by the browser in loadedmetadata.
+            firstIndex = 0;
+            session.lockedQuality = prefs.quality;
+        } else {
+            const allQualities = [...new Set(
+                normalized.filter(s => s.alive !== false).flatMap(s => s.qualities || (s.quality ? [s.quality] : []))
+            )].sort((a, b) => b - a);
+
+            if (allQualities.length > 0) {
+                let matched = allQualities.find(q => q <= prefs.quality);
+                if (!matched) matched = allQualities[0];
+                session.lockedQuality = matched;
+                const withQuality = normalized.findIndex(src => src.alive !== false && (
+                    (src.qualities && src.qualities.includes(matched)) || src.quality === matched
+                ));
+                if (withQuality >= 0) firstIndex = withQuality;
+            }
+        }
     }
     return mountNativeSource(session, firstIndex, { startTime });
 }
@@ -2334,7 +2352,9 @@ function refreshQualityMenu(session) {
     session.qualityEntries = entries;
 
     // Checkmark reconciliation: ensure locked quality matches an available option
-    if (!session.autoMode && session.lockedQuality) {
+    // (If the current playing source is unmeasured, do not prematurely downgrade lockedQuality)
+    const currentUnmeasured = current && current.alive !== false && !current.quality;
+    if (!session.autoMode && session.lockedQuality && !currentUnmeasured) {
         if (!entries.has(session.lockedQuality)) {
             const available = [...entries.keys()].sort((a, b) => b - a);
             const matched = available.find(q => q <= session.lockedQuality) || available[0];
@@ -2628,12 +2648,15 @@ function measureCurrentQuality(session) {
     }
     updateQualityIndicators(session);
 
-    // Automatic quality upgrade safeguard: if playing < 720p in Auto mode, silently search for a better quality in background
-    if (session.autoMode && (activeQuality(session) || 0) < 720 && !session.qualitySearching && !session.qualitySearchDone) {
+    // Automatic quality upgrade safeguard: if playing < 720p, silently search for a better quality in background
+    const playingQ = activeQuality(session) || 0;
+    const wantsBetter = session.autoMode || (session.lockedQuality && session.lockedQuality > playingQ);
+    if (wantsBetter && playingQ < 720 && !session.qualitySearching && !session.qualitySearchDone) {
         if (!session.autoQualityTimer) {
             session.autoQualityTimer = setTimeout(() => {
                 session.autoQualityTimer = null;
-                if (isSessionLive(session) && session.autoMode && (activeQuality(session) || 0) < 720 && !session.qualitySearchDone) {
+                const curQ = activeQuality(session) || 0;
+                if (isSessionLive(session) && curQ < 720 && !session.qualitySearchDone) {
                     searchBetterQuality(session, false);
                 }
             }, 1500);
