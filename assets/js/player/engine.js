@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261027_1758';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261027_1758';
-import { showToast } from '../core/toast.js?v=20261027_1758';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261027_1758';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261027_1758';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261027_1758';
-import { formatClock } from '../core/resume.js?v=20261027_1758';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261027_1758';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261027_1758';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261027_1758';
+import { store } from '../core/state.js?v=20261027_1830';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261027_1830';
+import { showToast } from '../core/toast.js?v=20261027_1830';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261027_1830';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261027_1830';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261027_1830';
+import { formatClock } from '../core/resume.js?v=20261027_1830';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261027_1830';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261027_1830';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261027_1830';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1270,12 +1270,12 @@ export function mountNativePlayer(options) {
         if (withExactQuality >= 0) {
             firstIndex = withExactQuality;
             session.lockedQuality = prefs.quality;
-        } else if (primaryUnmeasured && prefs.quality >= 720) {
+        } else if (primaryUnmeasured) {
             // The primary source chosen by backend has not been probed yet (e.g. direct Brazilian CDN MP4).
-            // Do not downgrade to a known lower-quality source (e.g. 480p) before giving the primary source a chance.
+            // Always give the primary source the first chance instead of prematurely jumping to a low-res fallback.
             // Its actual resolution will be measured by the browser in loadedmetadata.
             firstIndex = 0;
-            session.lockedQuality = prefs.quality;
+            session.lockedQuality = Math.max(prefs.quality || 0, 720);
         } else {
             const allQualities = [...new Set(
                 normalized.filter(s => s.alive !== false).flatMap(s => s.qualities || (s.quality ? [s.quality] : []))
@@ -2380,7 +2380,7 @@ function refreshQualityMenu(session) {
             default: !session.autoMode && session.lockedQuality === quality
         });
     }
-    if (qualitySearchCandidates(session).length) {
+    if (qualitySearchCandidates(session, true).length) {
         selector.push({ html: session.qualitySearching ? 'Buscando qualidade melhor...' : 'Buscar qualidade melhor', value: 'search' });
     }
 
@@ -2408,9 +2408,10 @@ function refreshQualityMenu(session) {
  * (HLS cannot be read without hls.js, so those keep the server's word). A source that only ran out of start time
  * counts again: the slow host is exactly what the viewer accepts to wait for.
  */
-function qualitySearchCandidates(session) {
-    if (session.qualitySearchDone || (activeQuality(session) || 0) >= 1080) return [];
-    const usable = idx => !session.failed.has(idx) || (session.failReasons && session.failReasons[idx] === 'timeout');
+function qualitySearchCandidates(session, isManual = false) {
+    if (!isManual && session.qualitySearchDone) return [];
+    if ((activeQuality(session) || 0) >= 1080) return [];
+    const usable = idx => isManual || (!session.failed.has(idx) || (session.failReasons && session.failReasons[idx] === 'timeout'));
     const playing = activeQuality(session) || 0;
     return session.sources
         .map((src, idx) => ({ src, idx }))
@@ -2448,15 +2449,18 @@ function readFrameSize(url, budgetMs) {
  * menu, and moves to the best one when it beats what plays (same position), or says nothing better was found.
  */
 async function searchBetterQuality(session, isManual = false) {
-    const candidates = qualitySearchCandidates(session);
-    if (session.qualitySearching || !candidates.length) return;
+    const candidates = qualitySearchCandidates(session, isManual);
+    if (session.qualitySearching || !candidates.length) {
+        if (isManual) showToast('Não encontramos uma qualidade melhor para este título.', 4500);
+        return;
+    }
     session.qualitySearching = true;
     refreshQualityMenu(session);
     if (isManual) showToast('Procurando uma fonte de qualidade melhor...', 4000);
 
     const sizes = await Promise.all(candidates.map(({ src }) => readFrameSize(src.url, QUALITY_SEARCH_BUDGET_MS)));
     session.qualitySearching = false;
-    session.qualitySearchDone = true;
+    if (!isManual) session.qualitySearchDone = true;
     if (!isSessionLive(session)) return;
     candidates.forEach(({ src }, i) => {
         const quality = sizes[i] ? qualityClass(sizes[i].width, sizes[i].height) : null;
@@ -2478,6 +2482,8 @@ async function searchBetterQuality(session, isManual = false) {
     }
     showToast(`Qualidade melhor encontrada (${qualityText(best.src.quality)}). Carregando...`, 3000);
     session.lockedQuality = best.src.quality;
+    session.autoMode = false;
+    setPlayerPref('quality', best.src.quality);
     session.slowStartIndex = best.idx;
     session.failed.delete(best.idx);
     remountFromMenu(session, best.idx);
