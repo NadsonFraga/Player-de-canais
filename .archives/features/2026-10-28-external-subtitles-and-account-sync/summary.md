@@ -38,3 +38,4 @@
 5. **Cache Busting & Test Integrity:**
    - Version stamped to `20261028_1827` across 33 project files.
    - All automated test suites passing (sync, subtitles API, XSS, headers, CORS, imports).
+

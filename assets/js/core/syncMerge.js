@@ -122,7 +122,10 @@ export function sanitizeRecord(kind, key, data, now) {
         if (isMovie) {
             const saved = position(data, now);
             Object.assign(clean, { position: saved.position, duration: saved.duration, finished: saved.finished, server: saved.server, at: saved.at });
-        } else {
+            if (data.subtitle_size !== undefined) clean.subtitle_size = int(data.subtitle_size, 50, 200) ?? 100;
+        if (data.subtitle_color !== undefined) clean.subtitle_color = ['#ffffff', '#facc15', '#22d3ee', '#4ade80'].includes(data.subtitle_color) ? data.subtitle_color : '#ffffff';
+        if (data.subtitle_bg !== undefined) clean.subtitle_bg = data.subtitle_bg === 'box' ? 'box' : 'shadow';
+    } else {
             clean.season = int(data.season, 0, 1000) ?? 1;
             clean.episode = int(data.episode, 0, 100000) ?? 1;
             clean.episodeTitle = text(data.episodeTitle, 200);
@@ -147,6 +150,7 @@ export function sanitizeRecord(kind, key, data, now) {
             subtitle: data.subtitle == null ? null : text(String(data.subtitle), 10),
             quality: data.quality === 'auto' ? 'auto' : (int(data.quality, 100, 5000) ?? 'auto'),
             fit: data.fit === 'cover' ? 'cover' : 'contain',
+
             at: time(data.at, now)
         };
         if (data.subtitle_size !== undefined) {
@@ -158,6 +162,9 @@ export function sanitizeRecord(kind, key, data, now) {
         if (data.subtitle_bg !== undefined) {
             clean.subtitle_bg = data.subtitle_bg === 'box' ? 'box' : 'shadow';
         }
+        if (data.subtitle_size !== undefined) clean.subtitle_size = int(data.subtitle_size, 50, 200) ?? 100;
+        if (data.subtitle_color !== undefined) clean.subtitle_color = ['#ffffff', '#facc15', '#22d3ee', '#4ade80'].includes(data.subtitle_color) ? data.subtitle_color : '#ffffff';
+        if (data.subtitle_bg !== undefined) clean.subtitle_bg = data.subtitle_bg === 'box' ? 'box' : 'shadow';
     } else {
         clean = { team: data.team == null ? null : text(String(data.team), 40) || null, at: time(data.at, now) };
     }
@@ -239,7 +246,10 @@ export function mergeRecord(kind, stored, incoming) {
             merged.at = saved.at || 0;
             // Opening a finished movie again (a newer timestamp than its last saved time) starts it over
             merged.finished = Boolean(saved.finished) && (saved.at || 0) >= merged.timestamp;
-        } else {
+            if (data.subtitle_size !== undefined) clean.subtitle_size = int(data.subtitle_size, 50, 200) ?? 100;
+        if (data.subtitle_color !== undefined) clean.subtitle_color = ['#ffffff', '#facc15', '#22d3ee', '#4ade80'].includes(data.subtitle_color) ? data.subtitle_color : '#ffffff';
+        if (data.subtitle_bg !== undefined) clean.subtitle_bg = data.subtitle_bg === 'box' ? 'box' : 'shadow';
+    } else {
             const positions = { ...(stored.positions || {}) };
             for (const [k, value] of Object.entries(incoming.positions || {})) positions[k] = newer(positions[k], value);
             merged.positions = capPositions(positions);

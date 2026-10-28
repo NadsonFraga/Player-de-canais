@@ -200,10 +200,10 @@ export async function onRequestGet(context) {
   }
 
   // Search Mode: Query Stremio OpenSubtitles v3
-  const rawType = (urlObj.searchParams.get("type") || "movie").toLowerCase();
-  const type = rawType === "tv" || rawType === "anime" || rawType === "series" ? "series" : "movie";
-  let imdbId = urlObj.searchParams.get("imdb_id") || "";
-  const tmdbId = urlObj.searchParams.get("tmdb_id") || urlObj.searchParams.get("id") || "";
+  const rawType = (urlObj.searchParams.get("type") || urlObj.searchParams.get("mediaType") || "movie").toLowerCase();
+  const type = rawType === "tv" || rawType === "anime" || rawType === "series" || rawType === "serie" ? "series" : "movie";
+  let imdbId = urlObj.searchParams.get("imdb_id") || urlObj.searchParams.get("imdbId") || "";
+  const tmdbId = urlObj.searchParams.get("tmdb_id") || urlObj.searchParams.get("tmdbId") || urlObj.searchParams.get("id") || "";
   const season = parseInt(urlObj.searchParams.get("season") || "1", 10) || 1;
   const episode = parseInt(urlObj.searchParams.get("episode") || "1", 10) || 1;
 

@@ -1929,10 +1929,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
         # Search action
-        raw_type = (params.get("type") or ["movie"])[0].lower()
-        media_type = "series" if raw_type in ("tv", "anime", "series") else "movie"
-        imdb_id = (params.get("imdb_id") or [""])[0]
-        tmdb_id = (params.get("tmdb_id") or params.get("id") or [""])[0]
+        raw_type = (params.get("type") or params.get("mediaType") or ["movie"])[0].lower()
+        media_type = "series" if raw_type in ("tv", "anime", "series", "serie") else "movie"
+        imdb_id = (params.get("imdb_id") or params.get("imdbId") or [""])[0]
+        tmdb_id = (params.get("tmdb_id") or params.get("tmdbId") or params.get("id") or [""])[0]
         try:
             season = int((params.get("season") or ["1"])[0])
         except (ValueError, TypeError):

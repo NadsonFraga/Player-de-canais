@@ -3,18 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261028_1827';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1827';
-import { showToast } from '../core/toast.js?v=20261028_1827';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1827';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1827';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1827';
-import { formatClock } from '../core/resume.js?v=20261028_1827';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1827';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1827';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1827';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_1827';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1827';
+import { store } from '../core/state.js?v=20261028_1855';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1855';
+import { showToast } from '../core/toast.js?v=20261028_1855';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1855';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1855';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1855';
+import { formatClock } from '../core/resume.js?v=20261028_1855';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1855';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1855';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1855';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_1855';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1855';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_1855';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1069,7 +1070,7 @@ const NATIVE_ICONS = {
     quality: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.2" fill="#000"/><circle cx="15" cy="12" r="2.2" fill="#000"/><circle cx="7" cy="17" r="2.2" fill="#000"/></svg>',
     audio: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
     fit: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>',
-    subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10.5 10.2a2.2 2.2 0 1 0 0 3.6M16.5 10.2a2.2 2.2 0 1 0 0 3.6" stroke-linecap="round"/></svg>',
+    subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="3.5"/><path d="M9.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/><path d="M16.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/></svg>',
     cast: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8"/><path d="M3 16a4 4 0 0 1 4 4"/><path d="M3 20h.01"/></svg>'
 };
 
@@ -2925,26 +2926,55 @@ function refreshAudioMenu(session) {
 /**
  * Fetches external subtitles in background without blocking video playback.
  */
-function fetchExternalSubtitles(session) {
+async function fetchExternalSubtitles(session) {
     const ctx = session.mediaContext;
     if (!ctx || (!ctx.id && !ctx.imdbId)) return;
-    const token = session.mountToken;
+    const sessionId = session.id;
+
+    session.fetchingSubtitles = true;
+    renderSubtitlesFlyout(session);
 
     const rawType = String(ctx.type || 'movie').toLowerCase();
-    const type = rawType === 'tv' || rawType === 'anime' || rawType === 'series' ? 'series' : 'movie';
+    const type = rawType === 'tv' || rawType === 'anime' || rawType === 'series' || rawType === 'serie' ? 'series' : 'movie';
+    let imdbId = ctx.imdbId;
+
+    if (!imdbId && ctx.id) {
+        try {
+            const tmdbPath = type === 'movie' ? `movie/${ctx.id}` : `tv/${ctx.id}/external_ids`;
+            const tmdbData = await fetchTmdb(tmdbPath);
+            if (tmdbData && tmdbData.imdb_id) {
+                imdbId = String(tmdbData.imdb_id);
+                ctx.imdbId = imdbId;
+            }
+        } catch (e) {
+            // Keep going, server also has fallback resolver
+        }
+    }
+
+    if (activeNativeSession !== session || session.id !== sessionId) return;
+
     const params = new URLSearchParams({
         type,
         season: String(ctx.season || 1),
         episode: String(ctx.episode || 1)
     });
-    if (ctx.id) params.set('tmdb_id', String(ctx.id));
-    if (ctx.imdbId) params.set('imdb_id', String(ctx.imdbId));
+    if (ctx.id) {
+        params.set('tmdb_id', String(ctx.id));
+        params.set('id', String(ctx.id));
+    }
+    if (imdbId) {
+        params.set('imdb_id', String(imdbId));
+    }
 
     fetch(`/api/subtitles?${params.toString()}`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {
-            if (!data || !Array.isArray(data.subtitles) || !data.subtitles.length) return;
-            if (!isSessionLive(session, token)) return;
+            session.fetchingSubtitles = false;
+            if (activeNativeSession !== session || session.id !== sessionId) return;
+            if (!data || !Array.isArray(data.subtitles) || !data.subtitles.length) {
+                renderSubtitlesFlyout(session);
+                return;
+            }
 
             const existingUrls = new Set(session.subtitles.map(s => s.url || s.file));
             const newTracks = data.subtitles.filter(s => !existingUrls.has(s.url)).map(s => ({
@@ -2952,7 +2982,10 @@ function fetchExternalSubtitles(session) {
                 isExternal: true
             }));
 
-            if (!newTracks.length) return;
+            if (!newTracks.length) {
+                renderSubtitlesFlyout(session);
+                return;
+            }
 
             // Retain native tracks at top, external underneath
             session.subtitles = [...session.subtitles, ...newTracks];
@@ -2978,7 +3011,9 @@ function fetchExternalSubtitles(session) {
             updateSubtitlesControlActiveState(session);
         })
         .catch(err => {
+            session.fetchingSubtitles = false;
             console.warn('[PlayerEngine] Falha ao carregar legendas externas:', err);
+            renderSubtitlesFlyout(session);
         });
 }
 
@@ -3432,6 +3467,23 @@ function renderSubtitlesFlyout(session) {
                 </div>`;
             }
         });
+
+        if (session.fetchingSubtitles) {
+            html += `
+            <div class="tvz-sub-item" style="opacity: 0.65; cursor: default;">
+                <div class="tvz-sub-item-left" style="gap: 8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    <span class="tvz-sub-item-text" style="font-size: 13px;">Buscando legendas online...</span>
+                </div>
+            </div>`;
+        } else if (subtitles.length === 0) {
+            html += `
+            <div class="tvz-sub-item" style="opacity: 0.6; cursor: default;">
+                <div class="tvz-sub-item-left">
+                    <span class="tvz-sub-item-text" style="font-size: 13px;">Nenhuma legenda encontrada</span>
+                </div>
+            </div>`;
+        }
     }
 
     html += '</div>';

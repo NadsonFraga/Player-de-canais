@@ -876,11 +876,13 @@
 .art-video-player .art-control-subtitle-btn {
     position: relative;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #f1f1f1;
-    transition: color 0.15s ease;
+    color: rgba(255, 255, 255, 0.85);
+    transition: color 0.15s ease, transform 0.1s ease;
+    padding: 0 6px;
+    height: 100%;
 }
 
 .art-video-player .art-control-subtitle-btn:hover {
@@ -892,6 +894,8 @@
 }
 
 .art-video-player .art-control-subtitle-btn svg {
+    width: 22px;
+    height: 22px;
     fill: none !important;
     stroke: currentColor !important;
 }
@@ -1055,21 +1059,15 @@
 }
 
 /* Flag SVG Color Isolation inside Artplayer */
-.tvz-flag-svg {
-    width: 18px;
-    height: 13.5px;
-    border-radius: 2px;
+.art-video-player .tvz-flag-svg {
+    width: 20px;
+    height: 15px;
+    border-radius: 3px;
     flex-shrink: 0;
     display: inline-block;
     vertical-align: middle;
-}
-
-.art-video-player .tvz-flag-svg path,
-.art-video-player .tvz-flag-svg rect,
-.art-video-player .tvz-flag-svg circle,
-.art-video-player .tvz-flag-svg polygon {
-    fill: revert !important;
-    stroke: revert !important;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .art-video-player .tvz-globe-icon {

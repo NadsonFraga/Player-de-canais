@@ -48,3 +48,4 @@
   - In the CC flyout, click "Carregar legenda do dispositivo (.srt, .vtt)".
   - Choose a local `.srt` or `.vtt` file.
   - Verify that the custom subtitle activates instantly.
+
