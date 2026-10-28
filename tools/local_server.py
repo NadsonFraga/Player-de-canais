@@ -27,6 +27,7 @@ from socketserver import ThreadingMixIn
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import local_accounts  # noqa: E402  (mirror of functions/api/account/[[path]].js)
 import local_sync  # noqa: E402  (mirror of functions/api/sync.js)
+import local_providers  # noqa: E402  (mirror of functions/api/providers.js)
 
 PORT = 8787
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -175,6 +176,25 @@ def map_merged_episode(groups, season, episode):
     return None
 
 
+def score_season_group_candidate(g):
+    pts = 0
+    gtype = g.get("type")
+    if gtype == 6:
+        pts += 50
+    elif gtype == 4:
+        pts += 40
+    elif gtype == 1:
+        pts += 20
+    name = str(g.get("name") or "").lower()
+    if re.search(r"\bseasons?\b|\btemporadas?\b", name, re.I):
+        pts += 30
+    if re.search(r"\bparts?\b|\bpartes?\b", name, re.I):
+        pts += 25
+    if name in ("seasons", "parts", "original parts"):
+        pts += 15
+    return pts
+
+
 def fetch_season_groups(tmdb_id):
     """The real season split of a show listed as one season on TMDB, or None (cached 24 h)."""
     cached = SEASON_GROUPS_CACHE.get(tmdb_id)
@@ -191,13 +211,13 @@ def fetch_season_groups(tmdb_id):
     try:
         show = get(f"/tv/{tmdb_id}")
         regular = [s for s in show.get("seasons", []) if s.get("season_number", 0) >= 1 and s.get("episode_count", 0) > 0]
-        if len(regular) == 1:
-            candidates = [g for g in get(f"/tv/{tmdb_id}/episode_groups").get("results", []) if g.get("type") == 6]
-            candidates.sort(key=lambda g: g.get("name") != "Seasons")
-            for candidate in candidates[:3]:
-                groups = regular_season_groups(get(f"/tv/episode_group/{candidate['id']}"))
-                if groups:
-                    break
+        candidates = [g for g in get(f"/tv/{tmdb_id}/episode_groups").get("results", []) if g.get("type") in (6, 4, 1) and (g.get("group_count", 0) > 1 or not g.get("group_count"))]
+        candidates.sort(key=score_season_group_candidate, reverse=True)
+        for candidate in candidates[:3]:
+            parsed = regular_season_groups(get(f"/tv/episode_group/{candidate['id']}"))
+            if parsed and (len(regular) == 1 or len(parsed) > len(regular)):
+                groups = parsed
+                break
     except Exception as e:
         print(f"[LocalServer] Season groups failed for TMDB {tmdb_id}: {e}", file=sys.stderr)
         groups = None
@@ -289,8 +309,8 @@ def fetch_zoko(mal_id: str, episode: int = 1):
 PROBE_TIMEOUT_S = 3.5
 PROBE_MAX_SOURCES = 6
 # Probing stops after this budget; sources not measured in time keep host order
-PROBE_BUDGET_S = 2.5
-KIND_RANK = {"hls-multi": 0, "hls-single": 1, "mp4-range": 2, "mp4": 3, "unknown": 4}
+PROBE_BUDGET_S = 3.5
+KIND_RANK = {"hls-multi": 0, "mp4-range": 1, "hls-single": 2, "mp4": 3, "unknown": 4}
 H264_HIGH_PROFILES = {100, 110, 122, 244, 44, 83, 86, 118, 128, 138, 139, 134, 135}
 
 
@@ -622,6 +642,42 @@ def probe_first_segment(playlist_url, text, referer, read_resolution):
     }
 
 
+def is_portuguese_audio_tag(line):
+    """Detects whether an audio tag declares Portuguese audio (pt, pt-BR, etc)."""
+    lang_m = re.search(r'LANGUAGE=["\']?([^"\',\s]+)["\']?', line, re.I)
+    name_m = re.search(r'NAME=["\']?([^"\']+)["\']?', line, re.I)
+    lang = (lang_m.group(1) if lang_m else "").lower()
+    name = (name_m.group(1) if name_m else "").lower()
+    return bool(re.search(r'(?:^|[^a-z])(pt|pt-br|pt_br|por)(?:[^a-z]|$)', lang, re.I) or
+                re.search(r'portugu[eê]s|dublado|brasil|brazil', name, re.I))
+
+
+def check_hls_audio_tracks(lines):
+    """Checks audio tracks declared in an HLS master playlist (#EXT-X-MEDIA:TYPE=AUDIO)."""
+    audio_lines = [l for l in lines if l.startswith("#EXT-X-MEDIA:TYPE=AUDIO") or (l.startswith("#EXT-X-MEDIA:") and re.search(r"TYPE=AUDIO", l, re.I))]
+    if audio_lines:
+        has_pt = any(is_portuguese_audio_tag(l) for l in audio_lines)
+        return {"audio_mismatch": not has_pt, "has_pt_audio": has_pt, "no_audio": False}
+
+    # Check if variants explicitly declare CODECS without any audio codec
+    stream_inf_lines = [l for l in lines if l.startswith("#EXT-X-STREAM-INF")]
+    if stream_inf_lines:
+        variants_with_codecs = []
+        for l in stream_inf_lines:
+            m = re.search(r'CODECS=["\']([^"\']+)["\']', l, re.I)
+            if m:
+                variants_with_codecs.append([c.strip().lower() for c in m.group(1).split(",")])
+        if variants_with_codecs:
+            has_any_audio = any(
+                any(re.match(r"^(mp4a|ac-3|ec-3|opus|vorbis|flac|dts)", c, re.I) for c in codecs)
+                for codecs in variants_with_codecs
+            )
+            if not has_any_audio:
+                return {"audio_mismatch": True, "has_pt_audio": False, "no_audio": True}
+
+    return {"audio_mismatch": False, "has_pt_audio": False, "no_audio": False}
+
+
 def probe_hls(url, referer):
     """Probes an HLS playlist: variants of a master (plus a first-segment sanity check),
     or the first TS segment of a media playlist for its frame size."""
@@ -654,6 +710,11 @@ def probe_hls(url, referer):
         bandwidths = ",".join(str(b) for b in sorted(v["bandwidth"] for v in variants))
         synthetic = bool(re.search(r"FirePlayer", text, re.I)) or bandwidths == "276000,2048000"
 
+        audio_check = check_hls_audio_tracks(lines)
+        audio_mismatch = audio_check["audio_mismatch"]
+        has_pt_audio = audio_check["has_pt_audio"]
+        no_audio = bool(audio_check.get("no_audio"))
+
         # Check the top variant: its first segment must start at byte 0, and its real
         # frame size replaces a declared resolution that is not there
         broken = False
@@ -674,53 +735,99 @@ def probe_hls(url, referer):
                     seg = probe_first_segment(variant_url, media_text, referer, True)
                     broken = seg["broken"]
                     measured = quality_class(*seg["res"]) if seg["res"] else None
-                    if measured and top["quality"] and measured != top["quality"]:
-                        qualities = [measured] + [q for q in qualities if q < measured]
+                    if measured:
+                        if not top["quality"]:
+                            qualities = [measured] + [q for q in qualities if q != measured]
+                        elif measured < top["quality"]:
+                            # Real frame size is lower than advertised in playlist: downgrade fake resolution
+                            qualities = [measured] + [q for q in qualities if q < measured]
+                        # When measured >= top["quality"], keep the playlist's declared ladder so Hls.js levels match 1:1
         except Exception:
             pass  # The variant check is best effort
         return {"qualities": qualities, "multi": len(variants) > 1, "broken": broken, "synthetic": synthetic,
-                "duration": duration, "empty": empty}
+                "duration": duration, "empty": empty, "audio_mismatch": audio_mismatch, "has_pt_audio": has_pt_audio,
+                "no_audio": no_audio}
 
     # Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
     length = hls_playlist_duration(text)
     seg = probe_first_segment(url, text, referer, True)
     q = quality_class(*seg["res"]) if seg["res"] else None
+    is_explicit_sd = "-sd." in url or "/sd/" in url or "-sd-" in url or "_480p" in url
+    is_explicit_ld = "-ld." in url or "/ld/" in url or "-ld-" in url or "_360p" in url
+    if q and q > 480 and is_explicit_sd:
+        q = 480
+    if q and q > 360 and is_explicit_ld:
+        q = 360
     return {"qualities": [q] if q else [], "broken": seg["broken"], "duration": length["seconds"],
-            "empty": length["segments"] == 0}
+            "empty": length["segments"] == 0, "audio_mismatch": False, "has_pt_audio": False}
+
+
+def is_brazilian_cdn(url):
+    """Detects verified Brazilian IPTV/VOD CDNs that serve authentic PT-BR audio."""
+    raw = (url or "").lower()
+    return bool("fontedecanais" in raw or "57lgoe65efxo71.com" in raw or "77zzhf54vdll71.com" in raw)
+
+
+def is_direct_mp4_source(src):
+    """Detects direct MP4 streams hosted on known video CDNs."""
+    raw = (src.get("raw_url") or "").lower()
+    return ".mp4" in raw and (is_brazilian_cdn(raw) or "/movies/" in raw)
 
 
 def probe_source(src):
     """Adds quality, qualities, kind and alive to a source dict (returns a new dict)."""
     raw = src.get("raw_url", "")
     is_hls = src.get("type") == "hls" or ".m3u8" in raw
+    is_direct_mp4 = is_direct_mp4_source(src)
     referer = (src.get("headers") or {}).get("Referer", "")
     is_proxied = "/api/stream" in src.get("stream_url", "")
-    qualities, kind, alive, synthetic, duration = [], "unknown", True, False, None
+    qualities, kind, alive, synthetic, duration = ([], "mp4-range" if is_direct_mp4 else "unknown", True, False, None)
+    audio_mismatch = False
+    has_pt_audio = False
     try:
-        r = probe_hls(raw, referer) if is_hls else probe_mp4(raw, referer)
-        if r.get("dead"):
-            alive = not is_proxied
-        elif is_hls:
-            qualities = r["qualities"]
-            kind = "hls-multi" if r.get("multi") else "hls-single"
-            synthetic = bool(r.get("synthetic"))
-            duration = r.get("duration") or None
-            # A broken first segment stalls playback, and a playlist without segments plays
-            # nothing: keep them only as a last resort
-            if r.get("broken") or r.get("empty"):
-                alive = False
+        if is_hls:
+            r = probe_hls(raw, referer)
+            if r.get("dead"):
+                alive = not is_proxied
+            else:
+                qualities = r["qualities"]
+                kind = "hls-multi" if r.get("multi") else "hls-single"
+                synthetic = bool(r.get("synthetic"))
+                duration = r.get("duration") or None
+                audio_mismatch = bool(r.get("audio_mismatch"))
+                has_pt_audio = bool(r.get("has_pt_audio"))
+                # A broken first segment stalls playback, and a playlist without segments plays
+                # nothing: keep them only as a last resort
+                if r.get("broken") or r.get("empty") or r.get("no_audio"):
+                    alive = False
         else:
-            q = quality_class(*r["res"]) if r.get("res") else None
-            qualities = [q] if q else []
-            kind = "mp4-range" if r.get("ranged") else "mp4"
-            duration = r.get("duration") or None
+            r = probe_mp4(raw, referer)
+            if r.get("dead"):
+                alive = not is_proxied
+            else:
+                q = quality_class(*r["res"]) if r.get("res") else None
+                qualities = [q] if q else []
+                kind = "mp4-range" if (r.get("ranged") or is_direct_mp4) else "mp4"
+                duration = r.get("duration") or None
     except Exception as e:
-        # Timeouts and network errors leave the source as unknown but playable
+        qualities = []
         print(f"[LocalServer] Probe failed for {raw[:80]}: {e}", file=sys.stderr)
     qualities = sorted(qualities, reverse=True)
-    return {**src, "quality": qualities[0] if qualities else None, "qualities": qualities, "kind": kind,
-            "alive": alive, "synthetic": synthetic, "duration": duration, "duration_mismatch": False,
-            "probed": True}
+    if is_brazilian_cdn(raw):
+        has_pt_audio = True
+    return {
+        **src,
+        "quality": qualities[0] if qualities else None,
+        "qualities": qualities,
+        "kind": kind,
+        "alive": alive,
+        "synthetic": synthetic,
+        "duration": duration,
+        "duration_mismatch": False,
+        "audio_mismatch": audio_mismatch,
+        "has_pt_audio": has_pt_audio,
+        "probed": True
+    }
 
 
 # Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
@@ -747,6 +854,21 @@ def mark_duration_outliers(sources):
     return sources
 
 
+MIN_MOVIE_DURATION_S = 1200
+
+
+def mark_movie_duration_outliers(sources):
+    """For movies, samples or trailers (e.g. 10s dummy streams) masquerade as full-length features.
+    When at least one measured source is full-length (>= 20 min), shorter ones are flagged."""
+    measured = [s for s in sources if s.get("alive") and (s.get("duration") or 0) > 0]
+    has_full_length = any(s["duration"] >= MIN_MOVIE_DURATION_S for s in measured)
+    if has_full_length:
+        for s in measured:
+            if s["duration"] < MIN_MOVIE_DURATION_S:
+                s["duration_mismatch"] = True
+    return sources
+
+
 def can_stop_probing(results):
     """Ranking may stop early on a trusted 1080p HLS, but only once another measured source
     confirms its length: the first trusted source may itself be the wrong video."""
@@ -769,13 +891,26 @@ def is_low_trust_source(src):
     return bool(src.get("synthetic")) or is_mirror_source(src)
 
 
+def is_cam_source(src):
+    """Detects CAM / TeleSync / Cinema recording markers in stream labels, titles and URLs."""
+    text = f"{src.get('label') or ''} {src.get('title') or ''} {src.get('raw_url') or ''}"
+    clean = re.sub(r"\.ts(?:[?#]|$)", " ", text, flags=re.I)
+    return bool(re.search(r"\b(cam|camrip|telesync|telecine|hdts|hdtc|hdcam|cinema|gravado)\b", clean, re.I) or
+                re.search(r"(?:[_\W]|^)(?:ts-?rip|hd-?ts)(?:[_\W]|$)", clean, re.I))
+
+
 def is_trusted_top_source(src):
     """A measured, healthy 1080p+ HLS from a trusted host: no need to wait for the others."""
-    return (src.get("probed") and src.get("alive") and (src.get("quality") or 0) >= 1080
-            and src.get("kind", "").startswith("hls") and not is_low_trust_source(src))
+    return (src.get("probed") and src.get("alive") and not src.get("audio_mismatch") and (src.get("quality") or 0) >= 1080
+            and src.get("kind", "").startswith("hls") and not is_low_trust_source(src) and not is_cam_source(src))
 
 
-def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=False):
+def is_hd_abr(src):
+    """Detects an adaptive HLS multi-bitrate stream with HD quality (720p+)."""
+    return src.get("kind") == "hls-multi" and (src.get("quality") or 0) >= 720
+
+
+def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=False, is_dubbed=True, quality_mode="balanced"):
     """Probes sources in parallel within PROBE_BUDGET_S and sorts them best-first.
     Returns early when a trusted 1080p HLS is measured; sources not measured in time stay
     "unknown" and fall back to kind/host order.
@@ -783,12 +918,23 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
     different lengths), the early return also needs another source confirming the length, and
     a source whose length disagrees with the others goes after every agreeing live source."""
     from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
-    results = [{**s, "quality": None, "qualities": [], "kind": "unknown", "alive": True,
-                "synthetic": False, "duration": None, "duration_mismatch": False, "probed": False} for s in sources]
-    to_probe = sources[:PROBE_MAX_SOURCES]
+    results = [dict(s) if s.get("probed") else {
+        **s,
+        "quality": None,
+        "qualities": [],
+        "kind": "mp4-range" if is_direct_mp4_source(s) else "unknown",
+        "alive": True,
+        "synthetic": False,
+        "duration": None,
+        "duration_mismatch": False,
+        "audio_mismatch": False,
+        "has_pt_audio": False,
+        "probed": False
+    } for s in sources]
+    to_probe = [i for i, s in enumerate(sources[:PROBE_MAX_SOURCES]) if not s.get("probed")]
     if to_probe:
         pool = ThreadPoolExecutor(max_workers=len(to_probe))
-        futures = {pool.submit(probe_source, src): i for i, src in enumerate(to_probe)}
+        futures = {pool.submit(probe_source, sources[i]): i for i in to_probe}
         deadline = time.time() + PROBE_BUDGET_S
         pending = set(futures)
         while pending:
@@ -807,13 +953,30 @@ def rank_sources_by_quality(sources, tie_breaker=lambda s: 0, check_lengths=Fals
         pool.shutdown(wait=False, cancel_futures=True)
     if check_lengths:
         mark_duration_outliers(results)
-    indexed = list(enumerate(results))
+    else:
+        mark_movie_duration_outliers(results)
+
+    candidates = results
+    if is_dubbed:
+        valid_audio = [s for s in results if s.get("alive") and not s.get("audio_mismatch")]
+        if valid_audio:
+            candidates = [s for s in results if not s.get("audio_mismatch")]
+
+    def is_hd(s):
+        return (s.get("quality") or 0) >= 720
+
+    indexed = list(enumerate(candidates))
     indexed.sort(key=lambda x: (
         -int(x[1]["alive"]),
+        int(bool(x[1].get("audio_mismatch"))),
+        int(is_cam_source(x[1])),
         int(bool(x[1].get("duration_mismatch"))),
+        (-int(bool(x[1].get("has_pt_audio")))) if is_dubbed else 0,
+        -int(is_hd(x[1])),
+        (-int(is_hd_abr(x[1]))) if quality_mode != "highest" else 0,
         -(x[1]["quality"] or 0),
         int(is_low_trust_source(x[1])),
-        KIND_RANK[x[1]["kind"]],
+        KIND_RANK.get(x[1]["kind"], 99),
         -tie_breaker(x[1]),
         x[0],
     ))
@@ -972,6 +1135,18 @@ def lookup_mal_candidates(title: str, original_title: str = "", season: int = 1,
             matches = sum(1 for w in s_words if w in c_name)
             if matches:
                 pts += (matches * 25)
+
+            # Check Part mismatch: if clean_sname explicitly specifies a part ("Part 1")
+            # and candidate title specifies a different part ("Part 2"), heavy mismatch penalty (-80 pts)
+            req_part = re.search(r'\bpart\s*(\d+)\b', clean_sname, re.I)
+            cand_part = re.search(r'\bpart\s*(\d+)\b', c_name, re.I)
+            if req_part and cand_part:
+                if int(req_part.group(1)) != int(cand_part.group(1)):
+                    pts -= 80
+            elif req_part and not cand_part and int(req_part.group(1)) == 1:
+                pts += 20
+            elif not req_part and cand_part and int(cand_part.group(1)) > 1:
+                pts -= 40
 
         # Remakes share one title ("Hunter x Hunter" 1999 vs 2011): the show's first air year picks the right
         # entry. Only season 1 is compared, later seasons start years after the show's first air date.
@@ -1372,7 +1547,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(status)
         allow_origin = origin if origin else "*"
         self.send_header("Access-Control-Allow-Origin", allow_origin)
-        self.send_header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Range, Content-Type, Accept, User-Agent, Referer, Origin")
         self.send_header("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges")
         self.send_header("Vary", "Origin")
@@ -1513,7 +1688,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         try:
             path = urllib.parse.urlparse(self.path).path
-            if path.startswith("/api/account/"):
+            if path == "/api/resolve":
+                self.handle_resolve_post()
+            elif path.startswith("/api/account/"):
                 self.handle_account("POST", path)
             elif path == "/api/sync":
                 self.handle_sync("POST")
@@ -1527,6 +1704,39 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
             except Exception:
                 pass
+
+    def handle_resolve_post(self):
+        origin = self.headers.get("Origin")
+        if not is_allowed_origin(origin):
+            self.send_response(403)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b'{"success":false,"error":"CORS origin forbidden"}')
+            return
+        parsed = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        action = params.get("action", [""])[0]
+        if action in ("sign", "sign_batch"):
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(min(length, 65536)) if length else b""
+            try:
+                body = json.loads(raw.decode("utf-8")) if raw else {}
+            except Exception:
+                self.send_json(400, {"success": False, "error": "Invalid JSON"}, origin)
+                return
+            items = body if isinstance(body, list) else (body.get("items") if isinstance(body.get("items"), list) else [body])
+            host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
+            proxy_base = f"http://{host_header}/api/stream"
+            stream_key = stream_signing_key()
+            signed = []
+            for item in items:
+                if not item or not isinstance(item, dict) or not item.get("url"):
+                    continue
+                signed_url = proxied_stream_url(proxy_base, stream_key, item["url"], item.get("referer", ""), origin=item.get("origin", ""))
+                signed.append({**item, "signed_url": signed_url})
+            self.send_json(200, {"success": True, "items": signed}, origin)
+            return
+        self.send_json(400, {"success": False, "error": "Unsupported action"}, origin)
 
     def handle_account(self, method, path):
         """/api/account/*: same answers as functions/api/account/[[path]].js. No CORS headers: only this site reads them."""
@@ -1626,6 +1836,22 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json(502, {"error": "tmdb_unreachable"}, origin)
 
     def handle_resolve(self, params, origin=None):
+        host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
+        proxy_base = f"http://{host_header}/api/stream"
+        stream_key = stream_signing_key()
+
+        action = params.get("action", [""])[0]
+        if action == "sign":
+            target_url = params.get("url", [""])[0]
+            referer = params.get("referer", [""])[0]
+            target_origin = params.get("target_origin", [""])[0]
+            if not target_url:
+                self.send_json(400, {"success": False, "error": "Missing url parameter"}, origin)
+                return
+            signed_url = proxied_stream_url(proxy_base, stream_key, target_url, referer, origin=target_origin)
+            self.send_json(200, {"success": True, "signed_url": signed_url}, origin)
+            return
+
         media_id = params.get("id", [""])[0]
         media_type = params.get("type", ["movie"])[0]
         season = int(params.get("season", ["1"])[0])
@@ -1644,6 +1870,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         total_episodes = int(total_param) if total_param.isdigit() else 0
         mal_id = params.get("mal_id", [""])[0]
         imdb_id = params.get("imdb_id", [""])[0]
+        quality_mode = params.get("quality_mode", ["balanced"])[0]
         # Identifiers go into other sites' addresses: digits only (IMDb: "tt" + digits)
         if (media_id and not re.fullmatch(r"\d{1,9}", media_id)) or (mal_id and not re.fullmatch(r"\d{1,9}", mal_id)) \
                 or (imdb_id and not re.fullmatch(r"tt\d{1,10}", imdb_id)):
@@ -1652,20 +1879,15 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         # aniskip_only=1: only the MyAnimeList entry and its episode number (skip times for anime played from another host)
         aniskip_only = params.get("aniskip_only", [""])[0] == "1"
 
-        host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
-        proxy_base = f"http://{host_header}/api/stream"
-        # Proxy addresses are signed: the proxy takes no address it did not get from here
-        stream_key = stream_signing_key()
-
         cache_key = f"{host_header}_{media_type}_{media_id}_{imdb_id}_{season}_{episode}_{lang}_{mal_id}_{title_param}_{original_title_param}_{year_value}_{absolute_episode}_{total_episodes}_{season_name_param}_{aniskip_only}"
         now = time.time()
         # Per-step durations exposed as a Server-Timing header (ms)
         timings = {}
 
-        def timed(name, fn, *args):
+        def timed(name, fn, *args, **kwargs):
             started = time.time()
             try:
-                return fn(*args)
+                return fn(*args, **kwargs)
             finally:
                 timings[name] = timings.get(name, 0) + (time.time() - started) * 1000
 
@@ -1677,7 +1899,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         if cache_key in RESOLVE_CACHE:
             cached_time, cached_res = RESOLVE_CACHE[cache_key]
-            if now - cached_time < 1800:
+            if now - cached_time < 60:
                 self.send_cors_headers(200, "application/json; charset=utf-8", origin=origin)
                 self.send_header("Server-Timing", 'cache;desc="hit"')
                 self.end_headers()
@@ -1686,8 +1908,11 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         result = None
 
+        source_param = params.get("source", [""])[0]
+        requested_source = source_param or ("anime_native" if (media_type == "anime" and lang == "sub") else "mgeb")
+
         # Route 1: Anime Subtitled via ZokoAnime
-        if media_type == "anime" and lang == "sub":
+        if requested_source == "anime_native" or (media_type == "anime" and lang == "sub" and requested_source == "mgeb"):
             mal_ids = []
             if not mal_id and title_param:
                 mal_ids = timed("mal", get_mal_candidates, title_param, original_title_param, season, season_name_param, year_value)
@@ -1742,6 +1967,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     "title": title_param or f"Anime Ep {episode}",
                     "category": "anime",
                     "audio": "subtitled",
+                    "provider": "anime_native",
                     "primary_source": zoko_source,
                     "fallback_sources": [],
                     "subtitles": subtitles,
@@ -1752,9 +1978,78 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     },
                 }
 
-        # Route 2: Movies, Series or Anime Dubbed via MGEB (never for subtitled anime: independent players)
+        # Route 2: FenixFlix (PT-BR Dublado)
+        if not result and requested_source == "fenixflix" and (media_id or imdb_id):
+            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, imdb_id, media_type, season, episode, "dubbed")
+            if fenix_data and fenix_data.get("sources"):
+                parsed = []
+                for s in fenix_data["sources"]:
+                    raw_file = s["file"].strip()
+                    referer = s.get("referer", "https://embedplayer2.xyz/")
+                    is_mp4 = (".mp4" in raw_file or "/stream/" in raw_file) and (
+                        is_brazilian_cdn(raw_file)
+                        or "fenixhub" in raw_file
+                        or "koyeb.app" in raw_file
+                        or "squareweb.app" in raw_file
+                        or "fenixbot" in raw_file
+                        or "/movies/" in raw_file
+                        or "/series/" in raw_file
+                    )
+                    clean_url = re.sub(r'^http://', 'https://', raw_file).replace(':80/', '/') if is_mp4 else raw_file
+                    stream_url = clean_url if is_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
+                    is_hls = s.get("type") == "hls" or ".m3u8" in raw_file
+                    parsed.append({
+                        "label": s.get("label", f"FenixFlix {s.get('quality', 1080)}p"),
+                        "type": "hls" if is_hls else "mp4",
+                        "stream_url": stream_url,
+                        "direct_url": raw_file if (not is_mp4 and is_hls and raw_file.startswith("https://")) else None,
+                        "raw_url": clean_url,
+                        "headers": {"Referer": referer},
+                        "quality": s.get("quality", 1080)
+                    })
+                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: 90, media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
+                result = {
+                    "success": True,
+                    "title": fenix_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
+                    "category": media_type,
+                    "audio": "dubbed",
+                    "provider": "fenixflix",
+                    "primary_source": ranked[0],
+                    "fallback_sources": ranked[1:],
+                    "subtitles": [],
+                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
+                }
+
+
+
+        # Route 5: Movy (Wecollege CDN)
+        if not result and requested_source == "movy" and media_id:
+            movy_data = timed("movy", local_providers.fetch_movy, media_id, media_type, season, episode, imdb_id)
+            if movy_data and movy_data.get("sources"):
+                parsed = [{
+                    "label": s["label"],
+                    "type": "hls",
+                    "stream_url": proxied_stream_url(proxy_base, stream_key, s["file"], s["referer"]),
+                    "direct_url": s["file"],
+                    "raw_url": s["file"],
+                    "headers": {"Referer": s["referer"]},
+                    "quality": s.get("quality", 1080)
+                } for s in movy_data["sources"]]
+                result = {
+                    "success": True,
+                    "title": title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
+                    "category": media_type,
+                    "audio": "original",
+                    "provider": "movy",
+                    "primary_source": parsed[0],
+                    "fallback_sources": parsed[1:],
+                    "subtitles": [],
+                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
+                }
+
+        # Route 6: MGEB (Player Principal Atual)
         mgeb_episode_mismatch = [False]
-        if not result and (media_id or imdb_id) and not (media_type == "anime" and lang == "sub"):
+        if not result and requested_source == "mgeb" and (media_id or imdb_id):
             mgeb_type = "serie" if media_type == "anime" else media_type
             given_imdb = imdb_id if (imdb_id and imdb_id.startswith("tt")) else None
             tmdb_id = media_id if (media_id and str(media_id).isdigit()) else None
@@ -1798,20 +2093,34 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
             mgeb_data = timed("mgeb", lookup_mgeb, season, episode)
             mgeb_episode = (season, episode)
-            # MGEB answered for another episode: the show may be one long season on TMDB and split on MGEB
-            if not mgeb_data and mgeb_episode_mismatch[0] and tmdb_id and mgeb_type == "serie":
+            def is_playable_mgeb_source(s):
+                f = (s.get("file") or "").lower()
+                return not ("streamtape" in f or "tapecontent" in f)
+
+            has_sources = bool(mgeb_data and mgeb_data.get("sources") and any(is_playable_mgeb_source(s) for s in mgeb_data["sources"]))
+            # MGEB answered for another episode, has zero sources, or only dead Streamtape: the show may be split into parts on MGEB
+            if (not has_sources or mgeb_episode_mismatch[0]) and tmdb_id and mgeb_type == "serie":
                 mapped = map_merged_episode(timed("groups", fetch_season_groups, str(tmdb_id)), season, episode)
                 if mapped and mapped != (season, episode):
-                    mgeb_data = timed("mgeb2", lookup_mgeb, *mapped)
-                    if mgeb_data:
+                    mgeb_data2 = timed("mgeb2", lookup_mgeb, *mapped)
+                    if mgeb_data2 and mgeb_data2.get("sources") and any(is_playable_mgeb_source(s) for s in mgeb_data2["sources"]):
+                        mgeb_data = mgeb_data2
                         mgeb_episode = mapped
+
+            display_season = int(params.get("display_season")[0]) if params.get("display_season") else None
+            display_episode = int(params.get("display_episode")[0]) if params.get("display_episode") else None
+            if (not has_sources or mgeb_episode_mismatch[0]) and display_season and display_episode and (display_season, display_episode) != (season, episode) and mgeb_type == "serie":
+                mgeb_data3 = timed("mgeb_display", lookup_mgeb, display_season, display_episode)
+                if mgeb_data3 and mgeb_data3.get("sources") and any(is_playable_mgeb_source(s) for s in mgeb_data3["sources"]):
+                    mgeb_data = mgeb_data3
+                    mgeb_episode = (display_season, display_episode)
 
             if mgeb_data and mgeb_data.get("sources"):
                 raw_sources = mgeb_data["sources"]
                 parsed_sources = []
                 for idx, s in enumerate(raw_sources):
                     raw_file = s.get("file", "").strip().replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top")
-                    is_direct_mp4 = ".mp4" in raw_file and ("fontedecanais" in raw_file or "57lgoe65efxo71.com" in raw_file)
+                    is_direct_mp4 = ".mp4" in raw_file and is_brazilian_cdn(raw_file)
                     direct_clean_url = raw_file
                     if is_direct_mp4:
                         # Convert to secure HTTPS and strip port :80 to prevent SSL handshake errors
@@ -1838,43 +2147,42 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
                 def score_source(src):
                     url = src.get("raw_url", "").lower()
-                    # Tier 1: Proven robust datacenter-safe HLS CDNs (Score 95)
-                    if "cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url:
+                    # Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
+                    if ("cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url
+                            or is_brazilian_cdn(url)):
                         return 95
-                    # Tier 2: Direct sanitized HTTPS MP4 (Score 90 - Fast, zero-WAF, native seeking)
-                    if "fontedecanais" in url or "57lgoe65efxo71.com" in url:
-                        return 90
-                    # Tier 3: Standard generic HLS streams (Score 80)
+                    # Tier 2: Standard generic HLS streams (Score 80)
                     if ".m3u8" in url:
                         return 80
-                    # Tier 4: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
+                    # Tier 3: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
                     if "playercdn" in url or "workers.dev" in url or "powestream" in url:
                         return 60
-                    # Tier 5: Other MP4 streams (Score 50)
+                    # Tier 4: Other MP4 streams (Score 50)
                     if ".mp4" in url:
                         return 50
                     return 10
 
                 # Best quality first; the host score only breaks ties between equal qualities
-                ranked_sources = timed("probe", rank_sources_by_quality, parsed_sources, score_source, mgeb_type == "serie")
-                primary = ranked_sources[0]
-                fallbacks = ranked_sources[1:]
+                ranked_sources = timed("probe", rank_sources_by_quality, parsed_sources, score_source, mgeb_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
+                if ranked_sources:
+                    primary = ranked_sources[0]
+                    fallbacks = ranked_sources[1:]
 
-                result = {
-                    "success": True,
-                    "title": mgeb_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
-                    "category": media_type,
-                    "audio": "subtitled" if lang == "sub" else "dubbed",
-                    "primary_source": primary,
-                    "fallback_sources": fallbacks,
-                    "mgeb_episode": f"T{mgeb_episode[0]}E{mgeb_episode[1]}" if mgeb_type == "serie" else None,
-                    "subtitles": [],
-                    "aniskip": {
-                        "mal_id": int(mal_id) if mal_id and str(mal_id).isdigit() else None,
-                        "episode": episode,
-                        "ready": bool(mal_id),
-                    },
-                }
+                    result = {
+                        "success": True,
+                        "title": mgeb_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
+                        "category": media_type,
+                        "audio": "subtitled" if lang == "sub" else "dubbed",
+                        "primary_source": primary,
+                        "fallback_sources": fallbacks,
+                        "mgeb_episode": f"T{mgeb_episode[0]}E{mgeb_episode[1]}" if mgeb_type == "serie" else None,
+                        "subtitles": [],
+                        "aniskip": {
+                            "mal_id": int(mal_id) if mal_id and str(mal_id).isdigit() else None,
+                            "episode": episode,
+                            "ready": bool(mal_id),
+                        },
+                    }
 
         timings["total"] = (time.time() - now) * 1000
         server_timing = ", ".join(f"{k};dur={v:.0f}" for k, v in timings.items())

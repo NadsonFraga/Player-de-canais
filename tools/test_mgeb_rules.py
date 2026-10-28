@@ -74,6 +74,34 @@ def group_detail(*sizes_and_names):
 JJK = group_detail(("Season 1", 24), ("Season 2", 23), ("Specials", 5, 0), ("Season 3", 12))
 REZERO = group_detail(("Season 1", 25), ("Season 2", 25), ("Specials", 81, 0), ("Season 3", 16), ("Season 4", 19))
 ONE_GROUP = group_detail(("Season 1", 59))
+LUPIN = {
+    "groups": [
+        {
+            "name": "Part 1",
+            "order": 1,
+            "episodes": [
+                {"season_number": 1, "episode_number": i + 1, "order": i}
+                for i in range(5)
+            ],
+        },
+        {
+            "name": "Part 2",
+            "order": 2,
+            "episodes": [
+                {"season_number": 1, "episode_number": i + 6, "order": i}
+                for i in range(5)
+            ],
+        },
+        {
+            "name": "Part 3",
+            "order": 3,
+            "episodes": [
+                {"season_number": 2, "episode_number": i + 1, "order": i}
+                for i in range(7)
+            ],
+        },
+    ]
+}
 
 CASES = {
     # group detail, TMDB season, TMDB episode -> real season/episode (None: no mapping)
@@ -86,6 +114,13 @@ CASES = {
         ["Re:Zero E26", REZERO, 1, 26, [2, 1]],
         ["Re:Zero E51", REZERO, 1, 51, [3, 1]],
         ["only one regular group", ONE_GROUP, 1, 41, None],
+        ["Lupin T1E5 (Part 1)", LUPIN, 1, 5, [1, 5]],
+        ["Lupin T1E6 -> T2E1 (Part 2)", LUPIN, 1, 6, [2, 1]],
+        ["Lupin T1E7 -> T2E2 (Part 2)", LUPIN, 1, 7, [2, 2]],
+        ["Lupin T1E10 -> T2E5 (Part 2)", LUPIN, 1, 10, [2, 5]],
+        ["Lupin T2E1 -> T3E1 (Part 3)", LUPIN, 2, 1, [3, 1]],
+        ["Lupin T2E7 -> T3E7 (Part 3)", LUPIN, 2, 7, [3, 7]],
+        ["Lupin T2E8 (beyond the list)", LUPIN, 2, 8, None],
     ],
     "title": [
         ["One Piece - T1E1 - Eu Sou Luffy!", 1, 62, False],
@@ -120,6 +155,66 @@ CASES = {
         ["trusted alone", 1453.6, [], False],
         ["trusted without length", None, [1453.6], False],
     ],
+    "cam": [
+        ["Opção 1 - CAM", "https://cdn.example/movie_cam.mp4", True],
+        ["Opção 2", "https://cdn.example/hls/segment_001.ts", False],
+        ["Opção 3 - Dublado HD", "https://cdn.example/movie.m3u8", False],
+        ["Cinema Gravado", "https://cdn.example/stream.mp4", True],
+        ["Filme Telesync", "https://cdn.example/stream.mp4", True],
+        ["Filme HDTC", "https://cdn.example/stream.mp4", True],
+    ],
+    "audio": [
+        ["multi-audio without pt", [
+            '#EXTM3U',
+            '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="hi",NAME="Hindi"',
+            '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="en",NAME="English"'
+        ], [True, False]],
+        ["multi-audio with pt-BR", [
+            '#EXTM3U',
+            '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="en",NAME="English"',
+            '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="pt-BR",NAME="Português (Brasil)"'
+        ], [False, True]],
+        ["single embedded audio", [
+            '#EXTM3U',
+            '#EXT-X-STREAM-INF:BANDWIDTH=2000000',
+            'variant.m3u8'
+        ], [False, False]],
+        ["explicit codecs without audio (mute)", [
+            '#EXTM3U',
+            '#EXT-X-STREAM-INF:BANDWIDTH=912614,RESOLUTION=640x360,CODECS="avc1.64001f"',
+            '360p.m3u8',
+            '#EXT-X-STREAM-INF:BANDWIDTH=2676545,RESOLUTION=1280x720,CODECS="avc1.64001f"',
+            '720p.m3u8'
+        ], [True, False]],
+        ["explicit codecs with audio", [
+            '#EXTM3U',
+            '#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=1280x720,CODECS="avc1.64001f,mp4a.40.2"',
+            '720p.m3u8'
+        ], [False, False]],
+    ],
+    "movie_outliers": [
+        ["movie with 10s dummy trailer", [10, 7200, 7250], [True, False, False]],
+        ["movie all full length", [5400, 7200, 7500], [False, False, False]],
+        ["short film all under 20min", [480, 500, 520], [False, False, False]],
+    ],
+    "quality_mode": [
+        ["balanced: hls-multi 720p beats mp4-range 1080p", "balanced", [
+            {"label": "multi720", "kind": "hls-multi", "quality": 720, "alive": True, "probed": True, "raw_url": "https://cdn.example/m.m3u8"},
+            {"label": "mp4_1080", "kind": "mp4-range", "quality": 1080, "alive": True, "probed": True, "raw_url": "https://cdn.example/v.mp4"},
+        ], "multi720"],
+        ["highest: mp4-range 1080p beats hls-multi 720p", "highest", [
+            {"label": "multi720", "kind": "hls-multi", "quality": 720, "alive": True, "probed": True, "raw_url": "https://cdn.example/m.m3u8"},
+            {"label": "mp4_1080", "kind": "mp4-range", "quality": 1080, "alive": True, "probed": True, "raw_url": "https://cdn.example/v.mp4"},
+        ], "mp4_1080"],
+        ["highest: dubbed pt-audio 720p beats unverified 1080p", "highest", [
+            {"label": "en_1080", "kind": "mp4-range", "quality": 1080, "alive": True, "probed": True, "has_pt_audio": False, "raw_url": "https://streamtape.example/v.mp4"},
+            {"label": "pt_720", "kind": "mp4-range", "quality": 720, "alive": True, "probed": True, "has_pt_audio": True, "raw_url": "https://fontedecanais.example/v.mp4"},
+        ], "pt_720"],
+        ["dubbed: confirmed pt-audio beats unverified 720p", "balanced", [
+            {"label": "pt_480", "kind": "mp4-range", "quality": 480, "alive": True, "probed": True, "has_pt_audio": True, "raw_url": "https://fontedecanais.example/sd.mp4"},
+            {"label": "clean_720", "kind": "hls-multi", "quality": 720, "alive": True, "probed": True, "has_pt_audio": False, "raw_url": "https://mgeb.example/m.m3u8"},
+        ], "pt_480"],
+    ],
 }
 
 
@@ -127,7 +222,7 @@ def run_python():
     spec = importlib.util.spec_from_file_location("local_server", ROOT / "tools" / "local_server.py")
     ls = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ls)
-    out = {"merged": [], "title": [], "hls": [], "mvhd": [], "outliers": [], "early_stop": []}
+    out = {"merged": [], "title": [], "hls": [], "mvhd": [], "outliers": [], "movie_outliers": [], "early_stop": [], "cam": [], "audio": [], "quality_mode": []}
     for _, detail, s, e, _ in CASES["merged"]:
         mapped = ls.map_merged_episode(ls.regular_season_groups(detail), s, e)
         out["merged"].append(list(mapped) if mapped else None)
@@ -142,20 +237,41 @@ def run_python():
         sources = [src(d) for d in lengths]
         ls.mark_duration_outliers(sources)
         out["outliers"].append([s["duration_mismatch"] for s in sources])
+    for _, lengths, _ in CASES["movie_outliers"]:
+        sources = [src(d) for d in lengths]
+        ls.mark_movie_duration_outliers(sources)
+        out["movie_outliers"].append([s["duration_mismatch"] for s in sources])
     for _, top, others, _ in CASES["early_stop"]:
         results = [src(top)] + [src(d, quality=720) for d in others]
         out["early_stop"].append(bool(ls.can_stop_probing(results)))
+    for label, url, _ in CASES["cam"]:
+        out["cam"].append(bool(ls.is_cam_source({"label": label, "raw_url": url})))
+    for _, lines, _ in CASES["audio"]:
+        chk = ls.check_hls_audio_tracks(lines)
+        out["audio"].append([chk["audio_mismatch"], chk["has_pt_audio"]])
+    for _, mode, sources, _ in CASES["quality_mode"]:
+        ranked = ls.rank_sources_by_quality(sources, quality_mode=mode)
+        out["quality_mode"].append(ranked[0]["label"])
     return out
 
 
 NODE_HARNESS = r"""
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+import { join, dirname } from "node:path";
 const [file] = process.argv.slice(1);
 const casesJson = readFileSync(0, "utf8");
+const tmpPath = join(dirname(file), ".test_mgeb_rules_tmp.mjs");
 const code = readFileSync(file, "utf8") +
-  "\nexport { mgebEpisodeMatches, hlsPlaylistDuration, parseMoovDuration, markDurationOutliers, canStopProbing," +
-  " regularSeasonGroups, mapMergedEpisode };\n";
-const m = await import("data:text/javascript;base64," + Buffer.from(code).toString("base64"));
+  "\nexport { mgebEpisodeMatches, hlsPlaylistDuration, parseMoovDuration, markDurationOutliers, markMovieDurationOutliers, canStopProbing," +
+  " regularSeasonGroups, mapMergedEpisode, isCamSource, checkHlsAudioTracks, rankSourcesByQuality };\n";
+writeFileSync(tmpPath, code, "utf8");
+let m;
+try {
+  m = await import(pathToFileURL(tmpPath).href);
+} finally {
+  try { unlinkSync(tmpPath); } catch {}
+}
 const cases = JSON.parse(casesJson);
 const src = (d, quality = 1080) => ({ duration: d, alive: true, probed: true, quality, kind: "hls-single",
   raw_url: "https://cdn.example/a.m3u8", synthetic: false, duration_mismatch: false });
@@ -172,7 +288,21 @@ const out = {
     m.markDurationOutliers(sources);
     return sources.map(s => s.duration_mismatch);
   }),
+  movie_outliers: cases.movie_outliers.map(([, lengths]) => {
+    const sources = lengths.map(d => src(d));
+    m.markMovieDurationOutliers(sources);
+    return sources.map(s => s.duration_mismatch);
+  }),
   early_stop: cases.early_stop.map(([, top, others]) => Boolean(m.canStopProbing([src(top), ...others.map(d => src(d, 720))]))),
+  cam: cases.cam.map(([label, url]) => Boolean(m.isCamSource({ label, raw_url: url }))),
+  audio: cases.audio.map(([, lines]) => {
+    const chk = m.checkHlsAudioTracks(lines);
+    return [chk.audioMismatch, chk.hasPtAudio];
+  }),
+  quality_mode: await Promise.all(cases.quality_mode.map(async ([, mode, sources]) => {
+    const ranked = await m.rankSourcesByQuality(sources, () => 0, false, true, mode);
+    return ranked[0].label;
+  })),
 };
 console.log(JSON.stringify(out));
 """
@@ -208,8 +338,16 @@ def check_unit(lang, out):
         check(f"mvhd -> {case[1]}", same(got, case[1]), f"-> {got}")
     for case, got in zip(CASES["outliers"], out["outliers"]):
         check(f"outliers {case[0]}", got == case[2], f"-> {got}")
+    for case, got in zip(CASES["movie_outliers"], out["movie_outliers"]):
+        check(f"movie outliers {case[0]}", got == case[2], f"-> {got}")
     for case, got in zip(CASES["early_stop"], out["early_stop"]):
         check(f"early stop: {case[0]}", got == case[3], f"-> {got}")
+    for case, got in zip(CASES["cam"], out["cam"]):
+        check(f"cam: '{case[0]}'", got == case[2], f"-> {got}")
+    for case, got in zip(CASES["audio"], out["audio"]):
+        check(f"audio: '{case[0]}'", got == case[2], f"-> mismatch={got[0]}, has_pt={got[1]}")
+    for case, got in zip(CASES["quality_mode"], out["quality_mode"]):
+        check(f"quality_mode: '{case[0]}'", got == case[3], f"-> {got}")
 
 
 py_out = run_python()

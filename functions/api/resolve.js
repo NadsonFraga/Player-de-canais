@@ -66,6 +66,18 @@ function mapMergedEpisode(groups, season, episode) {
   return null;
 }
 
+function scoreSeasonGroupCandidate(g) {
+  let pts = 0;
+  if (g.type === 6) pts += 50;
+  else if (g.type === 4) pts += 40;
+  else if (g.type === 1) pts += 20;
+  const name = String(g.name || "").toLowerCase();
+  if (/\bseasons?\b|\btemporadas?\b/i.test(name)) pts += 30;
+  if (/\bparts?\b|\bpartes?\b/i.test(name)) pts += 25;
+  if (name === "seasons" || name === "parts" || name === "original parts") pts += 15;
+  return pts;
+}
+
 async function fetchSeasonGroups(tmdbId) {
   const cached = seasonGroupsCache.get(tmdbId);
   if (cached && Date.now() - cached.at < SEASON_GROUPS_TTL_MS) return cached.groups;
@@ -77,14 +89,15 @@ async function fetchSeasonGroups(tmdbId) {
     };
     const show = await get(`/tv/${tmdbId}`);
     const regularSeasons = ((show && show.seasons) || []).filter(s => s.season_number >= 1 && s.episode_count > 0);
-    if (regularSeasons.length === 1) {
-      const list = await get(`/tv/${tmdbId}/episode_groups`);
-      const candidates = ((list && list.results) || [])
-        .filter(g => g.type === 6)
-        .sort((a, b) => Number(b.name === "Seasons") - Number(a.name === "Seasons"));
-      for (const candidate of candidates.slice(0, 3)) {
-        groups = regularSeasonGroups(await get(`/tv/episode_group/${candidate.id}`));
-        if (groups) break;
+    const list = await get(`/tv/${tmdbId}/episode_groups`);
+    const candidates = ((list && list.results) || [])
+      .filter(g => [6, 4, 1].includes(g.type) && (g.group_count > 1 || !g.group_count))
+      .sort((a, b) => scoreSeasonGroupCandidate(b) - scoreSeasonGroupCandidate(a));
+    for (const candidate of candidates.slice(0, 3)) {
+      const parsed = regularSeasonGroups(await get(`/tv/episode_group/${candidate.id}`));
+      if (parsed && (regularSeasons.length === 1 || parsed.length > regularSeasons.length)) {
+        groups = parsed;
+        break;
       }
     }
   } catch (e) {
@@ -150,6 +163,7 @@ function firstThenMerge(lookups, windowMs) {
 }
 
 import { streamSigningKey, proxiedStreamUrl } from "./stream.js";
+import { resolveFenixFlix, resolveMovy } from "./providers.js";
 
 // Calls per minute from one IP to /api/resolve and /api/tmdb, counted in this isolate's memory (free, approximate):
 // many title pages and catalog rows fit; a script hammering the routes does not
@@ -199,7 +213,7 @@ export async function onRequestOptions(context) {
     status: 204,
     headers: {
       "Access-Control-Allow-Origin": origin || "*",
-      "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, HEAD, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Range, Content-Type, Accept, User-Agent, Referer, Origin",
       "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
       "Access-Control-Max-Age": "86400",
@@ -310,8 +324,8 @@ async function resolveZoko(malId, episode = 1) {
 const PROBE_TIMEOUT_MS = 3500;
 const PROBE_MAX_SOURCES = 6;
 // Probing stops after this budget; sources not measured in time keep host order
-const PROBE_BUDGET_MS = 2500;
-const KIND_RANK = { "hls-multi": 0, "hls-single": 1, "mp4-range": 2, "mp4": 3, "unknown": 4 };
+const PROBE_BUDGET_MS = 3500;
+const KIND_RANK = { "hls-multi": 0, "mp4-range": 1, "hls-single": 2, "mp4": 3, "unknown": 4 };
 
 /**
  * Maps a frame size to a standard quality class (2160, 1440, 1080, 720, 480, 360, 240).
@@ -647,6 +661,53 @@ async function probeFirstSegment(playlistUrl, text, referer, readResolution) {
 }
 
 /**
+ * Detects whether an audio tag declares Portuguese audio (pt, pt-BR, etc).
+ */
+function isPortugueseAudioTag(line) {
+  const langMatch = line.match(/LANGUAGE=["']?([^"',\s]+)["']?/i);
+  const nameMatch = line.match(/NAME=["']?([^"']+)["']?/i);
+  const lang = (langMatch ? langMatch[1] : "").toLowerCase();
+  const name = (nameMatch ? nameMatch[1] : "").toLowerCase();
+  return /(?:^|[^a-z])(pt|pt-br|pt_br|por)(?:[^a-z]|$)/i.test(lang) ||
+         /portugu[eê]s|dublado|brasil|brazil/i.test(name);
+}
+
+/**
+ * Checks audio tracks declared in an HLS master playlist (#EXT-X-MEDIA:TYPE=AUDIO).
+ * Returns { audioMismatch, hasPtAudio }:
+ * - If no explicit audio tracks: audioMismatch = false, hasPtAudio = false.
+ * - If explicit tracks exist and at least one is Portuguese: audioMismatch = false, hasPtAudio = true.
+ * - If explicit tracks exist and NONE is Portuguese: audioMismatch = true, hasPtAudio = false.
+ */
+function checkHlsAudioTracks(lines) {
+  const audioLines = lines.filter(l => l.startsWith("#EXT-X-MEDIA:TYPE=AUDIO") || (l.startsWith("#EXT-X-MEDIA:") && /TYPE=AUDIO/i.test(l)));
+  if (audioLines.length > 0) {
+    const hasPtAudio = audioLines.some(isPortugueseAudioTag);
+    return { audioMismatch: !hasPtAudio, hasPtAudio, noAudio: false };
+  }
+
+  // Check if variants explicitly declare CODECS without any audio codec
+  const streamInfLines = lines.filter(l => l.startsWith("#EXT-X-STREAM-INF"));
+  if (streamInfLines.length > 0) {
+    const variantsWithCodecs = streamInfLines
+      .map(l => l.match(/CODECS=["']([^"']+)["']/i))
+      .filter(Boolean)
+      .map(m => m[1].split(",").map(c => c.trim().toLowerCase()));
+
+    if (variantsWithCodecs.length > 0) {
+      const hasAnyAudioCodec = variantsWithCodecs.some(codecs =>
+        codecs.some(c => /^(mp4a|ac-3|ec-3|opus|vorbis|flac|dts)/i.test(c))
+      );
+      if (!hasAnyAudioCodec) {
+        return { audioMismatch: true, hasPtAudio: false, noAudio: true };
+      }
+    }
+  }
+
+  return { audioMismatch: false, hasPtAudio: false, noAudio: false };
+}
+
+/**
  * Probes an HLS playlist: variants of a master (plus a sanity check of the first
  * segment), or the first TS segment of a media playlist for its frame size.
  */
@@ -671,6 +732,11 @@ async function probeHls(url, referer) {
     const bandwidths = variants.map(v => v.bandwidth).sort((a, b) => a - b).join(",");
     const synthetic = /FirePlayer/i.test(text) || bandwidths === "276000,2048000";
 
+    const audioCheck = checkHlsAudioTracks(lines);
+    const audioMismatch = audioCheck.audioMismatch;
+    const hasPtAudio = audioCheck.hasPtAudio;
+    const noAudio = Boolean(audioCheck.noAudio);
+
     // Check the top variant: its first segment must start at byte 0, and its real
     // frame size replaces a declared resolution that is not there
     let broken = false;
@@ -689,22 +755,43 @@ async function probeHls(url, referer) {
           const seg = await probeFirstSegment(variantUrl, mediaText, referer, true);
           broken = seg.broken;
           const measured = seg.res ? qualityClass(seg.res.width, seg.res.height) : null;
-          if (measured && top.quality && measured !== top.quality) {
-            qualities = [...new Set([measured, ...qualities.filter(q => q < measured)])];
+          if (measured) {
+            if (!top.quality) {
+              qualities = [...new Set([measured, ...qualities])];
+            } else if (measured < top.quality) {
+              // Real frame size is lower than advertised in playlist: downgrade fake resolution
+              qualities = [...new Set([measured, ...qualities.filter(q => q < measured)])];
+            }
+            // When measured >= top.quality, keep the playlist's declared ladder so Hls.js levels match 1:1
           }
         }
       }
     } catch (e) {
       // The variant check is best effort
     }
-    return { qualities, multi: variants.length > 1, broken, synthetic, duration, empty };
+    return { qualities, multi: variants.length > 1, broken, synthetic, duration, empty, audioMismatch, hasPtAudio, noAudio };
   }
 
   // Media playlist: read the frame size from the first segment (fMP4 segments are skipped)
   const length = hlsPlaylistDuration(text);
   const seg = await probeFirstSegment(url, text, referer, true);
-  const q = seg.res ? qualityClass(seg.res.width, seg.res.height) : null;
-  return { qualities: q ? [q] : [], broken: seg.broken, duration: length.seconds, empty: length.segments === 0 };
+  let q = seg.res ? qualityClass(seg.res.width, seg.res.height) : null;
+  const isExplicitSd = url.includes("-sd.") || url.includes("/sd/") || url.includes("-sd-") || url.includes("_480p");
+  const isExplicitLd = url.includes("-ld.") || url.includes("/ld/") || url.includes("-ld-") || url.includes("_360p");
+  if (q && q > 480 && isExplicitSd) q = 480;
+  if (q && q > 360 && isExplicitLd) q = 360;
+  return { qualities: q ? [q] : [], broken: seg.broken, duration: length.seconds, empty: length.segments === 0, audioMismatch: false, hasPtAudio: false };
+}
+
+function isBrazilianCdn(url) {
+  const raw = (url || "").toLowerCase();
+  return raw.includes("fontedecanais") || raw.includes("57lgoe65efxo71.com") || raw.includes("77zzhf54vdll71.com");
+}
+
+/** Detects direct MP4 streams hosted on known video CDNs. */
+function isDirectMp4Source(src) {
+  const raw = (src.raw_url || "").toLowerCase();
+  return raw.includes(".mp4") && (isBrazilianCdn(raw) || raw.includes("/movies/"));
 }
 
 /**
@@ -712,17 +799,21 @@ async function probeHls(url, referer) {
  * kind (hls-multi | hls-single | mp4-range | mp4 | unknown) and alive.
  */
 async function probeSource(src) {
-  const isHls = src.type === "hls" || (src.raw_url || "").includes(".m3u8");
+  const rawUrl = src.raw_url || "";
+  const isHls = src.type === "hls" || rawUrl.includes(".m3u8");
+  const isDirectMp4 = isDirectMp4Source(src);
   const referer = src.headers ? src.headers.Referer : "";
   const isProxied = (src.stream_url || "").includes("/api/stream");
   let qualities = [];
-  let kind = "unknown";
+  let kind = isDirectMp4 ? "mp4-range" : "unknown";
   let alive = true;
   let synthetic = false;
   let duration = null;
+  let audioMismatch = false;
+  let hasPtAudio = false;
   try {
     if (isHls) {
-      const r = await probeHls(src.raw_url, referer);
+      const r = await probeHls(rawUrl, referer);
       if (r.dead) {
         alive = !isProxied;
       } else {
@@ -730,26 +821,31 @@ async function probeSource(src) {
         kind = r.multi ? "hls-multi" : "hls-single";
         synthetic = Boolean(r.synthetic);
         duration = r.duration || null;
+        audioMismatch = Boolean(r.audioMismatch);
+        hasPtAudio = Boolean(r.hasPtAudio);
         // A broken first segment stalls playback, and a playlist without segments plays
         // nothing: keep them only as a last resort
-        if (r.broken || r.empty) alive = false;
+        if (r.broken || r.empty || r.noAudio) alive = false;
       }
     } else {
-      const r = await probeMp4(src.raw_url, referer);
+      const r = await probeMp4(rawUrl, referer);
       if (r.dead) {
         alive = !isProxied;
       } else {
         const q = r.res ? qualityClass(r.res.width, r.res.height) : null;
         qualities = q ? [q] : [];
-        kind = r.ranged ? "mp4-range" : "mp4";
+        kind = r.ranged || isDirectMp4 ? "mp4-range" : "mp4";
         duration = r.duration || null;
       }
     }
   } catch (e) {
-    // Timeouts and network errors leave the source as unknown but playable
+    qualities = [];
   }
   qualities.sort((a, b) => b - a);
-  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, probed: true };
+  if (isBrazilianCdn(rawUrl)) {
+    hasPtAudio = true;
+  }
+  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, audio_mismatch: audioMismatch, has_pt_audio: hasPtAudio, probed: true };
 }
 
 // Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
@@ -772,6 +868,25 @@ function markDurationOutliers(sources) {
   const mid = values.length >> 1;
   const median = values.length % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
   for (const s of measured) s.duration_mismatch = !durationsAgree(s.duration, median);
+  return sources;
+}
+
+const MIN_MOVIE_DURATION_S = 1200; // 20 minutes
+
+/**
+ * For movies, samples or trailers (e.g. 10s dummy streams) masquerade as full-length features.
+ * When at least one measured source is full-length (>= 20 min), shorter ones are flagged.
+ */
+function markMovieDurationOutliers(sources) {
+  const measured = sources.filter(s => s.alive && s.duration > 0);
+  const hasFullLength = measured.some(s => s.duration >= MIN_MOVIE_DURATION_S);
+  if (hasFullLength) {
+    for (const s of measured) {
+      if (s.duration < MIN_MOVIE_DURATION_S) {
+        s.duration_mismatch = true;
+      }
+    }
+  }
   return sources;
 }
 
@@ -800,9 +915,22 @@ function isLowTrustSource(src) {
   return Boolean(src.synthetic) || isMirrorSource(src);
 }
 
+/** Detects CAM / TeleSync / Cinema recording markers in stream labels, titles and URLs. */
+function isCamSource(src) {
+  const text = `${src.label || ""} ${src.title || ""} ${src.raw_url || ""}`;
+  const clean = text.replace(/\.ts(?:[?#]|$)/gi, " ");
+  return /\b(cam|camrip|telesync|telecine|hdts|hdtc|hdcam|cinema|gravado)\b/i.test(clean) ||
+         /(?:[_\W]|^)(?:ts-?rip|hd-?ts)(?:[_\W]|$)/i.test(clean);
+}
+
 /** A measured, healthy 1080p+ HLS from a trusted host: no need to wait for the others. */
 function isTrustedTopSource(src) {
-  return src.probed && src.alive && (src.quality || 0) >= 1080 && src.kind.startsWith("hls") && !isLowTrustSource(src);
+  return src.probed && src.alive && !src.audio_mismatch && (src.quality || 0) >= 1080 && src.kind.startsWith("hls") && !isLowTrustSource(src) && !isCamSource(src);
+}
+
+/** Detects an adaptive HLS multi-bitrate stream with HD quality (720p+). */
+function isHdAbr(src) {
+  return src.kind === "hls-multi" && (src.quality || 0) >= 720;
 }
 
 /**
@@ -813,15 +941,33 @@ function isTrustedTopSource(src) {
  * different lengths), the early return also needs another source confirming the length, and
  * a source whose length disagrees with the others goes after every agreeing live source.
  */
-async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths = false) {
-  const results = sources.map(s => ({ ...s, quality: null, qualities: [], kind: "unknown", alive: true, synthetic: false, duration: null, duration_mismatch: false, probed: false }));
-  const toProbe = Math.min(sources.length, PROBE_MAX_SOURCES);
-  if (toProbe > 0) {
+async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths = false, isDubbed = true, qualityMode = "balanced") {
+  const results = sources.map(s => {
+    if (s.probed) return { ...s };
+    const isDirect = isDirectMp4Source(s);
+    return {
+      ...s,
+      quality: null,
+      qualities: [],
+      kind: isDirect ? "mp4-range" : "unknown",
+      alive: true,
+      synthetic: false,
+      duration: null,
+      duration_mismatch: false,
+      audio_mismatch: false,
+      has_pt_audio: false,
+      probed: false,
+    };
+  });
+  const unprobedIndices = sources.slice(0, PROBE_MAX_SOURCES)
+    .map((s, i) => (s.probed ? -1 : i))
+    .filter(i => i >= 0);
+  if (unprobedIndices.length > 0) {
     await new Promise(resolve => {
-      let pending = toProbe;
+      let pending = unprobedIndices.length;
       const timer = setTimeout(resolve, PROBE_BUDGET_MS);
       const done = () => { clearTimeout(timer); resolve(); };
-      for (let i = 0; i < toProbe; i++) {
+      for (const i of unprobedIndices) {
         probeSource(sources[i]).then(r => {
           results[i] = r;
           pending -= 1;
@@ -830,15 +976,35 @@ async function rankSourcesByQuality(sources, tieBreaker = () => 0, checkLengths 
       }
     });
   }
-  if (checkLengths) markDurationOutliers(results);
-  return results.slice()
+  if (checkLengths) {
+    markDurationOutliers(results);
+  } else {
+    markMovieDurationOutliers(results);
+  }
+
+  let candidates = results;
+  if (isDubbed) {
+    const validAudioSources = results.filter(s => s.alive && !s.audio_mismatch);
+    if (validAudioSources.length > 0) {
+      candidates = results.filter(s => !s.audio_mismatch);
+    }
+  }
+
+  const isHd = (s) => (s.quality || 0) >= 720;
+
+  return candidates.slice()
     .map((s, i) => ({ s, i }))
     .sort((a, b) => (
       (Number(b.s.alive) - Number(a.s.alive)) ||
+      (Number(a.s.audio_mismatch) - Number(b.s.audio_mismatch)) ||
+      (Number(isCamSource(a.s)) - Number(isCamSource(b.s))) ||
       (Number(a.s.duration_mismatch) - Number(b.s.duration_mismatch)) ||
+      (isDubbed ? (Number(b.s.has_pt_audio) - Number(a.s.has_pt_audio)) : 0) ||
+      (Number(isHd(b.s)) - Number(isHd(a.s))) ||
+      (qualityMode === "highest" ? 0 : (Number(isHdAbr(b.s)) - Number(isHdAbr(a.s)))) ||
       ((b.s.quality || 0) - (a.s.quality || 0)) ||
       (Number(isLowTrustSource(a.s)) - Number(isLowTrustSource(b.s))) ||
-      (KIND_RANK[a.s.kind] - KIND_RANK[b.s.kind]) ||
+      ((KIND_RANK[a.s.kind] ?? 99) - (KIND_RANK[b.s.kind] ?? 99)) ||
       (tieBreaker(b.s) - tieBreaker(a.s)) ||
       (a.i - b.i)
     ))
@@ -990,6 +1156,20 @@ function calculateItemScore(cand, baseScore, cleanSname, season, titleKeys = [],
     const matches = sWords.filter(w => cName.includes(w)).length;
     if (matches > 0) {
       pts += (matches * 25);
+    }
+
+    // Check Part mismatch: if cleanSname explicitly specifies a part ("Part 1")
+    // and candidate title specifies a different part ("Part 2"), heavy mismatch penalty (-80 pts)
+    const reqPart = cleanSname.match(/\bpart\s*(\d+)\b/i);
+    const candPart = cName.match(/\bpart\s*(\d+)\b/i);
+    if (reqPart && candPart) {
+      if (parseInt(reqPart[1], 10) !== parseInt(candPart[1], 10)) {
+        pts -= 80;
+      }
+    } else if (reqPart && !candPart && parseInt(reqPart[1], 10) === 1) {
+      pts += 20;
+    } else if (!reqPart && candPart && parseInt(candPart[1], 10) > 1) {
+      pts -= 40;
     }
   }
 
@@ -1147,6 +1327,49 @@ function normalizeSubtitles(tracks) {
   }));
 }
 
+export async function onRequestPost(context) {
+  const { request } = context;
+  const origin = request.headers.get("Origin");
+  if (!isAllowedOrigin(origin)) {
+    return new Response(JSON.stringify({ success: false, error: "CORS origin forbidden" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+    });
+  }
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": origin || "*",
+    "Vary": "Origin",
+  };
+  const urlObj = new URL(request.url);
+  const action = urlObj.searchParams.get("action");
+  if (action === "sign" || action === "sign_batch") {
+    try {
+      const body = await request.json();
+      const items = Array.isArray(body) ? body : (Array.isArray(body && body.items) ? body.items : [body]);
+      const proxyBase = `${urlObj.origin}/api/stream`;
+      const streamKey = await streamSigningKey(context.env);
+      const signed = await Promise.all(items.map(async item => {
+        if (!item || !item.url) return null;
+        const signedUrl = await proxiedStreamUrl(proxyBase, streamKey, item.url, item.referer || "", { origin: item.origin || "" });
+        return { ...item, signed_url: signedUrl };
+      }));
+      return new Response(JSON.stringify({ success: true, items: signed.filter(Boolean) }), {
+        status: 200,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ success: false, error: "Invalid JSON payload" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    }
+  }
+  return new Response(JSON.stringify({ success: false, error: "Not supported" }), {
+    status: 405,
+    headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+  });
+}
+
 export async function onRequestGet(context) {
   const { request } = context;
   tmdbApiKey = (context.env && context.env.TMDB_API_KEY) || "";
@@ -1170,6 +1393,26 @@ export async function onRequestGet(context) {
   }
 
   const urlObj = new URL(request.url);
+  const action = urlObj.searchParams.get("action");
+
+  if (action === "sign") {
+    const targetUrl = urlObj.searchParams.get("url");
+    const referer = urlObj.searchParams.get("referer") || "";
+    const customOrigin = urlObj.searchParams.get("target_origin") || "";
+    if (!targetUrl) {
+      return new Response(JSON.stringify({ success: false, error: "Missing url parameter" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    }
+    const proxyBase = `${urlObj.origin}/api/stream`;
+    const streamKey = await streamSigningKey(context.env);
+    const signedUrl = await proxiedStreamUrl(proxyBase, streamKey, targetUrl, referer, { origin: customOrigin });
+    return new Response(JSON.stringify({ success: true, signed_url: signedUrl }), {
+      status: 200,
+      headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+    });
+  }
 
   const id = urlObj.searchParams.get("id");
   const type = urlObj.searchParams.get("type") || "movie"; // 'movie' | 'serie' | 'anime'
@@ -1185,6 +1428,7 @@ export async function onRequestGet(context) {
   const absoluteEpisodeParam = parseInt(urlObj.searchParams.get("absolute_episode") || "0", 10) || 0;
   const totalEpisodesParam = parseInt(urlObj.searchParams.get("total_episodes") || "0", 10) || 0;
   let malId = urlObj.searchParams.get("mal_id");
+  const qualityMode = urlObj.searchParams.get("quality_mode") || "balanced";
   // aniskip_only=1: only the MyAnimeList entry and its episode number (skip times for anime played from another host)
   const aniskipOnly = urlObj.searchParams.get("aniskip_only") === "1";
 
@@ -1222,8 +1466,12 @@ export async function onRequestGet(context) {
     }
   };
 
+  // Determine requested provider (mgeb, fenixflix, movy, anime_native)
+  const requestedSource = urlObj.searchParams.get("source") || (type === "anime" && lang === "sub" ? "anime_native" : "mgeb");
+  const imdbId = urlObj.searchParams.get("imdb_id");
+
   // ROTA 1: Anime Legendado (ZokoAnime)
-  if (type === "anime" && lang === "sub") {
+  if (requestedSource === "anime_native" || (type === "anime" && lang === "sub" && requestedSource === "mgeb")) {
     let malIds = [];
     if (!malId && titleParam) {
       malIds = await timed("mal", getMalCandidates(titleParam, originalTitleParam, season, seasonNameParam, yearParam));
@@ -1279,6 +1527,7 @@ export async function onRequestGet(context) {
         title: titleParam || `Anime Ep ${episode}`,
         category: "anime",
         audio: "subtitled",
+        provider: "anime_native",
         primary_source: zokoSource,
         fallback_sources: [],
         subtitles,
@@ -1291,10 +1540,89 @@ export async function onRequestGet(context) {
     }
   }
 
-  // ROTA 2: Filmes, Séries ou Anime Dublado (MGEB)
-  const imdbId = urlObj.searchParams.get("imdb_id");
+  let providerDebug = null;
+
+  // ROTA 2: FenixFlix (PT-BR Dublado)
+  if (!result && requestedSource === "fenixflix" && (id || imdbId)) {
+    const fenixData = await timed("fenixflix", resolveFenixFlix({ id, imdbId, type, season, episode, audio: "dubbed" }));
+    providerDebug = fenixData?.debug || null;
+    if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
+      const parsedSources = await Promise.all(fenixData.sources.map(async (s, idx) => {
+        const rawFile = (s.file || "").trim();
+        const isDirectMp4 = (rawFile.includes(".mp4") || rawFile.includes("/stream/")) && (
+          isBrazilianCdn(rawFile) ||
+          rawFile.includes("fenixhub") ||
+          rawFile.includes("koyeb.app") ||
+          rawFile.includes("squareweb.app") ||
+          rawFile.includes("fenixbot") ||
+          rawFile.includes("/movies/") ||
+          rawFile.includes("/series/")
+        );
+        const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, "https://").replace(/:80\//, "/") : rawFile;
+        const referer = s.referer || "https://embedplayer2.xyz/";
+        const finalStreamUrl = isDirectMp4 ? directCleanUrl : await proxied(rawFile, referer);
+        const sourceType = s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4");
+        const directUrl = !isDirectMp4 && sourceType === "hls" && /^https:\/\//i.test(rawFile) ? rawFile : null;
+        return {
+          label: s.label || `FenixFlix ${s.quality}p`,
+          type: sourceType,
+          stream_url: finalStreamUrl,
+          direct_url: directUrl,
+          raw_url: directCleanUrl,
+          headers: { "Referer": referer },
+          quality: s.quality || 1080
+        };
+      }));
+      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, () => 90, type === "serie", lang !== "sub", qualityMode));
+      result = {
+        success: true,
+        title: fenixData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
+        category: type,
+        audio: "dubbed",
+        provider: "fenixflix",
+        primary_source: rankedSources[0],
+        fallback_sources: rankedSources.slice(1),
+        subtitles: [],
+        aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
+      };
+    }
+  }
+
+
+
+  // ROTA 5: Movy (Wecollege CDN)
+  if (!result && requestedSource === "movy" && id) {
+    const tmdbId = /^\d+$/.test(id) ? id : null;
+    if (tmdbId) {
+      const movyData = await timed("movy", resolveMovy({ tmdbId, type, season, episode, imdbId }));
+      if (movyData && movyData.sources && movyData.sources.length > 0) {
+        const parsedSources = await Promise.all(movyData.sources.map(async (s) => ({
+          label: s.label,
+          type: "hls",
+          stream_url: await proxied(s.file, s.referer),
+          direct_url: s.file,
+          raw_url: s.file,
+          headers: { "Referer": s.referer },
+          quality: s.quality || 1080
+        })));
+        result = {
+          success: true,
+          title: titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
+          category: type,
+          audio: "original",
+          provider: "movy",
+          primary_source: parsedSources[0],
+          fallback_sources: parsedSources.slice(1),
+          subtitles: [],
+          aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
+        };
+      }
+    }
+  }
+
+  // ROTA 6: MGEB (Player Principal Atual)
   let mgebEpisodeMismatch = false;
-  if (!result && (id || imdbId) && !(type === "anime" && lang === "sub")) {
+  if (!result && requestedSource === "mgeb" && (id || imdbId)) {
     const mgebType = type === "anime" ? "serie" : type;
     const givenImdb = imdbId && imdbId.startsWith("tt") ? imdbId : null;
     const tmdbId = id && /^\d+$/.test(id) ? id : null;
@@ -1323,12 +1651,31 @@ export async function onRequestGet(context) {
 
     let mgebData = await timed("mgeb", lookupMgeb(season, episode));
     let mgebEpisode = { season, episode };
-    // MGEB answered for another episode: the show may be one long season on TMDB and split on MGEB
-    if (!mgebData && mgebEpisodeMismatch && tmdbId && mgebType === "serie") {
+    const hasSources = (d) => Boolean(
+      d && d.sources && d.sources.length > 0 &&
+      d.sources.some(s => {
+        const f = (s.file || "").toLowerCase();
+        return !f.includes("streamtape") && !f.includes("tapecontent");
+      })
+    );
+    // MGEB answered for another episode, has zero sources, or only dead Streamtape: the show may be split into parts on MGEB
+    if ((!hasSources(mgebData) || mgebEpisodeMismatch) && tmdbId && mgebType === "serie") {
       const mapped = mapMergedEpisode(await timed("groups", fetchSeasonGroups(tmdbId)), season, episode);
       if (mapped && (mapped.season !== season || mapped.episode !== episode)) {
-        mgebData = await timed("mgeb2", lookupMgeb(mapped.season, mapped.episode));
-        if (mgebData) mgebEpisode = mapped;
+        const mgebData2 = await timed("mgeb2", lookupMgeb(mapped.season, mapped.episode));
+        if (hasSources(mgebData2)) {
+          mgebData = mgebData2;
+          mgebEpisode = mapped;
+        }
+      }
+    }
+    const displaySeason = parseInt(urlObj.searchParams.get("display_season"), 10);
+    const displayEpisode = parseInt(urlObj.searchParams.get("display_episode"), 10);
+    if ((!hasSources(mgebData) || mgebEpisodeMismatch) && displaySeason && displayEpisode && (displaySeason !== season || displayEpisode !== episode) && mgebType === "serie") {
+      const mgebData3 = await timed("mgeb_display", lookupMgeb(displaySeason, displayEpisode));
+      if (hasSources(mgebData3)) {
+        mgebData = mgebData3;
+        mgebEpisode = { season: displaySeason, episode: displayEpisode };
       }
     }
 
@@ -1338,7 +1685,7 @@ export async function onRequestGet(context) {
         // Normalize any relative path artifacts from MGEB embed
         rawFile = rawFile.replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top");
 
-        const isDirectMp4 = rawFile.includes(".mp4") && (rawFile.includes("fontedecanais") || rawFile.includes("57lgoe65efxo71.com"));
+        const isDirectMp4 = rawFile.includes(".mp4") && isBrazilianCdn(rawFile);
         let directCleanUrl = rawFile;
         if (isDirectMp4) {
           // Explicitly convert to secure HTTPS and strip port :80 to prevent SSL handshake errors
@@ -1373,23 +1720,19 @@ export async function onRequestGet(context) {
 
       function scoreSource(src) {
         const u = (src.raw_url || "").toLowerCase();
-        // Tier 1: Proven robust datacenter-safe HLS CDNs (Score 95)
-        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com")) {
+        // Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
+        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || isBrazilianCdn(u)) {
           return 95;
         }
-        // Tier 2: Direct sanitized HTTPS MP4 (Score 90 - Fast, zero-WAF, native seeking)
-        if (u.includes("fontedecanais") || u.includes("57lgoe65efxo71.com")) {
-          return 90;
-        }
-        // Tier 3: Standard generic HLS streams (Score 80)
+        // Tier 2: Standard generic HLS streams (Score 80)
         if (u.includes(".m3u8")) {
           return 80;
         }
-        // Tier 4: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
+        // Tier 3: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
         if (u.includes("playercdn") || u.includes("workers.dev") || u.includes("powestream")) {
           return 60;
         }
-        // Tier 5: Other MP4 streams (Score 50)
+        // Tier 4: Other MP4 streams (Score 50)
         if (u.includes(".mp4")) {
           return 50;
         }
@@ -1397,25 +1740,27 @@ export async function onRequestGet(context) {
       }
 
       // Best quality first; the host score only breaks ties between equal qualities
-      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, scoreSource, mgebType === "serie"));
-      const primary = rankedSources[0];
-      const fallbacks = rankedSources.slice(1);
+      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, scoreSource, mgebType === "serie", lang !== "sub", qualityMode));
+      if (rankedSources && rankedSources.length > 0) {
+        const primary = rankedSources[0];
+        const fallbacks = rankedSources.slice(1);
 
-      result = {
-        success: true,
-        title: mgebData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
-        category: type,
-        audio: lang === "sub" ? "subtitled" : "dubbed",
-        primary_source: primary,
-        fallback_sources: fallbacks,
-        mgeb_episode: mgebType === "serie" ? `T${mgebEpisode.season}E${mgebEpisode.episode}` : null,
-        subtitles: [],
-        aniskip: {
-          mal_id: malId ? parseInt(malId, 10) : null,
-          episode,
-          ready: Boolean(malId),
-        },
-      };
+        result = {
+          success: true,
+          title: mgebData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
+          category: type,
+          audio: lang === "sub" ? "subtitled" : "dubbed",
+          primary_source: primary,
+          fallback_sources: fallbacks,
+          mgeb_episode: mgebType === "serie" ? `T${mgebEpisode.season}E${mgebEpisode.episode}` : null,
+          subtitles: [],
+          aniskip: {
+            mal_id: malId ? parseInt(malId, 10) : null,
+            episode,
+            ready: Boolean(malId),
+          },
+        };
+      }
     }
   }
 
@@ -1428,7 +1773,7 @@ export async function onRequestGet(context) {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
         ...corsHeaders,
-        "Cache-Control": "public, max-age=1800",
+        "Cache-Control": "public, max-age=60, s-maxage=120",
         "Server-Timing": serverTiming,
       },
     });
@@ -1436,7 +1781,9 @@ export async function onRequestGet(context) {
 
   return new Response(JSON.stringify({
     success: false,
-    error: "No direct streams resolved for the requested title.",
+    error: `No direct streams resolved on ${requestedSource} for the requested title.`,
+    provider: requestedSource,
+    debug: providerDebug,
     reason: type === "anime" && lang === "sub" ? "anime_not_found" : (mgebEpisodeMismatch ? "episode_mismatch" : "no_sources"),
     fallback_recommended: true,
   }), {

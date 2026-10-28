@@ -13,17 +13,17 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261021_1511';
-import { fetchTmdb } from '../core/tmdb.js?v=20261021_1511';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261021_1511';
-import { showToast } from '../core/toast.js?v=20261021_1511';
-import { syncPageLock } from '../core/activity.js?v=20261021_1511';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261021_1511';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261021_1511';
-import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261021_1511';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261021_1511';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261021_1511';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261021_1511';
+} from '../core/constants.js?v=20261028_1625';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_1625';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1625';
+import { showToast } from '../core/toast.js?v=20261028_1625';
+import { syncPageLock } from '../core/activity.js?v=20261028_1625';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261028_1625';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261028_1625';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261028_1625';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261028_1625';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261028_1625';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261028_1625';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -33,7 +33,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261021_1511';
+} from './series.js?v=20261028_1625';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
@@ -562,6 +562,26 @@ function playLabel(entry) {
     return 'Assistir T1:E1';
 }
 
+function hasWatchProgress(entry) {
+    const id = entry.item.id;
+    if (entry.kind === 'movie') {
+        const progress = getMovieProgress(id);
+        return Boolean(progress && !progress.finished && progress.position > 30);
+    }
+    const progress = getStoredWatchProgress()[id];
+    return Boolean(progress && progress.season && progress.episode && (Number(progress.season) > 1 || Number(progress.episode) > 1 || (progress.position && progress.position > 30)));
+}
+
+function isRecentCinemaRelease(item, kind) {
+    if (kind !== 'movie') return false;
+    const dateStr = item.release_date;
+    if (!dateStr) return false;
+    const releaseTime = new Date(dateStr + 'T00:00:00Z').getTime();
+    if (isNaN(releaseTime)) return false;
+    const diffDays = (Date.now() - releaseTime) / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= 75;
+}
+
 function renderActions(entry) {
     // Only known once the details are in (a catalog item may lack its date): until then it reads Assistir
     const upcoming = Boolean(entry.details) && isUpcomingTitle(fullItem(entry));
@@ -571,6 +591,19 @@ function renderActions(entry) {
         playButton.setAttribute('aria-disabled', String(upcoming));
     }
     setText('title-play-label', upcoming ? upcomingPlayLabel(fullItem(entry)) : playLabel(entry));
+
+    const restartButton = document.getElementById('btn-title-restart');
+    if (restartButton) {
+        const showRestart = !upcoming && hasWatchProgress(entry);
+        restartButton.classList.toggle('hidden', !showRestart);
+    }
+
+    const noticeEl = document.getElementById('title-quality-notice');
+    if (noticeEl) {
+        const isRecent = isRecentCinemaRelease(fullItem(entry), entry.kind);
+        noticeEl.classList.toggle('hidden', !isRecent);
+    }
+
     const state = getLibraryState(entry.kind, entry.item.id);
     const watchlist = document.getElementById('btn-title-watchlist');
     if (watchlist) {
@@ -977,6 +1010,17 @@ export function setupTitlePage() {
             return;
         }
         play(current);
+    });
+    document.getElementById('btn-title-restart')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!current || current.type !== 'title') return;
+        const entry = current;
+        const item = fullItem(entry);
+        if (entry.kind === 'movie') {
+            playMovie(item, { restart: true });
+        } else {
+            openEpisode(item, { season: 1, episode: 1 }, { restart: true });
+        }
     });
     document.getElementById('btn-title-watchlist')?.addEventListener('click', () => libraryToggle('watchlist'));
     document.getElementById('btn-title-watched')?.addEventListener('click', () => libraryToggle('watched'));

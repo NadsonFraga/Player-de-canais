@@ -8,7 +8,7 @@
  *   Servidores externos     other sites' players in an iframe, "Servidor 1 (MGEB)"...
  * Live TV uses the same words: its Player Principal lists its fontes, and its iframes are servidores externos.
  */
-import { escapeHtml } from './sanitize.js?v=20261021_1511';
+import { escapeHtml } from './sanitize.js?v=20261028_1625';
 
 /**
  * How a live channel's direct link reads: a fonte of its Player Principal. `data/canais.json` names them

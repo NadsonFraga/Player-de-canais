@@ -68,15 +68,16 @@ export const FAMOUS_STUDIOS = [
     { id: 521, name: "DreamWorks", badge: "DreamWorks", logo: "https://image.tmdb.org/t/p/w500/3BPX5VGBov8SDqTV7wC1L1xShAS.png" }
 ];
 
-// Verified Legacy Movie Servers
+// Verified Movie Servers (Native Artplayer direct streams + External iframes)
 export const MOVIE_SERVERS = [
-    { id: 'native_direct', name: 'Player Principal', isNative: true },
-    { id: 'mgeb',      name: 'Servidor 1 (MGEB)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
-    { id: 'superflix', name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.quest/filme/${id}` },
-    { id: 'myembed',   name: 'Servidor 3 (MyEmbed)', buildUrl: (id) => `https://myembed.biz/filme/${id}` },
-    { id: 'vsembed',   name: 'Servidor 4 (VSEmbed, multiáudio)', buildUrl: (id) => `https://vsembed.ru/embed/movie/${id}?ds_lang=pob,pt,en` },
-    { id: 'embedplay', name: 'Servidor 5 (EmbedPlay)', buildUrl: (id) => `https://www.embedplay.one/filme/${id}` },
-    { id: 'fembed',    name: 'Servidor 6 (FEmbed)', buildUrl: (id) => `https://fembed.lol/filme/e/${id}` }
+    { id: 'native_direct',  name: 'Mgeb Player (BETA)',       isNative: true, source: 'mgeb' },
+    { id: 'native_fenix',   name: 'Fenix Player (BETA)',      isNative: true, source: 'fenixflix' },
+    { id: 'mgeb',           name: 'Servidor 1 (MGEB)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
+    { id: 'superflix',      name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.bond/filme/${id}` },
+    { id: 'myembed',        name: 'Servidor 3 (MyEmbed)', buildUrl: (id) => `https://myembed.biz/filme/${id}` },
+    { id: 'vsembed',        name: 'Servidor 4 (VSEmbed, multiáudio)', buildUrl: (id) => `https://vsembed.ru/embed/movie/${id}?ds_lang=pob,pt,en` },
+    { id: 'embedplay',      name: 'Servidor 5 (EmbedPlay)', buildUrl: (id) => `https://www.embedplay.one/filme/${id}` },
+    { id: 'fembed',         name: 'Servidor 6 (FEmbed)', buildUrl: (id) => `https://fembed.lol/filme/e/${id}` }
 ];
 
 // Verified Series & Animes Servers
@@ -87,7 +88,7 @@ export const SERIES_SERVERS = {
     },
     superflix: {
         name: "Superflix",
-        buildUrl: (id, s, e) => `https://superflixapi.quest/serie/${id}/${s}/${e}`
+        buildUrl: (id, s, e) => `https://superflixapi.bond/serie/${id}/${s}/${e}`
     },
     myembed: {
         name: "MyEmbed",
