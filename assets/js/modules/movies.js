@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261028_1015';
-import { showToast } from '../core/toast.js?v=20261028_1015';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261028_1015';
-import { buildFeedRows } from '../core/feedRows.js?v=20261028_1015';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261028_1015';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1015';
-import { getUiSvg } from '../core/icons.js?v=20261028_1015';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261028_1015';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261028_1015';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1015';
-import { fetchTmdb } from '../core/tmdb.js?v=20261028_1015';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261028_1015';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261028_1015';
-import { resumeStartTime } from '../core/resume.js?v=20261028_1015';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261028_1015';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261028_1015';
+} from '../core/constants.js?v=20261028_1035';
+import { showToast } from '../core/toast.js?v=20261028_1035';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261028_1035';
+import { buildFeedRows } from '../core/feedRows.js?v=20261028_1035';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261028_1035';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1035';
+import { getUiSvg } from '../core/icons.js?v=20261028_1035';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261028_1035';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261028_1035';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1035';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_1035';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261028_1035';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261028_1035';
+import { resumeStartTime } from '../core/resume.js?v=20261028_1035';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261028_1035';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261028_1035';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1283,15 +1283,6 @@ export function selectMovieServer(server, buttonElement = null) {
             }
             if (movieLoader) movieLoader.classList.add("hidden");
             if (!data || !data.primary_source) {
-                if (server.id === 'native_direct') {
-                    const fenixServer = MOVIE_SERVERS.find(s => s.id === 'native_fenix');
-                    if (fenixServer) {
-                        console.info("[Movies] Player Principal sem fontes. Acionando failover automatico para FenixFlix...");
-                        showToast('Player Principal sem fontes. Conectando via FenixFlix...', 3000);
-                        playMovieServer(fenixServer, movie, currentMoviePlayOptions);
-                        return;
-                    }
-                }
                 showToast(`O ${sName} não encontrou fontes para este filme. Escolha outro player ou um servidor externo abaixo.`);
                 if (movieArt) {
                     movieArt.innerHTML = `
@@ -1336,15 +1327,6 @@ export function selectMovieServer(server, buttonElement = null) {
                 subtitles: data.subtitles || [],
                 onAllFailed: () => {
                     atomicPlayerReset();
-                    if (server.id === 'native_direct') {
-                        const fenixServer = MOVIE_SERVERS.find(s => s.id === 'native_fenix');
-                        if (fenixServer) {
-                            console.info("[Movies] Todas as fontes do Player Principal falharam. Alternando para FenixFlix...");
-                            showToast('Player Principal sem resposta. Conectando via FenixFlix...', 3500);
-                            playMovieServer(fenixServer, movie, currentMoviePlayOptions);
-                            return;
-                        }
-                    }
                     showToast(`Nenhuma fonte do ${sName} respondeu. Escolha outro player ou um servidor externo abaixo.`);
                     if (movieArt) {
                         movieArt.innerHTML = `

@@ -3,28 +3,28 @@
  * Coordinates core state, modular engines, navigation, and exposes TvzinhaActions
  */
 
-import { store } from './core/state.js?v=20261028_1015';
-import { showToast } from './core/toast.js?v=20261028_1015';
-import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261028_1015';
-import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261028_1015';
-import { runWhenHomeIdle } from './core/activity.js?v=20261028_1015';
-import { initMoviesView, resetMoviesViewState } from './modules/movies.js?v=20261028_1015';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261028_1015';
-import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261028_1015';
-import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261028_1015';
-import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261028_1015';
-import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261028_1015';
-import { preloadPlayerLibs } from './player/engine.js?v=20261028_1015';
-import { setupSiteFooter } from './modules/footer.js?v=20261028_1015';
-import { setupTitlePage, openTitle, titleBack, closeTitlePage, readTitleFromAddress } from './modules/titlePage.js?v=20261028_1015';
-import { setupHeader, openSearch } from './modules/header.js?v=20261028_1015';
-import { setupCollection, renderCollection, openCollection } from './modules/collection.js?v=20261028_1015';
-import { setupAccountPage, openAccountPage } from './modules/accountPage.js?v=20261028_1015';
-import { refreshAccount } from './core/account.js?v=20261028_1015';
-import { setupProfilePage, checkProfileOnStart, openProfilePicker } from './modules/profilePage.js?v=20261028_1015';
-import { setupSync, syncNow } from './core/sync.js?v=20261028_1015';
-import { setupSettingsPage, openSettingsPage } from './modules/settingsPage.js?v=20261028_1015';
-import { installImageFallbacks } from './core/imageFallback.js?v=20261028_1015';
+import { store } from './core/state.js?v=20261028_1035';
+import { showToast } from './core/toast.js?v=20261028_1035';
+import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261028_1035';
+import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261028_1035';
+import { runWhenHomeIdle } from './core/activity.js?v=20261028_1035';
+import { initMoviesView, resetMoviesViewState } from './modules/movies.js?v=20261028_1035';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261028_1035';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261028_1035';
+import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261028_1035';
+import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261028_1035';
+import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261028_1035';
+import { preloadPlayerLibs } from './player/engine.js?v=20261028_1035';
+import { setupSiteFooter } from './modules/footer.js?v=20261028_1035';
+import { setupTitlePage, openTitle, titleBack, closeTitlePage, readTitleFromAddress } from './modules/titlePage.js?v=20261028_1035';
+import { setupHeader, openSearch } from './modules/header.js?v=20261028_1035';
+import { setupCollection, renderCollection, openCollection } from './modules/collection.js?v=20261028_1035';
+import { setupAccountPage, openAccountPage } from './modules/accountPage.js?v=20261028_1035';
+import { refreshAccount } from './core/account.js?v=20261028_1035';
+import { setupProfilePage, checkProfileOnStart, openProfilePicker } from './modules/profilePage.js?v=20261028_1035';
+import { setupSync, syncNow } from './core/sync.js?v=20261028_1035';
+import { setupSettingsPage, openSettingsPage } from './modules/settingsPage.js?v=20261028_1035';
+import { installImageFallbacks } from './core/imageFallback.js?v=20261028_1035';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
