@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261028_1125';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1125';
-import { showToast } from '../core/toast.js?v=20261028_1125';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1125';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1125';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1125';
-import { formatClock } from '../core/resume.js?v=20261028_1125';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1125';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1125';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1125';
+import { store } from '../core/state.js?v=20261028_1222';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1222';
+import { showToast } from '../core/toast.js?v=20261028_1222';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1222';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1222';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1222';
+import { formatClock } from '../core/resume.js?v=20261028_1222';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1222';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1222';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1222';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1424,7 +1424,10 @@ function failoverNativeSource(session, reason) {
         const backQuality = session.sources[prevIdx]?.quality;
         if (backQuality) session.lockedQuality = backQuality;
         else session.autoMode = true;
-        showToast(`A qualidade ${qualityText(failedQuality)} não respondeu. Retornando para ${qualityText(backQuality) || 'anterior'}...`, 4000);
+        const msg = (backQuality && failedQuality && backQuality !== failedQuality)
+            ? `A qualidade ${qualityText(failedQuality)} não respondeu. Retornando para ${qualityText(backQuality)}...`
+            : `A nova fonte não respondeu. Retornando para a fonte anterior...`;
+        showToast(msg, 4000);
         mountNativeSource(session, prevIdx, { startTime: prevTime });
         return;
     }
@@ -1441,8 +1444,12 @@ function failoverNativeSource(session, reason) {
     session.statusNote = 'Fonte anterior não respondeu.';
     // The better source the viewer asked for did not start: say so, instead of silently going back
     if (session.currentIndex === session.slowStartIndex) {
-        const back = session.sources[nextIdx].quality;
-        showToast(`A fonte em ${qualityText(session.sources[session.currentIndex].quality)} não respondeu. Voltando${back ? ` para ${qualityText(back)}` : ''}.`, 5000);
+        const back = session.sources[nextIdx]?.quality;
+        const currentQ = session.sources[session.currentIndex]?.quality;
+        const msg = (back && currentQ && back !== currentQ)
+            ? `A fonte em ${qualityText(currentQ)} não respondeu. Voltando para ${qualityText(back)}.`
+            : `A fonte testada não respondeu. Retornando para a fonte anterior.`;
+        showToast(msg, 5000);
         session.slowStartIndex = null;
     }
     mountNativeSource(session, nextIdx, { startTime: resumeAt });
@@ -1453,6 +1460,7 @@ function failoverNativeSource(session, reason) {
  */
 function mountNativeSource(session, index, { startTime = 0 } = {}) {
     atomicPlayerReset();
+    stopUpNextCountdown(session);
     activeNativeSession = session;
     session.currentIndex = index;
     session.mountToken += 1;

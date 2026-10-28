@@ -1735,6 +1735,21 @@ export async function onRequestGet(context) {
     }
   }
 
+  timings.total = Date.now() - startedAt;
+  const serverTiming = Object.entries(timings).map(([k, v]) => `${k};dur=${v}`).join(", ");
+
+  if (result) {
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        ...corsHeaders,
+        "Cache-Control": "public, max-age=60, s-maxage=120",
+        "Server-Timing": serverTiming,
+      },
+    });
+  }
+
   return new Response(JSON.stringify({
     success: false,
     error: `No direct streams resolved on ${requestedSource} for the requested title.`,
