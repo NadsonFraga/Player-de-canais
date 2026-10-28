@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261028_1222';
-import { showToast } from '../core/toast.js?v=20261028_1222';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261028_1222';
-import { buildFeedRows } from '../core/feedRows.js?v=20261028_1222';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261028_1222';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1222';
-import { resumeStartTime } from '../core/resume.js?v=20261028_1222';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261028_1222';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261028_1222';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1222';
-import { fetchTmdb } from '../core/tmdb.js?v=20261028_1222';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261028_1222';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261028_1222';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261028_1222';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261028_1222';
+} from '../core/constants.js?v=20261028_1415';
+import { showToast } from '../core/toast.js?v=20261028_1415';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261028_1415';
+import { buildFeedRows } from '../core/feedRows.js?v=20261028_1415';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261028_1415';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1415';
+import { resumeStartTime } from '../core/resume.js?v=20261028_1415';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261028_1415';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261028_1415';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1415';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_1415';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261028_1415';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261028_1415';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261028_1415';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261028_1415';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -2354,6 +2354,7 @@ export async function resolveEpisodeContext(showRef, target = {}) {
         list = [];
     }
     const tmdbNumber = ep => Number(ep.tmdb_episode_number != null ? ep.tmdb_episode_number : ep.episode_number);
+    const tmdbSeasonNumber = ep => Number(ep.tmdb_season_number != null ? ep.tmdb_season_number : (ep.season_number != null ? ep.season_number : season));
     let epData = target.tmdbEpisode
         ? list.find(ep => tmdbNumber(ep) === Number(target.tmdbEpisode))
         : list.find(ep => Number(ep.episode_number) === episode);
@@ -2367,6 +2368,7 @@ export async function resolveEpisodeContext(showRef, target = {}) {
         imdbId: (details && details.external_ids && details.external_ids.imdb_id) || null,
         season,
         episode,
+        tmdbSeason: epData ? tmdbSeasonNumber(epData) : season,
         tmdbEpisode: epData ? tmdbNumber(epData) : episode,
         absolute: details ? (absoluteEpisodeOf(details, season, episode) || episode) : null,
         totalEpisodes: details ? totalEpisodesOf(details) : 0,
@@ -2666,7 +2668,7 @@ function getNextEpisodeTarget() {
  * native_anime sends both numberings plus the show total: the server picks the one the chosen
  * MyAnimeList entry uses (a whole-show entry wants the absolute number, a per-season entry the relative one).
  */
-function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNumber, absoluteEpisode) {
+function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNumber, absoluteEpisode, extraContext = {}) {
     const isAnimeMode = serverKey === 'native_anime' || (serverKey && serverKey.id === 'native_anime');
     let seasonName = "";
     if (currentSeriesDetails && currentSeriesDetails.seasons) {
@@ -2691,11 +2693,30 @@ function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNum
     const serverDef = typeof serverKey === 'object' ? serverKey : SERIES_SERVER_OPTIONS.find(s => s.id === serverKey);
     const source = serverDef ? (serverDef.source || 'mgeb') : (isAnimeMode ? 'anime_native' : 'mgeb');
 
+    // Canonical TMDB season & episode resolution for shows grouped into parts (e.g. Lupin, Jujutsu Kaisen)
+    let resolveSeason = seasonNumber;
+    let resolveEpisode = episodeNumber;
+    if (extraContext && extraContext.tmdbSeason != null && extraContext.tmdbEpisode != null) {
+        resolveSeason = Number(extraContext.tmdbSeason);
+        resolveEpisode = Number(extraContext.tmdbEpisode);
+    } else {
+        const cachedList = cachedSeasonsMap[`${showItem.id}_${seasonNumber}`];
+        if (cachedList && Array.isArray(cachedList)) {
+            const matchedEp = cachedList.find(e => Number(e.episode_number) === Number(episodeNumber));
+            if (matchedEp) {
+                if (matchedEp.tmdb_season_number != null) resolveSeason = Number(matchedEp.tmdb_season_number);
+                if (matchedEp.tmdb_episode_number != null) resolveEpisode = Number(matchedEp.tmdb_episode_number);
+            }
+        }
+    }
+
     return {
         id: showItem.id,
         type: isAnimeMode ? "anime" : "serie",
-        season: seasonNumber,
-        episode: episodeNumber,
+        season: resolveSeason,
+        episode: resolveEpisode,
+        display_season: seasonNumber,
+        display_episode: episodeNumber,
         absolute_episode: isAnimeMode ? (absoluteEpisode || absoluteEpisodeOf(details, seasonNumber, episodeNumber) || '') : '',
         total_episodes: isAnimeMode ? (totalEpisodesOf(details) || '') : '',
         mal_id: isAnimeMode ? (animeMalIds.get(`${showItem.id}_${seasonNumber}`) || '') : '',
@@ -2857,8 +2878,10 @@ function startEpisodePlayback(context, options = {}) {
         if (seriesLoader) seriesLoader.classList.remove("hidden");
         const playerName = serverDef.name;
 
+        const reqSeason = context.tmdbSeason || seasonNumber;
+        const reqEpisode = context.tmdbEpisode || episodeNumber;
         resolveDirectStream(
-            buildNativeResolveRequest(showItem, serverDef, seasonNumber, episodeNumber, activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode)
+            buildNativeResolveRequest(showItem, serverDef, reqSeason, reqEpisode, activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode, context)
         ).then(data => {
             if (currentSessionId !== seriesPlaybackSessionId || !theaterView || theaterView.classList.contains("hidden")) {
                 console.warn("[Series] Abortando montagem nativa: reprodução cancelada ou janela fechada.");
@@ -2902,8 +2925,10 @@ function startEpisodePlayback(context, options = {}) {
                     id: showItem.id,
                     imdbId: context.imdbId || null,
                     type: isAnime ? 'anime' : 'serie',
-                    season: seasonNumber,
-                    episode: episodeNumber,
+                    season: context.tmdbSeason || seasonNumber,
+                    episode: context.tmdbEpisode || episodeNumber,
+                    displaySeason: seasonNumber,
+                    displayEpisode: episodeNumber,
                     absolute: activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode || null,
                     title: showName
                 },

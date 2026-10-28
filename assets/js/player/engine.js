@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261028_1222';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1222';
-import { showToast } from '../core/toast.js?v=20261028_1222';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1222';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1222';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1222';
-import { formatClock } from '../core/resume.js?v=20261028_1222';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1222';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1222';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1222';
+import { store } from '../core/state.js?v=20261028_1415';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1415';
+import { showToast } from '../core/toast.js?v=20261028_1415';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1415';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1415';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1415';
+import { formatClock } from '../core/resume.js?v=20261028_1415';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1415';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1415';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1415';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -2454,7 +2454,7 @@ function qualitySearchCandidates(session, isManual = false) {
         .filter(({ src, idx }) => idx !== session.currentIndex && usable(idx) && src.alive && (!src.quality || src.quality > playing) && !isHlsSource(src))
         .slice(0, QUALITY_SEARCH_MAX);
     if (internal.length > 0) return internal;
-    if (session.mediaContext && !session.fenixSearched && playing < 1080) {
+    if (session.provider === 'fenixflix' && session.mediaContext && !session.fenixSearched && playing < 1080) {
         return [{ external: true }];
     }
     return [];
@@ -2526,7 +2526,7 @@ async function searchBetterQuality(session, isManual = false) {
     }
 
     const playingNow = activeQuality(session) || 0;
-    if (!best && playingNow < 1080 && session.mediaContext && !session.fenixSearched) {
+    if (!best && playingNow < 1080 && session.provider === 'fenixflix' && session.mediaContext && !session.fenixSearched) {
         session.fenixSearched = true;
         try {
             console.info("[PlayerEngine] Buscando fontes em 1080p no FenixFlix...");
