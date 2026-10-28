@@ -3,7 +3,7 @@
  * Carousels and catalog preloading must not download images while nobody can see them
  * (another tab, a player or detail panel on top, or the browser tab hidden).
  */
-import { store } from './state.js?v=20261028_1919';
+import { store } from './state.js?v=20261028_1951';
 
 // Panels that cover the whole page while a title is shown or playing
 const COVERING_PANELS = ['title-page', 'movie-player-view', 'series-player-view', 'search-overlay', 'account-page', 'profile-page', 'settings-page'];

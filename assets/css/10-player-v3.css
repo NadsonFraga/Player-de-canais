@@ -884,8 +884,8 @@
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
-    color: rgba(255, 255, 255, 0.85);
-    transition: color 0.15s ease, transform 0.1s ease;
+    color: rgba(255, 255, 255, 0.85) !important;
+    transition: color 0.15s ease, opacity 0.15s ease;
     padding: 0 6px !important;
     height: 100%;
 }
@@ -894,8 +894,22 @@
     color: #ffffff !important;
 }
 
+/* Active indicator: keep clean white icon matching other player buttons, with subtle green dot */
 .art-video-player .art-control-subtitle-btn.is-active {
-    color: #22c55e !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.art-video-player .art-control-subtitle-btn.is-active::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    box-shadow: 0 0 5px rgba(34, 197, 94, 0.9);
 }
 
 .art-video-player .art-control-subtitle-btn svg,

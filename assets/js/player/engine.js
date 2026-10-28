@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261028_1919';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1919';
-import { showToast } from '../core/toast.js?v=20261028_1919';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1919';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1919';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1919';
-import { formatClock } from '../core/resume.js?v=20261028_1919';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1919';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1919';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1919';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_1919';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1919';
-import { fetchTmdb } from '../core/tmdb.js?v=20261028_1919';
+import { store } from '../core/state.js?v=20261028_1951';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1951';
+import { showToast } from '../core/toast.js?v=20261028_1951';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1951';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1951';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1951';
+import { formatClock } from '../core/resume.js?v=20261028_1951';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1951';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1951';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1951';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_1951';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1951';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_1951';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -3395,15 +3395,58 @@ function renderSubtitlesFlyout(session) {
 
     html += '<div class="tvz-sub-list">';
 
+    // Language canonical helpers
+    const LANG_PRIORITIES = {
+        'pt-BR': 1, 'pt': 2, 'en': 3, 'es': 4, 'fr': 5, 'it': 6, 'de': 7,
+        'ja': 8, 'ko': 9, 'zh': 10, 'ru': 11, 'pl': 12, 'ar': 13, 'id': 14,
+        'tr': 15, 'vi': 16, 'sr': 17, 'ro': 18, 'nl': 19, 'sv': 20
+    };
+    const LANG_NAMES = {
+        'pt-BR': 'Português (Brasil)', 'pt': 'Português', 'en': 'Inglês', 'es': 'Espanhol',
+        'fr': 'Francês', 'it': 'Italiano', 'de': 'Alemão', 'ja': 'Japonês', 'ko': 'Coreano',
+        'zh': 'Chinês', 'ru': 'Russo', 'pl': 'Polonês', 'ar': 'Árabe', 'id': 'Indonésio',
+        'tr': 'Turco', 'vi': 'Vietnamita', 'sr': 'Sérvio', 'ro': 'Romeno', 'nl': 'Holandês', 'sv': 'Sueco'
+    };
+    function normLang(l) {
+        if (!l) return 'other';
+        const s = String(l).toLowerCase().replace('_', '-').trim();
+        if (s === 'pt-br' || s === 'pob' || s === 'br' || s.includes('brasil')) return 'pt-BR';
+        if (s === 'pt' || s === 'por' || s.startsWith('portug')) return 'pt';
+        if (s === 'en' || s === 'eng' || s === 'us' || s.startsWith('ingl')) return 'en';
+        if (s === 'es' || s === 'spa' || s === 'spl' || s === 'cat' || s === 'ca' || s.startsWith('espan')) return 'es';
+        if (s === 'fr' || s === 'fre' || s === 'fra' || s.startsWith('franc')) return 'fr';
+        if (s === 'it' || s === 'ita' || s.startsWith('ital')) return 'it';
+        if (s === 'de' || s === 'ger' || s === 'deu' || s.startsWith('alem')) return 'de';
+        if (s === 'ja' || s === 'jpn' || s === 'jp' || s.startsWith('japon')) return 'ja';
+        if (s === 'ko' || s === 'kor' || s === 'kr' || s.startsWith('core')) return 'ko';
+        if (s === 'zh' || s === 'chi' || s === 'zho' || s === 'zht' || s === 'cn' || s.startsWith('chin')) return 'zh';
+        if (s === 'ru' || s === 'rus' || s.startsWith('russ')) return 'ru';
+        if (s === 'pl' || s === 'pol' || s.startsWith('polon')) return 'pl';
+        if (s === 'ar' || s === 'ara' || s.startsWith('árab') || s.startsWith('arab')) return 'ar';
+        if (s === 'id' || s === 'ind' || s.startsWith('indon')) return 'id';
+        if (s === 'tr' || s === 'tur' || s.startsWith('turc')) return 'tr';
+        if (s === 'vi' || s === 'vie' || s.startsWith('viet')) return 'vi';
+        if (s === 'sr' || s === 'srp' || s.startsWith('sérv') || s.startsWith('serv')) return 'sr';
+        if (s === 'ro' || s === 'ron' || s.startsWith('romen')) return 'ro';
+        if (s === 'nl' || s === 'nld' || s === 'dut' || s.startsWith('holan')) return 'nl';
+        if (s === 'sv' || s === 'swe' || s.startsWith('suec')) return 'sv';
+        return s;
+    }
+
     if (isDrilldown) {
-        const groupSubs = subtitles.filter(s => s.lang === session.activeLangDrilldown);
+        const groupSubs = subtitles.filter(s => normLang(s.lang) === session.activeLangDrilldown);
+        // Native tracks first in drilldown list
+        groupSubs.sort((a, b) => (b.isNative ? 1 : 0) - (a.isNative ? 1 : 0));
         groupSubs.forEach((sub, idx) => {
-            const isSelected = activeUrl === sub.url;
-            const releaseLabel = sub.release || `Versão ${idx + 1}`;
+            const isSelected = activeUrl === (sub.url || sub.file);
+            const releaseLabel = sub.isNative
+                ? `${sub.label || 'Original da Fonte'}`
+                : (sub.release || `Versão ${idx + 1}`);
             html += `
-            <div class="tvz-sub-item ${isSelected ? 'is-selected' : ''}" data-url="${escapeAttr(sub.url)}" data-lang="${escapeAttr(sub.lang)}">
+            <div class="tvz-sub-item ${isSelected ? 'is-selected' : ''}" data-url="${escapeAttr(sub.url || sub.file)}" data-lang="${escapeAttr(sub.lang)}">
                 <div class="tvz-sub-item-left">
                     <span class="tvz-sub-item-text">${escapeHtml(releaseLabel)}</span>
+                    ${sub.isNative ? '<span class="tvz-sub-badge">Original da Fonte</span>' : ''}
                 </div>
                 ${isSelected ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
             </div>`;
@@ -3418,44 +3461,44 @@ function renderSubtitlesFlyout(session) {
             ${isOff ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
         </div>`;
 
-        // Native tracks first
-        const nativeTracks = subtitles.filter(s => s.isNative);
-        nativeTracks.forEach(sub => {
-            const isSelected = activeUrl === (sub.url || sub.file);
-            html += `
-            <div class="tvz-sub-item ${isSelected ? 'is-selected' : ''}" data-url="${escapeAttr(sub.url || sub.file)}" data-lang="${escapeAttr(sub.lang || '')}">
-                <div class="tvz-sub-item-left">
-                    ${getFlagSvg(sub.lang)}
-                    <span class="tvz-sub-item-text">${escapeHtml(sub.label || 'Português (Brasil)')}</span>
-                    <span class="tvz-sub-badge">Original da Fonte</span>
-                </div>
-                ${isSelected ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
-            </div>`;
-        });
-
-        // External tracks grouped by language
-        const externalTracks = subtitles.filter(s => !s.isNative);
+        // Unified Language Grouping: merges native + external tracks by language
         const langGroups = new Map();
-        externalTracks.forEach(sub => {
-            const key = sub.lang || 'other';
-            if (!langGroups.has(key)) {
-                langGroups.set(key, { label: sub.label || key.toUpperCase(), items: [] });
+        subtitles.forEach(sub => {
+            const langKey = normLang(sub.lang);
+            if (!langGroups.has(langKey)) {
+                langGroups.set(langKey, {
+                    langKey,
+                    label: LANG_NAMES[langKey] || sub.label || langKey.toUpperCase(),
+                    items: []
+                });
             }
-            langGroups.get(key).items.push(sub);
+            langGroups.get(langKey).items.push(sub);
         });
 
-        langGroups.forEach((group, langKey) => {
+        // Sorted by canonical priority
+        const sortedLangKeys = Array.from(langGroups.keys()).sort((a, b) => {
+            const pA = LANG_PRIORITIES[a] || 99;
+            const pB = LANG_PRIORITIES[b] || 99;
+            return pA - pB;
+        });
+
+        sortedLangKeys.forEach(langKey => {
+            const group = langGroups.get(langKey);
             const items = group.items;
-            const hasActiveInGroup = items.some(s => s.url === activeUrl);
+            // Native tracks on top of each group
+            items.sort((a, b) => (b.isNative ? 1 : 0) - (a.isNative ? 1 : 0));
+            const hasActiveInGroup = items.some(s => (s.url || s.file) === activeUrl);
+            const activeSubInGroup = items.find(s => (s.url || s.file) === activeUrl);
 
             if (items.length === 1) {
                 const sub = items[0];
-                const isSelected = activeUrl === sub.url;
+                const isSelected = activeUrl === (sub.url || sub.file);
                 html += `
-                <div class="tvz-sub-item ${isSelected ? 'is-selected' : ''}" data-url="${escapeAttr(sub.url)}" data-lang="${escapeAttr(sub.lang)}">
+                <div class="tvz-sub-item ${isSelected ? 'is-selected' : ''}" data-url="${escapeAttr(sub.url || sub.file)}" data-lang="${escapeAttr(sub.lang)}">
                     <div class="tvz-sub-item-left">
                         ${getFlagSvg(langKey)}
                         <span class="tvz-sub-item-text">${escapeHtml(group.label)}</span>
+                        ${sub.isNative ? '<span class="tvz-sub-badge">Original da Fonte</span>' : ''}
                     </div>
                     ${isSelected ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
                 </div>`;
@@ -3465,6 +3508,7 @@ function renderSubtitlesFlyout(session) {
                     <div class="tvz-sub-item-left">
                         ${getFlagSvg(langKey)}
                         <span class="tvz-sub-item-text">${escapeHtml(group.label)}</span>
+                        ${activeSubInGroup && activeSubInGroup.isNative ? '<span class="tvz-sub-badge">Original da Fonte</span>' : ''}
                     </div>
                     <span class="tvz-sub-count">${items.length}</span>
                     <span class="tvz-sub-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
@@ -3489,7 +3533,6 @@ function renderSubtitlesFlyout(session) {
             </div>`;
         }
     }
-
     html += '</div>';
 
     // File Upload Row (only on main view)
