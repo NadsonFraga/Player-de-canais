@@ -1269,6 +1269,26 @@ TMDB_ALLOWED_PATH = re.compile(r"^/(movie|tv|discover|trending|search|genre|coll
 TMDB_CACHE = {}
 TMDB_CACHE_TTL_S = 1800
 
+# ---------- Subtitle search & proxy (/api/subtitles)
+SUBTITLE_CACHE = {}
+SUBTITLE_CACHE_TTL_S = 14400
+SUBTITLE_LANG_MAP = {
+    "pob": {"code": "pt-BR", "label": "Português (Brasil)", "flag": "br", "priority": 1},
+    "por": {"code": "pt", "label": "Português", "flag": "pt", "priority": 2},
+    "eng": {"code": "en", "label": "Inglês", "flag": "us", "priority": 3},
+    "spa": {"code": "es", "label": "Espanhol", "flag": "es", "priority": 4},
+    "fre": {"code": "fr", "label": "Francês", "flag": "fr", "priority": 5},
+    "fra": {"code": "fr", "label": "Francês", "flag": "fr", "priority": 5},
+    "ita": {"code": "it", "label": "Italiano", "flag": "it", "priority": 6},
+    "ger": {"code": "de", "label": "Alemão", "flag": "de", "priority": 7},
+    "deu": {"code": "de", "label": "Alemão", "flag": "de", "priority": 7},
+    "jpn": {"code": "ja", "label": "Japonês", "flag": "jp", "priority": 8},
+    "kor": {"code": "ko", "label": "Coreano", "flag": "kr", "priority": 9},
+    "chi": {"code": "zh", "label": "Chinês", "flag": "cn", "priority": 10},
+    "zho": {"code": "zh", "label": "Chinês", "flag": "cn", "priority": 10},
+    "rus": {"code": "ru", "label": "Russo", "flag": "ru", "priority": 11},
+}
+
 
 def tmdb_target(path, key):
     """The TMDB address for `path`, or None when the path is not an allowed read."""
@@ -1335,6 +1355,37 @@ def clean_vtt(text):
             line = re.sub(r"(?<!<[ibu])(?<!</[ibu])>", "&gt;", line)
         lines.append(line)
     return "\n".join(lines)
+
+
+def srt_to_vtt(text):
+    """Converts SubRip (.srt) subtitle text to standard WebVTT format and sanitizes tags."""
+    if not text:
+        return "WEBVTT\n\n"
+    s = text.lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+    if s.strip().startswith("WEBVTT"):
+        return clean_vtt(s)
+    s = re.sub(r"(\d{1,2}:\d{2}:\d{2}),(\d{3})\s*-->\s*(\d{1,2}:\d{2}:\d{2}),(\d{3})", r"\1.\2 --> \3.\4", s)
+    return "WEBVTT\n\n" + clean_vtt(s)
+
+
+def is_safe_subtitle_url(url_str):
+    """Checks whether an outbound subtitle URL is safe to fetch (anti-SSRF guard)."""
+    try:
+        parsed = urllib.parse.urlsplit(url_str or "")
+        if parsed.scheme not in ("http", "https"):
+            return False
+        host = (parsed.hostname or "").lower()
+        if host in ("localhost", "127.0.0.1", "::1"):
+            return False
+        if re.match(r"^192\.168\.\d{1,3}\.\d{1,3}$", host):
+            return False
+        if re.match(r"^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$", host):
+            return False
+        if re.match(r"^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$", host):
+            return False
+        return True
+    except Exception:
+        return False
 
 
 def read_capped(resp):
@@ -1585,7 +1636,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         parsed = urllib.parse.urlparse(self.path)
         origin = self.headers.get("Origin")
-        restricted = parsed.path in ("/api/resolve", "/api/tmdb")
+        restricted = parsed.path in ("/api/resolve", "/api/tmdb", "/api/subtitles")
         if restricted and not is_allowed_origin(origin):
             self.send_response(403)
             self.end_headers()
@@ -1635,7 +1686,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             if not path.startswith("/api/") and is_blocked_path(self.path.split("?", 1)[0]):
                 self.send_not_found()
                 return
-            if path in ("/api/resolve", "/api/tmdb"):
+            if path in ("/api/resolve", "/api/tmdb", "/api/subtitles"):
                 wait = api_ip_blocked_for(self.client_address[0] if self.client_address else "")
                 if wait:
                     self.send_response(429)
@@ -1655,6 +1706,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.handle_resolve(params, origin=origin)
             elif path == "/api/tmdb":
                 self.handle_tmdb(params, origin=self.headers.get("Origin"))
+            elif path == "/api/subtitles":
+                self.handle_subtitles(params, origin=self.headers.get("Origin"))
             elif path.startswith("/api/account/"):
                 self.handle_account("GET", path)
             elif path == "/api/sync":
@@ -1834,6 +1887,119 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json(e.code, e.read() or b"{}", origin)
         except Exception:
             self.send_json(502, {"error": "tmdb_unreachable"}, origin)
+
+    def handle_subtitles(self, params, origin=None):
+        """/api/subtitles: Multi-source subtitle search & WebVTT conversion proxy."""
+        if not is_allowed_origin(origin):
+            self.send_response(403)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b'{"error":"origin_forbidden"}')
+            return
+
+        action = (params.get("action") or [""])[0]
+
+        # Proxy action
+        if action == "proxy":
+            target_url = (params.get("url") or [""])[0]
+            if not target_url or not is_safe_subtitle_url(target_url):
+                self.send_json(400, {"error": "invalid_url"}, origin)
+                return
+            try:
+                req = urllib.request.Request(target_url, headers={"User-Agent": USER_AGENT})
+                with urllib.request.urlopen(req, timeout=15) as res:
+                    raw_data = res.read(2 * 1024 * 1024 + 1)
+                if len(raw_data) > 2 * 1024 * 1024:
+                    self.send_json(502, {"error": "subtitle_too_large"}, origin)
+                    return
+                text = raw_data.decode("utf-8", errors="replace")
+                vtt_text = srt_to_vtt(text)
+                body = vtt_text.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/vtt; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.send_header("X-Content-Type-Options", "nosniff")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except Exception as e:
+                self.send_json(502, {"error": "upstream_unreachable"}, origin)
+                return
+
+        # Search action
+        raw_type = (params.get("type") or ["movie"])[0].lower()
+        media_type = "series" if raw_type in ("tv", "anime", "series") else "movie"
+        imdb_id = (params.get("imdb_id") or [""])[0]
+        tmdb_id = (params.get("tmdb_id") or params.get("id") or [""])[0]
+        try:
+            season = int((params.get("season") or ["1"])[0])
+        except (ValueError, TypeError):
+            season = 1
+        try:
+            episode = int((params.get("episode") or ["1"])[0])
+        except (ValueError, TypeError):
+            episode = 1
+
+        if (not imdb_id or not imdb_id.startswith("tt")) and tmdb_id:
+            imdb_id = fetch_imdb_id(tmdb_id, "serie" if media_type == "series" else "movie") or ""
+
+        if not imdb_id or not imdb_id.startswith("tt"):
+            self.send_json(200, {"imdb_id": None, "subtitles": []}, origin)
+            return
+
+        cache_key = f"movie:{imdb_id}" if media_type == "movie" else f"series:{imdb_id}:{season}:{episode}"
+        cached = SUBTITLE_CACHE.get(cache_key)
+        if cached and time.time() - cached[0] < SUBTITLE_CACHE_TTL_S:
+            self.send_json(200, cached[1], origin)
+            return
+
+        stremio_url = (
+            f"https://opensubtitles-v3.strem.io/subtitles/movie/{imdb_id}.json"
+            if media_type == "movie"
+            else f"https://opensubtitles-v3.strem.io/subtitles/series/{imdb_id}:{season}:{episode}.json"
+        )
+
+        try:
+            req = urllib.request.Request(stremio_url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=12) as res:
+                data = json.loads(res.read().decode("utf-8", errors="replace"))
+
+            raw_list = data.get("subtitles") if isinstance(data, dict) and isinstance(data.get("subtitles"), list) else []
+            processed = []
+            for idx, sub in enumerate(raw_list):
+                raw_lang = str(sub.get("lang") or "").lower()
+                info = SUBTITLE_LANG_MAP.get(raw_lang, {
+                    "code": raw_lang,
+                    "label": str(sub.get("lang") or "Outro").upper(),
+                    "flag": "other",
+                    "priority": 99,
+                })
+
+                release = (sub.get("releaseGroup") or sub.get("releaseFormat") or sub.get("movieReleaseName") or sub.get("subtitleFileName") or "")
+                release = re.sub(r"\.srt$", "", release, flags=re.I).strip()
+
+                sub_url = sub.get("url") or ""
+                processed.append({
+                    "id": str(sub.get("id") or idx),
+                    "lang": info["code"],
+                    "label": info["label"],
+                    "flag": info["flag"],
+                    "priority": info["priority"],
+                    "release": release or info["label"],
+                    "fileName": sub.get("subtitleFileName") or "",
+                    "format": "vtt",
+                    "url": f"/api/subtitles?action=proxy&url={urllib.parse.quote(sub_url)}",
+                    "direct_url": sub_url,
+                })
+
+            processed.sort(key=lambda s: s["priority"])
+            payload = {"imdb_id": imdb_id, "subtitles": processed}
+            SUBTITLE_CACHE[cache_key] = (time.time(), payload)
+            self.send_json(200, payload, origin)
+        except Exception as e:
+            self.send_json(200, {"imdb_id": imdb_id, "subtitles": []}, origin)
 
     def handle_resolve(self, params, origin=None):
         host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
