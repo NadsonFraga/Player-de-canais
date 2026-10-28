@@ -1157,6 +1157,20 @@ function calculateItemScore(cand, baseScore, cleanSname, season, titleKeys = [],
     if (matches > 0) {
       pts += (matches * 25);
     }
+
+    // Check Part mismatch: if cleanSname explicitly specifies a part ("Part 1")
+    // and candidate title specifies a different part ("Part 2"), heavy mismatch penalty (-80 pts)
+    const reqPart = cleanSname.match(/\bpart\s*(\d+)\b/i);
+    const candPart = cName.match(/\bpart\s*(\d+)\b/i);
+    if (reqPart && candPart) {
+      if (parseInt(reqPart[1], 10) !== parseInt(candPart[1], 10)) {
+        pts -= 80;
+      }
+    } else if (reqPart && !candPart && parseInt(reqPart[1], 10) === 1) {
+      pts += 20;
+    } else if (!reqPart && candPart && parseInt(candPart[1], 10) > 1) {
+      pts -= 40;
+    }
   }
 
   // Remakes share one title ("Hunter x Hunter" 1999 vs 2011): the show's first air year picks the right
@@ -1637,8 +1651,14 @@ export async function onRequestGet(context) {
 
     let mgebData = await timed("mgeb", lookupMgeb(season, episode));
     let mgebEpisode = { season, episode };
-    const hasSources = (d) => Boolean(d && d.sources && d.sources.length > 0);
-    // MGEB answered for another episode or has zero sources: the show may be split into parts on MGEB
+    const hasSources = (d) => Boolean(
+      d && d.sources && d.sources.length > 0 &&
+      d.sources.some(s => {
+        const f = (s.file || "").toLowerCase();
+        return !f.includes("streamtape") && !f.includes("tapecontent");
+      })
+    );
+    // MGEB answered for another episode, has zero sources, or only dead Streamtape: the show may be split into parts on MGEB
     if ((!hasSources(mgebData) || mgebEpisodeMismatch) && tmdbId && mgebType === "serie") {
       const mapped = mapMergedEpisode(await timed("groups", fetchSeasonGroups(tmdbId)), season, episode);
       if (mapped && (mapped.season !== season || mapped.episode !== episode)) {
@@ -1647,6 +1667,15 @@ export async function onRequestGet(context) {
           mgebData = mgebData2;
           mgebEpisode = mapped;
         }
+      }
+    }
+    const displaySeason = parseInt(urlObj.searchParams.get("display_season"), 10);
+    const displayEpisode = parseInt(urlObj.searchParams.get("display_episode"), 10);
+    if ((!hasSources(mgebData) || mgebEpisodeMismatch) && displaySeason && displayEpisode && (displaySeason !== season || displayEpisode !== episode) && mgebType === "serie") {
+      const mgebData3 = await timed("mgeb_display", lookupMgeb(displaySeason, displayEpisode));
+      if (hasSources(mgebData3)) {
+        mgebData = mgebData3;
+        mgebEpisode = { season: displaySeason, episode: displayEpisode };
       }
     }
 

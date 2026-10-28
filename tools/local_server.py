@@ -1136,6 +1136,18 @@ def lookup_mal_candidates(title: str, original_title: str = "", season: int = 1,
             if matches:
                 pts += (matches * 25)
 
+            # Check Part mismatch: if clean_sname explicitly specifies a part ("Part 1")
+            # and candidate title specifies a different part ("Part 2"), heavy mismatch penalty (-80 pts)
+            req_part = re.search(r'\bpart\s*(\d+)\b', clean_sname, re.I)
+            cand_part = re.search(r'\bpart\s*(\d+)\b', c_name, re.I)
+            if req_part and cand_part:
+                if int(req_part.group(1)) != int(cand_part.group(1)):
+                    pts -= 80
+            elif req_part and not cand_part and int(req_part.group(1)) == 1:
+                pts += 20
+            elif not req_part and cand_part and int(cand_part.group(1)) > 1:
+                pts -= 40
+
         # Remakes share one title ("Hunter x Hunter" 1999 vs 2011): the show's first air year picks the right
         # entry. Only season 1 is compared, later seasons start years after the show's first air date.
         start_year = str(payload.get("start_year", "")).strip()
@@ -2081,15 +2093,27 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
             mgeb_data = timed("mgeb", lookup_mgeb, season, episode)
             mgeb_episode = (season, episode)
-            has_sources = bool(mgeb_data and mgeb_data.get("sources"))
-            # MGEB answered for another episode or has zero sources: the show may be split into parts on MGEB
+            def is_playable_mgeb_source(s):
+                f = (s.get("file") or "").lower()
+                return not ("streamtape" in f or "tapecontent" in f)
+
+            has_sources = bool(mgeb_data and mgeb_data.get("sources") and any(is_playable_mgeb_source(s) for s in mgeb_data["sources"]))
+            # MGEB answered for another episode, has zero sources, or only dead Streamtape: the show may be split into parts on MGEB
             if (not has_sources or mgeb_episode_mismatch[0]) and tmdb_id and mgeb_type == "serie":
                 mapped = map_merged_episode(timed("groups", fetch_season_groups, str(tmdb_id)), season, episode)
                 if mapped and mapped != (season, episode):
                     mgeb_data2 = timed("mgeb2", lookup_mgeb, *mapped)
-                    if mgeb_data2 and mgeb_data2.get("sources"):
+                    if mgeb_data2 and mgeb_data2.get("sources") and any(is_playable_mgeb_source(s) for s in mgeb_data2["sources"]):
                         mgeb_data = mgeb_data2
                         mgeb_episode = mapped
+
+            display_season = int(params.get("display_season")[0]) if params.get("display_season") else None
+            display_episode = int(params.get("display_episode")[0]) if params.get("display_episode") else None
+            if (not has_sources or mgeb_episode_mismatch[0]) and display_season and display_episode and (display_season, display_episode) != (season, episode) and mgeb_type == "serie":
+                mgeb_data3 = timed("mgeb_display", lookup_mgeb, display_season, display_episode)
+                if mgeb_data3 and mgeb_data3.get("sources") and any(is_playable_mgeb_source(s) for s in mgeb_data3["sources"]):
+                    mgeb_data = mgeb_data3
+                    mgeb_episode = (display_season, display_episode)
 
             if mgeb_data and mgeb_data.get("sources"):
                 raw_sources = mgeb_data["sources"]
