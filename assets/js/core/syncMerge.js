@@ -149,6 +149,15 @@ export function sanitizeRecord(kind, key, data, now) {
             fit: data.fit === 'cover' ? 'cover' : 'contain',
             at: time(data.at, now)
         };
+        if (data.subtitle_size !== undefined) {
+            clean.subtitle_size = int(data.subtitle_size, 50, 200) ?? 100;
+        }
+        if (data.subtitle_color !== undefined) {
+            clean.subtitle_color = ['#ffffff', '#facc15', '#22d3ee', '#4ade80'].includes(data.subtitle_color) ? data.subtitle_color : '#ffffff';
+        }
+        if (data.subtitle_bg !== undefined) {
+            clean.subtitle_bg = data.subtitle_bg === 'box' ? 'box' : 'shadow';
+        }
     } else {
         clean = { team: data.team == null ? null : text(String(data.team), 40) || null, at: time(data.at, now) };
     }

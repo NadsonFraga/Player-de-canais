@@ -214,6 +214,12 @@ def sanitize_record(kind, key, data, now):
             "fit": "cover" if data.get("fit") == "cover" else "contain",
             "at": _time(_g(data, "at"), now),
         }
+        if "subtitle_size" in data:
+            clean["subtitle_size"] = _or(_int(_g(data, "subtitle_size"), 50, 200), 100)
+        if "subtitle_color" in data:
+            clean["subtitle_color"] = data.get("subtitle_color") if data.get("subtitle_color") in ("#ffffff", "#facc15", "#22d3ee", "#4ade80") else "#ffffff"
+        if "subtitle_bg" in data:
+            clean["subtitle_bg"] = "box" if data.get("subtitle_bg") == "box" else "shadow"
     else:
         team = data.get("team")
         clean = {"team": None if team is None else (_text(_js_string(team), 40) or None), "at": _time(_g(data, "at"), now)}
