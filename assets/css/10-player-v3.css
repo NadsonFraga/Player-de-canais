@@ -876,28 +876,42 @@
 .art-video-player .art-control-subtitle-btn {
     position: relative;
     cursor: pointer;
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
     color: rgba(255, 255, 255, 0.85);
     transition: color 0.15s ease, transform 0.1s ease;
-    padding: 0 6px;
+    padding: 0 6px !important;
     height: 100%;
 }
 
 .art-video-player .art-control-subtitle-btn:hover {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 .art-video-player .art-control-subtitle-btn.is-active {
     color: #22c55e !important;
 }
 
-.art-video-player .art-control-subtitle-btn svg {
-    width: 22px;
-    height: 22px;
+.art-video-player .art-control-subtitle-btn svg,
+.art-video-player .art-control-subtitle-btn svg * {
     fill: none !important;
     stroke: currentColor !important;
+}
+
+@keyframes tvz-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.tvz-sub-spinner {
+    animation: tvz-spin 1s linear infinite;
+    display: inline-block;
 }
 
 /* Subtitle Glassmorphism Flyout Panel */
