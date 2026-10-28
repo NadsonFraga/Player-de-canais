@@ -9,7 +9,7 @@ const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
  * 1. FENIXFLIX (PT-BR Dublado Native Stream Aggregator)
  * ============================================================ */
 export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode = 1, audio = "dubbed" }) {
-  const isSeries = type === "series" || type === "serie" || type === "tv";
+  const isSeries = type === "series" || type === "serie" || type === "tv" || type === "anime";
   const queryId = (imdbId && imdbId.startsWith("tt")) ? imdbId : (id && String(id).startsWith("tmdb:") ? id : `tmdb:${id}`);
   const endpoint = isSeries
     ? `https://fenixflix.fenixhub.online/stream/series/${queryId}:${season}:${episode}.json`

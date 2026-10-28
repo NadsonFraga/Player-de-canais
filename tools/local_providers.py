@@ -12,7 +12,7 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 # 1. FENIXFLIX
 def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="dubbed"):
-    is_series = media_type in ("series", "serie", "tv")
+    is_series = media_type in ("series", "serie", "tv", "anime")
     query_id = imdb_id if (imdb_id and imdb_id.startswith("tt")) else (media_id if str(media_id).startswith("tmdb:") else f"tmdb:{media_id}")
     url = f"https://fenixflix.fenixhub.online/stream/series/{query_id}:{season}:{episode}.json" if is_series else f"https://fenixflix.fenixhub.online/stream/movie/{query_id}.json"
 

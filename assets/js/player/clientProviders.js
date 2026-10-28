@@ -6,7 +6,7 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1035';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1125';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -78,7 +78,7 @@ export async function signStreamUrlsBatch(items) {
  * ============================================================ */
 
 export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', season = 1, episode = 1, audio = 'dubbed', title = '' }) {
-  const isSeries = type === 'series' || type === 'serie' || type === 'tv';
+  const isSeries = type === 'series' || type === 'serie' || type === 'tv' || type === 'anime';
   const queryId = (imdbId && imdbId.startsWith('tt')) ? imdbId : (id && String(id).startsWith('tmdb:') ? id : `tmdb:${id}`);
   const endpoint = isSeries
     ? `https://fenixflix.fenixhub.online/stream/series/${queryId}:${season}:${episode}.json`
@@ -358,7 +358,7 @@ export async function resolveMovyClient({ id, type = 'movie', season = 1, episod
     return { success: false, error: 'Movy requer ID numérico do TMDB', provider: 'movy', reason: 'invalid_id' };
   }
 
-  const isSeries = type === 'series' || type === 'serie' || type === 'tv';
+  const isSeries = type === 'series' || type === 'serie' || type === 'tv' || type === 'anime';
   const mediaType = isSeries ? 'tv' : 'movie';
   const headers = {
     'Origin': 'https://www.movy.sx',

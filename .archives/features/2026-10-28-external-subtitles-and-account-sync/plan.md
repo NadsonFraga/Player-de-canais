@@ -1,4 +1,4 @@
-# Feature Plan: External Subtitles, Account Preferences & Playback Continuity
+# Feature Plan: Automated Multi-Source Subtitles, Dedicated Player Panel & Account Sync
 
 **Slug:** `external-subtitles-and-account-sync`  
 **Date:** 2026-10-28  
@@ -7,215 +7,147 @@
 
 ---
 
-## 1. Executive Summary & Scope
+## 1. Context & Architectural Overview
 
-### 1.1 Goals
-1. **External Subtitle Ingestion (.srt, .vtt, .ass):** Enable users to upload or drag-and-drop external subtitle files directly into the native Artplayer on desktop, mobile, and TV.
-2. **Account & Profile Preferences Sync:** Make subtitle appearance (font size, font color, background shadow/card, fallback encoding) a first-class citizen in the site settings (`settingsPage.js`), fully persisted per profile and synchronized across devices via the Cloudflare account sync engine (`playerPrefs.js`, `sync.js`, `syncMerge.js`).
-3. **Playback Continuity & Per-Title Offset:** Remember subtitle synchronization adjustments (delay/advance) per title and episode in `watchProgress`, and persist active external subtitle files in local `IndexedDB` so refreshing or resuming retains the loaded subtitle and its precise sync timing.
-4. **Architectural Red Lines:** Zero bundlers, native ES modules only, zero emojis (strictly inline SVG line icons), mobile-touch compatibility without fullscreen disruption, and zero performance regression on stream startup.
-
----
-
-## 2. Technical Architecture & Component Design
-
-```
-+-----------------------------------------------------------------------------------+
-|                              SITE SETTINGS & ACCOUNT                              |
-| assets/js/modules/settingsPage.js  <-->  assets/js/core/playerPrefs.js            |
-| (Size, Color, Background, Fallback Encoding)        ^                             |
-|                                                     | Sincronização               |
-|                                                     v                             |
-| assets/js/core/sync.js  <-------------------->  assets/js/core/syncMerge.js       |
-+-----------------------------------------------------------------------------------+
-                                                      |
-                                                      v
-+-----------------------------------------------------------------------------------+
-|                                 ARTPLAYER ENGINE                                  |
-| assets/js/player/engine.js                                                        |
-|   +--------------------------+  +------------------------+  +-------------------+ |
-|   | Subtitle Menu & Selector |  | Subtitle Offset Sync   |  | Custom Styling    | |
-|   | (Native + External Tracks|  | (±60s, 0.1s/0.5s step) |  | (CSS Variables /  | |
-|   |  + "Carregar arquivo")   |  | Persisted per title    |  |  Artplayer style) | |
-|   +--------------------------+  +------------------------+  +-------------------+ |
-|                 ^                                                                 |
-|                 |                                                                 |
-|   +-----------------------------------------------------------------------------+ |
-|   | Local Ingestion: <input type="file"> / Drag & Drop                          | |
-|   | Encoding Guard: TextDecoder (UTF-8 auto-fallback to Windows-1252 / Latin-1) | |
-|   | Parser: Artplayer.utils.srtToVtt / assToVtt -> Blob URL                      | |
-|   | Cache: IndexedDB 'tvz_subtitles' (recent titles auto-restore)               | |
-|   +-----------------------------------------------------------------------------+ |
-+-----------------------------------------------------------------------------------+
-```
+The user clarified the vision for external subtitles based on modern top-tier streaming players (e.g. Cinejoy / modern video players):
+1. **Automated Search & Multi-Release Aggregation:** Subtitles are fetched **automatically** from online providers (OpenSubtitles / Stremio API) using TMDB / IMDb IDs, season, and episode. No manual user effort required.
+2. **Prioritization of Native/Embedded Subtitles over External Subtitles:**
+   - When a video source already delivers a native/embedded subtitle track (e.g. ZokoAnime or direct streams with embedded WebVTT in Portuguese):
+     - The **native track is prioritized** by default because its synchronization is 100% frame-perfect with that specific video cut.
+     - In the subtitle selection menu, the native track is pinned at the top and marked clearly as `Português (Brasil) (Original da Fonte)`.
+     - The external options from OpenSubtitles (`Versão 1 - OpenSubtitles`, `Versão 2`, etc.) are also listed right below it, giving users the freedom to switch if they prefer a different translation or font formatting.
+   - When the stream has NO native subtitles (e.g. MGEB movie in original audio, or series without embedded tracks), the highest-rated external Portuguese subtitle is auto-selected by default.
+3. **Multiple Releases Per Language:** Providers like OpenSubtitles return multiple subtitle releases per language (different translation quality, sync profiles, release groups). The system picks the best one by default, but allows users to click into the language and switch between releases (e.g., Release 1, Release 2, Hearing Impaired).
+4. **Dedicated Control Bar Button & Glassmorphism Panel:** 
+   - A dedicated **Subtitles button** (`Closed Captions` SVG icon) placed on the bottom player control bar, immediately adjacent to the Settings gear (`⚙`).
+   - Clicking it opens a dedicated Subtitles Flyout Panel with:
+     - Header: "Legendas" + "Customizar" button (navigates to styling & sync panel).
+     - "Desativada" toggle.
+     - "Enviar arquivo de legenda" (subtle contingency upload option).
+     - "Sincronizar legenda >" shortcut.
+     - Primary languages with release counters: `[Bandeira BR] Português` (e.g. `3 >`), `[Bandeira US] Inglês` (e.g. `11 >`).
+     - "Mais idiomas..." / Search filter (Spanish, French, Japanese, etc.).
+     - Clicking a language expands the available releases.
+5. **Auto-Activation Rule:**
+   - When playing non-PT-BR audio (such as Japanese anime in Player Animes, or subbed movies/series), the best available **Português (Brasil)** subtitle (native first, then external) is auto-selected and displayed immediately on playback start.
+   - Respects user preferences in the site's Account Settings (`settingsPage.js`): users can turn it off by default or set a different preferred language.
+6. **In-Player Customization & Sync Panel:**
+   - **Subtitle Delay:** Slider and quick micro-steppers (`< Ouviu áudio` / `> Viu legenda` / `Zerar`), saved per title in `watchProgress`.
+   - **Styling:** Font size (75%-150%), font colors (White, Yellow, Cyan, Green), and background contrast (Drop Shadow vs Translucent Box), synced to account preferences via `playerPrefs.js`.
+7. **Zero-Emoji Compliance with Authentic Vector Flags:**
+   - Unicode emoji flags (e.g. 🇧🇷) are strictly forbidden because they break into letters on Windows Desktop ("BR", "US"), vary wildly across platforms, and violate the project's visual integrity.
+   - Instead, we implement **authentic vector SVG flags** (Brazil, United States, Spain, Japan, France, etc.) sized at `20x14px` with subtle `border-radius: 2px`.
+   - SVG flag paths are protected from Artplayer's global white fill CSS override via dedicated `.tvz-sub-flag` rules, guaranteeing pixel-perfect color reproduction on Windows, Android, iOS, and Smart TVs.
 
 ---
 
-## 3. Detailed Technical Specifications
+## 2. Component Architecture & Data Flow
 
-### A. Account & Profile Sync Specification
-
-#### 1. Schema Extensions in `assets/js/core/playerPrefs.js`
-Extend `PLAYER_PREF_DEFAULTS`:
-```javascript
-export const PLAYER_PREF_DEFAULTS = Object.freeze({
-    volume: 0.9,
-    muted: false,
-    playbackRate: 1,
-    subtitle: null,             // 'pt-BR' | 'pt' | 'en' | 'off' | null
-    quality: 'auto',
-    quality_mode: 'balanced',
-    fit: 'contain',
-    // --- Subtitle Preferences (Account & Profile Synced) ---
-    sub_size: '100%',           // '75%' | '100%' | '125%' | '150%'
-    sub_color: '#ffffff',       // '#ffffff' (White) | '#ffeb3b' (Yellow) | '#00e5ff' (Cyan)
-    sub_bg: 'shadow',           // 'shadow' (None/Drop shadow) | 'semi' (Translucent black) | 'solid' (Solid black)
-    sub_encoding: 'auto'        // 'auto' (UTF-8 with Latin-1 fallback) | 'utf-8' | 'windows-1252'
-});
 ```
-
-#### 2. Sanitization & Merging in `assets/js/core/syncMerge.js`
-Ensure incoming cloud records sanitize new subtitle fields:
-```javascript
-clean = {
-    volume: num(data.volume, 0, 1) ?? 0.9,
-    muted: Boolean(data.muted),
-    playbackRate: num(data.playbackRate, 0.25, 4) ?? 1,
-    subtitle: data.subtitle == null ? null : text(String(data.subtitle), 10),
-    quality: data.quality === 'auto' ? 'auto' : (int(data.quality, 100, 5000) ?? 'auto'),
-    quality_mode: data.quality_mode === 'highest' ? 'highest' : 'balanced',
-    fit: data.fit === 'cover' ? 'cover' : 'contain',
-    sub_size: ['75%', '100%', '125%', '150%'].includes(data.sub_size) ? data.sub_size : '100%',
-    sub_color: ['#ffffff', '#ffeb3b', '#00e5ff'].includes(data.sub_color) ? data.sub_color : '#ffffff',
-    sub_bg: ['shadow', 'semi', 'solid'].includes(data.sub_bg) ? data.sub_bg : 'shadow',
-    sub_encoding: ['auto', 'utf-8', 'windows-1252'].includes(data.sub_encoding) ? data.sub_encoding : 'auto',
-    at: time(data.at, now)
-};
++-----------------------------------------------------------------------------------------+
+|                                    BACKEND RESOLUTION                                   |
+| /api/subtitles?tmdb_id=...&imdb_id=...&season=...&episode=...&type=movie|series         |
+|   (Cloudflare Pages Function & tools/local_server.py parity)                            |
+|   + Queries OpenSubtitles / Stremio Addon API                                           |
+|   + Groups by Language: pt-br (pob/por), en (eng), other                                |
+|   + Caches responses in memory / Cloudflare Cache API (24h TTL)                         |
++-----------------------------------------------------------------------------------------+
+                                           |
+                                           v
++-----------------------------------------------------------------------------------------+
+|                                  ARTPLAYER INTEGRATION                                  |
+| assets/js/player/engine.js                                                              |
+|                                                                                         |
+|  [Bottom Bar]                                                                           |
+|  Play/Pause | Timeline | ... | [CC Subtitles Button] | [⚙ Settings] | [Fullscreen]      |
+|                                     |                                                   |
+|                                     v (Opens Flyout Panel)                              |
+|  +-----------------------------------------------------------------------------------+  |
+|  | Subtitles Panel:                                                                  |  |
+|  |   Header: "Legendas" .......................................... [Customizar]      |  |
+|  |   ( ) Desativada                                                                  |  |
+|  |   [Upload] Enviar arquivo próprio (opcional)                                      |  |
+|  |   [Timer] Sincronizar áudio/legenda >                                             |  |
+|  |                                                                                   |  |
+|  |   [SVG Flag BR] Português (Brasil)  ..................................... 3 >     |  |
+|  |      ├── [★] Embutida (Original da Fonte - Zoko/Stream) [Prioritária]             |  |
+|  |      ├── [ ] Versão 1 (OpenSubtitles)                                             |  |
+|  |      └── [ ] Versão 2 (OpenSubtitles - Rip)                                       |  |
+|  |                                                                                   |  |
+|  |   [SVG Flag US] Inglês  ................................................. 11 >    |  |
+|  |   [Globe] Outros idiomas...                                                       |  |
+|  +-----------------------------------------------------------------------------------+  |
+|                                     |                                                   |
+|                                     v ("Customizar" clicked)                            |
+|  +-----------------------------------------------------------------------------------+  |
+|  | Subtitle Customization & Sync:                                                    |  |
+|  |   < Voltar                                                                        |  |
+|  |   Atraso da legenda: [-0.5s] [ 0s ] [+0.5s]  (Slider: -10s .. +10s)               |  |
+|  |   Tamanho da fonte: [ 100% ] (Slider: 75% .. 150%)                                 |  |
+|  |   Cor do texto: [Branco] [Amarelo] [Ciano] [Verde]                                |  |
+|  |   Fundo: ( ) Sombra clássica  ( ) Caixa translúcida                               |  |
+|  +-----------------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------------+
+                                           |
+                    +----------------------+----------------------+
+                    |                                             |
+                    v                                             v
+     +------------------------------+             +-------------------------------+
+     | ACCOUNT / PROFILE SYNC       |             | TITLE PLAYBACK CONTINUITY     |
+     | playerPrefs.js + syncMerge.js|             | watchProgress.js              |
+     | (Size, Color, Bg, Default)   |             | (Delay Offset per movie / ep) |
+     +------------------------------+             +-------------------------------+
 ```
-
-#### 3. Settings UI in `assets/js/modules/settingsPage.js`
-Under the **Player** section, add a dedicated card: **Legendas e Aparência**:
-- **Tamanho da Legenda:** Pequeno (75%), Normal (100%), Grande (125%), Muito Grande (150%).
-- **Cor do Texto:** Branco (Padrão), Amarelo, Ciano.
-- **Destaque de Fundo:** Sombra (Padrão), Fundo translúcido, Fundo sólido.
-- **Codificação de Arquivos:** Automática (Recomendada), UTF-8, Windows-1252.
 
 ---
 
-### B. Subtitle Parsing & Encoding Guard
+## 3. Step-by-Step Implementation Strategy
 
-Brazilian subtitle repositories (e.g. Legendas.tv, OpenSubtitles) frequently distribute `.srt` files encoded in **Windows-1252 / ISO-8859-1** rather than UTF-8, causing corrupt characters (``, `c~ao`, etc.).
-
-#### Safe Decoder Algorithm
-```javascript
-export async function decodeSubtitleBuffer(arrayBuffer, encodingPreference = 'auto') {
-    const bytes = new Uint8Array(arrayBuffer);
-    
-    if (encodingPreference === 'windows-1252') {
-        return new TextDecoder('windows-1252').decode(bytes);
+### Phase 1: Subtitle Lookup API & Backend Parity
+- **Endpoints:**
+  - `functions/api/subtitles.js` (Cloudflare Pages Function).
+  - `tools/local_server.py` (Local development server mirror).
+- **Behavior:**
+  - Accepts `tmdb_id`, `imdb_id`, `type`, `season`, `episode`.
+  - Queries OpenSubtitles v3 public CDN endpoint (`https://opensubtitles-v3.strem.io/subtitles/{type}/{imdb_id}.json` or `{type}/{imdb_id}:{season}:{episode}.json`).
+  - Formats results into structured payload:
+    ```json
+    {
+      "pt-br": [
+        { "id": "1", "name": "Versão 1 (Padrão)", "url": "https://...", "format": "srt" },
+        { "id": "2", "name": "Versão 2 (Rip)", "url": "https://...", "format": "srt" }
+      ],
+      "en": [
+        { "id": "3", "name": "English (Original)", "url": "https://...", "format": "srt" }
+      ],
+      "others": {
+        "es": 5, "fr": 4, "ja": 2
+      }
     }
-    if (encodingPreference === 'utf-8') {
-        return new TextDecoder('utf-8').decode(bytes);
-    }
-    
-    // Auto detection: try UTF-8 with fatal: true to detect encoding errors
-    try {
-        const strictUtf8 = new TextDecoder('utf-8', { fatal: true });
-        return strictUtf8.decode(bytes);
-    } catch {
-        // Fallback to Windows-1252 for Brazilian Portuguese legacy subtitles
-        return new TextDecoder('windows-1252').decode(bytes);
-    }
-}
-```
+    ```
+  - Unit test: `tools/test_subtitles_api.py` validating responses and edge cases.
 
-#### Zero-Dependency Conversion
-Artplayer 5.1.7 already exports:
-- `Artplayer.utils.srtToVtt(str)`
-- `Artplayer.utils.assToVtt(str)`
-- `Artplayer.utils.vttToBlob(vttStr)`
+### Phase 2: Dedicated Control Bar Button, Vector Flags & Flyout Panel in Artplayer
+- In `assets/js/player/flags.js`:
+  - Mini vector SVGs for primary countries: Brazil (`br`), USA/UK (`us`), Spain (`es`), Japan (`ja`), France (`fr`), etc.
+- In `assets/js/player/engine.js`:
+  - Register dedicated control icon `subtitles` on Artplayer controls (`art.controls.add`).
+  - Build UI flyout modal styled identically to reference screenshots (dark translucent glassmorphism, rounded corners, clean typography, authentic flag vectors).
+  - Implement subtitle merging: Native tracks placed at the top of their language group with an `(Original da Fonte)` badge.
+  - Implement language selection and drill-down into specific subtitle releases.
+  - Implement subtitle auto-activation on startup for non-PT audio streams (Native track prioritized; external fallback).
 
-We convert the parsed VTT into an in-memory `blob:` URL, avoiding any bloated external NPM packages.
+### Phase 3: Customization Panel, Offset Controller & Account Integration
+- Implement the "Customizar" sub-view inside the subtitle drawer:
+  - Real-time subtitle delay with `< Ouviu áudio` / `> Viu legenda` controls and interactive slider.
+  - Font size, color swatches, and background toggles.
+- Connect settings to `playerPrefs.js` and `syncMerge.js` so they persist to the user's account and sync between devices.
+- Connect offset to `watchProgress.js` so adjustments persist when resuming a title.
 
----
-
-### C. Playback Continuity & IndexedDB Caching
-
-1. **Subtitle Sync Offset in `watchProgress.js`:**
-   - Add `sub_offset` (seconds, float) to the progress entry for the active title/episode.
-   - Example: `watchProgress.save(id, { time, duration, sub_offset: 1.5 })`.
-   - On player init, if `sub_offset` exists, the offset is restored immediately upon subtitle activation.
-
-2. **IndexedDB Cache (`tvz_subtitles`):**
-   - Store structure: `{ key: mediaKey, name: string, vtt: string, updatedAt: number }`.
-   - When a user uploads a subtitle for Movie `12345` or Episode `S01E03`, store the converted VTT in `IndexedDB`.
-   - If the user reloads the browser tab or returns to that episode later, the player auto-loads the stored subtitle from `IndexedDB` and marks it: `Externa: nome_do_arquivo.srt`.
-   - LRU eviction retains a maximum of 10 recent titles (~1MB total browser storage).
-
----
-
-### D. Player Interface & Controls Integration
-
-1. **Settings Menu in Player (`refreshSubtitleMenu` in `engine.js`):**
-   - **Row 1:** Subtitle Selector:
-     - `Desativada`
-     - Native track(s) (e.g. `Português (Brasil)`, `Inglês`)
-     - `Externa: [nome_do_arquivo]` (when loaded)
-   - **Row 2:** Action: **"Carregar legenda externa..."**
-     - Clicking opens the native file picker dialog (`<input type="file" accept=".srt,.vtt,.ass">`).
-   - **Row 3:** Submenu: **"Sincronia da legenda"** (visible when a subtitle is active)
-     - Interactive panel with increment buttons: `[-1s]` `[-0.2s]` `[Zerar]` `[+0.2s]` `[+1s]`
-     - Tooltip / Status displaying active offset: `Offset: +1.4s`
-   - **Row 4:** Submenu: **"Estilo da legenda"**
-     - Direct shortcuts to change Size and Color, reflecting immediately and saving to account prefs.
-
-2. **Drag & Drop Support:**
-   - Drop listener on `.art-video-player`: dropping an `.srt` or `.vtt` file immediately parses and enables the subtitle, displaying a confirmation toast: *"Legenda carregada: [nome]"*.
-
-3. **Visual Aesthetics & CSS Styling:**
-   - Configure Artplayer's `.art-subtitle` container using dynamic CSS custom properties:
-     - `--tvz-sub-size`
-     - `--tvz-sub-color`
-     - `--tvz-sub-shadow`
-     - `--tvz-sub-bg`
-   - Ensure Artplayer subtitles do not collide with player controls, the timeline bar, or mobile double-tap seek indicators.
-
----
-
-## 4. Phased Implementation Roadmap
-
-- **Phase 1: Foundation & Account Preferences Sync**
-  - Update `playerPrefs.js` with subtitle defaults.
-  - Update `syncMerge.js` with validation and cloud merge rules.
-  - Update `settingsPage.js` to render the new Subtitle configuration cards.
-  - Run `tools/check_js.py` and test account sync persistence.
-
-- **Phase 2: Subtitle Ingestion, Safe Decoding & Parsing**
-  - Implement `assets/js/player/subtitles.js` (isolated helper module for file reading, encoding detection, SRT->VTT parsing, and IndexedDB caching).
-  - Write test script `tools/test_subtitles.mjs` verifying parsing and Windows-1252 / UTF-8 detection.
-
-- **Phase 3: Artplayer Integration & Offset Controls**
-  - Wire external subtitle loader into `refreshSubtitleMenu` in `assets/js/player/engine.js`.
-  - Implement the offset controller with real-time cue shifting and persistence into `watchProgress`.
-  - Add Drag & Drop listeners on desktop.
-
-- **Phase 4: Automated Checks, Responsive Verification & Staging Deploy**
-  - Automated tests: SRI integrity, CSP validation (`test_browser_sri.mjs`), UI touch check (`player_touch_check.mjs`).
-  - Cache version bump via `python tools/bump_version.py`.
-  - Merge into `staging` and verify live preview on `https://staging.tvzinhaonline.pages.dev/`.
-
----
-
-## 5. Verification Matrix & Edge Cases
-
-| Test Case | Expected Behavior |
-| :--- | :--- |
-| UTF-8 `.srt` upload | Parsed seamlessly, cues aligned, Brazilian accents (`ç`, `ã`) intact |
-| Windows-1252 / ANSI `.srt` upload | Auto-fallback prevents mojibake (``), accented words render correctly |
-| Mobile touch upload (Android/iOS) | Native file picker opens; selecting file does not disrupt player orientation |
-| Drag & Drop on desktop player | Drops file, converts to VTT blob, activates subtitle and shows toast |
-| Offset adjustment (`+1.5s`) | Cues advance cleanly without cumulative drift; persists on page reload |
-| Account sync across devices | Subtitle size/color/bg chosen on Device A immediately applies on Device B |
-| Fullscreen & player rotation | Subtitles scale responsively without clipping bottom controls |
-| Stream without native subtitles | Subtitle menu displays "Nenhuma disponível" + "Carregar legenda externa..." |
-
+### Phase 4: Automated Testing, Cache Busting & Staging Verification
+- Automated checks:
+  - `python tools/check_js.py`
+  - `node tools/test_xss_protection.mjs`
+  - `python tools/bump_version.py`
+- Test playback across Anime (Jujutsu Kaisen, DBZ), Movies (Shawshank Redemption, Spider-Man), and Series (Breaking Bad).
+- Merge into `staging` and verify on live preview `https://staging.tvzinhaonline.pages.dev/`.

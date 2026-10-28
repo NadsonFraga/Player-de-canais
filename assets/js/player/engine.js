@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261028_1035';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1035';
-import { showToast } from '../core/toast.js?v=20261028_1035';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1035';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1035';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1035';
-import { formatClock } from '../core/resume.js?v=20261028_1035';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1035';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1035';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1035';
+import { store } from '../core/state.js?v=20261028_1125';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1125';
+import { showToast } from '../core/toast.js?v=20261028_1125';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1125';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1125';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1125';
+import { formatClock } from '../core/resume.js?v=20261028_1125';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1125';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1125';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1125';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1797,6 +1797,15 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
         art.on('video:loadedmetadata', () => {
             if (!isSessionLive(session, token)) return;
+            const video = art.video;
+            if (video && video.videoWidth && video.videoHeight) {
+                const isEpisode = session.mediaContext && session.mediaContext.type !== 'movie';
+                if (isEpisode && (video.videoWidth < video.videoHeight || (video.duration > 0 && video.duration < 300))) {
+                    console.warn(`[PlayerEngine] Fonte descartada por proporção vertical ou duração anômala: ${video.videoWidth}x${video.videoHeight}, ${video.duration}s`);
+                    failoverNativeSource(session, 'invalid-dimensions');
+                    return;
+                }
+            }
             measureCurrentQuality(session);
             requestSkipSegments(session);
             // A source switch builds a new progress bar: draw the known ranges again
@@ -1807,6 +1816,13 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         art.on('video:playing', markStreamSuccess);
         art.on('video:playing', () => {
             if (isSessionLive(session, token)) {
+                if (session.qualityRollback && session.currentIndex !== session.qualityRollback.previousSourceIndex) {
+                    const targetQ = session.qualityRollback.targetQuality;
+                    session.lockedQuality = targetQ;
+                    session.autoMode = false;
+                    setPlayerPref('quality', targetQ);
+                    session.qualityRollback = null;
+                }
                 showResumeNotice(session);
                 if (session.autoMode && !session.qualitySearchDone && (activeQuality(session) || 0) < 720 && qualitySearchCandidates(session).length) {
                     setTimeout(() => {
@@ -1834,7 +1850,21 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
         art.on('video:ended', () => {
             if (!isSessionLive(session, token)) return;
-            const next = !session.upNextCancelled && typeof session.getNextUp === 'function' ? session.getNextUp() : null;
+            const video = session.art && session.art.video;
+            if (!video || !Number.isFinite(video.duration) || video.duration < 300) {
+                console.warn("[PlayerEngine] video:ended ignorado em vídeo curto ou duração inválida:", video?.duration);
+                return;
+            }
+            if (video.currentTime < video.duration - 5) {
+                console.warn("[PlayerEngine] video:ended ignorado: currentTime longe do fim:", video.currentTime, video.duration);
+                return;
+            }
+            if (session.qualityRollback) {
+                console.warn("[PlayerEngine] video:ended ignorado durante teste de qualidade.");
+                return;
+            }
+            if (session.upNextCancelled) return;
+            const next = typeof session.getNextUp === 'function' ? session.getNextUp() : null;
             if (next) playNextUp(session, next);
         });
 
@@ -2052,7 +2082,7 @@ function updateSkipButton(session) {
  */
 function handleEndApproach(session) {
     const video = session.art && session.art.video;
-    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    if (!video || !Number.isFinite(video.duration) || video.duration < 300) return;
     const remaining = video.duration - video.currentTime;
 
     if (!session.nearEndFired && typeof session.onNearEnd === 'function' && remaining <= NATIVE_NEAR_END_S) {
@@ -2440,7 +2470,14 @@ function readFrameSize(url, budgetMs) {
             resolve(size);
         };
         timer = setTimeout(() => finish(null), budgetMs);
-        video.addEventListener('loadedmetadata', () => finish(video.videoWidth ? { width: video.videoWidth, height: video.videoHeight } : null), { once: true });
+        video.addEventListener('loadedmetadata', () => {
+            if (!video.videoWidth || !video.videoHeight) return finish(null);
+            if (video.videoWidth < video.videoHeight || (video.duration > 0 && video.duration < 300)) {
+                console.warn(`[PlayerEngine] readFrameSize descartou vídeo anômalo (${video.videoWidth}x${video.videoHeight}, ${video.duration}s)`);
+                return finish(null);
+            }
+            finish({ width: video.videoWidth, height: video.videoHeight });
+        }, { once: true });
         video.addEventListener('error', () => finish(null), { once: true });
         video.src = url;
         video.load();
@@ -2521,9 +2558,11 @@ async function searchBetterQuality(session, isManual = false) {
         return;
     }
     showToast(`Qualidade melhor encontrada (${qualityText(best.src.quality)}). Carregando...`, 3000);
-    session.lockedQuality = best.src.quality;
-    session.autoMode = false;
-    setPlayerPref('quality', best.src.quality);
+    session.qualityRollback = {
+        previousSourceIndex: session.currentIndex,
+        previousPlaybackTime: currentPlaybackTime(session),
+        targetQuality: best.src.quality
+    };
     session.slowStartIndex = best.idx;
     session.failed.delete(best.idx);
     remountFromMenu(session, best.idx);

@@ -7,25 +7,25 @@
  * The search reads TMDB's multi search once per query (one /api/tmdb call, after a short pause in the typing) and
  * splits it into Filmes, Séries, Animes and Pessoas on the page; channels are searched in the list already loaded.
  */
-import { store } from '../core/state.js?v=20261028_1035';
-import { TMDB_IMG_W185 } from '../core/constants.js?v=20261028_1035';
-import { fetchTmdb } from '../core/tmdb.js?v=20261028_1035';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1035';
-import { showToast } from '../core/toast.js?v=20261028_1035';
-import { syncPageLock } from '../core/activity.js?v=20261028_1035';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261028_1035';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261028_1035';
-import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261028_1035';
-import { isAnimeShow } from './series.js?v=20261028_1035';
-import { selectChannelByName } from './channels.js?v=20261028_1035';
-import { openCollection } from './collection.js?v=20261028_1035';
-import { getAccount, getActiveProfile, ACCOUNT_EVENT } from '../core/account.js?v=20261028_1035';
-import { leaveAccount, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261028_1035';
-import { PROFILE_EVENT } from '../core/profileStore.js?v=20261028_1035';
-import { avatarSrc } from '../core/avatars.js?v=20261028_1035';
-import { openAccountPage } from './accountPage.js?v=20261028_1035';
-import { openProfilePicker } from './profilePage.js?v=20261028_1035';
-import { openSettingsPage } from './settingsPage.js?v=20261028_1035';
+import { store } from '../core/state.js?v=20261028_1125';
+import { TMDB_IMG_W185 } from '../core/constants.js?v=20261028_1125';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_1125';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1125';
+import { showToast } from '../core/toast.js?v=20261028_1125';
+import { syncPageLock } from '../core/activity.js?v=20261028_1125';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261028_1125';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261028_1125';
+import { openTitle, openPersonTitles, fillCards, isTitlePageOpen, closeTitlePage } from './titlePage.js?v=20261028_1125';
+import { isAnimeShow } from './series.js?v=20261028_1125';
+import { selectChannelByName } from './channels.js?v=20261028_1125';
+import { openCollection } from './collection.js?v=20261028_1125';
+import { getAccount, getActiveProfile, ACCOUNT_EVENT } from '../core/account.js?v=20261028_1125';
+import { leaveAccount, getSyncStatus, syncStatusText, SYNC_EVENT } from '../core/sync.js?v=20261028_1125';
+import { PROFILE_EVENT } from '../core/profileStore.js?v=20261028_1125';
+import { avatarSrc } from '../core/avatars.js?v=20261028_1125';
+import { openAccountPage } from './accountPage.js?v=20261028_1125';
+import { openProfilePicker } from './profilePage.js?v=20261028_1125';
+import { openSettingsPage } from './settingsPage.js?v=20261028_1125';
 
 const SEARCH_PAUSE_MS = 350;
 const MIN_QUERY = 2;
