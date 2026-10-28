@@ -3,16 +3,16 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261027_1830';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261027_1830';
-import { showToast } from '../core/toast.js?v=20261027_1830';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261027_1830';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261027_1830';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261027_1830';
-import { formatClock } from '../core/resume.js?v=20261027_1830';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261027_1830';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261027_1830';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261027_1830';
+import { store } from '../core/state.js?v=20261028_1015';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1015';
+import { showToast } from '../core/toast.js?v=20261028_1015';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1015';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1015';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1015';
+import { formatClock } from '../core/resume.js?v=20261028_1015';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1015';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1015';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1015';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1248,6 +1248,9 @@ export function mountNativePlayer(options) {
         currentIndex: 0,
         autoMode: true,
         lockedQuality: null,
+        mediaContext: options.mediaContext || null,
+        provider: options.provider || null,
+        fenixSearched: false,
         art: null,
         hls: null,
         mountToken: 0
@@ -1256,9 +1259,6 @@ export function mountNativePlayer(options) {
     const prefs = getPlayerPrefs();
     let firstIndex = 0;
     if (typeof prefs.quality === 'number') {
-        session.autoMode = false;
-        session.lockedQuality = prefs.quality;
-
         const primary = normalized[0];
         const primaryUnmeasured = primary && primary.alive !== false && !primary.quality;
 
@@ -1269,24 +1269,28 @@ export function mountNativePlayer(options) {
 
         if (withExactQuality >= 0) {
             firstIndex = withExactQuality;
+            session.autoMode = false;
             session.lockedQuality = prefs.quality;
         } else if (primaryUnmeasured) {
             // The primary source chosen by backend has not been probed yet (e.g. direct Brazilian CDN MP4).
-            // Always give the primary source the first chance instead of prematurely jumping to a low-res fallback.
-            // Its actual resolution will be measured by the browser in loadedmetadata.
+            // Give the primary source the first chance; actual resolution will be measured in loadedmetadata.
             firstIndex = 0;
-            session.lockedQuality = Math.max(prefs.quality || 0, 720);
+            session.autoMode = false;
+            session.lockedQuality = prefs.quality;
         } else {
+            // None of the available sources match the preferred quality (e.g. user prefers 1080p, but only 480p exists).
+            // Do NOT lock to 480p! Start in Auto mode at best available source, showing "Automático (480p)".
+            session.autoMode = true;
+            session.lockedQuality = null;
+
             const allQualities = [...new Set(
                 normalized.filter(s => s.alive !== false).flatMap(s => s.qualities || (s.quality ? [s.quality] : []))
             )].sort((a, b) => b - a);
 
             if (allQualities.length > 0) {
-                let matched = allQualities.find(q => q <= prefs.quality);
-                if (!matched) matched = allQualities[0];
-                session.lockedQuality = matched;
+                const bestQ = allQualities[0];
                 const withQuality = normalized.findIndex(src => src.alive !== false && (
-                    (src.qualities && src.qualities.includes(matched)) || src.quality === matched
+                    (src.qualities && src.qualities.includes(bestQ)) || src.quality === bestQ
                 ));
                 if (withQuality >= 0) firstIndex = withQuality;
             }
@@ -2357,14 +2361,8 @@ function refreshQualityMenu(session) {
     const currentUnmeasured = current && current.alive !== false && !current.quality;
     if (!session.autoMode && session.lockedQuality && !currentUnmeasured) {
         if (!entries.has(session.lockedQuality)) {
-            const available = [...entries.keys()].sort((a, b) => b - a);
-            const matched = available.find(q => q <= session.lockedQuality) || available[0];
-            if (matched) {
-                session.lockedQuality = matched;
-            } else {
-                session.autoMode = true;
-                session.lockedQuality = null;
-            }
+            session.autoMode = true;
+            session.lockedQuality = null;
         }
     }
 
@@ -2413,10 +2411,15 @@ function qualitySearchCandidates(session, isManual = false) {
     if ((activeQuality(session) || 0) >= 1080) return [];
     const usable = idx => isManual || (!session.failed.has(idx) || (session.failReasons && session.failReasons[idx] === 'timeout'));
     const playing = activeQuality(session) || 0;
-    return session.sources
+    const internal = session.sources
         .map((src, idx) => ({ src, idx }))
         .filter(({ src, idx }) => idx !== session.currentIndex && usable(idx) && src.alive && (!src.quality || src.quality > playing) && !isHlsSource(src))
         .slice(0, QUALITY_SEARCH_MAX);
+    if (internal.length > 0) return internal;
+    if (session.mediaContext && !session.fenixSearched && playing < 1080) {
+        return [{ external: true }];
+    }
+    return [];
 }
 
 /** Real frame size of a video from its metadata only (nothing plays); null when it does not answer in time. */
@@ -2458,24 +2461,61 @@ async function searchBetterQuality(session, isManual = false) {
     refreshQualityMenu(session);
     if (isManual) showToast('Procurando uma fonte de qualidade melhor...', 4000);
 
-    const sizes = await Promise.all(candidates.map(({ src }) => readFrameSize(src.url, QUALITY_SEARCH_BUDGET_MS)));
+    const internalCandidates = candidates.filter(c => !c.external);
+    let best = null;
+
+    if (internalCandidates.length > 0) {
+        const sizes = await Promise.all(internalCandidates.map(({ src }) => readFrameSize(src.url, QUALITY_SEARCH_BUDGET_MS)));
+        internalCandidates.forEach(({ src }, i) => {
+            const quality = sizes[i] ? qualityClass(sizes[i].width, sizes[i].height) : null;
+            if (quality) {
+                src.quality = quality;
+                src.qualities = [quality];
+            }
+        });
+        console.info("[PlayerEngine] Qualidade medida no navegador:", internalCandidates.map(({ src }) => src.quality ? `${src.quality}p` : '?').join(', '));
+        const playing = activeQuality(session) || 0;
+        best = internalCandidates
+            .filter(({ src }) => (src.quality || 0) > playing)
+            .sort((a, b) => b.src.quality - a.src.quality)[0];
+    }
+
+    const playingNow = activeQuality(session) || 0;
+    if (!best && playingNow < 1080 && session.mediaContext && !session.fenixSearched) {
+        session.fenixSearched = true;
+        try {
+            console.info("[PlayerEngine] Buscando fontes em 1080p no FenixFlix...");
+            const fenixRes = await resolveClientProvider('fenixflix', session.mediaContext);
+            if (fenixRes && fenixRes.success && fenixRes.primary_source) {
+                const newSources = [fenixRes.primary_source, ...(fenixRes.fallback_sources || [])];
+                const existingUrls = new Set(session.sources.map(s => s.url));
+                const added = [];
+                for (const rawSrc of newSources) {
+                    if (!existingUrls.has(rawSrc.stream_url) && !existingUrls.has(rawSrc.url)) {
+                        const norm = normalizeNativeSources({ sources: [rawSrc] })[0];
+                        if (norm) {
+                            session.sources.push(norm);
+                            added.push({ src: norm, idx: session.sources.length - 1 });
+                        }
+                    }
+                }
+                const fenixBest = added
+                    .filter(({ src }) => (src.quality || 0) > playingNow)
+                    .sort((a, b) => b.src.quality - a.src.quality)[0];
+                if (fenixBest) {
+                    best = fenixBest;
+                }
+            }
+        } catch (fenixErr) {
+            console.warn("[PlayerEngine] Erro ao buscar qualidade no FenixFlix:", fenixErr);
+        }
+    }
+
     session.qualitySearching = false;
     if (!isManual) session.qualitySearchDone = true;
     if (!isSessionLive(session)) return;
-    candidates.forEach(({ src }, i) => {
-        const quality = sizes[i] ? qualityClass(sizes[i].width, sizes[i].height) : null;
-        if (quality) {
-            src.quality = quality;
-            src.qualities = [quality];
-        }
-    });
-    console.info("[PlayerEngine] Qualidade medida no navegador:", candidates.map(({ src }) => src.quality ? `${src.quality}p` : '?').join(', '));
     refreshQualityMenu(session);
 
-    const playing = activeQuality(session) || 0;
-    const best = candidates
-        .filter(({ src }) => (src.quality || 0) > playing)
-        .sort((a, b) => b.src.quality - a.src.quality)[0];
     if (!best) {
         if (isManual) showToast('Não encontramos uma qualidade melhor para este título.', 4500);
         return;
@@ -2556,8 +2596,6 @@ function applyLockedLevel(session) {
         });
         if (bestIdx >= 0) {
             hls.currentLevel = bestIdx;
-            const actualQ = hlsLevelQuality(hls.levels[bestIdx]);
-            if (actualQ) session.lockedQuality = actualQ;
             return;
         }
     }

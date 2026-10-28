@@ -59,18 +59,21 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
                          (text.includes("🇧🇷") && !isSubbed);
         const isHls = s.url.includes(".m3u8");
 
-        // Provider trust tier:
-        // 3: FenixHub official library master (fenixhub, koyeb, squareweb, fenixbot)
-        // 2: Verified mirrors (zunder)
-        // 1: Third-party scrapers (hollymovies / embedplayer2 with deceptive 1080p tags & 480p real streams)
+        // Provider trust & speed tiers:
+        // 4: Dedicated high-speed official masters (fenixhub.online / Zeus, squareweb.app, fenixbot) -> 0ms startup
+        // 3: Verified mirrors & direct CDNs (zunder, zunderflix)
+        // 2: Third-party scrapers (hollymovies / embedplayer2)
+        // 1: Free sleep-prone cloud containers (koyeb.app takes 10-15s to wake up; keep as last resort)
         const rawUrl = (s.url || "").toLowerCase();
-        let providerTier = 2;
-        if (text.includes("fenixhub") || rawUrl.includes("squareweb.app") || rawUrl.includes("koyeb.app") || rawUrl.includes("fenixhub.online") || rawUrl.includes("fenixbot")) {
+        let providerTier = 3;
+        if (rawUrl.includes("fenixhub.online") || rawUrl.includes("squareweb.app") || rawUrl.includes("fenixbot") || (text.includes("fenixhub") && !rawUrl.includes("koyeb.app"))) {
+          providerTier = 4;
+        } else if (text.includes("zunder") || rawUrl.includes("zunderflix")) {
           providerTier = 3;
         } else if (text.includes("hollymovies") || rawUrl.includes("embedplayer2")) {
-          providerTier = 1;
-        } else if (text.includes("zunder") || rawUrl.includes("zunderflix")) {
           providerTier = 2;
+        } else if (rawUrl.includes("koyeb.app")) {
+          providerTier = 1;
         }
 
         const tag = isDubbed ? (text.includes("dual") ? "Dual Áudio" : "Dublado") : (isSubbed ? "Legendado" : "Original");

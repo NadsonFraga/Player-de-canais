@@ -59,14 +59,21 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
                     or ("🇧🇷" in text and not is_subbed)
                 )
                 is_hls = ".m3u8" in u
+                # Provider trust & speed tiers:
+                # 4: Dedicated high-speed official masters (fenixhub.online / Zeus, squareweb.app, fenixbot) -> 0ms startup
+                # 3: Verified mirrors & direct CDNs (zunder, zunderflix)
+                # 2: Third-party scrapers (hollymovies / embedplayer2)
+                # 1: Free sleep-prone cloud containers (koyeb.app takes 10-15s to wake up; keep as last resort)
                 raw_url = (u or "").lower()
-                provider_tier = 2
-                if "fenixhub" in text or "squareweb.app" in raw_url or "koyeb.app" in raw_url or "fenixhub.online" in raw_url or "fenixbot" in raw_url:
+                provider_tier = 3
+                if "fenixhub.online" in raw_url or "squareweb.app" in raw_url or "fenixbot" in raw_url or ("fenixhub" in text and "koyeb.app" not in raw_url):
+                    provider_tier = 4
+                elif "zunder" in text or "zunderflix" in raw_url:
                     provider_tier = 3
                 elif "hollymovies" in text or "embedplayer2" in raw_url:
-                    provider_tier = 1
-                elif "zunder" in text or "zunderflix" in raw_url:
                     provider_tier = 2
+                elif "koyeb.app" in raw_url:
+                    provider_tier = 1
 
                 name = s.get("name") or f"FenixFlix {quality}p"
                 tag = "Dual Áudio" if "dual" in text else ("Dublado" if is_dubbed else ("Legendado" if is_subbed else "Original"))

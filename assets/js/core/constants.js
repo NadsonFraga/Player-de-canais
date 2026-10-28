@@ -73,7 +73,7 @@ export const MOVIE_SERVERS = [
     { id: 'native_direct',  name: 'Player Principal (MGEB)',  isNative: true, source: 'mgeb' },
     { id: 'native_fenix',   name: 'FenixFlix (Dublado)',      isNative: true, source: 'fenixflix' },
     { id: 'mgeb',           name: 'Servidor 1 (MGEB)', buildUrl: (id) => `https://mgeb.top/embed/${id}` },
-    { id: 'superflix',      name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.quest/filme/${id}` },
+    { id: 'superflix',      name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.bond/filme/${id}` },
     { id: 'myembed',        name: 'Servidor 3 (MyEmbed)', buildUrl: (id) => `https://myembed.biz/filme/${id}` },
     { id: 'vsembed',        name: 'Servidor 4 (VSEmbed, multiáudio)', buildUrl: (id) => `https://vsembed.ru/embed/movie/${id}?ds_lang=pob,pt,en` },
     { id: 'embedplay',      name: 'Servidor 5 (EmbedPlay)', buildUrl: (id) => `https://www.embedplay.one/filme/${id}` },
@@ -88,7 +88,7 @@ export const SERIES_SERVERS = {
     },
     superflix: {
         name: "Superflix",
-        buildUrl: (id, s, e) => `https://superflixapi.quest/serie/${id}/${s}/${e}`
+        buildUrl: (id, s, e) => `https://superflixapi.bond/serie/${id}/${s}/${e}`
     },
     myembed: {
         name: "MyEmbed",

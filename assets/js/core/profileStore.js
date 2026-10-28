@@ -9,7 +9,7 @@
  * Only constants.js is imported (no cycles): core/state.js builds the store from these keys at load time.
  * Switching fires PROFILE_EVENT on window; each store drops its memory copy and tells its screens.
  */
-import { WATCH_PROGRESS_KEY, LIBRARY_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY, PERSONAL_TIMES_KEY } from './constants.js?v=20261027_1830';
+import { WATCH_PROGRESS_KEY, LIBRARY_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY, PERSONAL_TIMES_KEY } from './constants.js?v=20261028_1015';
 
 export const PROFILE_EVENT = 'tvzinha:profile';
 // { profileId, lastSeen, asked: [profile ids already asked about the guest data] }

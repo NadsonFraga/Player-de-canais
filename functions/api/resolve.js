@@ -1712,24 +1712,85 @@ export async function onRequestGet(context) {
 
       // Best quality first; the host score only breaks ties between equal qualities
       const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, scoreSource, mgebType === "serie", lang !== "sub", qualityMode));
-      const primary = rankedSources[0];
-      const fallbacks = rankedSources.slice(1);
+      if (rankedSources && rankedSources.length > 0) {
+        const primary = rankedSources[0];
+        const fallbacks = rankedSources.slice(1);
 
-      result = {
-        success: true,
-        title: mgebData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
-        category: type,
-        audio: lang === "sub" ? "subtitled" : "dubbed",
-        primary_source: primary,
-        fallback_sources: fallbacks,
-        mgeb_episode: mgebType === "serie" ? `T${mgebEpisode.season}E${mgebEpisode.episode}` : null,
-        subtitles: [],
-        aniskip: {
-          mal_id: malId ? parseInt(malId, 10) : null,
-          episode,
-          ready: Boolean(malId),
-        },
-      };
+        result = {
+          success: true,
+          title: mgebData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
+          category: type,
+          audio: lang === "sub" ? "subtitled" : "dubbed",
+          primary_source: primary,
+          fallback_sources: fallbacks,
+          mgeb_episode: mgebType === "serie" ? `T${mgebEpisode.season}E${mgebEpisode.episode}` : null,
+          subtitles: [],
+          aniskip: {
+            mal_id: malId ? parseInt(malId, 10) : null,
+            episode,
+            ready: Boolean(malId),
+          },
+        };
+      }
+    }
+  }
+
+  // Automatic Fallback: If MGEB returned 0 working sources, fail over to FenixFlix
+  if (!result && requestedSource === "mgeb" && (id || imdbId)) {
+    try {
+      const fenixFallback = await timed("fenix_fallback", resolveFenixFlix({
+        id,
+        imdbId,
+        type: type === "anime" ? "serie" : type,
+        season,
+        episode,
+        audio: lang === "sub" ? "subbed" : "dubbed"
+      }));
+      if (fenixFallback && fenixFallback.sources && fenixFallback.sources.length > 0) {
+        const parsedSources = await Promise.all(fenixFallback.sources.map(async (s) => {
+          const rawFile = (s.file || "").trim();
+          const isDirectMp4 = (rawFile.includes(".mp4") || rawFile.includes("/stream/")) && (
+            isBrazilianCdn(rawFile) ||
+            rawFile.includes("fenixhub") ||
+            rawFile.includes("koyeb.app") ||
+            rawFile.includes("squareweb.app") ||
+            rawFile.includes("fenixbot") ||
+            rawFile.includes("/movies/") ||
+            rawFile.includes("/series/")
+          );
+          const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, "https://").replace(/:80\//, "/") : rawFile;
+          const referer = s.referer || "https://embedplayer2.xyz/";
+          const finalStreamUrl = isDirectMp4 ? directCleanUrl : await proxied(rawFile, referer);
+          const sourceType = s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4");
+          const directUrl = !isDirectMp4 && sourceType === "hls" && /^https:\/\//i.test(rawFile) ? rawFile : null;
+          return {
+            label: s.label || `FenixFlix ${s.quality}p`,
+            type: sourceType,
+            stream_url: finalStreamUrl,
+            direct_url: directUrl,
+            raw_url: directCleanUrl,
+            headers: { "Referer": referer },
+            quality: s.quality || 1080
+          };
+        }));
+        const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, () => 90, type === "serie", lang !== "sub", qualityMode));
+        if (rankedSources && rankedSources.length > 0) {
+          result = {
+            success: true,
+            title: fenixFallback.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
+            category: type,
+            audio: "dubbed",
+            provider: "fenixflix",
+            fallback_provider: true,
+            primary_source: rankedSources[0],
+            fallback_sources: rankedSources.slice(1),
+            subtitles: [],
+            aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
+          };
+        }
+      }
+    } catch (fallbackErr) {
+      console.warn("[ResolveAPI] Erro no fallback FenixFlix:", fallbackErr);
     }
   }
 

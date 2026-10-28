@@ -2140,24 +2140,77 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
                 # Best quality first; the host score only breaks ties between equal qualities
                 ranked_sources = timed("probe", rank_sources_by_quality, parsed_sources, score_source, mgeb_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
-                primary = ranked_sources[0]
-                fallbacks = ranked_sources[1:]
+                if ranked_sources:
+                    primary = ranked_sources[0]
+                    fallbacks = ranked_sources[1:]
 
-                result = {
-                    "success": True,
-                    "title": mgeb_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
-                    "category": media_type,
-                    "audio": "subtitled" if lang == "sub" else "dubbed",
-                    "primary_source": primary,
-                    "fallback_sources": fallbacks,
-                    "mgeb_episode": f"T{mgeb_episode[0]}E{mgeb_episode[1]}" if mgeb_type == "serie" else None,
-                    "subtitles": [],
-                    "aniskip": {
-                        "mal_id": int(mal_id) if mal_id and str(mal_id).isdigit() else None,
-                        "episode": episode,
-                        "ready": bool(mal_id),
-                    },
-                }
+                    result = {
+                        "success": True,
+                        "title": mgeb_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
+                        "category": media_type,
+                        "audio": "subtitled" if lang == "sub" else "dubbed",
+                        "primary_source": primary,
+                        "fallback_sources": fallbacks,
+                        "mgeb_episode": f"T{mgeb_episode[0]}E{mgeb_episode[1]}" if mgeb_type == "serie" else None,
+                        "subtitles": [],
+                        "aniskip": {
+                            "mal_id": int(mal_id) if mal_id and str(mal_id).isdigit() else None,
+                            "episode": episode,
+                            "ready": bool(mal_id),
+                        },
+                    }
+
+        # Automatic Fallback: If MGEB returned 0 working sources, fail over to FenixFlix
+        if not result and requested_source == "mgeb" and (media_id or imdb_id):
+            try:
+                fenix_data = timed("fenix_fallback", local_providers.fetch_fenixflix, media_id, imdb_id, media_type, season, episode, "subbed" if lang == "sub" else "dubbed")
+                if fenix_data and fenix_data.get("sources"):
+                    parsed_sources = []
+                    for s in fenix_data["sources"]:
+                        raw_file = (s.get("file") or "").strip()
+                        is_direct_mp4 = (".mp4" in raw_file or "/stream/" in raw_file) and (
+                            is_brazilian_cdn(raw_file) or
+                            "fenixhub" in raw_file or
+                            "koyeb.app" in raw_file or
+                            "squareweb.app" in raw_file or
+                            "fenixbot" in raw_file or
+                            "/movies/" in raw_file or
+                            "/series/" in raw_file
+                        )
+                        direct_clean_url = re.sub(r":80/", "/", re.sub(r"^http://", "https://", raw_file, flags=re.I)) if is_direct_mp4 else raw_file
+                        referer = s.get("referer") or "https://embedplayer2.xyz/"
+                        final_stream_url = direct_clean_url if is_direct_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
+                        source_type = s.get("type") or ("hls" if ".m3u8" in raw_file else "mp4")
+                        direct_url = raw_file if (not is_direct_mp4 and source_type == "hls" and raw_file.lower().startswith("https://")) else None
+                        parsed_sources.append({
+                            "label": s.get("label") or f"FenixFlix {s.get('quality', 1080)}p",
+                            "type": source_type,
+                            "stream_url": final_stream_url,
+                            "direct_url": direct_url,
+                            "raw_url": direct_clean_url,
+                            "headers": {"Referer": referer},
+                            "quality": s.get("quality", 1080)
+                        })
+                    ranked_sources = timed("probe", rank_sources_by_quality, parsed_sources, lambda s: 90, media_type in ("serie", "anime"), is_dubbed=lang != "sub", quality_mode=quality_mode)
+                    if ranked_sources:
+                        result = {
+                            "success": True,
+                            "title": fenix_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
+                            "category": media_type,
+                            "audio": "dubbed",
+                            "provider": "fenixflix",
+                            "fallback_provider": True,
+                            "primary_source": ranked_sources[0],
+                            "fallback_sources": ranked_sources[1:],
+                            "subtitles": [],
+                            "aniskip": {
+                                "mal_id": int(mal_id) if mal_id and str(mal_id).isdigit() else None,
+                                "episode": episode,
+                                "ready": bool(mal_id),
+                            },
+                        }
+            except Exception as e:
+                print(f"[LocalServer] Error in FenixFlix fallback: {e}", file=sys.stderr)
 
         timings["total"] = (time.time() - now) * 1000
         server_timing = ", ".join(f"{k};dur={v:.0f}" for k, v in timings.items())
