@@ -6,7 +6,7 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261029_0156';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261029_1203';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
