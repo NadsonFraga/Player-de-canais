@@ -14,32 +14,35 @@
    - Built complete unit and integration tests (`tools/test_subtitles_api.py`).
 
 2. **Player Subtitle Engine (`assets/js/player/flags.js`, `assets/js/player/engine.js`, `assets/css/10-player-v3.css`):**
-   - Added vector SVG flag icons (BR, US, PT, ES, FR, IT, DE, JA, KO, ZH, RU, PL, ID, AR, SR, TR, VI, RO, NL, SV, Global) with inline styles and `!important` to prevent player CSS overrides.
-   - Added a dedicated `CC` control button in Artplayer with clean styling, transparent background, and green active indicator dot.
-   - Unified language flyout grouping: tracks with the same language are merged under one entry with a version drilldown (`Original da Fonte` prioritized at top).
-   - Added context-aware auto-activation: Dubbed streams start with subtitles OFF; Subtitled / Anime streams start with subtitles ON (PT-BR).
-   - Added manual file upload contingency for `.srt` and `.vtt` files.
+   - Vector SVG flags with protected inline styles and `!important`.
+   - Unified language flyout grouping with version drilldowns (`Original da Fonte` prioritized at top).
+   - Context-aware auto-activation: Dubbed streams start with subtitles OFF; Subtitled / Anime streams start with subtitles ON (PT-BR).
+   - Manual file upload contingency for `.srt` and `.vtt` files.
 
-3. **Cross-Server Subtitle Persistence & Cache:**
+3. **Synchronous Controls & Button Lifecycle:**
+   - Moved `tvz-subtitles-btn` declaration directly into the Artplayer constructor options (`controls: [...]`).
+   - The CC button now renders in the initial DOM together with volume, play, and settings, eliminating layout jump or late pop-in.
+
+4. **Mobile UX, Backdrop Overlay & Touch Bleed Elimination:**
+   - Added `.tvz-subtitles-backdrop` overlay covering the entire stage while the flyout is open.
+   - Added full event capture and `stopPropagation()` on the panel and backdrop, completely eliminating click-throughs to the underlying video and progress bar (which previously caused accidental seeks to the end of the video).
+   - Added an explicit Close (`[X]`) button across all views (Main list, Language Drilldown, and Customizer).
+   - Added mobile-specific bottom-sheet positioning and responsive sizing for portrait and landscape modes.
+   - Added smooth auto-close (220ms) upon selecting a subtitle track or turning off subtitles on mobile.
+
+5. **Cross-Server Subtitle Persistence & Cache:**
    - Implemented `mediaSubtitlesCache` in `engine.js` keyed by media context (`series:${id}:${season}:${episode}` or `movie:${id}`).
-   - Subtitle tracks (both native from stream hosts and external from OpenSubtitles) are retained in memory across server switches for the current episode/movie.
-   - When switching from anime player (or any host with native subtitles) to other servers like `mgeb`, the previously discovered subtitles remain immediately available.
+   - Subtitle tracks remain available across server switches for the same episode/movie.
 
-4. **Responsive Fullscreen Font Sizing:**
+6. **Responsive Fullscreen Font Sizing:**
    - Replaced fixed inline `20px` font size with responsive CSS `clamp()` rules driven by `--tvz-sub-scale` CSS variable:
      - Windowed mode: `clamp(17px, 2.2vw, 22px) * scale`
-     - Desktop / TV Fullscreen: `clamp(26px, 2.0vw, 40px) * scale` (scales up ~50% for optimal readability at 1080p, 1440p, 4K)
+     - Desktop / TV Fullscreen: `clamp(26px, 2.0vw, 40px) * scale`
      - Mobile portrait: `clamp(15px, 3.8vw, 19px) * scale`
      - Mobile landscape: `clamp(16px, 4.2vh, 23px) * scale`
-     - Subtitle elevation adjusts automatically (`bottom: 100px` in fullscreen) when player controls appear to avoid covering text.
+     - Subtitle elevation adjusts automatically (`bottom: 100px` in fullscreen) when player controls appear.
 
-5. **Customizer & Preference Persistence (`assets/js/core/playerPrefs.js`, `assets/js/core/syncMerge.js`, `tools/local_sync.py`):**
-   - Added timing delay offset slider (`-10.0s` to `+10.0s`) with `-0.5s`, `Zerar`, `+0.5s` step buttons, saved per title in localStorage.
-   - Added typography size (75% to 150%), color swatch selection, and background mode (shadow vs semi-opaque box) controls.
-   - Integrated appearance preferences into player preferences and cloud profile synchronization.
-
-6. **Verification & Deployment:**
-   - Ran `tools/bump_version.py` updating cache busting stamps across 33 files.
+7. **Verification & Deployment:**
    - Verified tests: `check_js.py`, `bump_version.py --check`, `test_subtitles_api.py`, `test_sync_api.py`, `test_security_headers.py`, `test_resolve_cors.py`, `test_xss_protection.mjs`.
    - Merged into `staging` branch and pushed to origin.
 
