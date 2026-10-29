@@ -257,10 +257,15 @@ export function fixMojibake(text) {
 export function cleanVtt(text) {
     if (!text) return 'WEBVTT\n\n';
     const fixed = fixMojibake(text);
-    return fixed.split('\n').map(line => {
+    const withLineBreaks = fixed.replace(/\\N/g, '\n');
+    return withLineBreaks.split('\n').map(line => {
         if (line.includes('-->')) return line;
         return line
+            // Strip all SSA/ASS override tags and MicroDVD tags: {...}
+            .replace(/\{[^}]*\}/g, '')
+            // Keep only <i>, <b>, <u> formatting
             .replace(/<\/?[a-zA-Z][^<>]*>/g, tag => (/^<\/?[ibu]>$/i.test(tag) ? tag.toLowerCase() : ''))
+            // Escape stray unescaped < or >
             .replace(/<(?!\/?[ibu]>)/g, '&lt;')
             .replace(/(?<!<[ibu])(?<!<\/[ibu])>/g, '&gt;');
     }).join('\n');

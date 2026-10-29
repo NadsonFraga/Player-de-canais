@@ -871,20 +871,46 @@
 
 
 /* ============================================================
-   TVZINHA SUBTITLE RESPONSIVE STYLING & FULLSCREEN ADAPTATION
+   TVZINHA SUBTITLE STREAMING STANDARDS (Netflix / HBO / Prime / Crunchyroll)
    ============================================================ */
 
 .art-video-player .art-subtitle {
+    /* Streaming Industry Standard Typography */
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    line-height: 1.35 !important;
+    text-align: center !important;
+    word-break: break-word !important;
+    max-width: 85% !important;
+    margin: 0 auto !important;
+
     /* Responsive font-size in windowed mode, multiplied by user scale */
-    font-size: calc(clamp(17px, 2.2vw, 22px) * var(--tvz-sub-scale, 1)) !important;
+    font-size: calc(clamp(18px, 1.9vw, 22px) * var(--tvz-sub-scale, 1)) !important;
     color: var(--tvz-sub-color, #ffffff) !important;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
-    line-height: 1.35 !important;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Multi-pass 360-degree crisp contour matching Netflix & Crunchyroll */
+    text-shadow:
+        0 0 3px #000000,
+        0 0 5px rgba(0, 0, 0, 0.95),
+        0 1px 3px rgba(0, 0, 0, 0.95),
+        0 2px 4px rgba(0, 0, 0, 0.95),
+        0 0 8px rgba(0, 0, 0, 0.6) !important;
+    -webkit-text-stroke: 0.35px rgba(0, 0, 0, 0.3);
+
     bottom: 45px !important;
     transition: bottom 0.2s cubic-bezier(0.2, 0, 0, 1), font-size 0.15s ease;
     user-select: none;
     pointer-events: none;
+}
+
+/* Individual subtitle lines rendered by Artplayer */
+.art-video-player .art-subtitle .art-subtitle-line {
+    display: inline-block !important;
+    max-width: 100% !important;
 }
 
 /* Controls visible in windowed mode: lift subtitle slightly */
@@ -894,12 +920,12 @@
 }
 
 /* Fullscreen mode on desktop / TV / Web Fullscreen:
-   Noticeably larger font size matching cinema & streaming standard */
+   Proportionally scaled to 2.7vh (~29px at 1080p, ~34px at 1440p) */
 .art-video-player.art-fullscreen .art-subtitle,
 .art-video-player.art-fullscreen-web .art-subtitle,
 :fullscreen .art-video-player .art-subtitle {
-    font-size: calc(clamp(26px, 2.0vw, 40px) * var(--tvz-sub-scale, 1)) !important;
-    bottom: 65px !important;
+    font-size: calc(clamp(25px, 2.7vh, 34px) * var(--tvz-sub-scale, 1)) !important;
+    bottom: 60px !important;
 }
 
 /* When controls appear in fullscreen mode: lift subtitle above player bar */
@@ -907,17 +933,18 @@
 .art-video-player.art-fullscreen-web.art-control-show .art-subtitle,
 .art-video-player.art-fullscreen.art-hover .art-subtitle,
 .art-video-player.art-fullscreen-web.art-hover .art-subtitle {
-    bottom: 100px !important;
+    bottom: 95px !important;
 }
 
 /* Mobile Devices in Portrait */
 @media (max-width: 768px) and (orientation: portrait) {
     .art-video-player .art-subtitle {
-        font-size: calc(clamp(15px, 3.8vw, 19px) * var(--tvz-sub-scale, 1)) !important;
-        bottom: 35px !important;
+        font-size: calc(clamp(15px, 3.8vw, 18px) * var(--tvz-sub-scale, 1)) !important;
+        bottom: 30px !important;
+        max-width: 90% !important;
     }
     .art-video-player.art-control-show .art-subtitle {
-        bottom: 65px !important;
+        bottom: 60px !important;
     }
 }
 
@@ -925,12 +952,13 @@
 @media (max-height: 520px) and (orientation: landscape) {
     .art-video-player.art-fullscreen .art-subtitle,
     .art-video-player.art-fullscreen-web .art-subtitle {
-        font-size: calc(clamp(16px, 4.2vh, 23px) * var(--tvz-sub-scale, 1)) !important;
-        bottom: 35px !important;
+        font-size: calc(clamp(16px, 4.2vh, 21px) * var(--tvz-sub-scale, 1)) !important;
+        bottom: 25px !important;
+        max-width: 90% !important;
     }
     .art-video-player.art-fullscreen.art-control-show .art-subtitle,
     .art-video-player.art-fullscreen-web.art-control-show .art-subtitle {
-        bottom: 70px !important;
+        bottom: 65px !important;
     }
 }
 

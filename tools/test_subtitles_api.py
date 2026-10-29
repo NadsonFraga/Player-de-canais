@@ -38,6 +38,32 @@ class TestSubtitlesConversion(unittest.TestCase):
         self.assertIn("00:01:26.789 --> 00:01:30.000", vtt_output)
         self.assertNotIn("00:01:20,123", vtt_output)
 
+    def test_srt_to_vtt_ass_and_override_tags_stripping(self):
+        raw_srt = (
+            "1\n"
+            "00:00:01,000 --> 00:00:05,000\n"
+            "{\\an8}Texto no topo da tela\n"
+            "\n"
+            "2\n"
+            "00:00:06,000 --> 00:00:10,000\n"
+            "{/an8}{\\pos(192,240)}{\\fad(200,200)}Texto posicionado com quebra\\Nde linha e {y:i}MicroDVD\n"
+            "\n"
+            "3\n"
+            "00:00:11,000 --> 00:00:15,000\n"
+            "<i>{\\c&H00FFFF&}Amarelo e itálico</i>\n"
+        )
+        vtt = srt_to_vtt(raw_srt)
+        self.assertNotIn("{\\an8}", vtt)
+        self.assertNotIn("{/an8}", vtt)
+        self.assertNotIn("{\\pos(192,240)}", vtt)
+        self.assertNotIn("{\\fad(200,200)}", vtt)
+        self.assertNotIn("{y:i}", vtt)
+        self.assertNotIn("{\\c&H00FFFF&}", vtt)
+        self.assertNotIn("\\N", vtt)
+        self.assertIn("Texto no topo da tela", vtt)
+        self.assertIn("Texto posicionado com quebra\nde linha", vtt)
+        self.assertIn("<i>Amarelo e itálico</i>", vtt)
+
     def test_srt_to_vtt_xss_sanitization(self):
         malicious_srt = (
             "1\n"

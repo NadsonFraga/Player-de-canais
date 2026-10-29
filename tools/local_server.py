@@ -1387,12 +1387,18 @@ def fix_mojibake(text):
 
 
 def clean_vtt(text):
+    if not text:
+        return "WEBVTT\n\n"
     text = fix_mojibake(text)
-    """Subtitle cues keep italics, bold and underline only. Any other complete tag is dropped and a stray "<" or ">"
-    (a tag split over two lines) is escaped, so the player can draw the cue as HTML without running anything."""
+    # Convert ASS line break notation to newline
+    text = re.sub(r'\\N', '\n', text)
+    """Subtitle cues keep italics, bold and underline only. All SSA/ASS override tags ({...}) are stripped.
+    Any other complete tag is dropped and stray brackets escaped."""
     lines = []
     for line in text.split("\n"):
         if "-->" not in line:
+            # Strip all SSA/ASS override tags and MicroDVD tags: {...}
+            line = re.sub(r'\{[^}]*\}', '', line)
             line = re.sub(r"</?[a-zA-Z][^<>]*>", lambda m: m.group(0).lower() if re.fullmatch(r"</?[ibu]>", m.group(0), re.I) else "", line)
             line = re.sub(r"<(?!/?[ibu]>)", "&lt;", line)
             line = re.sub(r"(?<!<[ibu])(?<!</[ibu])>", "&gt;", line)

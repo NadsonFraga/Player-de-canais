@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261029_0156';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261029_0156';
-import { showToast } from '../core/toast.js?v=20261029_0156';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261029_0156';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261029_0156';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261029_0156';
-import { formatClock } from '../core/resume.js?v=20261029_0156';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261029_0156';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261029_0156';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261029_0156';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261029_0156';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261029_0156';
-import { fetchTmdb } from '../core/tmdb.js?v=20261029_0156';
+import { store } from '../core/state.js?v=20261029_1203';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261029_1203';
+import { showToast } from '../core/toast.js?v=20261029_1203';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261029_1203';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261029_1203';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261029_1203';
+import { formatClock } from '../core/resume.js?v=20261029_1203';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261029_1203';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261029_1203';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261029_1203';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261029_1203';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261029_1203';
+import { fetchTmdb } from '../core/tmdb.js?v=20261029_1203';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -2314,11 +2314,13 @@ export function applySubtitleStyles(art, prefs = getPlayerPrefs()) {
 
     if (bg === 'box') {
         el.style.textShadow = 'none';
-        el.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
-        el.style.padding = '4px 10px';
+        el.style.webkitTextStroke = 'none';
+        el.style.backgroundColor = 'rgba(0, 0, 0, 0.78)';
+        el.style.padding = '4px 12px';
         el.style.borderRadius = '6px';
     } else {
-        el.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.95)';
+        el.style.textShadow = '0 0 3px #000000, 0 0 5px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.95), 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.6)';
+        el.style.webkitTextStroke = '0.35px rgba(0, 0, 0, 0.3)';
         el.style.backgroundColor = 'transparent';
         el.style.padding = '0';
         el.style.borderRadius = '0';
@@ -3362,6 +3364,8 @@ function createSubtitlesFlyout(session) {
     const player = art && art.template && art.template.$player;
     if (!player) return;
 
+    installSubtitleSanitizer(art);
+
     let backdrop = player.querySelector(`.tvz-subtitles-backdrop[data-session="${session.id}"]`);
     if (!backdrop) {
         backdrop = document.createElement('div');
@@ -3847,6 +3851,43 @@ function renderSubtitlesFlyout(session) {
             };
             reader.readAsText(file, 'utf-8');
         });
+    }
+}
+
+function installSubtitleSanitizer(art) {
+    if (!art || !art.template || !art.template.$subtitle || art._tvzSubSanitizer) return;
+    art._tvzSubSanitizer = true;
+
+    function sanitizeSubtitleDom(el) {
+        if (!el) return;
+        const lines = el.querySelectorAll('.art-subtitle-line');
+        if (lines && lines.length > 0) {
+            lines.forEach(line => {
+                if (line.innerHTML && (line.innerHTML.includes('{') || line.innerHTML.includes('\\N'))) {
+                    line.innerHTML = line.innerHTML
+                        .replace(/\\N/g, '<br>')
+                        .replace(/\{[^}]*\}/g, '')
+                        .trim();
+                }
+            });
+        } else if (el.innerHTML && (el.innerHTML.includes('{') || el.innerHTML.includes('\\N'))) {
+            el.innerHTML = el.innerHTML
+                .replace(/\\N/g, '<br>')
+                .replace(/\{[^}]*\}/g, '')
+                .trim();
+        }
+    }
+
+    art.on('subtitleUpdate', () => {
+        sanitizeSubtitleDom(art.template.$subtitle);
+    });
+
+    if (window.MutationObserver) {
+        const observer = new MutationObserver(() => {
+            sanitizeSubtitleDom(art.template.$subtitle);
+        });
+        observer.observe(art.template.$subtitle, { childList: true, subtree: true, characterData: true });
+        art.on('destroy', () => observer.disconnect());
     }
 }
 
