@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261028_2123';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_2123';
-import { showToast } from '../core/toast.js?v=20261028_2123';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_2123';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_2123';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_2123';
-import { formatClock } from '../core/resume.js?v=20261028_2123';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_2123';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_2123';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_2123';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_2123';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_2123';
-import { fetchTmdb } from '../core/tmdb.js?v=20261028_2123';
+import { store } from '../core/state.js?v=20261028_2242';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_2242';
+import { showToast } from '../core/toast.js?v=20261028_2242';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_2242';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_2242';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_2242';
+import { formatClock } from '../core/resume.js?v=20261028_2242';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_2242';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_2242';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_2242';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_2242';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_2242';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_2242';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1696,6 +1696,17 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             aspectRatio: false,
             hotkey: true,
             airplay: true,
+            controls: [
+                {
+                    name: 'tvz-subtitles-btn',
+                    position: 'right',
+                    index: 15,
+                    html: `<i class="art-icon art-control-subtitle-btn" role="button" aria-label="Legendas (C)" title="Legendas (C)">${NATIVE_ICONS.subtitle}</i>`,
+                    click: () => {
+                        toggleSubtitlesFlyout(session);
+                    }
+                }
+            ],
             subtitle: subtitles.length > 0 && chosenSubtitle >= 0 ? {
                 url: defaultSubtitle.url || defaultSubtitle.file,
                 type: 'vtt',
@@ -1812,6 +1823,8 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         installHorizontalVolume(art);
         installDoubleTapSeek(art);
         installNoSwipeSeek(art);
+        createSubtitlesFlyout(session);
+        updateSubtitlesControlActiveState(session);
         const total = session.sources.length;
         setSourceStatus(session, [session.statusNote, total > 1 ? `Conectando à fonte ${index + 1} de ${total}...` : 'Conectando...'].filter(Boolean).join(' '));
 
@@ -3223,7 +3236,7 @@ function updateSubtitlesControlActiveState(session) {
 
 function installSubtitleControl(session) {
     const art = session.art;
-    if (!art || !art.controls || art.tvzSubtitlesInstalled) return;
+    if (!art || art.tvzSubtitlesInstalled) return;
     art.tvzSubtitlesInstalled = true;
 
     // Restore subtitle delay offset for this title
@@ -3233,18 +3246,21 @@ function installSubtitleControl(session) {
         art.subtitleOffset = savedDelay;
     }
 
-    try {
-        art.controls.add({
-            name: 'tvz-subtitles-btn',
-            position: 'right',
-            index: 15,
-            html: `<i class="art-icon art-control-subtitle-btn" role="button" aria-label="Legendas (C)" title="Legendas (C)">${NATIVE_ICONS.subtitle}</i>`,
-            click: () => {
-                toggleSubtitlesFlyout(session);
-            }
-        });
-    } catch (e) {
-        // Optional control
+    // Fallback if controls array was not created on instantiation
+    if (art.controls && !art.template.$controls?.querySelector('.art-control-subtitle-btn')) {
+        try {
+            art.controls.add({
+                name: 'tvz-subtitles-btn',
+                position: 'right',
+                index: 15,
+                html: `<i class="art-icon art-control-subtitle-btn" role="button" aria-label="Legendas (C)" title="Legendas (C)">${NATIVE_ICONS.subtitle}</i>`,
+                click: () => {
+                    toggleSubtitlesFlyout(session);
+                }
+            });
+        } catch (e) {
+            // Optional control
+        }
     }
 
     createSubtitlesFlyout(session);
@@ -3256,6 +3272,14 @@ function createSubtitlesFlyout(session) {
     const player = art && art.template && art.template.$player;
     if (!player) return;
 
+    let backdrop = player.querySelector(`.tvz-subtitles-backdrop[data-session="${session.id}"]`);
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'tvz-subtitles-backdrop';
+        backdrop.dataset.session = String(session.id);
+        player.appendChild(backdrop);
+    }
+
     let panel = player.querySelector(`.tvz-subtitles-panel[data-session="${session.id}"]`);
     if (!panel) {
         panel = document.createElement('div');
@@ -3264,38 +3288,63 @@ function createSubtitlesFlyout(session) {
         player.appendChild(panel);
     }
 
+    session.subtitlesBackdrop = backdrop;
     session.subtitlesFlyoutPanel = panel;
     session.activeLangDrilldown = null;
     session.activeView = 'list';
 
+    // Prevent any tap/gesture on the panel from bleeding through to underlying video or timeline
+    ['pointerdown', 'mousedown', 'touchstart', 'touchend', 'click'].forEach(evt => {
+        panel.addEventListener(evt, (e) => {
+            e.stopPropagation();
+        }, { passive: false });
+    });
+
+    // Tapping the backdrop closes the flyout safely without triggering video seek or controls
+    const onBackdropDismiss = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSubtitlesFlyout(session, false);
+    };
+    ['pointerdown', 'touchstart', 'click'].forEach(evt => {
+        backdrop.addEventListener(evt, onBackdropDismiss, { passive: false });
+    });
+
     renderSubtitlesFlyout(session);
 
-    const onPointerDown = (e) => {
+    const onDocPointerDown = (e) => {
         if (!panel.classList.contains('is-open')) return;
         if (!panel.contains(e.target) && !e.target.closest('.art-control-subtitle-btn')) {
-            panel.classList.remove('is-open');
+            toggleSubtitlesFlyout(session, false);
         }
     };
-    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointerdown', onDocPointerDown);
 
     art.on('destroy', () => {
-        document.removeEventListener('pointerdown', onPointerDown);
+        document.removeEventListener('pointerdown', onDocPointerDown);
+        if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
         if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
     });
 }
 
-function toggleSubtitlesFlyout(session) {
+function toggleSubtitlesFlyout(session, forceState) {
     const panel = session.subtitlesFlyoutPanel;
+    const backdrop = session.subtitlesBackdrop;
     if (!panel) return;
-    const willOpen = !panel.classList.contains('is-open');
+    const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
     if (willOpen) {
         if (session.art && session.art.setting) session.art.setting.show = false;
         session.activeLangDrilldown = null;
         session.activeView = 'list';
         renderSubtitlesFlyout(session);
         panel.classList.add('is-open');
+        if (backdrop) backdrop.classList.add('is-open');
+        if (session.art && session.art.controls) {
+            session.art.controls.show = true;
+        }
     } else {
         panel.classList.remove('is-open');
+        if (backdrop) backdrop.classList.remove('is-open');
     }
 }
 
@@ -3313,11 +3362,21 @@ function renderSubtitlesFlyout(session) {
 
         panel.innerHTML = `
         <div class="tvz-sub-header">
-            <button type="button" class="tvz-sub-customize-btn tvz-sub-back-to-list" style="color:#fff;display:flex;align-items:center;gap:4px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                Voltar
-            </button>
-            <span class="tvz-sub-title">Personalizar</span>
+            <div class="tvz-sub-header-left">
+                <button type="button" class="tvz-sub-customize-btn tvz-sub-back-to-list" style="color:#fff;display:flex;align-items:center;gap:4px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    Voltar
+                </button>
+                <span class="tvz-sub-title">Personalizar</span>
+            </div>
+            <div class="tvz-sub-header-actions">
+                <button type="button" class="tvz-sub-close-btn" aria-label="Fechar" title="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
         </div>
         <div class="tvz-sub-custom-body">
             <!-- Delay / Sync -->
@@ -3367,6 +3426,15 @@ function renderSubtitlesFlyout(session) {
         </div>`;
 
         // Event listeners for customizer
+        const closeBtn = panel.querySelector('.tvz-sub-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleSubtitlesFlyout(session, false);
+            });
+        }
+
         const backBtn = panel.querySelector('.tvz-sub-back-to-list');
         if (backBtn) {
             backBtn.addEventListener('click', () => {
@@ -3438,18 +3506,36 @@ function renderSubtitlesFlyout(session) {
     if (isDrilldown) {
         html += `
         <div class="tvz-sub-header">
-            <button type="button" class="tvz-sub-customize-btn tvz-sub-back-btn" style="color:#fff;display:flex;align-items:center;gap:4px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                Voltar
-            </button>
-            <span class="tvz-sub-title">${escapeHtml(session.activeLangDrilldownLabel || 'Versões')}</span>
+            <div class="tvz-sub-header-left">
+                <button type="button" class="tvz-sub-customize-btn tvz-sub-back-btn" style="color:#fff;display:flex;align-items:center;gap:4px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    Voltar
+                </button>
+                <span class="tvz-sub-title">${escapeHtml(session.activeLangDrilldownLabel || 'Versões')}</span>
+            </div>
+            <div class="tvz-sub-header-actions">
+                <button type="button" class="tvz-sub-close-btn" aria-label="Fechar" title="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
         </div>`;
     } else {
         html += `
         <div class="tvz-sub-header">
-            <span class="tvz-sub-title">Legendas</span>
+            <div class="tvz-sub-header-left">
+                <span class="tvz-sub-title">Legendas</span>
+            </div>
             <div class="tvz-sub-header-actions">
-                <button type="button" class="tvz-sub-customize-btn tvz-sub-custom-trigger">Customizar</button>
+                <button type="button" class="tvz-sub-customize-btn tvz-sub-custom-trigger">Personalizar</button>
+                <button type="button" class="tvz-sub-close-btn" aria-label="Fechar" title="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
         </div>`;
     }
@@ -3627,6 +3713,9 @@ function renderSubtitlesFlyout(session) {
                 updateSubtitlesControlActiveState(session);
                 renderSubtitlesFlyout(session);
                 refreshSubtitleMenu(session);
+                if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+                    setTimeout(() => toggleSubtitlesFlyout(session, false), 220);
+                }
                 return;
             }
 
@@ -3642,7 +3731,18 @@ function renderSubtitlesFlyout(session) {
                 updateSubtitlesControlActiveState(session);
                 renderSubtitlesFlyout(session);
                 refreshSubtitleMenu(session);
+                if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+                    setTimeout(() => toggleSubtitlesFlyout(session, false), 220);
+                }
             }
+        });
+    });
+
+    panel.querySelectorAll('.tvz-sub-close-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSubtitlesFlyout(session, false);
         });
     });
 

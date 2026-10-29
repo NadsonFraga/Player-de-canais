@@ -6,7 +6,7 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_2123';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_2242';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -126,20 +126,21 @@ export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', seaso
         const isHls = s.url.includes('.m3u8');
         const cleanName = s.name || `FenixFlix ${quality}p`;
 
-        // Provider trust & speed tiers:
-        // 4: Dedicated high-speed official masters (fenixhub.online / Zeus, squareweb.app, fenixbot) -> 0ms startup
+        // Provider trust, audio compatibility & speed tiers:
+        // 4: Dedicated high-speed official web VOD masters (fenixhub.online / Zeus / Badger) -> guaranteed AAC web audio, 0ms startup
         // 3: Verified mirrors & direct CDNs (zunder, zunderflix)
-        // 2: Third-party scrapers (hollymovies / embedplayer2)
-        // 1: Free sleep-prone cloud containers (koyeb.app takes 10-15s to wake up; keep as last resort)
+        // 2: Third-party web scrapers & adaptive HLS (hollymovies / embedplayer2) -> AAC web audio
+        // 1: Un-transcoded bot torrent streams (squareweb.app, koyeb.app, fenixbot, /stream/) -> raw MKVs with E-AC-3 audio (unsupported by HTML5 video / silent in browsers), sleep-prone containers
         const rawUrl = (s.url || '').toLowerCase();
         let providerTier = 3;
-        if (rawUrl.includes('fenixhub.online') || rawUrl.includes('squareweb.app') || rawUrl.includes('fenixbot') || (text.includes('fenixhub') && !rawUrl.includes('koyeb.app'))) {
+        const isBotStream = rawUrl.includes('/stream/') || rawUrl.includes('squareweb.app') || rawUrl.includes('fenixbot') || rawUrl.includes('koyeb.app');
+        if (rawUrl.includes('fenixhub.online')) {
           providerTier = 4;
         } else if (text.includes('zunder') || rawUrl.includes('zunderflix')) {
           providerTier = 3;
         } else if (text.includes('hollymovies') || rawUrl.includes('embedplayer2')) {
           providerTier = 2;
-        } else if (rawUrl.includes('koyeb.app')) {
+        } else if (isBotStream) {
           providerTier = 1;
         }
 
