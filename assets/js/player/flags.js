@@ -144,6 +144,52 @@ export const FLAG_SVGS = {
         <path style="fill: #fecc00 !important;" d="M0 200h640v80H0zM180 0h80v480h-80z"/>
     </svg>`,
 
+    // Greece (4:3 ratio)
+    el: `<svg class="tvz-flag-svg" viewBox="0 0 640 480" width="20" height="15" aria-hidden="true">
+        <path style="fill: #0d5eaf !important;" d="M0 0h640v480H0z"/>
+        <path style="stroke: #ffffff !important; stroke-width: 53.3px;" d="M0 80h640M0 186.6h640M0 293.3h640M0 400h640"/>
+        <path style="fill: #0d5eaf !important;" d="M0 0h240v266.6H0z"/>
+        <path style="stroke: #ffffff !important; stroke-width: 53.3px;" d="M120 0v266.6M0 133.3h240"/>
+    </svg>`,
+
+    // Czech Republic (4:3 ratio)
+    cs: `<svg class="tvz-flag-svg" viewBox="0 0 640 480" width="20" height="15" aria-hidden="true">
+        <path style="fill: #ffffff !important;" d="M0 0h640v240H0z"/>
+        <path style="fill: #d7141a !important;" d="M0 240h640v240H0z"/>
+        <polygon style="fill: #11457e !important;" points="0,0 320,240 0,480"/>
+    </svg>`,
+
+    // Hungary (4:3 ratio)
+    hu: `<svg class="tvz-flag-svg" viewBox="0 0 640 480" width="20" height="15" aria-hidden="true">
+        <path style="fill: #ce2939 !important;" d="M0 0h640v160H0z"/>
+        <path style="fill: #ffffff !important;" d="M0 160h640v160H0z"/>
+        <path style="fill: #477050 !important;" d="M0 320h640v160H0z"/>
+    </svg>`,
+
+    // Malaysia (4:3 ratio)
+    ms: `<svg class="tvz-flag-svg" viewBox="0 0 640 480" width="20" height="15" aria-hidden="true">
+        <path style="fill: #cc0000 !important;" d="M0 0h640v480H0z"/>
+        <path style="stroke: #ffffff !important; stroke-width: 34.3px;" d="M0 51.4h640M0 120h640M0 188.5h640M0 257h640M0 325.7h640M0 394.3h640M0 462.8h640"/>
+        <path style="fill: #000066 !important;" d="M0 0h320v240H0z"/>
+        <circle cx="160" cy="120" r="60" style="fill: #ffcc00 !important;"/>
+        <circle cx="180" cy="120" r="50" style="fill: #000066 !important;"/>
+    </svg>`,
+
+    // Thailand (4:3 ratio)
+    th: `<svg class="tvz-flag-svg" viewBox="0 0 640 480" width="20" height="15" aria-hidden="true">
+        <path style="fill: #a51931 !important;" d="M0 0h640v480H0z"/>
+        <path style="fill: #f4f5f8 !important;" d="M0 80h640v320H0z"/>
+        <path style="fill: #2d2a4a !important;" d="M0 160h640v160H0z"/>
+    </svg>`,
+
+    // India (4:3 ratio)
+    hi: `<svg class="tvz-flag-svg" viewBox="0 0 640 480" width="20" height="15" aria-hidden="true">
+        <path style="fill: #ff9933 !important;" d="M0 0h640v160H0z"/>
+        <path style="fill: #ffffff !important;" d="M0 160h640v160H0z"/>
+        <path style="fill: #138808 !important;" d="M0 320h640v160H0z"/>
+        <circle cx="320" cy="240" r="50" style="fill: none !important; stroke: #000080 !important; stroke-width: 8px;"/>
+    </svg>`,
+
     // Global / Other
     globe: `<svg class="tvz-flag-svg" viewBox="0 0 24 24" width="20" height="15" aria-hidden="true">
         <circle cx="12" cy="12" r="10" style="fill: none !important; stroke: #94a3b8 !important; stroke-width: 2px;"/>
@@ -178,15 +224,40 @@ export function getFlagSvg(lang) {
     if (l === 'ro' || l === 'ron') return FLAG_SVGS.ro;
     if (l === 'nl' || l === 'nld' || l === 'dut') return FLAG_SVGS.nl;
     if (l === 'sv' || l === 'swe') return FLAG_SVGS.sv;
+    if (l === 'el' || l === 'ell' || l === 'gre') return FLAG_SVGS.el;
+    if (l === 'cs' || l === 'cze' || l === 'ces') return FLAG_SVGS.cs;
+    if (l === 'hu' || l === 'hun' || l === 'mag') return FLAG_SVGS.hu;
+    if (l === 'ms' || l === 'mal' || l === 'may' || l === 'msa') return FLAG_SVGS.ms;
+    if (l === 'th' || l === 'tha') return FLAG_SVGS.th;
+    if (l === 'hi' || l === 'hin') return FLAG_SVGS.hi;
     return FLAG_SVGS.globe;
 }
 
 /**
  * Client-side subtitle sanitization to prevent XSS in VTT cues.
  */
+export function fixMojibake(text) {
+    if (!text || typeof text !== 'string') return text;
+    try {
+        if (/[\u00C2\u00C3]/.test(text)) {
+            return decodeURIComponent(escape(text));
+        }
+    } catch (e) {}
+    return text
+        .replace(/\u00C3\u00A1/g, 'á').replace(/\u00C3\u00A0/g, 'à').replace(/\u00C3\u00A2/g, 'â').replace(/\u00C3\u00A3/g, 'ã')
+        .replace(/\u00C3\u00A9/g, 'é').replace(/\u00C3\u00AA/g, 'ê').replace(/\u00C3\u00AD/g, 'í')
+        .replace(/\u00C3\u00B3/g, 'ó').replace(/\u00C3\u00B4/g, 'ô').replace(/\u00C3\u00B5/g, 'õ')
+        .replace(/\u00C3\u00BA/g, 'ú').replace(/\u00C3\u00A7/g, 'ç')
+        .replace(/\u00C3\u0081/g, 'Á').replace(/\u00C3\u0080/g, 'À').replace(/\u00C3\u0082/g, 'Â').replace(/\u00C3\u0083/g, 'Ã')
+        .replace(/\u00C3\u0089/g, 'É').replace(/\u00C3\u008A/g, 'Ê').replace(/\u00C3\u008D/g, 'Í')
+        .replace(/\u00C3\u0093/g, 'Ó').replace(/\u00C3\u0094/g, 'Ô').replace(/\u00C3\u0095/g, 'Õ')
+        .replace(/\u00C3\u009A/g, 'Ú').replace(/\u00C3\u0087/g, 'Ç');
+}
+
 export function cleanVtt(text) {
     if (!text) return 'WEBVTT\n\n';
-    return text.split('\n').map(line => {
+    const fixed = fixMojibake(text);
+    return fixed.split('\n').map(line => {
         if (line.includes('-->')) return line;
         return line
             .replace(/<\/?[a-zA-Z][^<>]*>/g, tag => (/^<\/?[ibu]>$/i.test(tag) ? tag.toLowerCase() : ''))
