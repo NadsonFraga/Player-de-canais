@@ -1285,3 +1285,84 @@
     border-color: #ffffff;
     box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.8);
 }
+
+/* Subtitle Backdrop Overlay (prevents ghost taps & touch bleed to underlying video/seek bar) */
+.tvz-subtitles-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 155;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+    touch-action: none;
+}
+
+.tvz-subtitles-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tvz-sub-close-btn {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.65) !important;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    padding: 0;
+    margin: 0;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.tvz-sub-close-btn:hover,
+.tvz-sub-close-btn:active {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.tvz-sub-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+/* Mobile Flyout Optimization */
+@media (max-width: 768px) {
+    .tvz-subtitles-panel {
+        right: 8px !important;
+        left: 8px !important;
+        bottom: 12px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100% - 24px) !important;
+        border-radius: 14px !important;
+        z-index: 160 !important;
+    }
+    .tvz-sub-list {
+        max-height: 230px !important;
+    }
+}
+
+/* Mobile Landscape / Low-Height Fullscreen */
+@media (max-height: 520px) and (orientation: landscape) {
+    .tvz-subtitles-panel {
+        right: 12px !important;
+        left: auto !important;
+        bottom: 8px !important;
+        top: 8px !important;
+        width: 320px !important;
+        max-width: calc(100% - 24px) !important;
+        max-height: calc(100% - 16px) !important;
+        border-radius: 12px !important;
+    }
+    .tvz-sub-list {
+        max-height: calc(100vh - 110px) !important;
+    }
+}

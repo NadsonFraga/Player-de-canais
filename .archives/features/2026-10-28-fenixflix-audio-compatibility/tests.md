@@ -37,3 +37,4 @@
 3. Select server **FenixFlix**.
 4. Confirm video loads immediately and audio starts playing cleanly in Portuguese (PT-BR) without silence.
 5. Check other episodes or series (e.g. *Lupin* S02E01) to verify correct Portuguese dubbing and audio playback.
+

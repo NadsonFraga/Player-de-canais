@@ -38,3 +38,4 @@ The FenixFlix API returns a mix of dedicated web VOD re-encodes (`fenixhub.onlin
 ## 4. Verification
 - *Rick and Morty* S08E04 now selects Tier 4 `fenixhub.online` with native AAC audio as primary.
 - Full compatibility maintained across existing series (*Lupin*, *Breaking Bad*) and movies (*Deadpool & Wolverine*).
+

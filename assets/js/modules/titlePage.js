@@ -13,17 +13,17 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261028_2242';
-import { fetchTmdb } from '../core/tmdb.js?v=20261028_2242';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_2242';
-import { showToast } from '../core/toast.js?v=20261028_2242';
-import { syncPageLock } from '../core/activity.js?v=20261028_2242';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261028_2242';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261028_2242';
-import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261028_2242';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261028_2242';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261028_2242';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261028_2242';
+} from '../core/constants.js?v=20261028_2249';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_2249';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_2249';
+import { showToast } from '../core/toast.js?v=20261028_2249';
+import { syncPageLock } from '../core/activity.js?v=20261028_2249';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261028_2249';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261028_2249';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261028_2249';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261028_2249';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261028_2249';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261028_2249';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -33,7 +33,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261028_2242';
+} from './series.js?v=20261028_2249';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };

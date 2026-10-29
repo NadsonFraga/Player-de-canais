@@ -43,3 +43,4 @@ When viewing *Rick and Morty* (S08E04 / Ep. 75 "The Last Temptation of Jerry") o
 - `functions/api/providers.js`
 - `tools/local_providers.py`
 - Version stamping across `index.html` and ES modules.
+
