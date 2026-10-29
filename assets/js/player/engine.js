@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261028_1951';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_1951';
-import { showToast } from '../core/toast.js?v=20261028_1951';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_1951';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_1951';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_1951';
-import { formatClock } from '../core/resume.js?v=20261028_1951';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_1951';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_1951';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_1951';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_1951';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_1951';
-import { fetchTmdb } from '../core/tmdb.js?v=20261028_1951';
+import { store } from '../core/state.js?v=20261028_2123';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_2123';
+import { showToast } from '../core/toast.js?v=20261028_2123';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_2123';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_2123';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_2123';
+import { formatClock } from '../core/resume.js?v=20261028_2123';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_2123';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_2123';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_2123';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_2123';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_2123';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_2123';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1113,6 +1113,20 @@ const NATIVE_I18N = {
 let activeNativeSession = null;
 let nativeSessionCounter = 0;
 
+// Cross-server in-memory subtitle cache per media item/episode
+const mediaSubtitlesCache = new Map();
+
+function getMediaSubtitleCacheKey(ctx) {
+    if (!ctx) return null;
+    const type = String(ctx.type || 'movie').toLowerCase();
+    const isSeries = type === 'tv' || type === 'anime' || type === 'series' || type === 'serie';
+    const s = ctx.season || 1;
+    const e = ctx.episode || 1;
+    const primaryId = ctx.id || ctx.imdbId;
+    if (!primaryId) return null;
+    return isSeries ? `series:${primaryId}:${s}:${e}` : `movie:${primaryId}`;
+}
+
 /**
  * Maps a frame size to a standard quality class (2160, 1440, 1080, 720, 480, 360, 240).
  * Mirrors qualityClass() in functions/api/resolve.js.
@@ -1219,6 +1233,29 @@ export function mountNativePlayer(options) {
         return null;
     }
 
+    const mediaCacheKey = getMediaSubtitleCacheKey(options.mediaContext);
+    const initialSubtitles = Array.isArray(subtitles) ? subtitles.map(s => ({
+        ...s,
+        isNative: true,
+        badge: '(Original da Fonte)'
+    })) : [];
+
+    // Inherit cached subtitles from previous server runs on the same title/episode
+    if (mediaCacheKey && mediaSubtitlesCache.has(mediaCacheKey)) {
+        const cachedList = mediaSubtitlesCache.get(mediaCacheKey) || [];
+        const existingUrls = new Set(initialSubtitles.map(s => s.url || s.file));
+        cachedList.forEach(cachedSub => {
+            const u = cachedSub.url || cachedSub.file;
+            if (u && !existingUrls.has(u)) {
+                initialSubtitles.push(cachedSub);
+                existingUrls.add(u);
+            }
+        });
+    }
+    if (mediaCacheKey && initialSubtitles.length) {
+        mediaSubtitlesCache.set(mediaCacheKey, [...initialSubtitles]);
+    }
+
     const session = {
         id: ++nativeSessionCounter,
         containerId,
@@ -1226,11 +1263,7 @@ export function mountNativePlayer(options) {
         poster,
         audio,
         userSelectedAudio: false,
-        subtitles: Array.isArray(subtitles) ? subtitles.map(s => ({
-            ...s,
-            isNative: true,
-            badge: '(Original da Fonte)'
-        })) : [],
+        subtitles: initialSubtitles,
         userToggledSubtitles: false,
         activeSubtitleUrl: null,
         onAllFailed,
@@ -2250,12 +2283,16 @@ function storedFit() {
 export function applySubtitleStyles(art, prefs = getPlayerPrefs()) {
     if (!art || !art.template || !art.template.$subtitle) return;
     const el = art.template.$subtitle;
+    const player = art.template.$player;
     const size = prefs.subtitle_size || 100;
     const color = prefs.subtitle_color || '#ffffff';
     const bg = prefs.subtitle_bg || 'shadow';
 
-    const pxSize = Math.round(20 * (size / 100));
-    el.style.fontSize = `${pxSize}px`;
+    const scale = (size / 100).toFixed(2);
+    if (player) player.style.setProperty('--tvz-sub-scale', scale);
+    el.style.setProperty('--tvz-sub-scale', scale);
+    el.style.setProperty('--tvz-sub-color', color);
+    el.style.fontSize = '';
     el.style.color = color;
 
     if (bg === 'box') {
@@ -2931,6 +2968,26 @@ async function fetchExternalSubtitles(session) {
     const ctx = session.mediaContext;
     if (!ctx || (!ctx.id && !ctx.imdbId)) return;
     const sessionId = session.id;
+    const cacheKey = getMediaSubtitleCacheKey(ctx);
+
+    // If already cached, populate immediately without wait
+    if (cacheKey && mediaSubtitlesCache.has(cacheKey)) {
+        const cachedList = mediaSubtitlesCache.get(cacheKey) || [];
+        const existingUrls = new Set(session.subtitles.map(s => s.url || s.file));
+        let added = false;
+        cachedList.forEach(c => {
+            const u = c.url || c.file;
+            if (u && !existingUrls.has(u)) {
+                session.subtitles.push(c);
+                existingUrls.add(u);
+                added = true;
+            }
+        });
+        if (added) {
+            renderSubtitlesFlyout(session);
+            updateSubtitlesControlActiveState(session);
+        }
+    }
 
     session.fetchingSubtitles = true;
     renderSubtitlesFlyout(session);
@@ -2993,6 +3050,9 @@ async function fetchExternalSubtitles(session) {
 
             // Retain native tracks at top, external underneath
             session.subtitles = [...session.subtitles, ...newTracks];
+            if (cacheKey) {
+                mediaSubtitlesCache.set(cacheKey, [...session.subtitles]);
+            }
 
             const art = session.art;
             // Smart auto-activation on subtitled audio if user hasn't explicitly chosen yet
@@ -3006,6 +3066,7 @@ async function fetchExternalSubtitles(session) {
                         session.activeSubtitleUrl = best.url || best.file;
                         art.subtitle.switch(session.activeSubtitleUrl, { name: best.release || best.label });
                         art.subtitle.show = true;
+                        applySubtitleStyles(art);
                     }
                 }
             }
@@ -3576,6 +3637,7 @@ function renderSubtitlesFlyout(session) {
                 session.activeSubtitleUrl = url;
                 session.art.subtitle.switch(url, { name: el.querySelector('.tvz-sub-item-text')?.textContent || 'Legenda' });
                 session.art.subtitle.show = true;
+                applySubtitleStyles(session.art);
                 setPlayerPref('subtitle', lang);
                 updateSubtitlesControlActiveState(session);
                 renderSubtitlesFlyout(session);

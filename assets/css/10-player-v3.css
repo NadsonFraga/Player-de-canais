@@ -870,6 +870,70 @@
 
 
 /* ============================================================
+   TVZINHA SUBTITLE RESPONSIVE STYLING & FULLSCREEN ADAPTATION
+   ============================================================ */
+
+.art-video-player .art-subtitle {
+    /* Responsive font-size in windowed mode, multiplied by user scale */
+    font-size: calc(clamp(17px, 2.2vw, 22px) * var(--tvz-sub-scale, 1)) !important;
+    color: var(--tvz-sub-color, #ffffff) !important;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.35 !important;
+    bottom: 45px !important;
+    transition: bottom 0.2s cubic-bezier(0.2, 0, 0, 1), font-size 0.15s ease;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Controls visible in windowed mode: lift subtitle slightly */
+.art-video-player.art-control-show .art-subtitle,
+.art-video-player.art-hover .art-subtitle {
+    bottom: 75px !important;
+}
+
+/* Fullscreen mode on desktop / TV / Web Fullscreen:
+   Noticeably larger font size matching cinema & streaming standard */
+.art-video-player.art-fullscreen .art-subtitle,
+.art-video-player.art-fullscreen-web .art-subtitle,
+:fullscreen .art-video-player .art-subtitle {
+    font-size: calc(clamp(26px, 2.0vw, 40px) * var(--tvz-sub-scale, 1)) !important;
+    bottom: 65px !important;
+}
+
+/* When controls appear in fullscreen mode: lift subtitle above player bar */
+.art-video-player.art-fullscreen.art-control-show .art-subtitle,
+.art-video-player.art-fullscreen-web.art-control-show .art-subtitle,
+.art-video-player.art-fullscreen.art-hover .art-subtitle,
+.art-video-player.art-fullscreen-web.art-hover .art-subtitle {
+    bottom: 100px !important;
+}
+
+/* Mobile Devices in Portrait */
+@media (max-width: 768px) and (orientation: portrait) {
+    .art-video-player .art-subtitle {
+        font-size: calc(clamp(15px, 3.8vw, 19px) * var(--tvz-sub-scale, 1)) !important;
+        bottom: 35px !important;
+    }
+    .art-video-player.art-control-show .art-subtitle {
+        bottom: 65px !important;
+    }
+}
+
+/* Mobile Devices in Landscape / Small Height Fullscreen */
+@media (max-height: 520px) and (orientation: landscape) {
+    .art-video-player.art-fullscreen .art-subtitle,
+    .art-video-player.art-fullscreen-web .art-subtitle {
+        font-size: calc(clamp(16px, 4.2vh, 23px) * var(--tvz-sub-scale, 1)) !important;
+        bottom: 35px !important;
+    }
+    .art-video-player.art-fullscreen.art-control-show .art-subtitle,
+    .art-video-player.art-fullscreen-web.art-control-show .art-subtitle {
+        bottom: 70px !important;
+    }
+}
+
+/* ============================================================
    TVZINHA SUBTITLE FLYOUT PANEL & CC BUTTON
    ============================================================ */
 
