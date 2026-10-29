@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261029_1203';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261029_1203';
-import { showToast } from '../core/toast.js?v=20261029_1203';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261029_1203';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261029_1203';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261029_1203';
-import { formatClock } from '../core/resume.js?v=20261029_1203';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261029_1203';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261029_1203';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261029_1203';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261029_1203';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261029_1203';
-import { fetchTmdb } from '../core/tmdb.js?v=20261029_1203';
+import { store } from '../core/state.js?v=20261029_1949';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261029_1949';
+import { showToast } from '../core/toast.js?v=20261029_1949';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261029_1949';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261029_1949';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261029_1949';
+import { formatClock } from '../core/resume.js?v=20261029_1949';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261029_1949';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261029_1949';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261029_1949';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261029_1949';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261029_1949';
+import { fetchTmdb } from '../core/tmdb.js?v=20261029_1949';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1124,9 +1124,9 @@ function getMediaSubtitleCacheKey(ctx) {
     if (!ctx) return null;
     const type = String(ctx.type || 'movie').toLowerCase();
     const isSeries = type === 'tv' || type === 'anime' || type === 'series' || type === 'serie';
-    const s = ctx.season || 1;
-    const e = ctx.episode || 1;
-    const primaryId = ctx.id || ctx.imdbId;
+    const s = ctx.tmdb_season != null ? ctx.tmdb_season : (ctx.season || 1);
+    const e = ctx.tmdb_episode != null ? ctx.tmdb_episode : (ctx.episode || 1);
+    const primaryId = ctx.id || ctx.imdbId || ctx.imdb_id;
     if (!primaryId) return null;
     return isSeries ? `series:${primaryId}:${s}:${e}` : `movie:${primaryId}`;
 }
@@ -2312,12 +2312,13 @@ export function applySubtitleStyles(art, prefs = getPlayerPrefs()) {
     el.style.fontSize = '';
     el.style.color = color;
 
+    el.setAttribute('data-bg', bg);
     if (bg === 'box') {
         el.style.textShadow = 'none';
         el.style.webkitTextStroke = 'none';
-        el.style.backgroundColor = 'rgba(0, 0, 0, 0.78)';
-        el.style.padding = '4px 12px';
-        el.style.borderRadius = '6px';
+        el.style.backgroundColor = 'transparent';
+        el.style.padding = '0';
+        el.style.borderRadius = '0';
     } else {
         el.style.textShadow = '0 0 3px #000000, 0 0 5px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.95), 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.6)';
         el.style.webkitTextStroke = '0.35px rgba(0, 0, 0, 0.3)';
@@ -2985,7 +2986,7 @@ function refreshAudioMenu(session) {
  */
 async function fetchExternalSubtitles(session) {
     const ctx = session.mediaContext;
-    if (!ctx || (!ctx.id && !ctx.imdbId)) return;
+    if (!ctx || (!ctx.id && !ctx.imdbId && !ctx.imdb_id)) return;
     const sessionId = session.id;
     const cacheKey = getMediaSubtitleCacheKey(ctx);
 
@@ -3013,7 +3014,7 @@ async function fetchExternalSubtitles(session) {
 
     const rawType = String(ctx.type || 'movie').toLowerCase();
     const type = rawType === 'tv' || rawType === 'anime' || rawType === 'series' || rawType === 'serie' ? 'series' : 'movie';
-    let imdbId = ctx.imdbId;
+    let imdbId = ctx.imdbId || ctx.imdb_id;
 
     if (!imdbId && ctx.id) {
         try {
@@ -3033,10 +3034,13 @@ async function fetchExternalSubtitles(session) {
         return;
     }
 
+    const season = String(ctx.tmdb_season != null ? ctx.tmdb_season : (ctx.season || 1));
+    const episode = String(ctx.tmdb_episode != null ? ctx.tmdb_episode : (ctx.episode || 1));
+
     const params = new URLSearchParams({
         type,
-        season: String(ctx.season || 1),
-        episode: String(ctx.episode || 1)
+        season,
+        episode
     });
     if (ctx.id) {
         params.set('tmdb_id', String(ctx.id));
@@ -3086,9 +3090,14 @@ async function fetchExternalSubtitles(session) {
                         const currentRank = currentSub ? subtitleLanguageRank(currentSub) : 999;
                         if (!session.activeSubtitleUrl || subtitleLanguageRank(best) < currentRank) {
                             session.activeSubtitleUrl = best.url || best.file;
-                            art.subtitle.switch(session.activeSubtitleUrl, { name: best.release || best.label });
-                            art.subtitle.show = true;
-                            applySubtitleStyles(art);
+                            patchArtplayerSubtitleEngine(art);
+                            art.subtitle.switch(session.activeSubtitleUrl, { name: best.release || best.label, type: 'vtt' })
+                                .then(() => {
+                                    art.subtitle.show = true;
+                                    disableEmbeddedTextTracks(art);
+                                    applySubtitleStyles(art);
+                                })
+                                .catch(() => {});
                         }
                     }
                 }
@@ -3309,10 +3318,13 @@ function refreshSubtitleMenu(session) {
 function getSubtitleDelayKey(session) {
     const ctx = session.mediaContext;
     if (!ctx) return null;
+    const s = ctx.tmdb_season != null ? ctx.tmdb_season : (ctx.season || 1);
+    const e = ctx.tmdb_episode != null ? ctx.tmdb_episode : (ctx.episode || 1);
+    const primaryId = ctx.id || ctx.imdbId || ctx.imdb_id;
     const type = ctx.type === 'movie' ? 'movie' : 'series';
     return type === 'movie'
-        ? `tvz_sub_delay:movie:${ctx.id || ctx.imdbId}`
-        : `tvz_sub_delay:series:${ctx.id || ctx.imdbId}:${ctx.season || 1}:${ctx.episode || 1}`;
+        ? `tvz_sub_delay:movie:${primaryId}`
+        : `tvz_sub_delay:series:${primaryId}:${s}:${e}`;
 }
 
 function getStoredSubtitleDelay(session) {
@@ -3769,16 +3781,48 @@ function renderSubtitlesFlyout(session) {
                 setPlayerPref('subtitle', url ? (lang || null) : 'off');
                 if (!url) {
                     session.art.subtitle.show = false;
+                    disableEmbeddedTextTracks(session.art);
+                    updateSubtitlesControlActiveState(session);
+                    renderSubtitlesFlyout(session);
+                    refreshSubtitleMenu(session);
                 } else {
+                    patchArtplayerSubtitleEngine(session.art);
                     const matchedSub = (session.subtitles || []).find(s => (s.url || s.file) === url);
                     const name = matchedSub ? (matchedSub.release || matchedSub.label || 'Legenda') : 'Legenda';
-                    session.art.subtitle.switch(url, { name });
-                    session.art.subtitle.show = true;
-                    applySubtitleStyles(session.art);
+                    (async () => {
+                        try {
+                            await session.art.subtitle.switch(url, { name, type: 'vtt' });
+                            session.art.subtitle.show = true;
+                            disableEmbeddedTextTracks(session.art);
+                            applySubtitleStyles(session.art);
+                        } catch (err) {
+                            console.warn('[Subtitles] Falha ao carregar faixa selecionada:', err);
+                            const sameLangSubs = matchedSub
+                                ? (session.subtitles || []).filter(s => s.lang === matchedSub.lang && (s.url || s.file) !== url)
+                                : [];
+                            if (sameLangSubs.length > 0) {
+                                const fallback = sameLangSubs[0];
+                                const fbUrl = fallback.url || fallback.file;
+                                const fbName = fallback.release || fallback.label || 'Legenda alternativa';
+                                if (session.art.notice) session.art.notice.show = 'Legenda indisponível. Tentando alternativa...';
+                                try {
+                                    await session.art.subtitle.switch(fbUrl, { name: fbName, type: 'vtt' });
+                                    session.activeSubtitleUrl = fbUrl;
+                                    session.art.subtitle.show = true;
+                                    disableEmbeddedTextTracks(session.art);
+                                    applySubtitleStyles(session.art);
+                                    renderSubtitlesFlyout(session);
+                                    updateSubtitlesControlActiveState(session);
+                                    return;
+                                } catch (fbErr) {}
+                            }
+                            if (session.art.notice) session.art.notice.show = 'Não foi possível carregar a legenda.';
+                        }
+                        updateSubtitlesControlActiveState(session);
+                        renderSubtitlesFlyout(session);
+                        refreshSubtitleMenu(session);
+                    })();
                 }
-                updateSubtitlesControlActiveState(session);
-                renderSubtitlesFlyout(session);
-                refreshSubtitleMenu(session);
             }
         });
     });
@@ -3842,7 +3886,9 @@ function renderSubtitlesFlyout(session) {
                 session.subtitles.unshift(customTrack);
                 session.userToggledSubtitles = true;
                 session.activeSubtitleUrl = blobUrl;
-                session.art.subtitle.switch(blobUrl, { name: customTrack.label });
+                patchArtplayerSubtitleEngine(session.art);
+                session.art.subtitle.switch(blobUrl, { name: customTrack.label, type: 'vtt' });
+                disableEmbeddedTextTracks(session.art);
                 session.art.subtitle.show = true;
                 updateSubtitlesControlActiveState(session);
                 renderSubtitlesFlyout(session);
@@ -3854,7 +3900,48 @@ function renderSubtitlesFlyout(session) {
     }
 }
 
+export function patchArtplayerSubtitleEngine(art) {
+    if (!art || !art.subtitle || art._tvzSubEnginePatched) return;
+    art._tvzSubEnginePatched = true;
+
+    try {
+        Object.defineProperty(art.subtitle, 'textTrack', {
+            get() {
+                if (art.template && art.template.$track && art.template.$track.track) {
+                    return art.template.$track.track;
+                }
+                return art.template?.$video?.textTracks?.[0] || null;
+            },
+            configurable: true
+        });
+
+        Object.defineProperty(art.subtitle, 'activeCue', {
+            get() {
+                const track = this.textTrack;
+                return track && track.activeCues ? track.activeCues[0] : null;
+            },
+            configurable: true
+        });
+    } catch (e) {
+        console.warn('[PlayerEngine] Subtitle engine patch notice:', e);
+    }
+}
+
+export function disableEmbeddedTextTracks(art) {
+    try {
+        const video = art?.template?.$video;
+        if (video && video.textTracks) {
+            for (let i = 0; i < video.textTracks.length; i++) {
+                const track = video.textTracks[i];
+                if (art.template?.$track && track === art.template.$track.track) continue;
+                track.mode = 'disabled';
+            }
+        }
+    } catch (e) {}
+}
+
 function installSubtitleSanitizer(art) {
+    patchArtplayerSubtitleEngine(art);
     if (!art || !art.template || !art.template.$subtitle || art._tvzSubSanitizer) return;
     art._tvzSubSanitizer = true;
 
