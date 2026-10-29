@@ -1300,6 +1300,15 @@ SUBTITLE_LANG_MAP = {
     "nld": {"code": "nl", "label": "Holandês", "flag": "nl", "priority": 20},
     "dut": {"code": "nl", "label": "Holandês", "flag": "nl", "priority": 20},
     "swe": {"code": "sv", "label": "Sueco", "flag": "sv", "priority": 21},
+    "ell": {"code": "el", "label": "Grego", "flag": "el", "priority": 22},
+    "gre": {"code": "el", "label": "Grego", "flag": "el", "priority": 22},
+    "cze": {"code": "cs", "label": "Tcheco", "flag": "cs", "priority": 23},
+    "ces": {"code": "cs", "label": "Tcheco", "flag": "cs", "priority": 23},
+    "hun": {"code": "hu", "label": "Húngaro", "flag": "hu", "priority": 24},
+    "mal": {"code": "ms", "label": "Malaio", "flag": "ms", "priority": 25},
+    "msa": {"code": "ms", "label": "Malaio", "flag": "ms", "priority": 25},
+    "tha": {"code": "th", "label": "Tailandês", "flag": "th", "priority": 26},
+    "hin": {"code": "hi", "label": "Hindi", "flag": "hi", "priority": 27},
 }
 
 
@@ -1357,7 +1366,28 @@ def stream_media_type(upstream_type, url):
     return STREAM_TYPE_BY_EXTENSION.get(extension, "application/octet-stream")
 
 
+def fix_mojibake(text):
+    if not text or not isinstance(text, str):
+        return text
+    if "\u00C2" in text or "\u00C3" in text:
+        try:
+            return text.encode("latin-1").decode("utf-8")
+        except Exception:
+            pass
+    return (
+        text.replace("\u00C3\u00A1", "á").replace("\u00C3\u00A0", "à").replace("\u00C3\u00A2", "â").replace("\u00C3\u00A3", "ã")
+        .replace("\u00C3\u00A9", "é").replace("\u00C3\u00AA", "ê").replace("\u00C3\u00AD", "í")
+        .replace("\u00C3\u00B3", "ó").replace("\u00C3\u00B4", "ô").replace("\u00C3\u00B5", "õ")
+        .replace("\u00C3\u00BA", "ú").replace("\u00C3\u00A7", "ç")
+        .replace("\u00C3\u0081", "Á").replace("\u00C3\u0080", "À").replace("\u00C3\u0082", "Â").replace("\u00C3\u0083", "Ã")
+        .replace("\u00C3\u0089", "É").replace("\u00C3\u008A", "Ê").replace("\u00C3\u008D", "Í")
+        .replace("\u00C3\u0093", "Ó").replace("\u00C3\u0094", "Ô").replace("\u00C3\u0095", "Õ")
+        .replace("\u00C3\u009A", "Ú").replace("\u00C3\u0087", "Ç")
+    )
+
+
 def clean_vtt(text):
+    text = fix_mojibake(text)
     """Subtitle cues keep italics, bold and underline only. Any other complete tag is dropped and a stray "<" or ">"
     (a tag split over two lines) is escaped, so the player can draw the cue as HTML without running anything."""
     lines = []
@@ -1925,7 +1955,14 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 if len(raw_data) > 2 * 1024 * 1024:
                     self.send_json(502, {"error": "subtitle_too_large"}, origin)
                     return
-                text = raw_data.decode("utf-8", errors="replace")
+                try:
+                    text = raw_data.decode("utf-8")
+                    text = fix_mojibake(text)
+                except UnicodeDecodeError:
+                    try:
+                        text = raw_data.decode("cp1252")
+                    except UnicodeDecodeError:
+                        text = raw_data.decode("latin-1", errors="replace")
                 vtt_text = srt_to_vtt(text)
                 body = vtt_text.encode("utf-8")
                 self.send_response(200)

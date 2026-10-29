@@ -47,6 +47,15 @@ const LANG_MAP = {
   nld: { code: "nl", label: "Holandês", flag: "nl", priority: 20 },
   dut: { code: "nl", label: "Holandês", flag: "nl", priority: 20 },
   swe: { code: "sv", label: "Sueco", flag: "sv", priority: 21 },
+  ell: { code: "el", label: "Grego", flag: "el", priority: 22 },
+  gre: { code: "el", label: "Grego", flag: "el", priority: 22 },
+  cze: { code: "cs", label: "Tcheco", flag: "cs", priority: 23 },
+  ces: { code: "cs", label: "Tcheco", flag: "cs", priority: 23 },
+  hun: { code: "hu", label: "Húngaro", flag: "hu", priority: 24 },
+  mal: { code: "ms", label: "Malaio", flag: "ms", priority: 25 },
+  msa: { code: "ms", label: "Malaio", flag: "ms", priority: 25 },
+  tha: { code: "th", label: "Tailandês", flag: "th", priority: 26 },
+  hin: { code: "hi", label: "Hindi", flag: "hi", priority: 27 },
 };
 
 function json(status, body, extraHeaders = {}) {
@@ -63,8 +72,27 @@ function json(status, body, extraHeaders = {}) {
  * Subtitle cues keep italics, bold and underline only. Any other tag is dropped
  * and a stray "<" or ">" is escaped, so the player renders cue HTML safely.
  */
+export function fixMojibake(text) {
+  if (!text || typeof text !== "string") return text;
+  try {
+    if (/[\u00C2\u00C3]/.test(text)) {
+      return decodeURIComponent(escape(text));
+    }
+  } catch (e) {}
+  return text
+    .replace(/\u00C3\u00A1/g, "á").replace(/\u00C3\u00A0/g, "à").replace(/\u00C3\u00A2/g, "â").replace(/\u00C3\u00A3/g, "ã")
+    .replace(/\u00C3\u00A9/g, "é").replace(/\u00C3\u00AA/g, "ê").replace(/\u00C3\u00AD/g, "í")
+    .replace(/\u00C3\u00B3/g, "ó").replace(/\u00C3\u00B4/g, "ô").replace(/\u00C3\u00B5/g, "õ")
+    .replace(/\u00C3\u00BA/g, "ú").replace(/\u00C3\u00A7/g, "ç")
+    .replace(/\u00C3\u0081/g, "Á").replace(/\u00C3\u0080/g, "À").replace(/\u00C3\u0082/g, "Â").replace(/\u00C3\u0083/g, "Ã")
+    .replace(/\u00C3\u0089/g, "É").replace(/\u00C3\u008A/g, "Ê").replace(/\u00C3\u008D/g, "Í")
+    .replace(/\u00C3\u0093/g, "Ó").replace(/\u00C3\u0094/g, "Ô").replace(/\u00C3\u0095/g, "Õ")
+    .replace(/\u00C3\u009A/g, "Ú").replace(/\u00C3\u0087/g, "Ç");
+}
+
 export function cleanVtt(text) {
-  return text.split("\n").map(line => {
+  const fixed = fixMojibake(text);
+  return fixed.split("\n").map(line => {
     if (line.includes("-->")) return line;
     return line
       .replace(/<\/?[a-zA-Z][^<>]*>/g, tag => (/^<\/?[ibu]>$/i.test(tag) ? tag.toLowerCase() : ""))
