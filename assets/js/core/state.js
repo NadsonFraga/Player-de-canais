@@ -3,8 +3,8 @@
  * Only leaf imports (constants and the profile key, which import nothing else) to keep the data flow one-way
  * and avoid circular dependencies
  */
-import { FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY } from './constants.js?v=20261028_2336';
-import { storageKey, stampFavorite, stampTime, PROFILE_EVENT } from './profileStore.js?v=20261028_2336';
+import { FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY } from './constants.js?v=20261029_0012';
+import { storageKey, stampFavorite, stampTime, PROFILE_EVENT } from './profileStore.js?v=20261029_0012';
 
 /** Channel favorites and the favorite team of the guest or the active profile. */
 function readPersonalChoices() {
