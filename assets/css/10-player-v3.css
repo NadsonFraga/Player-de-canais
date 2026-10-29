@@ -32,6 +32,7 @@
     width: 100% !important;
     overflow: visible !important;
     background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 100%) !important;
+    z-index: 150 !important;
 }
 
 .art-video-player .art-controls {
@@ -963,18 +964,7 @@
     color: rgba(255, 255, 255, 0.95) !important;
 }
 
-.art-video-player .art-control-subtitle-btn.is-active::after {
-    content: '';
-    position: absolute;
-    bottom: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background-color: #22c55e;
-    box-shadow: 0 0 5px rgba(34, 197, 94, 0.9);
-}
+/* Subtitle active dot removed per user preference */
 
 .art-video-player .art-control-subtitle-btn svg,
 .art-video-player .art-control-subtitle-btn svg * {
@@ -1013,7 +1003,8 @@
 .tvz-subtitles-backdrop {
     position: absolute;
     inset: 0;
-    z-index: 155;
+    bottom: 55px;
+    z-index: 140;
     background: transparent;
     opacity: 0;
     pointer-events: none;
@@ -1065,7 +1056,7 @@
     justify-content: space-between;
     height: 40px;
     min-height: 40px;
-    padding: 0 14px 0 10px;
+    padding: 0 10px 0 10px;
     box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
     font-weight: 600;
     font-size: 14px;
@@ -1073,26 +1064,35 @@
     user-select: none;
 }
 
-.tvz-sub-header.is-clickable {
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-}
-
-.tvz-sub-header.is-clickable:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
 .tvz-sub-header-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
     flex: 1;
 }
 
+.tvz-sub-header-left.is-clickable {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 4px 6px 4px 2px;
+    transition: background-color 0.15s ease;
+}
+
+.tvz-sub-header-left.is-clickable:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tvz-sub-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
 .tvz-sub-header-icon {
-    width: 22px;
-    min-width: 22px;
+    width: 20px;
+    min-width: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1117,12 +1117,32 @@
     cursor: pointer;
     padding: 4px 6px;
     border-radius: 4px;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.15s ease, background-color 0.15s ease;
     flex-shrink: 0;
 }
 
 .tvz-sub-custom-trigger:hover {
-    opacity: 0.8;
+    background-color: rgba(34, 197, 94, 0.14);
+}
+
+.tvz-sub-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    padding: 0;
+}
+
+.tvz-sub-close-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Subtitle Items List */
@@ -1338,19 +1358,34 @@
     }
 }
 
-/* Mobile Landscape / Low-Height Fullscreen */
+/* Fullscreen positioning: keep strictly ABOVE player control bar, never overlap */
+.art-video-player.art-fullscreen .tvz-subtitles-panel,
+.art-video-player.art-fullscreen-web .tvz-subtitles-panel,
+:fullscreen .art-video-player .tvz-subtitles-panel {
+    bottom: 75px !important;
+    top: auto !important;
+    max-height: calc(100% - 95px) !important;
+}
+
+/* Mobile Landscape / Low-Height Fullscreen: NEVER OVERLAP PLAYER CONTROLS */
 @media (max-height: 520px) and (orientation: landscape) {
-    .tvz-subtitles-panel {
+    .tvz-subtitles-panel,
+    .art-video-player.art-fullscreen .tvz-subtitles-panel,
+    .art-video-player.art-fullscreen-web .tvz-subtitles-panel,
+    :fullscreen .art-video-player .tvz-subtitles-panel {
         right: 12px !important;
         left: auto !important;
-        bottom: 8px !important;
-        top: 8px !important;
+        bottom: 55px !important;
+        top: auto !important;
         width: 300px !important;
         max-width: calc(100% - 24px) !important;
-        max-height: calc(100% - 16px) !important;
+        max-height: calc(100% - 68px) !important;
         border-radius: 12px !important;
     }
     .tvz-sub-list {
-        max-height: calc(100vh - 100px) !important;
+        max-height: calc(100vh - 120px) !important;
+    }
+    .tvz-sub-custom-body {
+        max-height: calc(100vh - 120px) !important;
     }
 }

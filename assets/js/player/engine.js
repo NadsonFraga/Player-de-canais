@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261029_0112';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261029_0112';
-import { showToast } from '../core/toast.js?v=20261029_0112';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261029_0112';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261029_0112';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261029_0112';
-import { formatClock } from '../core/resume.js?v=20261029_0112';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261029_0112';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261029_0112';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261029_0112';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261029_0112';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261029_0112';
-import { fetchTmdb } from '../core/tmdb.js?v=20261029_0112';
+import { store } from '../core/state.js?v=20261029_0156';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261029_0156';
+import { showToast } from '../core/toast.js?v=20261029_0156';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261029_0156';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261029_0156';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261029_0156';
+import { formatClock } from '../core/resume.js?v=20261029_0156';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261029_0156';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261029_0156';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261029_0156';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261029_0156';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261029_0156';
+import { fetchTmdb } from '../core/tmdb.js?v=20261029_0156';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -3131,6 +3131,54 @@ function chosenSubtitleIndex(session) {
     return defaultSubtitleIndex(subtitles);
 }
 
+const LANG_PRIORITIES = {
+    'pt-BR': 1, 'pt': 2, 'en': 3, 'es': 4, 'fr': 5, 'it': 6, 'de': 7,
+    'ja': 8, 'ko': 9, 'zh': 10, 'ru': 11, 'pl': 12, 'ar': 13, 'id': 14,
+    'tr': 15, 'vi': 16, 'sr': 17, 'ro': 18, 'nl': 19, 'sv': 20,
+    'el': 21, 'cs': 22, 'hu': 23, 'ms': 24, 'th': 25, 'hi': 26
+};
+
+const LANG_NAMES = {
+    'pt-BR': 'Português (Brasil)', 'pt': 'Português', 'en': 'Inglês', 'es': 'Espanhol',
+    'fr': 'Francês', 'it': 'Italiano', 'de': 'Alemão', 'ja': 'Japonês', 'ko': 'Coreano',
+    'zh': 'Chinês', 'ru': 'Russo', 'pl': 'Polonês', 'ar': 'Árabe', 'id': 'Indonésio',
+    'tr': 'Turco', 'vi': 'Vietnamita', 'sr': 'Sérvio', 'ro': 'Romeno', 'nl': 'Holandês',
+    'sv': 'Sueco', 'el': 'Grego', 'cs': 'Tcheco', 'hu': 'Húngaro', 'ms': 'Malaio',
+    'th': 'Tailandês', 'hi': 'Hindi'
+};
+
+function normLang(l) {
+    if (!l) return 'other';
+    const s = String(l).toLowerCase().replace('_', '-').trim();
+    if (s === 'pt-br' || s === 'pob' || s === 'br' || s.includes('brasil')) return 'pt-BR';
+    if (s === 'pt' || s === 'por' || s.startsWith('portug')) return 'pt';
+    if (s === 'en' || s === 'eng' || s === 'us' || s.startsWith('ingl')) return 'en';
+    if (s === 'es' || s === 'spa' || s === 'spl' || s === 'cat' || s === 'ca' || s.startsWith('espan')) return 'es';
+    if (s === 'fr' || s === 'fre' || s === 'fra' || s.startsWith('franc')) return 'fr';
+    if (s === 'it' || s === 'ita' || s.startsWith('ital')) return 'it';
+    if (s === 'de' || s === 'ger' || s === 'deu' || s.startsWith('alem')) return 'de';
+    if (s === 'ja' || s === 'jpn' || s === 'jp' || s.startsWith('japon')) return 'ja';
+    if (s === 'ko' || s === 'kor' || s === 'kr' || s.startsWith('core')) return 'ko';
+    if (s === 'zh' || s === 'chi' || s === 'zho' || s === 'zht' || s === 'cn' || s.startsWith('chin')) return 'zh';
+    if (s === 'ru' || s === 'rus' || s.startsWith('russ')) return 'ru';
+    if (s === 'pl' || s === 'pol' || s.startsWith('polon')) return 'pl';
+    if (s === 'ar' || s === 'ara' || s.startsWith('árab') || s.startsWith('arab')) return 'ar';
+    if (s === 'id' || s === 'ind' || s.startsWith('indon')) return 'id';
+    if (s === 'tr' || s === 'tur' || s.startsWith('turc')) return 'tr';
+    if (s === 'vi' || s === 'vie' || s.startsWith('viet')) return 'vi';
+    if (s === 'sr' || s === 'srp' || s.startsWith('sérv') || s.startsWith('serv')) return 'sr';
+    if (s === 'ro' || s === 'ron' || s.startsWith('romen')) return 'ro';
+    if (s === 'nl' || s === 'nld' || s === 'dut' || s.startsWith('holan')) return 'nl';
+    if (s === 'sv' || s === 'swe' || s.startsWith('suec')) return 'sv';
+    if (s === 'el' || s === 'ell' || s === 'gre' || s.startsWith('greg')) return 'el';
+    if (s === 'cs' || s === 'cze' || s === 'ces' || s.startsWith('tchec') || s.startsWith('czech')) return 'cs';
+    if (s === 'hu' || s === 'hun' || s === 'mag' || s.startsWith('húng') || s.startsWith('hung')) return 'hu';
+    if (s === 'ms' || s === 'mal' || s === 'may' || s === 'msa' || s.startsWith('malai') || s.startsWith('malay')) return 'ms';
+    if (s === 'th' || s === 'tha' || s.startsWith('tail') || s.startsWith('thai')) return 'th';
+    if (s === 'hi' || s === 'hin' || s.startsWith('hind')) return 'hi';
+    return s;
+}
+
 function subtitleLanguageRank(sub) {
     if (!sub) return 999;
     const lang = String(sub.lang || '').toLowerCase().replace('_', '-');
@@ -3165,6 +3213,27 @@ function defaultSubtitleIndex(subtitles) {
     return best;
 }
 
+function installSettingSubtitleInterceptor(art, session) {
+    if (!art || !art.template || !art.template.$setting || art.template.$setting._tvzSubClick) return;
+    art.template.$setting._tvzSubClick = true;
+    art.template.$setting.addEventListener('click', (e) => {
+        const item = e.target && e.target.closest && e.target.closest('.art-setting-item');
+        if (!item) return;
+        const panel = item.closest('.art-setting-panel');
+        const isRoot = panel && panel === panel.parentNode?.firstElementChild;
+        if (!isRoot) return;
+        const text = item.querySelector('.art-setting-item-left-text')?.textContent || item.textContent;
+        if (text && text.trim().startsWith('Legendas')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            session.openedFromSettings = true;
+            art.setting.show = false;
+            toggleSubtitlesFlyout(session, true);
+        }
+    }, true);
+}
+
 function refreshSubtitleMenu(session) {
     const art = session.art;
     if (!art) return;
@@ -3190,17 +3259,49 @@ function refreshSubtitleMenu(session) {
         }
     }
 
+    const subtitles = session.subtitles || [];
+    const isOff = !session.activeSubtitleUrl;
+    const selector = [];
+    selector.push({
+        default: isOff,
+        html: 'Desativada',
+        url: '',
+        lang: 'off'
+    });
+
+    const sortedSubs = [...subtitles].map((sub, origIdx) => ({ sub, origIdx }))
+        .sort((a, b) => subtitleLanguageRank(a.sub) - subtitleLanguageRank(b.sub));
+
+    const langCounts = {};
+    sortedSubs.forEach(({ sub }) => {
+        const k = normLang(sub.lang);
+        langCounts[k] = (langCounts[k] || 0) + 1;
+    });
+
+    sortedSubs.forEach(({ sub }) => {
+        const k = normLang(sub.lang);
+        const isCurrent = (sub.url || sub.file) === session.activeSubtitleUrl;
+        let label = sub.label || (LANG_NAMES[k] || k.toUpperCase());
+        if (langCounts[k] > 1 && sub.release) {
+            label = `${LANG_NAMES[k] || k.toUpperCase()} (${sub.release})`;
+        }
+        selector.push({
+            default: isCurrent,
+            html: label,
+            url: sub.url || sub.file,
+            lang: sub.lang
+        });
+    });
+
     upsertSetting(art, {
         name: 'subtitle',
         html: 'Legendas',
         icon: NATIVE_ICONS.subtitle,
         tooltip: activeTooltip,
-        onSelect: () => {
-            art.setting.show = false;
-            toggleSubtitlesFlyout(session, true);
-            return activeTooltip;
-        }
+        selector
     });
+
+    installSettingSubtitleInterceptor(art, session);
 }
 
 function getSubtitleDelayKey(session) {
@@ -3356,12 +3457,17 @@ function renderSubtitlesFlyout(session) {
         const curBg = prefs.subtitle_bg || 'shadow';
 
         panel.innerHTML = `
-        <div class="tvz-sub-header tvz-sub-back-to-list is-clickable" role="button" title="Voltar">
-            <div class="tvz-sub-header-left">
+        <div class="tvz-sub-header tvz-sub-header-customize">
+            <div class="tvz-sub-header-left is-clickable tvz-sub-back-to-list" role="button" title="Voltar para legendas" aria-label="Voltar para legendas">
                 <div class="tvz-sub-header-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </div>
                 <span class="tvz-sub-title">Configurações de Legenda</span>
+            </div>
+            <div class="tvz-sub-header-right">
+                <button type="button" class="tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
         </div>
         <div class="tvz-sub-custom-body">
@@ -3416,6 +3522,14 @@ function renderSubtitlesFlyout(session) {
             backBtn.addEventListener('click', () => {
                 session.activeView = 'list';
                 renderSubtitlesFlyout(session);
+            });
+        }
+
+        const closeBtn = panel.querySelector('.tvz-sub-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                session.openedFromSettings = false;
+                toggleSubtitlesFlyout(session, false);
             });
         }
 
@@ -3477,74 +3591,38 @@ function renderSubtitlesFlyout(session) {
     // Header
     if (isDrilldown) {
         html += `
-        <div class="tvz-sub-header tvz-sub-back-btn is-clickable" role="button" title="Voltar">
-            <div class="tvz-sub-header-left">
+        <div class="tvz-sub-header tvz-sub-header-drilldown">
+            <div class="tvz-sub-header-left is-clickable tvz-sub-back-btn" role="button" title="Voltar para todos os idiomas" aria-label="Voltar">
                 <div class="tvz-sub-header-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </div>
-                <span class="tvz-sub-title">${escapeHtml(session.activeLangDrilldownLabel || 'Versões')}</span>
+                <span class="tvz-sub-title">${escapeHtml(session.activeLangDrilldownLabel || 'Voltar')}</span>
+            </div>
+            <div class="tvz-sub-header-right">
+                <button type="button" class="tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
         </div>`;
     } else {
         html += `
-        <div class="tvz-sub-header">
-            <div class="tvz-sub-header-left">
+        <div class="tvz-sub-header tvz-sub-header-main">
+            <div class="tvz-sub-header-left is-clickable tvz-sub-header-back" role="button" title="Voltar" aria-label="Voltar">
                 <div class="tvz-sub-header-icon">
-                    ${NATIVE_ICONS.subtitle}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </div>
                 <span class="tvz-sub-title">Legendas</span>
             </div>
-            <button type="button" class="tvz-sub-custom-trigger" title="Personalizar sincronia e aparência">Customizar</button>
+            <div class="tvz-sub-header-right">
+                <button type="button" class="tvz-sub-custom-trigger" title="Personalizar sincronia e aparência">Customizar</button>
+                <button type="button" class="tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
         </div>`;
     }
 
     html += '<div class="tvz-sub-list">';
-
-    const LANG_PRIORITIES = {
-        'pt-BR': 1, 'pt': 2, 'en': 3, 'es': 4, 'fr': 5, 'it': 6, 'de': 7,
-        'ja': 8, 'ko': 9, 'zh': 10, 'ru': 11, 'pl': 12, 'ar': 13, 'id': 14,
-        'tr': 15, 'vi': 16, 'sr': 17, 'ro': 18, 'nl': 19, 'sv': 20,
-        'el': 21, 'cs': 22, 'hu': 23, 'ms': 24, 'th': 25, 'hi': 26
-    };
-    const LANG_NAMES = {
-        'pt-BR': 'Português (Brasil)', 'pt': 'Português', 'en': 'Inglês', 'es': 'Espanhol',
-        'fr': 'Francês', 'it': 'Italiano', 'de': 'Alemão', 'ja': 'Japonês', 'ko': 'Coreano',
-        'zh': 'Chinês', 'ru': 'Russo', 'pl': 'Polonês', 'ar': 'Árabe', 'id': 'Indonésio',
-        'tr': 'Turco', 'vi': 'Vietnamita', 'sr': 'Sérvio', 'ro': 'Romeno', 'nl': 'Holandês',
-        'sv': 'Sueco', 'el': 'Grego', 'cs': 'Tcheco', 'hu': 'Húngaro', 'ms': 'Malaio',
-        'th': 'Tailandês', 'hi': 'Hindi'
-    };
-    function normLang(l) {
-        if (!l) return 'other';
-        const s = String(l).toLowerCase().replace('_', '-').trim();
-        if (s === 'pt-br' || s === 'pob' || s === 'br' || s.includes('brasil')) return 'pt-BR';
-        if (s === 'pt' || s === 'por' || s.startsWith('portug')) return 'pt';
-        if (s === 'en' || s === 'eng' || s === 'us' || s.startsWith('ingl')) return 'en';
-        if (s === 'es' || s === 'spa' || s === 'spl' || s === 'cat' || s === 'ca' || s.startsWith('espan')) return 'es';
-        if (s === 'fr' || s === 'fre' || s === 'fra' || s.startsWith('franc')) return 'fr';
-        if (s === 'it' || s === 'ita' || s.startsWith('ital')) return 'it';
-        if (s === 'de' || s === 'ger' || s === 'deu' || s.startsWith('alem')) return 'de';
-        if (s === 'ja' || s === 'jpn' || s === 'jp' || s.startsWith('japon')) return 'ja';
-        if (s === 'ko' || s === 'kor' || s === 'kr' || s.startsWith('core')) return 'ko';
-        if (s === 'zh' || s === 'chi' || s === 'zho' || s === 'zht' || s === 'cn' || s.startsWith('chin')) return 'zh';
-        if (s === 'ru' || s === 'rus' || s.startsWith('russ')) return 'ru';
-        if (s === 'pl' || s === 'pol' || s.startsWith('polon')) return 'pl';
-        if (s === 'ar' || s === 'ara' || s.startsWith('árab') || s.startsWith('arab')) return 'ar';
-        if (s === 'id' || s === 'ind' || s.startsWith('indon')) return 'id';
-        if (s === 'tr' || s === 'tur' || s.startsWith('turc')) return 'tr';
-        if (s === 'vi' || s === 'vie' || s.startsWith('viet')) return 'vi';
-        if (s === 'sr' || s === 'srp' || s.startsWith('sérv') || s.startsWith('serv')) return 'sr';
-        if (s === 'ro' || s === 'ron' || s.startsWith('romen')) return 'ro';
-        if (s === 'nl' || s === 'nld' || s === 'dut' || s.startsWith('holan')) return 'nl';
-        if (s === 'sv' || s === 'swe' || s.startsWith('suec')) return 'sv';
-        if (s === 'el' || s === 'ell' || s === 'gre' || s.startsWith('greg')) return 'el';
-        if (s === 'cs' || s === 'cze' || s === 'ces' || s.startsWith('tchec') || s.startsWith('czech')) return 'cs';
-        if (s === 'hu' || s === 'hun' || s === 'mag' || s.startsWith('húng') || s.startsWith('hung')) return 'hu';
-        if (s === 'ms' || s === 'mal' || s === 'may' || s === 'msa' || s.startsWith('malai') || s.startsWith('malay')) return 'ms';
-        if (s === 'th' || s === 'tha' || s.startsWith('tail') || s.startsWith('thai')) return 'th';
-        if (s === 'hi' || s === 'hin' || s.startsWith('hind')) return 'hi';
-        return s;
-    }
 
     if (isDrilldown) {
         const groupSubs = subtitles.filter(s => normLang(s.lang) === session.activeLangDrilldown);
@@ -3709,6 +3787,27 @@ function renderSubtitlesFlyout(session) {
         });
     }
 
+    const headerBack = panel.querySelector('.tvz-sub-header-back');
+    if (headerBack) {
+        headerBack.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const backToSettings = Boolean(session.openedFromSettings);
+            session.openedFromSettings = false;
+            toggleSubtitlesFlyout(session, false);
+            if (backToSettings && session.art && session.art.setting) {
+                session.art.setting.show = true;
+            }
+        });
+    }
+
+    panel.querySelectorAll('.tvz-sub-close-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            session.openedFromSettings = false;
+            toggleSubtitlesFlyout(session, false);
+        });
+    });
+
     const customTrigger = panel.querySelector('.tvz-sub-custom-trigger');
     if (customTrigger) {
         customTrigger.addEventListener('click', () => {
@@ -3774,6 +3873,7 @@ function installSubtitleControl(session) {
                 index: 15,
                 html: `<i class="art-icon art-control-subtitle-btn" role="button" aria-label="Legendas (C)" title="Legendas (C)">${NATIVE_ICONS.subtitle}</i>`,
                 click: () => {
+                    session.openedFromSettings = false;
                     toggleSubtitlesFlyout(session);
                 }
             });
