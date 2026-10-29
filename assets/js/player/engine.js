@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261028_2249';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_2249';
-import { showToast } from '../core/toast.js?v=20261028_2249';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_2249';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_2249';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_2249';
-import { formatClock } from '../core/resume.js?v=20261028_2249';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_2249';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_2249';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_2249';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_2249';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_2249';
-import { fetchTmdb } from '../core/tmdb.js?v=20261028_2249';
+import { store } from '../core/state.js?v=20261028_2336';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261028_2336';
+import { showToast } from '../core/toast.js?v=20261028_2336';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261028_2336';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261028_2336';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261028_2336';
+import { formatClock } from '../core/resume.js?v=20261028_2336';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261028_2336';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261028_2336';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261028_2336';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261028_2336';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261028_2336';
+import { fetchTmdb } from '../core/tmdb.js?v=20261028_2336';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -3069,17 +3069,21 @@ async function fetchExternalSubtitles(session) {
 
             const art = session.art;
             // Smart auto-activation on subtitled audio if user hasn't explicitly chosen yet
-            if (art && !session.userToggledSubtitles && !session.activeSubtitleUrl) {
+            if (art && !session.userToggledSubtitles) {
                 const isSubtitledAudio = session.audio === 'subtitled' || (session.mediaContext && session.mediaContext.type === 'anime');
                 const userPref = getPlayerPrefs().subtitle;
                 if (userPref !== 'off' && isSubtitledAudio) {
                     const bestIdx = defaultSubtitleIndex(session.subtitles);
                     if (bestIdx >= 0) {
                         const best = session.subtitles[bestIdx];
-                        session.activeSubtitleUrl = best.url || best.file;
-                        art.subtitle.switch(session.activeSubtitleUrl, { name: best.release || best.label });
-                        art.subtitle.show = true;
-                        applySubtitleStyles(art);
+                        const currentSub = session.subtitles.find(s => (s.url || s.file) === session.activeSubtitleUrl);
+                        const currentRank = currentSub ? subtitleLanguageRank(currentSub) : 999;
+                        if (!session.activeSubtitleUrl || subtitleLanguageRank(best) < currentRank) {
+                            session.activeSubtitleUrl = best.url || best.file;
+                            art.subtitle.switch(session.activeSubtitleUrl, { name: best.release || best.label });
+                            art.subtitle.show = true;
+                            applySubtitleStyles(art);
+                        }
                     }
                 }
             }
@@ -3123,21 +3127,37 @@ function chosenSubtitleIndex(session) {
     return defaultSubtitleIndex(subtitles);
 }
 
+function subtitleLanguageRank(sub) {
+    if (!sub) return 999;
+    const lang = String(sub.lang || '').toLowerCase().replace('_', '-');
+    // PT-BR is ALWAYS highest priority (#1)
+    if (lang === 'pt-br' || lang === 'pob' || lang === 'br' || lang.includes('brasil')) {
+        return sub.isNative ? 1 : 2;
+    }
+    // PT (Portugal) is second priority (#2)
+    if (lang === 'pt' || lang === 'por' || lang.startsWith('portug')) {
+        return sub.isNative ? 3 : 4;
+    }
+    // English
+    if (lang === 'en' || lang === 'eng' || lang === 'us' || lang.startsWith('ingl')) {
+        return sub.isNative ? 10 : 11;
+    }
+    // Spanish
+    if (lang === 'es' || lang === 'spa' || lang === 'spl' || lang.startsWith('espan')) {
+        return sub.isNative ? 12 : 13;
+    }
+    // Other languages
+    return sub.isNative ? 20 : 21;
+}
+
 function defaultSubtitleIndex(subtitles) {
-    const rank = sub => {
-        const lang = String(sub.lang || '').toLowerCase();
-        // Priority: Native track first, then PT-BR, then PT, then EN
-        if (sub.isNative) return 0;
-        if (/^pt[-_]?br$/.test(lang)) return 1;
-        if (lang.startsWith('pt')) return 2;
-        if (sub.default) return 3;
-        if (lang.startsWith('en')) return 4;
-        return 5;
-    };
+    if (!subtitles || !subtitles.length) return -1;
     let best = 0;
-    subtitles.forEach((sub, idx) => {
-        if (rank(sub) < rank(subtitles[best])) best = idx;
-    });
+    for (let i = 1; i < subtitles.length; i++) {
+        if (subtitleLanguageRank(subtitles[i]) < subtitleLanguageRank(subtitles[best])) {
+            best = i;
+        }
+    }
     return best;
 }
 
@@ -3352,7 +3372,7 @@ function renderSubtitlesFlyout(session) {
     const panel = session.subtitlesFlyoutPanel;
     if (!panel) return;
 
-    // View: Customizer
+    // View: Customizer / Configurações de Legenda
     if (session.activeView === 'customize') {
         const prefs = getPlayerPrefs();
         const curDelay = session.subDelay || 0;
@@ -3361,21 +3381,12 @@ function renderSubtitlesFlyout(session) {
         const curBg = prefs.subtitle_bg || 'shadow';
 
         panel.innerHTML = `
-        <div class="tvz-sub-header">
+        <div class="tvz-sub-header tvz-sub-back-to-list is-clickable" role="button" title="Voltar">
             <div class="tvz-sub-header-left">
-                <button type="button" class="tvz-sub-customize-btn tvz-sub-back-to-list" style="color:#fff;display:flex;align-items:center;gap:4px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                    Voltar
-                </button>
-                <span class="tvz-sub-title">Personalizar</span>
-            </div>
-            <div class="tvz-sub-header-actions">
-                <button type="button" class="tvz-sub-close-btn" aria-label="Fechar" title="Fechar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
+                <div class="tvz-sub-header-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </div>
+                <span class="tvz-sub-title">Configurações de Legenda</span>
             </div>
         </div>
         <div class="tvz-sub-custom-body">
@@ -3419,21 +3430,11 @@ function renderSubtitlesFlyout(session) {
             <div class="tvz-custom-section">
                 <div class="tvz-custom-label"><span>Contraste do Fundo</span></div>
                 <div class="tvz-pills-row">
-                    <button type="button" class="tvz-pill-btn tvz-bg-pill ${curBg === 'shadow' ? 'is-active' : ''}" data-bg="shadow">Sombra clássica</button>
-                    <button type="button" class="tvz-pill-btn tvz-bg-pill ${curBg === 'box' ? 'is-active' : ''}" data-bg="box">Caixa translúcida</button>
+                    <button type="button" class="tvz-pill-btn tvz-bg-pill ${curBg === 'shadow' ? 'is-active' : ''}" data-bg="shadow">Sombra</button>
+                    <button type="button" class="tvz-pill-btn tvz-bg-pill ${curBg === 'box' ? 'is-active' : ''}" data-bg="box">Caixa</button>
                 </div>
             </div>
         </div>`;
-
-        // Event listeners for customizer
-        const closeBtn = panel.querySelector('.tvz-sub-close-btn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleSubtitlesFlyout(session, false);
-            });
-        }
 
         const backBtn = panel.querySelector('.tvz-sub-back-to-list');
         if (backBtn) {
@@ -3505,37 +3506,22 @@ function renderSubtitlesFlyout(session) {
     // Header
     if (isDrilldown) {
         html += `
-        <div class="tvz-sub-header">
+        <div class="tvz-sub-header tvz-sub-back-btn is-clickable" role="button" title="Voltar">
             <div class="tvz-sub-header-left">
-                <button type="button" class="tvz-sub-customize-btn tvz-sub-back-btn" style="color:#fff;display:flex;align-items:center;gap:4px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                    Voltar
-                </button>
+                <div class="tvz-sub-header-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </div>
                 <span class="tvz-sub-title">${escapeHtml(session.activeLangDrilldownLabel || 'Versões')}</span>
-            </div>
-            <div class="tvz-sub-header-actions">
-                <button type="button" class="tvz-sub-close-btn" aria-label="Fechar" title="Fechar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
             </div>
         </div>`;
     } else {
         html += `
         <div class="tvz-sub-header">
             <div class="tvz-sub-header-left">
+                <div class="tvz-sub-header-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="3.5"/><path d="M9.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/><path d="M16.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/></svg>
+                </div>
                 <span class="tvz-sub-title">Legendas</span>
-            </div>
-            <div class="tvz-sub-header-actions">
-                <button type="button" class="tvz-sub-customize-btn tvz-sub-custom-trigger">Personalizar</button>
-                <button type="button" class="tvz-sub-close-btn" aria-label="Fechar" title="Fechar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
             </div>
         </div>`;
     }
@@ -3593,9 +3579,11 @@ function renderSubtitlesFlyout(session) {
             <div class="tvz-sub-item ${isSelected ? 'is-selected' : ''}" data-url="${escapeAttr(sub.url || sub.file)}" data-lang="${escapeAttr(sub.lang)}">
                 <div class="tvz-sub-item-left">
                     <span class="tvz-sub-item-text">${escapeHtml(releaseLabel)}</span>
-                    ${sub.isNative ? '<span class="tvz-sub-badge">Original da Fonte</span>' : ''}
+                    ${sub.isNative ? '<span class="tvz-sub-badge">Fonte</span>' : ''}
                 </div>
-                ${isSelected ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
+                <div class="tvz-sub-item-right">
+                    ${isSelected ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
+                </div>
             </div>`;
         });
     } else {
@@ -3605,7 +3593,9 @@ function renderSubtitlesFlyout(session) {
             <div class="tvz-sub-item-left">
                 <span class="tvz-sub-item-text">Desativada</span>
             </div>
-            ${isOff ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
+            <div class="tvz-sub-item-right">
+                ${isOff ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
+            </div>
         </div>`;
 
         // Unified Language Grouping: merges native + external tracks by language
@@ -3645,9 +3635,11 @@ function renderSubtitlesFlyout(session) {
                     <div class="tvz-sub-item-left">
                         ${getFlagSvg(langKey)}
                         <span class="tvz-sub-item-text">${escapeHtml(group.label)}</span>
-                        ${sub.isNative ? '<span class="tvz-sub-badge">Original da Fonte</span>' : ''}
+                        ${sub.isNative ? '<span class="tvz-sub-badge">Fonte</span>' : ''}
                     </div>
-                    ${isSelected ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
+                    <div class="tvz-sub-item-right">
+                        ${isSelected ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
+                    </div>
                 </div>`;
             } else {
                 html += `
@@ -3655,10 +3647,12 @@ function renderSubtitlesFlyout(session) {
                     <div class="tvz-sub-item-left">
                         ${getFlagSvg(langKey)}
                         <span class="tvz-sub-item-text">${escapeHtml(group.label)}</span>
-                        ${activeSubInGroup && activeSubInGroup.isNative ? '<span class="tvz-sub-badge">Original da Fonte</span>' : ''}
+                        ${activeSubInGroup && activeSubInGroup.isNative ? '<span class="tvz-sub-badge">Fonte</span>' : ''}
                     </div>
-                    <span class="tvz-sub-count">${items.length}</span>
-                    <span class="tvz-sub-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
+                    <div class="tvz-sub-item-right">
+                        <span class="tvz-sub-count">${items.length}</span>
+                        <span class="tvz-sub-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
+                    </div>
                 </div>`;
             }
         });
@@ -3679,23 +3673,40 @@ function renderSubtitlesFlyout(session) {
                 </div>
             </div>`;
         }
-    }
-    html += '</div>';
 
-    // File Upload Row (only on main view)
-    if (!isDrilldown) {
+        // Action rows inside the list (Configurações & Enviar Arquivo)
         html += `
-        <label class="tvz-sub-upload-row">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span>Enviar arquivo (.srt / .vtt)</span>
+        <div class="tvz-sub-divider"></div>
+        <div class="tvz-sub-item tvz-sub-custom-trigger" role="button">
+            <div class="tvz-sub-item-left">
+                <span class="tvz-sub-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </span>
+                <span class="tvz-sub-item-text">Configurações de Legenda</span>
+            </div>
+            <div class="tvz-sub-item-right">
+                <span class="tvz-sub-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
+            </div>
+        </div>
+        <label class="tvz-sub-item tvz-sub-upload-trigger" role="button">
+            <div class="tvz-sub-item-left">
+                <span class="tvz-sub-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </span>
+                <span class="tvz-sub-item-text">Enviar arquivo (.srt / .vtt)</span>
+            </div>
             <input type="file" accept=".srt,.vtt" class="tvz-sub-file-input" style="display:none">
         </label>`;
     }
+    html += '</div>';
 
     panel.innerHTML = html;
 
     panel.querySelectorAll('.tvz-sub-item').forEach(el => {
-        el.addEventListener('click', () => {
+        el.addEventListener('click', (e) => {
+            // Ignore if clicking the file input itself
+            if (e.target && e.target.tagName === 'INPUT') return;
+
             const drillLang = el.getAttribute('data-drill');
             if (drillLang) {
                 session.activeLangDrilldown = drillLang;
@@ -3738,18 +3749,18 @@ function renderSubtitlesFlyout(session) {
         });
     });
 
-    panel.querySelectorAll('.tvz-sub-close-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleSubtitlesFlyout(session, false);
-        });
-    });
-
     const backBtn = panel.querySelector('.tvz-sub-back-btn');
     if (backBtn) {
         backBtn.addEventListener('click', () => {
             session.activeLangDrilldown = null;
+            renderSubtitlesFlyout(session);
+        });
+    }
+
+    const customTrigger = panel.querySelector('.tvz-sub-custom-trigger');
+    if (customTrigger) {
+        customTrigger.addEventListener('click', () => {
+            session.activeView = 'customize';
             renderSubtitlesFlyout(session);
         });
     }
@@ -3783,14 +3794,6 @@ function renderSubtitlesFlyout(session) {
                 refreshSubtitleMenu(session);
             };
             reader.readAsText(file, 'utf-8');
-        });
-    }
-
-    const customTrigger = panel.querySelector('.tvz-sub-custom-trigger');
-    if (customTrigger) {
-        customTrigger.addEventListener('click', () => {
-            session.activeView = 'customize';
-            renderSubtitlesFlyout(session);
         });
     }
 }
