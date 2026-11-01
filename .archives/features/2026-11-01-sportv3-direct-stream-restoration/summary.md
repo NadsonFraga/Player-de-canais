@@ -25,3 +25,4 @@
 - `python tools/test_security_headers.py`: Passed (0 failures).
 - `python tools/test_resolve_cors.py`: Passed (0 failures).
 - Headless Chrome native playback test: Passed (`readyState = 4`, 15 seconds uninterrupted playback, screenshot verified).
+

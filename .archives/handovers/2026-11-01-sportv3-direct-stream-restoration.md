@@ -39,3 +39,4 @@
 ## 3. Pending Verification
 - Staging verification: test SporTV 3 direct playback at https://staging.tvzinhaonline.pages.dev
 - Merge to production `master` once approved by user.
+
