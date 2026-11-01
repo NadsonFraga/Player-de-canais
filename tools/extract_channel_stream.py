@@ -6,6 +6,7 @@ and optionally updates data/canais.json and assets/js/core/fallbackChannels.js d
 Usage:
     python tools/extract_channel_stream.py --slug sportv3
     python tools/extract_channel_stream.py --slug sportv3 --name "SporTV 3" --update
+    python tools/extract_channel_stream.py --all
 """
 
 import os
@@ -36,7 +37,7 @@ EMBED_ENDPOINTS = [
     "https://7a6111736975081d37f185029a1fc088.embedtv.cc/{slug}"
 ]
 
-def fetch_url(url, timeout=10):
+def fetch_url(url, timeout=6):
     ctx = ssl._create_unverified_context()
     req = urllib.request.Request(
         url,
@@ -50,7 +51,7 @@ def fetch_url(url, timeout=10):
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
             return resp.read().decode("utf-8", errors="ignore")
-    except Exception as exc:
+    except Exception:
         return None
 
 def extract_stream_from_embed(slug):
@@ -58,7 +59,7 @@ def extract_stream_from_embed(slug):
     html = None
     for endpoint in EMBED_ENDPOINTS:
         target = endpoint.format(slug=slug)
-        html = fetch_url(target, timeout=10)
+        html = fetch_url(target, timeout=6)
         if html and "const src" in html:
             break
 
@@ -101,28 +102,19 @@ def find_channel_in_data(data, slug, channel_name):
     for cat_name, channels in data.items():
         if isinstance(channels, dict):
             for ch_name, ch_data in channels.items():
-                if ch_name.lower() == channel_name.lower():
+                if channel_name and ch_name.lower() == channel_name.lower():
                     return cat_name, ch_name
                 sources = ch_data.get("sources", [])
                 if any(s.get("slug") == slug for s in sources):
                     return cat_name, ch_name
     return None, None
 
-def update_channel_data(slug, channel_name, src1, src2):
-    """Updates data/canais.json and assets/js/core/fallbackChannels.js."""
-    if not os.path.exists(CANAIS_JSON_PATH):
-        print(f"[Error] {CANAIS_JSON_PATH} not found.")
-        return False
-
-    with open(CANAIS_JSON_PATH, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
+def update_single_channel_data(data, fallback_obj, slug, channel_name, src1, src2):
+    """Updates a single channel in data dict and fallback dict."""
     cat_name, ch_name = find_channel_in_data(data, slug, channel_name)
     if not cat_name or not ch_name:
-        print(f"[Warning] Channel with slug '{slug}' or name '{channel_name}' not found in canais.json.")
         return False
 
-    # Update sources
     new_sources = [
         {
             "name": "Servidor 1 (Principal)",
@@ -139,7 +131,7 @@ def update_channel_data(slug, channel_name, src1, src2):
     ]
     data[cat_name][ch_name]["sources"] = new_sources
 
-    # Prune obsolete / dead contingency links for this channel
+    # Prune obsolete / dead contingency links
     contingency = data[cat_name][ch_name].get("contingency", {})
     cleaned_contingency = {}
     for c_name, c_url in contingency.items():
@@ -147,52 +139,128 @@ def update_channel_data(slug, channel_name, src1, src2):
             continue
         cleaned_contingency[c_name] = c_url
     
-    # Ensure Servidor 5 (EmbedTV) is present
     cleaned_contingency["Servidor 5 (EmbedTV)"] = f"https://w7.embedtv.cc/{slug}"
     data[cat_name][ch_name]["contingency"] = cleaned_contingency
 
+    if fallback_obj:
+        fb_cat, fb_ch = find_channel_in_data(fallback_obj, slug, channel_name)
+        if fb_cat and fb_ch:
+            fallback_obj[fb_cat][fb_ch]["sources"] = new_sources
+            fallback_obj[fb_cat][fb_ch]["contingency"] = cleaned_contingency
+
+    return True
+
+def save_data_files(data, fallback_obj):
+    """Saves data/canais.json and assets/js/core/fallbackChannels.js."""
     with open(CANAIS_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"[OK] Updated {CANAIS_JSON_PATH} for channel '[{cat_name}] {ch_name}'.")
+    print(f"[OK] Saved {CANAIS_JSON_PATH}")
 
-    # Update fallbackChannels.js
+    if fallback_obj and os.path.exists(FALLBACK_JS_PATH):
+        new_js = (
+            "/**\n"
+            " * TVZINHA ONLINE - Static Fallback Channels Catalog\n"
+            " * Auto-synchronized dataset for offline resilience.\n"
+            " */\n\n"
+            "export const FALLBACK_CHANNELS = "
+            + json.dumps(fallback_obj, indent=2, ensure_ascii=False)
+            + ";\n"
+        )
+        with open(FALLBACK_JS_PATH, "w", encoding="utf-8") as f:
+            f.write(new_js)
+        print(f"[OK] Saved {FALLBACK_JS_PATH}")
+
+def update_all_channels():
+    """Extracts and updates streams for all channels defined in canais.json."""
+    if not os.path.exists(CANAIS_JSON_PATH):
+        print(f"[Error] {CANAIS_JSON_PATH} not found.")
+        return False
+
+    with open(CANAIS_JSON_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    fallback_obj = None
     if os.path.exists(FALLBACK_JS_PATH):
         with open(FALLBACK_JS_PATH, "r", encoding="utf-8") as f:
             js_content = f.read()
-
         m_json = re.search(r'export\s+const\s+FALLBACK_CHANNELS\s*=\s*({[\s\S]*?});\s*$', js_content)
         if m_json:
             try:
                 fallback_obj = json.loads(m_json.group(1))
-                fb_cat, fb_ch = find_channel_in_data(fallback_obj, slug, channel_name)
-                if fb_cat and fb_ch:
-                    fallback_obj[fb_cat][fb_ch]["sources"] = new_sources
-                    fallback_obj[fb_cat][fb_ch]["contingency"] = cleaned_contingency
-                    new_js = (
-                        "/**\n"
-                        " * TVZINHA ONLINE - Static Fallback Channels Catalog\n"
-                        " * Auto-synchronized dataset for offline resilience.\n"
-                        " */\n\n"
-                        "export const FALLBACK_CHANNELS = "
-                        + json.dumps(fallback_obj, indent=2, ensure_ascii=False)
-                        + ";\n"
-                    )
-                    with open(FALLBACK_JS_PATH, "w", encoding="utf-8") as f:
-                        f.write(new_js)
-                    print(f"[OK] Updated {FALLBACK_JS_PATH} for channel '[{fb_cat}] {fb_ch}'.")
             except Exception as e:
-                print(f"[Warning] Could not parse FALLBACK_CHANNELS in {FALLBACK_JS_PATH}: {e}")
+                print(f"[Warning] Could not parse fallbackChannels.js: {e}")
 
+    # Collect all unique slugs to scrape
+    slug_channel_map = {}
+    for cat_name, channels in data.items():
+        if isinstance(channels, dict):
+            for ch_name, ch_data in channels.items():
+                sources = ch_data.get("sources", [])
+                for s in sources:
+                    sl = s.get("slug")
+                    if sl and sl not in slug_channel_map:
+                        slug_channel_map[sl] = (cat_name, ch_name)
+
+    total_slugs = len(slug_channel_map)
+    print(f"[*] Starting batch extraction for {total_slugs} unique channel slugs...")
+
+    cache_extracted = {}
+    success_count = 0
+    fail_count = 0
+
+    for idx, (slug, (cat, name)) in enumerate(slug_channel_map.items()):
+        print(f"[{idx+1}/{total_slugs}] Extracting '{slug}' ({name})...", end=" ", flush=True)
+        res, err = extract_stream_from_embed(slug)
+        if res:
+            cache_extracted[slug] = res
+            print("OK", flush=True)
+            success_count += 1
+        else:
+            print(f"FAIL ({err})", flush=True)
+            fail_count += 1
+
+    print(f"\n[*] Extraction completed: {success_count} succeeded, {fail_count} failed.")
+
+    # Now apply updates across all channels
+    updated_channels = 0
+    for cat_name, channels in data.items():
+        if isinstance(channels, dict):
+            for ch_name, ch_data in channels.items():
+                sources = ch_data.get("sources", [])
+                matched_res = None
+                for s in sources:
+                    sl = s.get("slug")
+                    if sl in cache_extracted:
+                        matched_res = cache_extracted[sl]
+                        break
+
+                if matched_res:
+                    update_single_channel_data(
+                        data, fallback_obj, matched_res["slug"], ch_name,
+                        matched_res["primary_url"], matched_res["backup_url"]
+                    )
+                    updated_channels += 1
+
+    save_data_files(data, fallback_obj)
+    print(f"[SUCCESS] Successfully updated {updated_channels} channels in dataset.")
     return True
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract live HLS stream for a channel.")
-    parser.add_argument("--slug", default="sportv3", help="Channel slug (e.g. sportv3, sportv2, sportv)")
-    parser.add_argument("--name", default="SporTV 3", help="Channel display name in canais.json")
-    parser.add_argument("--update", action="store_true", help="Automatically update canais.json and fallbackChannels.js")
+    parser = argparse.ArgumentParser(description="Extract live HLS stream for channels.")
+    parser.add_argument("--slug", default=None, help="Channel slug (e.g. sportv3, sportv2, sportv)")
+    parser.add_argument("--name", default=None, help="Channel display name in canais.json")
+    parser.add_argument("--update", action="store_true", help="Update canais.json and fallbackChannels.js")
+    parser.add_argument("--all", action="store_true", help="Batch extract and update ALL channels in catalog")
     args = parser.parse_args()
 
-    slug = args.slug.strip().lower()
+    if args.all:
+        ok = update_all_channels()
+        if not ok:
+            sys.exit(1)
+        return
+
+    slug = (args.slug or "sportv3").strip().lower()
+    name = args.name or slug
     print(f"[*] Extracting stream for slug: '{slug}'...")
 
     result, err = extract_stream_from_embed(slug)
@@ -205,15 +273,26 @@ def main():
     print(f"[*] Backup URL:      {result['backup_url']}")
 
     if args.update:
-        print(f"[*] Applying updates to repository data files for '{args.name}'...")
-        updated = update_channel_data(slug, args.name, result["primary_url"], result["backup_url"])
-        if updated:
-            print("[SUCCESS] All files updated and synchronized.")
+        print(f"[*] Applying updates to repository data files for '{name}'...")
+        with open(CANAIS_JSON_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        fallback_obj = None
+        if os.path.exists(FALLBACK_JS_PATH):
+            with open(FALLBACK_JS_PATH, "r", encoding="utf-8") as f:
+                js_content = f.read()
+            m_json = re.search(r'export\s+const\s+FALLBACK_CHANNELS\s*=\s*({[\s\S]*?});\s*$', js_content)
+            if m_json:
+                fallback_obj = json.loads(m_json.group(1))
+
+        ok = update_single_channel_data(data, fallback_obj, slug, name, result["primary_url"], result["backup_url"])
+        if ok:
+            save_data_files(data, fallback_obj)
+            print("[SUCCESS] Channel updated successfully.")
         else:
-            print("[FAIL] Failed to update data files.")
+            print("[FAIL] Channel not found in dataset.")
             sys.exit(1)
     else:
-        print("[INFO] Run with --update to persist these sources into canais.json and fallbackChannels.js.")
+        print("[INFO] Run with --update or --all to persist these sources into canais.json and fallbackChannels.js.")
 
 if __name__ == "__main__":
     main()

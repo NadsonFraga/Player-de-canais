@@ -4,185 +4,93 @@
       "status": "ONLINE",
       "sources": [
         {
-          "name": "SP (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/globosp.txt",
+          "name": "Servidor 1 (Principal)",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/91fe8e8938089396a96f40eba4518243/error.txt",
           "slug": "globosp",
           "cdn": "CDN 1"
         },
         {
-          "name": "SP (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/globosp.txt",
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/91fe8e8938089396a96f40eba4518243/error.txt",
           "slug": "globosp",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "RJ (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/globorj.txt",
-          "slug": "globorj",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "RJ (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/globorj.txt",
-          "slug": "globorj",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globosp",
         "SP - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globosp",
-        "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/globo-sp",
-        "RJ - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=6120663-rj1",
         "RJ - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globorj",
-        "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/globo-rj",
-        "Minas - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/globo-minas",
-        "BA - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=globoba",
-        "BA - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globoba"
+        "BA - Backup": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=globoba",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/globosp"
       }
     },
     "Band": {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "SP (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/bandsp.txt",
+          "name": "Servidor 1 (Principal)",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/506bc8a86d0b62f70aad8f21de0ccd30/error.txt",
           "slug": "bandsp",
           "cdn": "CDN 1"
         },
         {
-          "name": "SP (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/bandsp.txt",
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/506bc8a86d0b62f70aad8f21de0ccd30/error.txt",
           "slug": "bandsp",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "RJ (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/bandrj.txt",
-          "slug": "bandrj",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "RJ (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/bandrj.txt",
-          "slug": "bandrj",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "Nacional (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/band.txt",
-          "slug": "band",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "Nacional (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/band.txt",
-          "slug": "band",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
         "Servidor 1": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019a797e-eeb8-7eda-9518-132403ccb160",
         "Servidor 2": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/eventos/band.html?id=019cc41a-ccc4-75e0-a31f-9bf47fad8d8b",
-        "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/band-sp",
-        "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/band-rj",
         "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/bandsp",
-        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/bandrj"
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/bandrj",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/bandsp"
       }
     },
     "SBT": {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Nacional (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sbt.txt",
+          "name": "Servidor 1 (Principal)",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5192195919ebd3bf77cf203ff0f1ecc4/error.txt",
           "slug": "sbt",
           "cdn": "CDN 1"
         },
         {
-          "name": "Nacional (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sbt.txt",
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5192195919ebd3bf77cf203ff0f1ecc4/error.txt",
           "slug": "sbt",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "SP Alternativo (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sbtsp.txt",
-          "slug": "sbtsp",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "SP Alternativo (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sbtsp.txt",
-          "slug": "sbtsp",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "RJ (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sbtrj.txt",
-          "slug": "sbtrj",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "RJ (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sbtrj.txt",
-          "slug": "sbtrj",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
         "SP - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtsp",
         "RJ - Principal": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sbtrj",
-        "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/sbt-sp",
-        "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/sbt-rj",
-        "Alternativo": "https://youtube-player.sbt.com.br/?videoID=ABVQXgr2LW4&t=0&adunit=/1011235/SBT_Videos/Especiais/SBT_Live/video"
+        "Alternativo": "https://youtube-player.sbt.com.br/?videoID=ABVQXgr2LW4&t=0&adunit=/1011235/SBT_Videos/Especiais/SBT_Live/video",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/sbt"
       }
     },
     "Record": {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "SP (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/recordsp.txt",
+          "name": "Servidor 1 (Principal)",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5f7c46965578e2aadc48f18391b6e614/error.txt",
           "slug": "recordsp",
           "cdn": "CDN 1"
         },
         {
-          "name": "SP (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/recordsp.txt",
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5f7c46965578e2aadc48f18391b6e614/error.txt",
           "slug": "recordsp",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "RJ (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/recordrj.txt",
-          "slug": "recordrj",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "RJ (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/recordrj.txt",
-          "slug": "recordrj",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "MG (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/recordmg.txt",
-          "slug": "recordmg",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "MG (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/recordmg.txt",
-          "slug": "recordmg",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "SP - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/record-sp",
-        "RJ - NossoPlayer": "https://nossoplayeronlinehd.ink/tv/record-rj",
         "SP - EmbedTV": "https://w7.embedtv.lat/recordsp",
         "RJ - EmbedTV": "https://w7.embedtv.lat/recordrj",
-        "MG - EmbedTV": "https://w7.embedtv.lat/recordmg"
+        "MG - EmbedTV": "https://w7.embedtv.lat/recordmg",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/recordsp"
       }
     }
   },
@@ -192,23 +100,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/bfcd5bf5a2898eb0a12b561d8e31ed62/error.txt",
           "slug": "sportv",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/bfcd5bf5a2898eb0a12b561d8e31ed62/error.txt",
           "slug": "sportv",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv",
-        "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/sportv",
-        "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
         "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=sportv",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv"
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/sportv"
       }
     },
     "SporTV 2": {
@@ -216,23 +121,19 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv2.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/8288304d94df546ab58ec90492d794cc/error.txt",
           "slug": "sportv2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv2.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/8288304d94df546ab58ec90492d794cc/error.txt",
           "slug": "sportv2",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/eventos/gbplay.html?id=sportv2",
-        "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/sportv2",
-        "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-292.php",
-        "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv2sd",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv2"
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/sportv2"
       }
     },
     "SporTV 3": {
@@ -261,22 +162,21 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/fd02ac2268ff350ecb8cca5e4243387c/error.txt",
           "slug": "premiere",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/fd02ac2268ff350ecb8cca5e4243387c/error.txt",
           "slug": "premiere",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
         "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/hls.html?id=premiere",
-        "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere",
-        "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-294.php",
-        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/premiere"
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/premiere",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/premiere"
       }
     },
     "Premiere 2": {
@@ -284,21 +184,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere2.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/abc3cc01c41ac5c9e704df7bc17f3932/error.txt",
           "slug": "premiere2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere2.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/abc3cc01c41ac5c9e704df7bc17f3932/error.txt",
           "slug": "premiere2",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere2",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-295.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere2"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere2",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/premiere2"
       }
     },
     "Premiere 3": {
@@ -306,21 +205,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere3.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/bbf59195791293b1d3e08b59fdb38035/error.txt",
           "slug": "premiere3",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere3.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/bbf59195791293b1d3e08b59fdb38035/error.txt",
           "slug": "premiere3",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere3",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-296.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere3"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere3",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/premiere3"
       }
     },
     "Premiere 4": {
@@ -328,21 +226,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere4.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/e35e6e37ee3a84bb1045eabe9f01da1c/error.txt",
           "slug": "premiere4",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere4.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/e35e6e37ee3a84bb1045eabe9f01da1c/error.txt",
           "slug": "premiere4",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere4",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-297.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere4"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere4",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/premiere4"
       }
     },
     "Premiere 5": {
@@ -350,21 +247,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere5.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/656ad29aee25e8e0bc1dd2f5df4f6a2d/error.txt",
           "slug": "premiere5",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere5.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/656ad29aee25e8e0bc1dd2f5df4f6a2d/error.txt",
           "slug": "premiere5",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere5",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-298.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere5"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere5",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/premiere5"
       }
     },
     "Premiere 6": {
@@ -372,21 +268,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere6.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/3c52a29bf1a398f5d4e20be697e2135f/error.txt",
           "slug": "premiere6",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere6.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/3c52a29bf1a398f5d4e20be697e2135f/error.txt",
           "slug": "premiere6",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere6",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-299.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere6"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere6",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/premiere6"
       }
     },
     "Premiere 7": {
@@ -394,21 +289,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere7.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/3bddfb039f8b00bd330b752a4cd770e7/error.txt",
           "slug": "premiere7",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/premiere7.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/3bddfb039f8b00bd330b752a4cd770e7/error.txt",
           "slug": "premiere7",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/premiere7",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-300.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere7"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/premiere7",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/premiere7"
       }
     },
     "Premiere Clubes": {
@@ -437,21 +331,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/db530527e76e3bc4fbc98c8a669450ab/error.txt",
           "slug": "espn",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/db530527e76e3bc4fbc98c8a669450ab/error.txt",
           "slug": "espn",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-81.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/espn"
       }
     },
     "ESPN 2": {
@@ -459,21 +352,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn2.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/11051d588923a170171d1707e14f2dfd/error.txt",
           "slug": "espn2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn2.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/11051d588923a170171d1707e14f2dfd/error.txt",
           "slug": "espn2",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn2",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-82.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn2"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn2",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/espn2"
       }
     },
     "ESPN 3": {
@@ -481,21 +373,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn3.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/b3b6db5afbb6f68fbbc75ad49d056f2f/error.txt",
           "slug": "espn3",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn3.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/b3b6db5afbb6f68fbbc75ad49d056f2f/error.txt",
           "slug": "espn3",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn3",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-83.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn3"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn3",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/espn3"
       }
     },
     "ESPN 4": {
@@ -503,21 +394,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn4.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5d176afba978f772513e52cc969a3580/error.txt",
           "slug": "espn4",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn4.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5d176afba978f772513e52cc969a3580/error.txt",
           "slug": "espn4",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/espn4",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-84.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn4"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/espn4",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/espn4"
       }
     },
     "ESPN Extra": {
@@ -554,20 +444,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/espn5.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/1b8b8b6f9e61d9c5c731636ff4e67566/error.txt",
           "slug": "espn5",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/espn5.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/1b8b8b6f9e61d9c5c731636ff4e67566/error.txt",
           "slug": "espn5",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/fox-sports2",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/foxsports2"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/foxsports2",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/espn5"
       }
     },
     "BandSports": {
@@ -575,47 +465,35 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/bandsports.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/89c36ba405ba84d8f9c4cd38e24cf5cb/error.txt",
           "slug": "bandsports",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/bandsports.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/89c36ba405ba84d8f9c4cd38e24cf5cb/error.txt",
           "slug": "bandsports",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/bandsports",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandsports"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandsports",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/bandsports"
       }
     },
     "CazéTV": {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Sinal 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/caze1.txt",
+          "name": "Servidor 1 (Principal)",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/b836b021df22971168f5eb47840c435a/error.txt",
           "slug": "caze1",
           "cdn": "CDN 1"
         },
         {
-          "name": "Sinal 1 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/caze1.txt",
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/b836b021df22971168f5eb47840c435a/error.txt",
           "slug": "caze1",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "Sinal 2 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/caze2.txt",
-          "slug": "caze2",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "Sinal 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/caze2.txt",
-          "slug": "caze2",
           "cdn": "CDN 2"
         }
       ],
@@ -623,7 +501,8 @@
         "Servidor 1 (EmbedCanais)": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv/",
         "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv2/",
         "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=cazetv3/",
-        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/caze1"
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/caze1",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/caze1"
       }
     },
     "Combate": {
@@ -631,21 +510,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/combate.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/58f8768a482d1373535fe6831f787b1a/error.txt",
           "slug": "combate",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/combate.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/58f8768a482d1373535fe6831f787b1a/error.txt",
           "slug": "combate",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/combate",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
-        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/combate"
+        "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/combate",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/combate"
       }
     },
     "UFC Fight Pass": {
@@ -653,22 +531,21 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/ufcfightpass.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/526998ad4e2003e2820da78e437a0237/error.txt",
           "slug": "ufcfightpass",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/ufcfightpass.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/526998ad4e2003e2820da78e437a0237/error.txt",
           "slug": "ufcfightpass",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/ufcfightpass",
-        "Servidor 2 (DaddyLive)": "https://dlive.sx/stream/stream-291.php",
         "Servidor 3 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/watch.html?id=paramount1",
-        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/ufcfightpass"
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/ufcfightpass",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/ufcfightpass"
       }
     },
     "XSports": {
@@ -676,20 +553,21 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/xsports.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/485168640074cb7884cf3cad83b14354/error.txt",
           "slug": "xsports",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/xsports.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/485168640074cb7884cf3cad83b14354/error.txt",
           "slug": "xsports",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
         "Servidor 1 (EmbedCanais)": "https://embedcanaisdetv.xyz/e/index.php?canal=xsports",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/xsports"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/xsports",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/xsports"
       }
     }
   },
@@ -699,20 +577,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/9e63200c27f1ce924706227ddcb10f86/error.txt",
           "slug": "hbo",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/9e63200c27f1ce924706227ddcb10f86/error.txt",
           "slug": "hbo",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbo"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbo",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/hbo"
       }
     },
     "HBO 2": {
@@ -720,20 +598,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo2.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/50008842db7f23ee75b7f7f48c3ab7d9/error.txt",
           "slug": "hbo2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/hbo2.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/50008842db7f23ee75b7f7f48c3ab7d9/error.txt",
           "slug": "hbo2",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo2",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbo2"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbo2",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/hbo2"
       }
     },
     "HBO Plus": {
@@ -741,20 +619,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/hboplus.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/a89fa5abba76d29a99528a7934fff2e1/error.txt",
           "slug": "hboplus",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/hboplus.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/a89fa5abba76d29a99528a7934fff2e1/error.txt",
           "slug": "hboplus",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo-plus",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hboplus"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hboplus",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/hboplus"
       }
     },
     "HBO Signature": {
@@ -783,20 +661,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/hbofamily.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/afc1d3a1510085f2d42d31fafe3ee474/error.txt",
           "slug": "hbofamily",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/hbofamily.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/afc1d3a1510085f2d42d31fafe3ee474/error.txt",
           "slug": "hbofamily",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/hbo-family",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbofamily"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/hbofamily",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/hbofamily"
       }
     },
     "Comedy Central": {
@@ -804,20 +682,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/comedycentral.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/c56c9a54b16b8395b04d87e70fa83d1d/error.txt",
           "slug": "comedycentral",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/comedycentral.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/c56c9a54b16b8395b04d87e70fa83d1d/error.txt",
           "slug": "comedycentral",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/comedycentral",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/comedycentral"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/comedycentral",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/comedycentral"
       }
     },
     "FOX (Star Channel)": {
@@ -832,14 +710,14 @@
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Sinal 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/disneyplus1.txt",
+          "name": "Servidor 1 (Principal)",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/74cc1eb9325116e8fbe9ac1cc584b826/error.txt",
           "slug": "disneyplus1",
           "cdn": "CDN 1"
         },
         {
-          "name": "Sinal 1 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/disneyplus1.txt",
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/74cc1eb9325116e8fbe9ac1cc584b826/error.txt",
           "slug": "disneyplus1",
           "cdn": "CDN 2"
         }
@@ -848,21 +726,22 @@
         "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus/",
         "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus02/",
         "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=disneyplus03/",
-        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/disneyplus1"
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/disneyplus1",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/disneyplus1"
       }
     },
     "Max": {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Sinal 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/max1.txt",
+          "name": "Servidor 1 (Principal)",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5dcb2a8f6b61a055ce932f440230995e/error.txt",
           "slug": "max1",
           "cdn": "CDN 1"
         },
         {
-          "name": "Sinal 1 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/max1.txt",
+          "name": "Servidor 2 (Backup)",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5dcb2a8f6b61a055ce932f440230995e/error.txt",
           "slug": "max1",
           "cdn": "CDN 2"
         }
@@ -871,7 +750,8 @@
         "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=max/",
         "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=max02/",
         "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=max03/",
-        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/max1"
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/max1",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/max1"
       }
     },
     "Paramount+": {
@@ -879,13 +759,13 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/paramountplus.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/a5168d635034b07e6519f8a7802bbec2/error.txt",
           "slug": "paramountplus",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/paramountplus.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/a5168d635034b07e6519f8a7802bbec2/error.txt",
           "slug": "paramountplus",
           "cdn": "CDN 2"
         }
@@ -894,7 +774,8 @@
         "Servidor 1": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus/",
         "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus02/",
         "Servidor 3": "https://embedcanaisdetv.xyz/e/index.php?canal=paramountplus03/",
-        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/paramountplus"
+        "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/paramountplus",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/paramountplus"
       }
     },
     "Prime Video": {
@@ -902,38 +783,14 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/d5f75a3df0ef269891282e718212c5c8/error.txt",
           "slug": "primevideo",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/d5f75a3df0ef269891282e718212c5c8/error.txt",
           "slug": "primevideo",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "Servidor 3 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo2.txt",
-          "slug": "primevideo2",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "Servidor 4 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo2.txt",
-          "slug": "primevideo2",
-          "cdn": "CDN 2"
-        },
-        {
-          "name": "Servidor 5 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo4.txt",
-          "slug": "primevideo4",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "Servidor 6 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/primevideo4.txt",
-          "slug": "primevideo4",
           "cdn": "CDN 2"
         }
       ],
@@ -942,7 +799,7 @@
         "Servidor 2": "https://embedcanaisdetv.xyz/e/index.php?canal=amazonprimevideo02",
         "Servidor 3 (EmbedTV)": "https://w7.embedtv.lat/primevideo",
         "Servidor 4 (EmbedTV)": "https://w7.embedtv.lat/primevideo2",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/primevideo4"
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/primevideo"
       }
     }
   },
@@ -952,20 +809,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonnetwork.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/92fab0077c4e8f6b28ee0c0b030321d3/error.txt",
           "slug": "cartoonnetwork",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonnetwork.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/92fab0077c4e8f6b28ee0c0b030321d3/error.txt",
           "slug": "cartoonnetwork",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/cartoon-network",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonnetwork"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonnetwork",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/cartoonnetwork"
       }
     },
     "Cartoonito": {
@@ -973,20 +830,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonito.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/c1868669860a66f8a3c0d9903d71e1b4/error.txt",
           "slug": "cartoonito",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/cartoonito.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/c1868669860a66f8a3c0d9903d71e1b4/error.txt",
           "slug": "cartoonito",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/cartoonito",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonito"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/cartoonito",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/cartoonito"
       }
     },
     "Boomerang": {
@@ -1047,20 +904,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/nickelodeon.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/6fcf45d7d49219b8311d108786251327/error.txt",
           "slug": "nickelodeon",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/nickelodeon.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/6fcf45d7d49219b8311d108786251327/error.txt",
           "slug": "nickelodeon",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/nickelodeon",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickelodeon"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickelodeon",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/nickelodeon"
       }
     },
     "Nick Jr.": {
@@ -1068,20 +925,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/nickjr.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/73bfb51e77c0b6fe522f5d92318abc03/error.txt",
           "slug": "nickjr",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/nickjr.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/73bfb51e77c0b6fe522f5d92318abc03/error.txt",
           "slug": "nickjr",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/nick-jr",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickjr"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/nickjr",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/nickjr"
       }
     },
     "Discovery Kids": {
@@ -1089,20 +946,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/discoverykids.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/80d740017ab9f85bdd5d2821048633f4/error.txt",
           "slug": "discoverykids",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/discoverykids.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/80d740017ab9f85bdd5d2821048633f4/error.txt",
           "slug": "discoverykids",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/discovery-kids",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverykids"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverykids",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/discoverykids"
       }
     },
     "Gloob": {
@@ -1110,20 +967,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/gloob.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/08d02d153cbe432ff2a8b5d7a43ed6bf/error.txt",
           "slug": "gloob",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/gloob.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/08d02d153cbe432ff2a8b5d7a43ed6bf/error.txt",
           "slug": "gloob",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/gloob",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/gloob"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/gloob",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/gloob"
       }
     },
     "Gloobinho": {
@@ -1154,20 +1011,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/discoverychannel.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/c5a4f867cc28f94f31ce9d3ea5c6a7ab/error.txt",
           "slug": "discoverychannel",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/discoverychannel.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/c5a4f867cc28f94f31ce9d3ea5c6a7ab/error.txt",
           "slug": "discoverychannel",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/discovery-channel",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverychannel"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/discoverychannel",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/discoverychannel"
       }
     },
     "Animal Planet": {
@@ -1175,20 +1032,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/animalplanet.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/75014a75ec0eeb7752ba43e8794c5718/error.txt",
           "slug": "animalplanet",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/animalplanet.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/75014a75ec0eeb7752ba43e8794c5718/error.txt",
           "slug": "animalplanet",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/animal-planet",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/animalplanet"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/animalplanet",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/animalplanet"
       }
     },
     "National Geographic": {
@@ -1220,20 +1077,21 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/globonews.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/825b4f561cc379cff268968a2e3bff92/error.txt",
           "slug": "globonews",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/globonews.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/825b4f561cc379cff268968a2e3bff92/error.txt",
           "slug": "globonews",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
         "Servidor 1 (EmbedCanais)": "https://embedcanaisdetv.xyz/e/index.php?canal=globonews",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/globonews"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/globonews",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/globonews"
       }
     },
     "BandNews": {
@@ -1241,20 +1099,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/bandnews.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/76e7afbd90d424f501dc5e851c78726d/error.txt",
           "slug": "bandnews",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/bandnews.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/76e7afbd90d424f501dc5e851c78726d/error.txt",
           "slug": "bandnews",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/band-news",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandnews"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/bandnews",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/bandnews"
       }
     },
     "Multishow": {
@@ -1262,20 +1120,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/multishow.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5ba07dbf29565f6097b4c04446feb0ad/error.txt",
           "slug": "multishow",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/multishow.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5ba07dbf29565f6097b4c04446feb0ad/error.txt",
           "slug": "multishow",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/multishow",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/multishow"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/multishow",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/multishow"
       }
     },
     "MTV": {
@@ -1283,20 +1141,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/mtv.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/6c414a75333c3aaf649ebcddf6e1b575/error.txt",
           "slug": "mtv",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/mtv.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/6c414a75333c3aaf649ebcddf6e1b575/error.txt",
           "slug": "mtv",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "Servidor 1 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/mtv",
-        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/mtv"
+        "Servidor 2 (EmbedTV)": "https://w7.embedtv.lat/mtv",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/mtv"
       }
     }
   },
@@ -1306,19 +1164,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_chaves.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/152f3f4057733eb1720c041a9e0273b4/error.txt",
           "slug": "24h_chaves",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_chaves.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/152f3f4057733eb1720c041a9e0273b4/error.txt",
           "slug": "24h_chaves",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_chaves"
+        "EmbedTV": "https://w7.embedtv.lat/24h_chaves",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_chaves"
       }
     },
     "Dragon Ball 24h": {
@@ -1326,19 +1185,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_dragonball.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/7359b32d8548fe23b8e0c03a7c57ff71/error.txt",
           "slug": "24h_dragonball",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_dragonball.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/7359b32d8548fe23b8e0c03a7c57ff71/error.txt",
           "slug": "24h_dragonball",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_dragonball"
+        "EmbedTV": "https://w7.embedtv.lat/24h_dragonball",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_dragonball"
       }
     },
     "Naruto 24h": {
@@ -1346,19 +1206,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_naruto.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/f53bccf0df8d839a48228bbaa81c3cd8/error.txt",
           "slug": "24h_naruto",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_naruto.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/f53bccf0df8d839a48228bbaa81c3cd8/error.txt",
           "slug": "24h_naruto",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_naruto"
+        "EmbedTV": "https://w7.embedtv.lat/24h_naruto",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_naruto"
       }
     },
     "Os Simpsons 24h": {
@@ -1366,19 +1227,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_simpsons.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/620f0f25f1a54f6944e993b43bc66e26/error.txt",
           "slug": "24h_simpsons",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_simpsons.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/620f0f25f1a54f6944e993b43bc66e26/error.txt",
           "slug": "24h_simpsons",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_simpsons"
+        "EmbedTV": "https://w7.embedtv.lat/24h_simpsons",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_simpsons"
       }
     },
     "Pica-Pau 24h": {
@@ -1386,19 +1248,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_picapau.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/897f22421e8ad893c0f6e02ef5ff0d94/error.txt",
           "slug": "24h_picapau",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_picapau.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/897f22421e8ad893c0f6e02ef5ff0d94/error.txt",
           "slug": "24h_picapau",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_picapau"
+        "EmbedTV": "https://w7.embedtv.lat/24h_picapau",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_picapau"
       }
     },
     "Friends 24h": {
@@ -1406,19 +1269,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_friends.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/79764687d4bd1131963fe68210da6959/error.txt",
           "slug": "24h_friends",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_friends.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/79764687d4bd1131963fe68210da6959/error.txt",
           "slug": "24h_friends",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_friends"
+        "EmbedTV": "https://w7.embedtv.lat/24h_friends",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_friends"
       }
     },
     "Todo Mundo Odeia o Chris 24h": {
@@ -1426,19 +1290,20 @@
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_odeiachris.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/2b25eca61a21f47d2a13fa56e9114315/error.txt",
           "slug": "24h_odeiachris",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/24h_odeiachris.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/2b25eca61a21f47d2a13fa56e9114315/error.txt",
           "slug": "24h_odeiachris",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_odeiachris"
+        "EmbedTV": "https://w7.embedtv.lat/24h_odeiachris",
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_odeiachris"
       }
     }
   }
