@@ -1,6 +1,6 @@
 /**
- * TVZINHA ONLINE - Offline Fallback Channels Dataset
- * Pure static dictionary used when running offline or under file:// protocol
+ * TVZINHA ONLINE - Static Fallback Channels Catalog
+ * Auto-synchronized dataset for offline resilience.
  */
 
 export const FALLBACK_CHANNELS = {
@@ -245,23 +245,20 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://73a017eaa1bb2a452b5bcc92acd54acb.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv3.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/86ec9721d4780493cea0657f56229342/error.txt",
           "slug": "sportv3",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s23-cloudfront-net.lat/8e8e8b142192ea65/sportv3.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/86ec9721d4780493cea0657f56229342/error.txt",
           "slug": "sportv3",
           "cdn": "CDN 2"
         }
       ],
       "contingency": {
         "Servidor 1 (MeuPlayer)": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://meuplayeronlinehd.com/myplay/premiere/primebr.html?id=sportv3",
-        "Servidor 2 (NossoPlayer)": "https://nossoplayeronlinehd.ink/tv/sportv3",
-        "Servidor 3 (DaddyLive)": "https://dlive.sx/stream/stream-293.php",
-        "Alternativo": "https://meuplayeronlinehd.com/myplay/emb.html?id=https://localhost70.xyz/myplay/premiere/primebr.html?id=sportv3sd",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.lat/sportv3"
+        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/sportv3"
       }
     },
     "Premiere": {
