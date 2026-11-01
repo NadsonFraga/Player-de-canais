@@ -3,7 +3,7 @@
  * Handles Hls.js liveSyncPosition calculations and dynamic AO VIVO badge states
  */
 
-import { showToast } from '../core/toast.js?v=20261028_1625';
+import { showToast } from '../core/toast.js?v=20261101_1742';
 
 export function syncToLiveEdge(art, hls, container = null) {
     if (!art || !art.video) return;
