@@ -6,7 +6,7 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261101_1743';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261109_1539';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -77,7 +77,9 @@ export async function signStreamUrlsBatch(items) {
  * 1. FENIXFLIX (PT-BR Dublado Native Stream Aggregator)
  * ============================================================ */
 
-export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', season = 1, episode = 1, audio = 'dubbed', title = '' }) {
+export async function resolveFenixFlixClient(options = {}) {
+  const { id, type = 'movie', season = 1, episode = 1, audio = 'dubbed', title = '' } = options;
+  const imdbId = options.imdbId || options.imdb_id;
   const isSeries = type === 'series' || type === 'serie' || type === 'tv' || type === 'anime';
   const queryId = (imdbId && imdbId.startsWith('tt')) ? imdbId : (id && String(id).startsWith('tmdb:') ? id : `tmdb:${id}`);
   const endpoint = isSeries
@@ -181,18 +183,15 @@ export async function resolveFenixFlixClient({ id, imdbId, type = 'movie', seaso
     // Sign proxy URLs for streams needing referer
     const itemsToSign = filtered.map(s => {
       const rawFile = (s.file || '').trim();
+      // FenixHub and Fenixbot streams redirect to upstream CDNs with self-signed SSL certs (e.g. dbonline.tech-cdn.top).
+      // They MUST be proxied via /api/stream to guarantee valid HTTPS, HTTP 206 Range, and open CORS without browser ERR_CERT_AUTHORITY_INVALID.
       const isDirectMp4 = (rawFile.includes('.mp4') || rawFile.includes('/stream/')) && (
         rawFile.includes('fontedecanais') ||
         rawFile.includes('57lgoe65efxo71.com') ||
         rawFile.includes('77zzhf54vdll71.com') ||
-        rawFile.includes('fenixhub.online') ||
-        rawFile.includes('fenixflix') ||
-        rawFile.includes('koyeb.app') ||
-        rawFile.includes('squareweb.app') ||
-        rawFile.includes('fenixbot') ||
         rawFile.includes('/movies/') ||
         rawFile.includes('/series/')
-      );
+      ) && !rawFile.includes('fenixhub') && !rawFile.includes('fenixflix') && !rawFile.includes('fenixbot') && !rawFile.includes('tech-cdn');
       const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, 'https://').replace(/:80\//, '/') : rawFile;
       const referer = 'https://embedplayer2.xyz/';
       return {

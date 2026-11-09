@@ -1549,15 +1549,13 @@ export async function onRequestGet(context) {
     if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
       const parsedSources = await Promise.all(fenixData.sources.map(async (s, idx) => {
         const rawFile = (s.file || "").trim();
+        // FenixHub and Fenixbot streams redirect to upstream CDNs with self-signed SSL certs (e.g. dbonline.tech-cdn.top).
+        // They MUST be proxied via /api/stream to guarantee valid HTTPS, HTTP 206 Range, and open CORS without browser ERR_CERT_AUTHORITY_INVALID.
         const isDirectMp4 = (rawFile.includes(".mp4") || rawFile.includes("/stream/")) && (
           isBrazilianCdn(rawFile) ||
-          rawFile.includes("fenixhub") ||
-          rawFile.includes("koyeb.app") ||
-          rawFile.includes("squareweb.app") ||
-          rawFile.includes("fenixbot") ||
           rawFile.includes("/movies/") ||
           rawFile.includes("/series/")
-        );
+        ) && !rawFile.includes("fenixhub") && !rawFile.includes("fenixflix") && !rawFile.includes("fenixbot") && !rawFile.includes("tech-cdn");
         const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, "https://").replace(/:80\//, "/") : rawFile;
         const referer = s.referer || "https://embedplayer2.xyz/";
         const finalStreamUrl = isDirectMp4 ? directCleanUrl : await proxied(rawFile, referer);
