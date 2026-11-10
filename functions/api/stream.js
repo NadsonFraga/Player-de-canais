@@ -207,8 +207,8 @@ export async function onRequestGet(context) {
       customOrigin = "https://embedplayer2.xyz";
     } else if (targetUrl.includes("googlevideo.com") || targetUrl.includes("blogger.com")) {
       customReferer = "https://www.blogger.com/";
-    } else if (targetUrl.includes("peliculaplay.com")) {
-      customReferer = "https://mgeb.top/";
+    } else if (targetUrl.includes("peliculaplay.com") || targetUrl.includes("mgeb.lat") || targetUrl.includes("mgeb.top") || targetUrl.includes("mgeb.space")) {
+      customReferer = "https://mgeb.lat/";
     } else {
       customReferer = "https://tvzinhaonline.pages.dev/";
     }
