@@ -115,33 +115,30 @@ def xor_decrypt(data_str: str, key: str = "otaku-embed-v1") -> str:
     return urllib.parse.unquote(decrypted.decode("latin1", errors="replace"))
 
 def fetch_mgeb(media_type: str, media_id: str, season: int = 1, episode: int = 1):
-    hosts = ["mgeb.lat", "mgeb.top"]
-    for host in hosts:
-        if media_type == "movie":
-            url = f"https://{host}/embed/{media_id}"
-        else:
-            url = f"https://{host}/embed/serie/{media_id}/{season}/{episode}"
+    if media_type == "movie":
+        url = f"https://mgeb.lat/embed/{media_id}"
+    else:
+        url = f"https://mgeb.lat/embed/serie/{media_id}/{season}/{episode}"
 
-        headers = {
-            "User-Agent": USER_AGENT,
-            "Referer": f"https://{host}/",
-            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
-        }
-        
-        try:
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=MGEB_TIMEOUT_S) as res:
-                html = res.read().decode("utf-8", errors="ignore")
-            m = re.search(r"var\s+sources\s*=\s*(\[.*?\]);", html, re.DOTALL)
-            if not m:
-                continue
-            sources = json.loads(m.group(1))
-            title_m = re.search(r'var\s+title\s*=\s*"(.*?)";', html)
-            title = title_m.group(1).replace(r"\/", "/") if title_m else ""
-            return {"title": title, "sources": sources}
-        except Exception as e:
-            print(f"[LocalServer] Error fetching MGEB ({url}): {e}", file=sys.stderr)
-            continue
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Referer": "https://mgeb.lat/",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
+    }
+    
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=MGEB_TIMEOUT_S) as res:
+            html = res.read().decode("utf-8", errors="ignore")
+        m = re.search(r"var\s+sources\s*=\s*(\[.*?\]);", html, re.DOTALL)
+        if not m:
+            return None
+        sources = json.loads(m.group(1))
+        title_m = re.search(r'var\s+title\s*=\s*"(.*?)";', html)
+        title = title_m.group(1).replace(r"\/", "/") if title_m else ""
+        return {"title": title, "sources": sources}
+    except Exception as e:
+        print(f"[LocalServer] Error fetching MGEB ({url}): {e}", file=sys.stderr)
     return None
 
 

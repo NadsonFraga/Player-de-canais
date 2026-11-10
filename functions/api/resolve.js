@@ -250,46 +250,42 @@ function xorDecrypt(base64Str, key = "otaku-embed-v1") {
  * Resolves MGEB streams for Movies, Series, and Dubbed Anime
  */
 async function resolveMgeb(type, id, season = 1, episode = 1) {
-  const hosts = ["mgeb.lat", "mgeb.top"];
-  for (const host of hosts) {
-    const embedUrl = type === "movie" 
-      ? `https://${host}/embed/${id}` 
-      : `https://${host}/embed/serie/${id}/${season}/${episode}`;
+  const embedUrl = type === "movie" 
+    ? `https://mgeb.lat/embed/${id}` 
+    : `https://mgeb.lat/embed/serie/${id}/${season}/${episode}`;
 
-    const headers = {
-      "User-Agent": USER_AGENT,
-      "Referer": `https://${host}/`,
-      "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
+  const headers = {
+    "User-Agent": USER_AGENT,
+    "Referer": "https://mgeb.lat/",
+    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
+  };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), MGEB_TIMEOUT_MS);
+  try {
+    const res = await fetch(embedUrl, {
+      headers,
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    const sourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
+    if (!sourcesMatch) return null;
+
+    const rawSources = JSON.parse(sourcesMatch[1]);
+    const titleMatch = html.match(/var\s+title\s*=\s*"(.*?)";/);
+    const title = titleMatch ? titleMatch[1].replace(/\\\//g, "/") : "";
+
+    return {
+      title,
+      sources: rawSources,
     };
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), MGEB_TIMEOUT_MS);
-    try {
-      const res = await fetch(embedUrl, {
-        headers,
-        signal: controller.signal,
-      });
-      if (!res.ok) continue;
-      const html = await res.text();
-
-      const sourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
-      if (!sourcesMatch) continue;
-
-      const rawSources = JSON.parse(sourcesMatch[1]);
-      const titleMatch = html.match(/var\s+title\s*=\s*"(.*?)";/);
-      const title = titleMatch ? titleMatch[1].replace(/\\\//g, "/") : "";
-
-      return {
-        title,
-        sources: rawSources,
-      };
-    } catch (e) {
-      continue;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+  } catch (e) {
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  return null;
 }
 
 /**
