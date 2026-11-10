@@ -2202,12 +2202,24 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         # Route 2: FenixFlix (PT-BR Dublado)
         if not result and requested_source == "fenixflix" and (media_id or imdb_id):
-            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, imdb_id, media_type, season, episode, "dubbed")
+            active_imdb_id = imdb_id
+            if not active_imdb_id and media_id and tmdb_api_key:
+                active_imdb_id = timed("imdb", fetch_imdb_id, media_id, "movie" if media_type == "movie" else "serie")
+            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, active_imdb_id, media_type, season, episode, "dubbed")
             if fenix_data and fenix_data.get("sources"):
                 parsed = []
                 for s in fenix_data["sources"]:
                     raw_file = s["file"].strip()
-                    referer = s.get("referer", "https://embedplayer2.xyz/")
+                    raw_lower = raw_file.lower()
+                    if "zunderflix" in raw_lower or "zunder" in raw_lower:
+                        referer = "https://zunderflix.lat/"
+                        origin = "https://zunderflix.lat"
+                    elif "hollymovies" in raw_lower:
+                        referer = "https://hollymovies.org/"
+                        origin = "https://hollymovies.org"
+                    else:
+                        referer = s.get("referer", "https://embedplayer2.xyz/")
+                        origin = "https://embedplayer2.xyz"
                     # FenixHub and Fenixbot streams redirect to upstream CDNs with self-signed SSL certs (e.g. dbonline.tech-cdn.top).
                     # They MUST be proxied via /api/stream to guarantee valid HTTPS, HTTP 206 Range, and open CORS without browser ERR_CERT_AUTHORITY_INVALID.
                     is_mp4 = (".mp4" in raw_file or "/stream/" in raw_file) and (
@@ -2216,7 +2228,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         or "/series/" in raw_file
                     ) and not any(k in raw_file for k in ("fenixhub", "fenixflix", "fenixbot", "tech-cdn"))
                     clean_url = re.sub(r'^http://', 'https://', raw_file).replace(':80/', '/') if is_mp4 else raw_file
-                    stream_url = clean_url if is_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
+                    stream_url = clean_url if is_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer, origin=origin)
                     is_hls = s.get("type") == "hls" or ".m3u8" in raw_file
                     parsed.append({
                         "label": s.get("label", f"FenixFlix {s.get('quality', 1080)}p"),
@@ -2224,7 +2236,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         "stream_url": stream_url,
                         "direct_url": raw_file if (not is_mp4 and is_hls and raw_file.startswith("https://")) else None,
                         "raw_url": clean_url,
-                        "headers": {"Referer": referer},
+                        "headers": {"Referer": referer, "Origin": origin},
                         "quality": s.get("quality", 1080)
                     })
                 ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: 90, media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
@@ -2458,6 +2470,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         if not referer:
             if "dramahot.top" in target_url or "zokoanime.video" in target_url:
                 referer, origin = "https://zokoanime.video/", "https://zokoanime.video"
+            elif "zunderflix" in target_url or "zunder" in target_url:
+                referer, origin = "https://zunderflix.lat/", "https://zunderflix.lat"
             elif "playercdn.workers.dev" in target_url or "embedplayer2.xyz" in target_url:
                 referer, origin = "https://embedplayer2.xyz/", "https://embedplayer2.xyz"
             elif "googlevideo.com" in target_url or "blogger.com" in target_url:
@@ -2490,7 +2504,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         with resp:
             content_type = (resp.headers.get("Content-Type", "") or "").lower()
-            is_m3u8 = ".m3u8" in target_url or ".m3u8" in final_url or "mpegurl" in content_type
+            is_m3u8 = ".m3u8" in target_url or ".m3u8" in final_url or "hls-proxy" in target_url or "mpegurl" in content_type
             is_vtt = ".vtt" in target_url or ".vtt" in final_url or "text/vtt" in content_type
             is_ok = 200 <= resp.status < 300
 
@@ -2509,7 +2523,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
                 def proxied(uri):
                     # The playlist's parts expire with the playlist
-                    return proxied_stream_url(proxy_base, signing_key, urllib.parse.urljoin(final_url, uri), referer, exp=link_exp)
+                    return proxied_stream_url(proxy_base, signing_key, urllib.parse.urljoin(final_url, uri), referer, origin=origin, exp=link_exp)
 
                 rewritten_lines = []
                 for line in raw.decode("utf-8", errors="ignore").split("\n"):

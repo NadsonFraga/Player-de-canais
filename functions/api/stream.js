@@ -199,6 +199,9 @@ export async function onRequestGet(context) {
     if (targetUrl.includes("dramahot.top") || targetUrl.includes("zokoanime.video")) {
       customReferer = "https://zokoanime.video/";
       customOrigin = "https://zokoanime.video";
+    } else if (targetUrl.includes("zunderflix") || targetUrl.includes("zunder")) {
+      customReferer = "https://zunderflix.lat/";
+      customOrigin = "https://zunderflix.lat";
     } else if (targetUrl.includes("playercdn.workers.dev") || targetUrl.includes("embedplayer2.xyz")) {
       customReferer = "https://embedplayer2.xyz/";
       customOrigin = "https://embedplayer2.xyz";
@@ -243,7 +246,7 @@ export async function onRequestGet(context) {
   }
 
   const contentType = (upstream.headers.get("content-type") || "").toLowerCase();
-  const isM3U8 = targetUrl.includes(".m3u8") || finalUrl.includes(".m3u8") || contentType.includes("mpegurl");
+  const isM3U8 = targetUrl.includes(".m3u8") || finalUrl.includes(".m3u8") || targetUrl.includes("hls-proxy") || contentType.includes("mpegurl");
   const isVtt = targetUrl.includes(".vtt") || finalUrl.includes(".vtt") || contentType.includes("text/vtt");
 
   // HLS playlist: rewrite relative and absolute paths (against the final address) so segments route through here
@@ -258,7 +261,7 @@ export async function onRequestGet(context) {
     const baseUrl = new URL(finalUrl);
     const proxyBase = `${urlObj.origin}${urlObj.pathname}`;
     // The playlist's parts expire with the playlist
-    const proxied = (uri) => proxiedStreamUrl(proxyBase, signingKey, new URL(uri, baseUrl).toString(), customReferer, { exp: linkExp });
+    const proxied = (uri) => proxiedStreamUrl(proxyBase, signingKey, new URL(uri, baseUrl).toString(), customReferer, { origin: customOrigin, exp: linkExp });
 
     const rewritten = (await Promise.all(playlistText.split("\n").map(async line => {
       const trimmed = line.trim();

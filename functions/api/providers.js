@@ -10,29 +10,50 @@ const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
  * ============================================================ */
 export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode = 1, audio = "dubbed" }) {
   const isSeries = type === "series" || type === "serie" || type === "tv" || type === "anime";
-  const queryId = (imdbId && imdbId.startsWith("tt")) ? imdbId : (id && String(id).startsWith("tmdb:") ? id : `tmdb:${id}`);
-  const endpoint = isSeries
-    ? `https://fenixflix.fenixhub.online/stream/series/${queryId}:${season}:${episode}.json`
-    : `https://fenixflix.fenixhub.online/stream/movie/${queryId}.json`;
+  const queryCandidates = [];
+  if (imdbId && imdbId.startsWith("tt")) {
+    queryCandidates.push(imdbId);
+  }
+  if (id) {
+    queryCandidates.push(String(id).startsWith("tmdb:") ? id : `tmdb:${id}`);
+  }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
-  const debug = { endpoint, status: null, statusText: null, error: null, streams: 0, body: null };
+  let data = null;
+  let rawStreams = [];
+  const debug = { endpoint: null, status: null, statusText: null, error: null, streams: 0, body: null };
+
+  for (const qId of queryCandidates) {
+    const endpoint = isSeries
+      ? `https://fenixflix.fenixhub.online/stream/series/${qId}:${season}:${episode}.json`
+      : `https://fenixflix.fenixhub.online/stream/movie/${qId}.json`;
+    debug.endpoint = endpoint;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    try {
+      const res = await fetch(endpoint, {
+        headers: { "User-Agent": USER_AGENT, "Accept": "application/json" },
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      debug.status = res.status;
+      debug.statusText = res.statusText;
+      if (res.ok) {
+        const j = await res.json();
+        if (Array.isArray(j.streams) && j.streams.length > 0) {
+          data = j;
+          rawStreams = j.streams;
+          debug.streams = rawStreams.length;
+          break;
+        }
+      }
+    } catch (e) {
+      clearTimeout(timer);
+      debug.error = e.message || String(e);
+    }
+  }
 
   try {
-    const res = await fetch(endpoint, {
-      headers: { "User-Agent": USER_AGENT, "Accept": "application/json" },
-      signal: controller.signal
-    });
-    debug.status = res.status;
-    debug.statusText = res.statusText;
-    if (!res.ok) {
-      debug.body = (await res.text()).slice(0, 300);
-      return { title: "", sources: [], debug };
-    }
-    const data = await res.json();
-    const rawStreams = Array.isArray(data.streams) ? data.streams : [];
-    debug.streams = rawStreams.length;
     if (!rawStreams.length) return { title: "", sources: [], debug };
 
     const parsed = rawStreams
@@ -57,7 +78,7 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
                          text.includes("pt-br") ||
                          text.includes("ptbr") ||
                          (text.includes("🇧🇷") && !isSubbed);
-        const isHls = s.url.includes(".m3u8");
+        const isHls = s.url.includes(".m3u8") || s.url.includes("hls-proxy") || s.url.includes("/hls") || (s.type === "hls");
 
         // Provider trust, audio compatibility & speed tiers:
         // 4: Dedicated high-speed official web VOD masters (fenixhub.online / Zeus / Badger) -> guaranteed AAC web audio, 0ms startup
@@ -114,8 +135,6 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
   } catch (err) {
     debug.error = err.message || String(err);
     return { title: "", sources: [], debug };
-  } finally {
-    clearTimeout(timer);
   }
 }
 

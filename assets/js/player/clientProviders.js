@@ -6,7 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261109_1539';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261110_0945';
+import { fetchTmdb } from '../core/tmdb.js?v=20261110_0945';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -73,32 +74,89 @@ export async function signStreamUrlsBatch(items) {
 }
 
 
+function getStreamHeaders(rawUrl) {
+  const defaultHeaders = { referer: 'https://embedplayer2.xyz/', origin: 'https://embedplayer2.xyz' };
+  if (!rawUrl) return defaultHeaders;
+  try {
+    const lower = rawUrl.toLowerCase();
+    if (lower.includes('zunderflix') || lower.includes('zunder')) {
+      return { referer: 'https://zunderflix.lat/', origin: 'https://zunderflix.lat' };
+    }
+    if (lower.includes('hollymovies')) {
+      return { referer: 'https://hollymovies.org/', origin: 'https://hollymovies.org' };
+    }
+    if (lower.includes('fenixhub') || lower.includes('fenixflix') || lower.includes('embedplayer2') || lower.includes('playercdn')) {
+      return { referer: 'https://embedplayer2.xyz/', origin: 'https://embedplayer2.xyz' };
+    }
+    const u = new URL(rawUrl);
+    return { referer: `${u.origin}/`, origin: u.origin };
+  } catch (e) {
+    return defaultHeaders;
+  }
+}
+
 /* ============================================================
  * 1. FENIXFLIX (PT-BR Dublado Native Stream Aggregator)
  * ============================================================ */
 
 export async function resolveFenixFlixClient(options = {}) {
   const { id, type = 'movie', season = 1, episode = 1, audio = 'dubbed', title = '' } = options;
-  const imdbId = options.imdbId || options.imdb_id;
+  let imdbId = options.imdbId || options.imdb_id;
   const isSeries = type === 'series' || type === 'serie' || type === 'tv' || type === 'anime';
-  const queryId = (imdbId && imdbId.startsWith('tt')) ? imdbId : (id && String(id).startsWith('tmdb:') ? id : `tmdb:${id}`);
-  const endpoint = isSeries
-    ? `https://fenixflix.fenixhub.online/stream/series/${queryId}:${season}:${episode}.json`
-    : `https://fenixflix.fenixhub.online/stream/movie/${queryId}.json`;
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 9000);
+  // 1. Resolve IMDb ID from TMDB if not provided
+  if (!imdbId && id && /^\d+$/.test(String(id))) {
+    try {
+      const tmdbPath = isSeries ? `tv/${id}/external_ids` : `movie/${id}`;
+      const tmdbData = await fetchTmdb(tmdbPath);
+      if (tmdbData && tmdbData.imdb_id && String(tmdbData.imdb_id).startsWith('tt')) {
+        imdbId = String(tmdbData.imdb_id);
+      }
+    } catch (e) {
+      console.warn('[ClientProviders] Erro ao buscar IMDb ID no TMDB para FenixFlix:', e);
+    }
+  }
+
+  // 2. Build candidate query IDs (prioritize IMDb tt..., fallback to tmdb:...)
+  const queryCandidates = [];
+  if (imdbId && imdbId.startsWith('tt')) {
+    queryCandidates.push(imdbId);
+  }
+  if (id) {
+    queryCandidates.push(String(id).startsWith('tmdb:') ? id : `tmdb:${id}`);
+  }
+
+  let data = null;
+  let rawStreams = [];
+
+  for (const qId of queryCandidates) {
+    const endpoint = isSeries
+      ? `https://fenixflix.fenixhub.online/stream/series/${qId}:${season}:${episode}.json`
+      : `https://fenixflix.fenixhub.online/stream/movie/${qId}.json`;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+
+    try {
+      const res = await fetch(endpoint, {
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      if (res.ok) {
+        const j = await res.json();
+        if (Array.isArray(j.streams) && j.streams.length > 0) {
+          data = j;
+          rawStreams = j.streams;
+          break;
+        }
+      }
+    } catch (e) {
+      clearTimeout(timer);
+    }
+  }
 
   try {
-    const res = await fetch(endpoint, {
-      headers: { 'Accept': 'application/json' },
-      signal: controller.signal
-    });
-    if (!res.ok) {
-      return { success: false, error: `FenixFlix retornou HTTP ${res.status}`, provider: 'fenixflix', reason: 'no_sources' };
-    }
-    const data = await res.json();
-    const rawStreams = Array.isArray(data.streams) ? data.streams : [];
     if (!rawStreams.length) {
       return { success: false, error: 'FenixFlix sem fontes para este título', provider: 'fenixflix', reason: 'no_sources' };
     }
@@ -125,7 +183,7 @@ export async function resolveFenixFlixClient(options = {}) {
                          text.includes('pt-br') ||
                          text.includes('ptbr') ||
                          (text.includes('🇧🇷') && !isSubbed);
-        const isHls = s.url.includes('.m3u8');
+        const isHls = s.url.includes('.m3u8') || s.url.includes('hls-proxy') || s.url.includes('/hls') || (s.type === 'hls');
         const cleanName = s.name || `FenixFlix ${quality}p`;
 
         // Provider trust, audio compatibility & speed tiers:
@@ -193,11 +251,11 @@ export async function resolveFenixFlixClient(options = {}) {
         rawFile.includes('/series/')
       ) && !rawFile.includes('fenixhub') && !rawFile.includes('fenixflix') && !rawFile.includes('fenixbot') && !rawFile.includes('tech-cdn');
       const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, 'https://').replace(/:80\//, '/') : rawFile;
-      const referer = 'https://embedplayer2.xyz/';
+      const { referer, origin } = getStreamHeaders(rawFile);
       return {
         url: directCleanUrl,
         referer,
-        origin: 'https://embedplayer2.xyz',
+        origin,
         sourceItem: s,
         isDirectMp4
       };
@@ -215,7 +273,7 @@ export async function resolveFenixFlixClient(options = {}) {
         stream_url: finalStreamUrl,
         direct_url: isDirectHls ? s.file : null,
         raw_url: s.file,
-        headers: { 'Referer': item.referer || 'https://embedplayer2.xyz/' },
+        headers: { 'Referer': item.referer, 'Origin': item.origin },
         quality: s.quality || 1080
       };
     });
@@ -234,8 +292,6 @@ export async function resolveFenixFlixClient(options = {}) {
   } catch (err) {
     console.error('[ClientProviders] Erro FenixFlix:', err);
     return { success: false, error: err.message || 'Erro ao carregar FenixFlix', provider: 'fenixflix', reason: 'error' };
-  } finally {
-    clearTimeout(timer);
   }
 }
 

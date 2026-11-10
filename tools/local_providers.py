@@ -13,90 +13,103 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 # 1. FENIXFLIX
 def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="dubbed"):
     is_series = media_type in ("series", "serie", "tv", "anime")
-    query_id = imdb_id if (imdb_id and imdb_id.startswith("tt")) else (media_id if str(media_id).startswith("tmdb:") else f"tmdb:{media_id}")
-    url = f"https://fenixflix.fenixhub.online/stream/series/{query_id}:{season}:{episode}.json" if is_series else f"https://fenixflix.fenixhub.online/stream/movie/{query_id}.json"
+    candidates = []
+    if imdb_id and str(imdb_id).startswith("tt"):
+        candidates.append(str(imdb_id))
+    if media_id:
+        candidates.append(str(media_id) if str(media_id).startswith("tmdb:") else f"tmdb:{media_id}")
 
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    data = None
+    raw_streams = []
+    for q_id in candidates:
+        url = f"https://fenixflix.fenixhub.online/stream/series/{q_id}:{season}:{episode}.json" if is_series else f"https://fenixflix.fenixhub.online/stream/movie/{q_id}.json"
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=6) as res:
+                if res.status == 200:
+                    j = json.loads(res.read().decode("utf-8"))
+                    if isinstance(j.get("streams"), list) and j["streams"]:
+                        data = j
+                        raw_streams = j["streams"]
+                        break
+        except Exception:
+            continue
+
+    if not raw_streams:
+        return None
+
     try:
-        with urllib.request.urlopen(req, timeout=8) as res:
-            if res.status != 200:
-                return None
-            data = json.loads(res.read().decode("utf-8"))
-            raw_streams = data.get("streams", [])
-            if not raw_streams:
-                return None
-
-            parsed = []
-            for s in raw_streams:
-                u = s.get("url")
-                if not u or not isinstance(u, str):
-                    continue
-                text = f"{s.get('name', '')} {s.get('title', '')}".lower()
+        parsed = []
+        for s in raw_streams:
+            u = s.get("url")
+            if not u or not isinstance(u, str):
+                continue
+            text = f"{s.get('name', '')} {s.get('title', '')}".lower()
+            quality = 1080
+            if "4k" in text or "2160p" in text:
+                quality = 2160
+            elif "1440p" in text or "2k" in text:
+                quality = 1440
+            elif "1080p" in text or "fhd" in text or "full hd" in text or "fullhd" in text:
                 quality = 1080
-                if "4k" in text or "2160p" in text:
-                    quality = 2160
-                elif "1440p" in text or "2k" in text:
-                    quality = 1440
-                elif "1080p" in text or "fhd" in text or "full hd" in text or "fullhd" in text:
-                    quality = 1080
-                elif "720p" in text or "hd" in text:
-                    quality = 720
-                elif "480p" in text or "sd" in text:
-                    quality = 480
-                elif "360p" in text:
-                    quality = 360
+            elif "720p" in text or "hd" in text:
+                quality = 720
+            elif "480p" in text or "sd" in text:
+                quality = 480
+            elif "360p" in text:
+                quality = 360
 
-                is_subbed = "legendado" in text or "subbed" in text
-                is_dubbed = (
-                    "dublado" in text
-                    or "nacional" in text
-                    or "dual" in text
-                    or "multi" in text
-                    or "tri áudio" in text
-                    or "tri audio" in text
-                    or "pt-br" in text
-                    or "ptbr" in text
-                    or ("🇧🇷" in text and not is_subbed)
-                )
-                is_hls = ".m3u8" in u
-                # Provider trust, audio compatibility & speed tiers:
-                # 4: Dedicated high-speed official web VOD masters (fenixhub.online / Zeus / Badger) -> guaranteed AAC web audio, 0ms startup
-                # 3: Verified mirrors & direct CDNs (zunder, zunderflix)
-                # 2: Third-party web scrapers & adaptive HLS (hollymovies / embedplayer2) -> AAC web audio
-                # 1: Un-transcoded bot torrent streams (squareweb.app, koyeb.app, fenixbot, /stream/) -> raw MKVs with E-AC-3 audio (unsupported by HTML5 video / silent in browsers), sleep-prone containers
-                raw_url = (u or "").lower()
+            is_subbed = "legendado" in text or "subbed" in text
+            is_dubbed = (
+                "dublado" in text
+                or "nacional" in text
+                or "dual" in text
+                or "multi" in text
+                or "tri áudio" in text
+                or "tri audio" in text
+                or "pt-br" in text
+                or "ptbr" in text
+                or ("🇧🇷" in text and not is_subbed)
+            )
+            is_hls = ".m3u8" in u or "hls-proxy" in u or "/hls" in u or s.get("type") == "hls"
+            # Provider trust, audio compatibility & speed tiers:
+            # 4: Dedicated high-speed official web VOD masters (fenixhub.online / Zeus / Badger) -> guaranteed AAC web audio, 0ms startup
+            # 3: Verified mirrors & direct CDNs (zunder, zunderflix)
+            # 2: Third-party web scrapers & adaptive HLS (hollymovies / embedplayer2) -> AAC web audio
+            # 1: Un-transcoded bot torrent streams (squareweb.app, koyeb.app, fenixbot, /stream/) -> raw MKVs with E-AC-3 audio (unsupported by HTML5 video / silent in browsers), sleep-prone containers
+            raw_url = (u or "").lower()
+            provider_tier = 3
+            is_bot_stream = "/stream/" in raw_url or "squareweb.app" in raw_url or "fenixbot" in raw_url or "koyeb.app" in raw_url
+            if "fenixhub.online" in raw_url:
+                provider_tier = 4
+            elif "zunder" in text or "zunderflix" in raw_url:
                 provider_tier = 3
-                is_bot_stream = "/stream/" in raw_url or "squareweb.app" in raw_url or "fenixbot" in raw_url or "koyeb.app" in raw_url
-                if "fenixhub.online" in raw_url:
-                    provider_tier = 4
-                elif "zunder" in text or "zunderflix" in raw_url:
-                    provider_tier = 3
-                elif "hollymovies" in text or "embedplayer2" in raw_url:
-                    provider_tier = 2
-                elif is_bot_stream:
-                    provider_tier = 1
+            elif "hollymovies" in text or "embedplayer2" in raw_url:
+                provider_tier = 2
+            elif is_bot_stream:
+                provider_tier = 1
 
-                name = s.get("name") or f"FenixFlix {quality}p"
-                tag = "Dual Áudio" if "dual" in text else ("Dublado" if is_dubbed else ("Legendado" if is_subbed else "Original"))
+            name = s.get("name") or f"FenixFlix {quality}p"
+            tag = "Dual Áudio" if "dual" in text else ("Dublado" if is_dubbed else ("Legendado" if is_subbed else "Original"))
 
-                parsed.append({
-                    "label": f"{name} [{tag}]",
-                    "file": u,
-                    "quality": quality,
-                    "providerTier": provider_tier,
-                    "type": "hls" if is_hls else "mp4",
-                    "isDubbed": is_dubbed,
-                    "isSubbed": is_subbed
-                })
+            parsed.append({
+                "label": f"{name} [{tag}]",
+                "file": u,
+                "quality": quality,
+                "providerTier": provider_tier,
+                "type": "hls" if is_hls else "mp4",
+                "isDubbed": is_dubbed,
+                "isSubbed": is_subbed
+            })
 
-            filtered = parsed
-            if audio == "dubbed":
-                dubbed = [s for s in parsed if s["isDubbed"]]
-                if dubbed:
-                    filtered = dubbed
+        filtered = parsed
+        if audio == "dubbed":
+            dubbed = [s for s in parsed if s["isDubbed"]]
+            if dubbed:
+                filtered = dubbed
 
-            filtered.sort(key=lambda s: (s["providerTier"], s["quality"], 1 if s["type"] == "hls" else 0), reverse=True)
-            return {"title": data.get("title", ""), "sources": filtered}
+        filtered.sort(key=lambda s: (s["providerTier"], s["quality"], 1 if s["type"] == "hls" else 0), reverse=True)
+        return {"title": data.get("title", ""), "sources": filtered}
     except Exception:
         return None
 

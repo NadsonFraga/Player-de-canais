@@ -1451,7 +1451,7 @@ export async function onRequestGet(context) {
   const proxyBase = `${urlObj.origin}/api/stream`;
   // Proxy addresses are signed: the proxy takes no address it did not get from here
   const streamKey = await streamSigningKey(context.env);
-  const proxied = (url, referer) => proxiedStreamUrl(proxyBase, streamKey, url, referer);
+  const proxied = (url, referer, options = {}) => proxiedStreamUrl(proxyBase, streamKey, url, referer, options);
   let result = null;
 
   // Per-step durations exposed as a Server-Timing header (ms)
@@ -1544,7 +1544,11 @@ export async function onRequestGet(context) {
 
   // ROTA 2: FenixFlix (PT-BR Dublado)
   if (!result && requestedSource === "fenixflix" && (id || imdbId)) {
-    const fenixData = await timed("fenixflix", resolveFenixFlix({ id, imdbId, type, season, episode, audio: "dubbed" }));
+    let activeImdbId = imdbId;
+    if (!activeImdbId && id && tmdbApiKey) {
+      activeImdbId = await timed("imdb", fetchImdbId(id, type === "movie" ? "movie" : "serie"));
+    }
+    const fenixData = await timed("fenixflix", resolveFenixFlix({ id, imdbId: activeImdbId, type, season, episode, audio: "dubbed" }));
     providerDebug = fenixData?.debug || null;
     if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
       const parsedSources = await Promise.all(fenixData.sources.map(async (s, idx) => {
@@ -1557,8 +1561,20 @@ export async function onRequestGet(context) {
           rawFile.includes("/series/")
         ) && !rawFile.includes("fenixhub") && !rawFile.includes("fenixflix") && !rawFile.includes("fenixbot") && !rawFile.includes("tech-cdn");
         const directCleanUrl = isDirectMp4 ? rawFile.replace(/^http:\/\//i, "https://").replace(/:80\//, "/") : rawFile;
-        const referer = s.referer || "https://embedplayer2.xyz/";
-        const finalStreamUrl = isDirectMp4 ? directCleanUrl : await proxied(rawFile, referer);
+        const rawLower = rawFile.toLowerCase();
+        let referer = s.referer;
+        let origin = "";
+        if (rawLower.includes("zunderflix") || rawLower.includes("zunder")) {
+          referer = "https://zunderflix.lat/";
+          origin = "https://zunderflix.lat";
+        } else if (rawLower.includes("hollymovies")) {
+          referer = "https://hollymovies.org/";
+          origin = "https://hollymovies.org";
+        } else if (!referer) {
+          referer = "https://embedplayer2.xyz/";
+          origin = "https://embedplayer2.xyz";
+        }
+        const finalStreamUrl = isDirectMp4 ? directCleanUrl : await proxied(rawFile, referer, { origin });
         const sourceType = s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4");
         const directUrl = !isDirectMp4 && sourceType === "hls" && /^https:\/\//i.test(rawFile) ? rawFile : null;
         return {
@@ -1567,7 +1583,7 @@ export async function onRequestGet(context) {
           stream_url: finalStreamUrl,
           direct_url: directUrl,
           raw_url: directCleanUrl,
-          headers: { "Referer": referer },
+          headers: { "Referer": referer, ...(origin ? { "Origin": origin } : {}) },
           quality: s.quality || 1080
         };
       }));
