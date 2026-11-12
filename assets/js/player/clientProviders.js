@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261110_1033';
-import { fetchTmdb } from '../core/tmdb.js?v=20261110_1033';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261112_1656';
+import { fetchTmdb } from '../core/tmdb.js?v=20261112_1656';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -129,25 +129,39 @@ export async function resolveFenixFlixClient(options = {}) {
   let data = null;
   let rawStreams = [];
 
-  for (const qId of queryCandidates) {
-    const endpoint = isSeries
-      ? `https://fenixflix.fenixhub.online/stream/series/${qId}:${season}:${episode}.json`
-      : `https://fenixflix.fenixhub.online/stream/movie/${qId}.json`;
-
+  if (queryCandidates.length > 0) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+    // Unified parallel budget of 4.5 seconds
+    const timer = setTimeout(() => controller.abort(), 4500);
 
     try {
-      const res = await fetch(endpoint, {
-        headers: { 'Accept': 'application/json' },
-        signal: controller.signal
-      });
+      const fetchCandidate = async (qId) => {
+        const endpoint = isSeries
+          ? `https://fenixflix.fenixhub.online/stream/series/${qId}:${season}:${episode}.json`
+          : `https://fenixflix.fenixhub.online/stream/movie/${qId}.json`;
+        try {
+          const res = await fetch(endpoint, {
+            headers: { 'Accept': 'application/json' },
+            signal: controller.signal
+          });
+          if (res.ok) {
+            const j = await res.json();
+            if (Array.isArray(j.streams) && j.streams.length > 0) {
+              return j;
+            }
+          }
+        } catch (_) {}
+        return null;
+      };
+
+      const results = await Promise.all(queryCandidates.map(fetchCandidate));
       clearTimeout(timer);
-      if (res.ok) {
-        const j = await res.json();
-        if (Array.isArray(j.streams) && j.streams.length > 0) {
-          data = j;
-          rawStreams = j.streams;
+
+      // Prioritize the result from the preferred candidate (IMDb tt... first, then TMDB)
+      for (const r of results) {
+        if (r && Array.isArray(r.streams) && r.streams.length > 0) {
+          data = r;
+          rawStreams = r.streams;
           break;
         }
       }
