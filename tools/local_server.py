@@ -215,7 +215,8 @@ def fetch_season_groups(tmdb_id):
         candidates.sort(key=score_season_group_candidate, reverse=True)
         for candidate in candidates[:3]:
             parsed = regular_season_groups(get(f"/tv/episode_group/{candidate['id']}"))
-            if parsed and (len(regular) == 1 or len(parsed) > len(regular)):
+            cand_score = score_season_group_candidate(candidate)
+            if parsed and (len(regular) == 1 or (cand_score >= 65 and len(parsed) > len(regular))):
                 groups = parsed
                 break
     except Exception as e:

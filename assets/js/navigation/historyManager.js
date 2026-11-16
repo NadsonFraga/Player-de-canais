@@ -3,7 +3,7 @@
  * Implements strict hierarchical back navigation across all tabs, searches, modals, drawers, and active media.
  */
 
-import { store } from '../core/state.js?v=20261112_1656';
+import { store } from '../core/state.js?v=20261116_1602';
 
 let navigationDepth = 0;
 let isProgrammaticBack = false;

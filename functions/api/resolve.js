@@ -95,7 +95,8 @@ async function fetchSeasonGroups(tmdbId) {
       .sort((a, b) => scoreSeasonGroupCandidate(b) - scoreSeasonGroupCandidate(a));
     for (const candidate of candidates.slice(0, 3)) {
       const parsed = regularSeasonGroups(await get(`/tv/episode_group/${candidate.id}`));
-      if (parsed && (regularSeasons.length === 1 || parsed.length > regularSeasons.length)) {
+      const candScore = scoreSeasonGroupCandidate(candidate);
+      if (parsed && (regularSeasons.length === 1 || (candScore >= 65 && parsed.length > regularSeasons.length))) {
         groups = parsed;
         break;
       }

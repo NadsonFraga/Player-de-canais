@@ -41,7 +41,10 @@ const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 // --browser=chrome (default) or --browser=edge: both Chromium; Chrome is what most viewers use
 const BROWSER = (process.argv.find(a => a.startsWith("--browser=")) || "--browser=chrome").split("=")[1];
 const CHROMIUM = BROWSER === "edge" ? EDGE : CHROME;
-const shotDir = process.argv[2];
+const shotDir = process.argv.slice(2).find(a => !a.startsWith("--"));
+if (shotDir) {
+  try { (await import("node:fs")).mkdirSync(shotDir, { recursive: true }); } catch {}
+}
 const PORT = 9700 + Math.floor(Math.random() * 200);
 const stopBrowser = () => { try { spawnSync("taskkill", ["/PID", String(proc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {} };
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -74,7 +77,7 @@ const evaluate = async (expr) => {
   if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
   return JSON.parse(r.result.value ?? "null");
 };
-const shot = async (name) => { const r = await send("Page.captureScreenshot", { format: "png" }); writeFileSync(join(shotDir, name), Buffer.from(r.data, "base64")); };
+const shot = async (name) => { if (!shotDir) return; const r = await send("Page.captureScreenshot", { format: "png" }); writeFileSync(join(shotDir, name), Buffer.from(r.data, "base64")); };
 const mouse = (x, y) => send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
 
 await send("Runtime.enable"); await send("Page.enable");
@@ -135,7 +138,11 @@ await evaluate(`(window.TvzinhaActions.openTitle('anime', { id: 12971, name: 'Dr
 await sleep(6000);
 await evaluate("(document.querySelector('[data-server=\"native_anime\"]')?.click(), true)");
 await sleep(12000);
-const resolveUrls = await evaluate("performance.getEntriesByType('resource').map(e => e.name).filter(n => n.includes('/api/resolve') && n.includes('type=anime'))");
+const allResolves = await evaluate("performance.getEntriesByType('resource').map(e => e.name).filter(n => n.includes('/api/resolve'))");
+if (allResolves.length && !allResolves.some(n => n.includes('type=anime'))) {
+  console.log("   all resolve requests:", allResolves.map(u => u.replace(BASE, "")));
+}
+const resolveUrls = allResolves.filter(n => n.includes('type=anime') || n.includes('12971'));
 const lastUrl = resolveUrls[resolveUrls.length - 1] || "";
 console.log("   anime resolve request:", lastUrl.replace(BASE, ""));
 check("request carries episode=31, absolute_episode=284 and total_episodes=291",
