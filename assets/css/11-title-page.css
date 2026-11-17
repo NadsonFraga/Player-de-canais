@@ -1137,33 +1137,42 @@
     display: block;
 }
 
-/* --- Player pages: the movie and episode players fill the screen --- */
+/* --- Player pages: the movie and episode players fill the screen (Immersive Cinema Viewport) --- */
 .movie-modal-backdrop.player-page {
-    padding: 0;
-    background: var(--bg-base);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    align-items: stretch;
-    animation: none;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #000000 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    align-items: stretch !important;
+    animation: none !important;
+    z-index: 1000 !important;
+    overflow: hidden !important;
 }
 
 .movie-modal-backdrop.player-page .movie-modal-card {
-    width: 100%;
-    max-width: none;
-    height: 100%;
-    max-height: 100%;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    animation: none;
-    background: var(--bg-base);
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    animation: none !important;
+    background: #000000 !important;
+    overflow: hidden !important;
 }
 
 .player-page .movie-modal-body {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    box-sizing: border-box;
+    display: none !important;
 }
 
 /* --- Tablets and phones --- */

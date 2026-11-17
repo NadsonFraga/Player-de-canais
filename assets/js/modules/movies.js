@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261117_1140';
-import { showToast } from '../core/toast.js?v=20261117_1140';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261117_1140';
-import { buildFeedRows } from '../core/feedRows.js?v=20261117_1140';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261117_1140';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_1140';
-import { getUiSvg } from '../core/icons.js?v=20261117_1140';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261117_1140';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261117_1140';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1140';
-import { fetchTmdb } from '../core/tmdb.js?v=20261117_1140';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261117_1140';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261117_1140';
-import { resumeStartTime } from '../core/resume.js?v=20261117_1140';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261117_1140';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261117_1140';
+} from '../core/constants.js?v=20261117_1323';
+import { showToast } from '../core/toast.js?v=20261117_1323';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261117_1323';
+import { buildFeedRows } from '../core/feedRows.js?v=20261117_1323';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261117_1323';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_1323';
+import { getUiSvg } from '../core/icons.js?v=20261117_1323';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261117_1323';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261117_1323';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1323';
+import { fetchTmdb } from '../core/tmdb.js?v=20261117_1323';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261117_1323';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261117_1323';
+import { resumeStartTime } from '../core/resume.js?v=20261117_1323';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261117_1323';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261117_1323';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1322,6 +1322,12 @@ export function selectMovieServer(server, buttonElement = null) {
                     title: currentSelectedMovie.title
                 },
                 provider: data.provider || server.source || 'mgeb',
+                servers: MOVIE_SERVERS,
+                activeServerId: server.id,
+                onSelectServer: (targetServer) => {
+                    const btn = document.querySelector(`#movie-servers-grid .btn-movie-server[data-server="${targetServer.id}"]`);
+                    selectMovieServer(targetServer, btn);
+                },
                 onProgress: (info) => {
                     saveMovieProgress(movie, server.id, info);
                     // Credits reached (or almost the end): Assistido, and the "Gostou? Avalie" card

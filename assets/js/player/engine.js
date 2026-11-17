@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261117_1140';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261117_1140';
-import { showToast } from '../core/toast.js?v=20261117_1140';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_1140';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261117_1140';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261117_1140';
-import { formatClock } from '../core/resume.js?v=20261117_1140';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261117_1140';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261117_1140';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261117_1140';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261117_1140';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1140';
-import { fetchTmdb } from '../core/tmdb.js?v=20261117_1140';
+import { store } from '../core/state.js?v=20261117_1323';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261117_1323';
+import { showToast } from '../core/toast.js?v=20261117_1323';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_1323';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261117_1323';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261117_1323';
+import { formatClock } from '../core/resume.js?v=20261117_1323';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261117_1323';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261117_1323';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261117_1323';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261117_1323';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1323';
+import { fetchTmdb } from '../core/tmdb.js?v=20261117_1323';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -207,8 +207,12 @@ function releaseVideoElement(video) {
         video.pause();
         video.muted = true;
         video.removeAttribute('src');
-        while (video.firstChild) {
-            video.removeChild(video.firstChild);
+        if (typeof video.replaceChildren === 'function') {
+            video.replaceChildren();
+        } else {
+            while (video.firstChild) {
+                video.removeChild(video.firstChild);
+            }
         }
         video.load();
     } catch (e) {
@@ -1099,7 +1103,11 @@ const NATIVE_ICONS = {
     audio: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
     fit: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>',
     subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="3.5" style="fill:none !important;stroke:currentColor !important;"/><path style="fill:none !important;stroke:currentColor !important;" d="M9.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/><path style="fill:none !important;stroke:currentColor !important;" d="M16.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/></svg>',
-    cast: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8"/><path d="M3 16a4 4 0 0 1 4 4"/><path d="M3 20h.01"/></svg>'
+    cast: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8"/><path d="M3 16a4 4 0 0 1 4 4"/><path d="M3 20h.01"/></svg>',
+    backward10: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><text x="12" y="15.5" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg>',
+    forward10: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><text x="12" y="15.5" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg>',
+    server: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>',
+    episodes: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>'
 };
 
 const NATIVE_I18N = {
@@ -1320,6 +1328,9 @@ export function mountNativePlayer(options) {
         lockedQuality: null,
         mediaContext: options.mediaContext || null,
         provider: options.provider || null,
+        serversList: options.servers || [],
+        activeServerId: options.activeServerId || null,
+        onSelectServer: options.onSelectServer || null,
         fenixSearched: false,
         art: null,
         hls: null,
@@ -1712,7 +1723,8 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             volume: getPlayerPrefs().volume,
             autoplay: true,
             autoMini: true,
-            theme: '#22c55e',
+            autoOrientation: false,
+            theme: '#eab308',
             lang: 'pt-br',
             i18n: NATIVE_I18N,
             fullscreen: true,
@@ -1726,12 +1738,53 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             airplay: true,
             controls: [
                 {
+                    name: 'tvz-seek-backward',
+                    position: 'left',
+                    index: 12,
+                    html: `<i class="art-icon art-control-seek-backward" role="button" aria-label="Voltar 10 segundos" title="Voltar 10s">${NATIVE_ICONS.backward10}</i>`,
+                    click: () => {
+                        if (session.art && session.art.video) {
+                            session.art.seek = Math.max(0, session.art.currentTime - 10);
+                        }
+                    }
+                },
+                {
+                    name: 'tvz-seek-forward',
+                    position: 'left',
+                    index: 14,
+                    html: `<i class="art-icon art-control-seek-forward" role="button" aria-label="Avançar 10 segundos" title="Avançar 10s">${NATIVE_ICONS.forward10}</i>`,
+                    click: () => {
+                        if (session.art && session.art.video) {
+                            session.art.seek = Math.min(session.art.duration || Infinity, session.art.currentTime + 10);
+                        }
+                    }
+                },
+                ...(session.mediaContext && session.mediaContext.type !== 'movie' ? [{
+                    name: 'tvz-episodes-btn',
+                    position: 'right',
+                    index: 10,
+                    html: `<i class="art-icon art-control-episodes-btn" role="button" aria-label="Lista de Episódios" title="Episódios">${NATIVE_ICONS.episodes}</i>`,
+                    click: () => {
+                        const drawer = document.getElementById("series-player-drawer");
+                        if (drawer) drawer.classList.toggle("hidden");
+                    }
+                }] : []),
+                {
                     name: 'tvz-subtitles-btn',
                     position: 'right',
-                    index: 15,
+                    index: 20,
                     html: `<i class="art-icon art-control-subtitle-btn" role="button" aria-label="Legendas (C)" title="Legendas (C)">${NATIVE_ICONS.subtitle}</i>`,
                     click: () => {
                         toggleSubtitlesFlyout(session);
+                    }
+                },
+                {
+                    name: 'tvz-servers-btn',
+                    position: 'right',
+                    index: 25,
+                    html: `<i class="art-icon art-control-servers-btn" role="button" aria-label="Servidores" title="Servidores">${NATIVE_ICONS.server}</i>`,
+                    click: () => {
+                        toggleServersFlyout(session);
                     }
                 }
             ],
@@ -1874,6 +1927,34 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             placeSideCards(art);
             ['resize', 'fullscreen', 'control'].forEach(name => art.on(name, () => requestAnimationFrame(() => placeSideCards(art))));
 
+            createServersFlyout(session);
+
+            art.on('control', (visible) => {
+                const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
+                if (card) {
+                    if (visible && !card.classList.contains('tvz-clean-pause')) {
+                        card.classList.add('is-ui-visible');
+                    } else if (!visible) {
+                        card.classList.remove('is-ui-visible');
+                    }
+                }
+            });
+
+            const mask = art.template && art.template.$mask;
+            if (mask) {
+                mask.addEventListener('click', (e) => {
+                    if (!art.playing) {
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+                        const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
+                        if (card) {
+                            const isClean = card.classList.toggle('tvz-clean-pause');
+                            art.controls.show = !isClean;
+                        }
+                    }
+                }, true);
+            }
+
             const playPromise = art.play();
             if (playPromise && typeof playPromise.catch === 'function') {
                 playPromise.catch(err => {
@@ -1912,6 +1993,11 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         art.on('video:canplay', markStreamSuccess);
         art.on('video:playing', markStreamSuccess);
         art.on('video:playing', () => {
+            const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
+            if (card) {
+                card.classList.remove('is-paused');
+                card.classList.remove('tvz-clean-pause');
+            }
             if (isSessionLive(session, token)) {
                 if (session.qualityRollback && session.currentIndex !== session.qualityRollback.previousSourceIndex) {
                     const targetQ = session.qualityRollback.targetQuality;
@@ -1932,6 +2018,11 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         });
 
         art.on('video:pause', () => {
+            const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
+            if (card) {
+                card.classList.add('is-paused');
+                card.classList.remove('tvz-clean-pause');
+            }
             setPlaybackActiveState(false);
             if (isSessionLive(session, token)) reportProgress(session, true);
         });
@@ -3452,8 +3543,8 @@ function createSubtitlesFlyout(session) {
 
     art.on('destroy', () => {
         document.removeEventListener('pointerdown', onDocPointerDown);
-        if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
-        if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+        try { if (backdrop) backdrop.remove(); } catch (e) {}
+        try { if (panel) panel.remove(); } catch (e) {}
     });
 }
 
@@ -4036,4 +4127,154 @@ function installSubtitleControl(session) {
 
     refreshSubtitleMenu(session);
     updateSubtitlesControlActiveState(session);
+}
+
+/* ============================================================
+   TVZINHA SERVERS FLYOUT (Instant switching popover)
+   ============================================================ */
+
+function createServersFlyout(session) {
+    const art = session.art;
+    const player = art && art.template && art.template.$player;
+    if (!player) return;
+
+    let backdrop = player.querySelector(`.tvz-servers-backdrop[data-session="${session.id}"]`);
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'tvz-servers-backdrop';
+        backdrop.dataset.session = String(session.id);
+        player.appendChild(backdrop);
+    }
+
+    let panel = player.querySelector(`.tvz-servers-panel[data-session="${session.id}"]`);
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.className = 'tvz-servers-panel';
+        panel.dataset.session = String(session.id);
+        player.appendChild(panel);
+    }
+
+    session.serversBackdrop = backdrop;
+    session.serversFlyoutPanel = panel;
+
+    ['pointerdown', 'mousedown', 'touchstart', 'touchend', 'click'].forEach(evt => {
+        panel.addEventListener(evt, (e) => e.stopPropagation(), { passive: false });
+    });
+
+    const onBackdropDismiss = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleServersFlyout(session, false);
+    };
+    ['pointerdown', 'touchstart', 'click'].forEach(evt => {
+        backdrop.addEventListener(evt, onBackdropDismiss, { passive: false });
+    });
+
+    renderServersFlyout(session);
+
+    const onDocPointerDown = (e) => {
+        if (!panel.classList.contains('is-open')) return;
+        if (!panel.contains(e.target) && !e.target.closest('.art-control-servers-btn')) {
+            toggleServersFlyout(session, false);
+        }
+    };
+    document.addEventListener('pointerdown', onDocPointerDown);
+
+    art.on('destroy', () => {
+        document.removeEventListener('pointerdown', onDocPointerDown);
+        try { if (backdrop) backdrop.remove(); } catch (e) {}
+        try { if (panel) panel.remove(); } catch (e) {}
+    });
+}
+
+function renderServersFlyout(session) {
+    const panel = session.serversFlyoutPanel;
+    if (!panel) return;
+
+    const servers = session.serversList || [];
+    const activeServerId = session.activeServerId || session.provider || 'mgeb';
+
+    const nativeServers = servers.filter(s => s.isNative);
+    const iframeServers = servers.filter(s => !s.isNative);
+
+    let html = `
+        <div class="tvz-servers-header">
+            <div class="tvz-servers-header-left">
+                ${NATIVE_ICONS.server}
+                <span>Servidores</span>
+            </div>
+            <button type="button" class="tvz-servers-close-btn" title="Fechar" aria-label="Fechar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="tvz-servers-body">
+    `;
+
+    if (nativeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Players Principais (Direto)</div>`;
+        nativeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'HD'}</span>
+                </div>
+            `;
+        });
+    }
+
+    if (iframeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Servidores Externos (Iframe)</div>`;
+        iframeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'Reproduzir'}</span>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div>`;
+    panel.innerHTML = html;
+
+    const closeBtn = panel.querySelector('.tvz-servers-close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => toggleServersFlyout(session, false));
+    }
+
+    panel.querySelectorAll('.tvz-server-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const serverId = item.getAttribute('data-server-id');
+            const targetServer = servers.find(s => s.id === serverId);
+            if (targetServer) {
+                toggleServersFlyout(session, false);
+                if (typeof session.onSelectServer === 'function') {
+                    session.onSelectServer(targetServer);
+                }
+            }
+        });
+    });
+}
+
+function toggleServersFlyout(session, forceState) {
+    let panel = session.serversFlyoutPanel;
+    let backdrop = session.serversBackdrop;
+    if (!panel && session.art) {
+        createServersFlyout(session);
+        panel = session.serversFlyoutPanel;
+        backdrop = session.serversBackdrop;
+    }
+    if (!panel) return;
+
+    const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
+    if (willOpen) {
+        renderServersFlyout(session);
+        panel.classList.add('is-open');
+        if (backdrop) backdrop.classList.add('is-open');
+    } else {
+        panel.classList.remove('is-open');
+        if (backdrop) backdrop.classList.remove('is-open');
+    }
 }
