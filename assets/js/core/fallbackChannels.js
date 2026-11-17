@@ -10,13 +10,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/91fe8e8938089396a96f40eba4518243/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/f877db2cf94825e49e2272b07eb7d743/error.txt",
           "slug": "globosp",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/91fe8e8938089396a96f40eba4518243/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/f877db2cf94825e49e2272b07eb7d743/error.txt",
           "slug": "globosp",
           "cdn": "CDN 2"
         }
@@ -33,13 +33,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/506bc8a86d0b62f70aad8f21de0ccd30/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/fd2d8be1f707c16b275acd1b129ec85d/error.txt",
           "slug": "bandsp",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/506bc8a86d0b62f70aad8f21de0ccd30/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/fd2d8be1f707c16b275acd1b129ec85d/error.txt",
           "slug": "bandsp",
           "cdn": "CDN 2"
         }
@@ -57,13 +57,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5192195919ebd3bf77cf203ff0f1ecc4/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/4e360c6cf79aa73af1dbc422792aa38d/error.txt",
           "slug": "sbt",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5192195919ebd3bf77cf203ff0f1ecc4/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/4e360c6cf79aa73af1dbc422792aa38d/error.txt",
           "slug": "sbt",
           "cdn": "CDN 2"
         }
@@ -80,13 +80,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5f7c46965578e2aadc48f18391b6e614/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/28df9ec1f1bb3cac36293e6f86d437bc/error.txt",
           "slug": "recordsp",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5f7c46965578e2aadc48f18391b6e614/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/28df9ec1f1bb3cac36293e6f86d437bc/error.txt",
           "slug": "recordsp",
           "cdn": "CDN 2"
         }
@@ -105,13 +105,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/bfcd5bf5a2898eb0a12b561d8e31ed62/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/ee48b7b53f713324bec579020d0f8f77/error.txt",
           "slug": "sportv",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/bfcd5bf5a2898eb0a12b561d8e31ed62/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/ee48b7b53f713324bec579020d0f8f77/error.txt",
           "slug": "sportv",
           "cdn": "CDN 2"
         }
@@ -126,13 +126,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/8288304d94df546ab58ec90492d794cc/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/725298091f6136ff43565108fb269e8f/error.txt",
           "slug": "sportv2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/8288304d94df546ab58ec90492d794cc/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/725298091f6136ff43565108fb269e8f/error.txt",
           "slug": "sportv2",
           "cdn": "CDN 2"
         }
@@ -146,13 +146,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/86ec9721d4780493cea0657f56229342/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/e5d3489f708fec6f899df2573370c720/error.txt",
           "slug": "sportv3",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/86ec9721d4780493cea0657f56229342/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/e5d3489f708fec6f899df2573370c720/error.txt",
           "slug": "sportv3",
           "cdn": "CDN 2"
         }
@@ -167,13 +167,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/fd02ac2268ff350ecb8cca5e4243387c/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/3f247d47300c0498657da2a40f6238a0/error.txt",
           "slug": "premiere",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/fd02ac2268ff350ecb8cca5e4243387c/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/3f247d47300c0498657da2a40f6238a0/error.txt",
           "slug": "premiere",
           "cdn": "CDN 2"
         }
@@ -189,13 +189,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/abc3cc01c41ac5c9e704df7bc17f3932/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/4410da6386b90add0842946b2c23dff5/error.txt",
           "slug": "premiere2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/abc3cc01c41ac5c9e704df7bc17f3932/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/4410da6386b90add0842946b2c23dff5/error.txt",
           "slug": "premiere2",
           "cdn": "CDN 2"
         }
@@ -210,13 +210,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/bbf59195791293b1d3e08b59fdb38035/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/4d27f8157d15b20f50e7927f3a4df6c6/error.txt",
           "slug": "premiere3",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/bbf59195791293b1d3e08b59fdb38035/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/4d27f8157d15b20f50e7927f3a4df6c6/error.txt",
           "slug": "premiere3",
           "cdn": "CDN 2"
         }
@@ -231,13 +231,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/e35e6e37ee3a84bb1045eabe9f01da1c/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/20a6f8f4372379756ff81bc4ea253337/error.txt",
           "slug": "premiere4",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/e35e6e37ee3a84bb1045eabe9f01da1c/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/20a6f8f4372379756ff81bc4ea253337/error.txt",
           "slug": "premiere4",
           "cdn": "CDN 2"
         }
@@ -252,13 +252,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/656ad29aee25e8e0bc1dd2f5df4f6a2d/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/98855951dc35462410d4b4c906b14e8a/error.txt",
           "slug": "premiere5",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/656ad29aee25e8e0bc1dd2f5df4f6a2d/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/98855951dc35462410d4b4c906b14e8a/error.txt",
           "slug": "premiere5",
           "cdn": "CDN 2"
         }
@@ -273,13 +273,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/3c52a29bf1a398f5d4e20be697e2135f/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/447241388b45313387c631aa9a2d55d9/error.txt",
           "slug": "premiere6",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/3c52a29bf1a398f5d4e20be697e2135f/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/447241388b45313387c631aa9a2d55d9/error.txt",
           "slug": "premiere6",
           "cdn": "CDN 2"
         }
@@ -294,13 +294,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/3bddfb039f8b00bd330b752a4cd770e7/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/48bc4a42a8c10aaf0fbd3699450be7d8/error.txt",
           "slug": "premiere7",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/3bddfb039f8b00bd330b752a4cd770e7/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/48bc4a42a8c10aaf0fbd3699450be7d8/error.txt",
           "slug": "premiere7",
           "cdn": "CDN 2"
         }
@@ -336,13 +336,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/db530527e76e3bc4fbc98c8a669450ab/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/087229819293035bfd293ed59d8b928e/error.txt",
           "slug": "espn",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/db530527e76e3bc4fbc98c8a669450ab/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/087229819293035bfd293ed59d8b928e/error.txt",
           "slug": "espn",
           "cdn": "CDN 2"
         }
@@ -357,13 +357,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/11051d588923a170171d1707e14f2dfd/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/1539cab22a2ea08beffb2dc4ba3e8634/error.txt",
           "slug": "espn2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/11051d588923a170171d1707e14f2dfd/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/1539cab22a2ea08beffb2dc4ba3e8634/error.txt",
           "slug": "espn2",
           "cdn": "CDN 2"
         }
@@ -378,13 +378,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/b3b6db5afbb6f68fbbc75ad49d056f2f/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/9c82f0d5cc7f25c9e852943fb365f2a3/error.txt",
           "slug": "espn3",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/b3b6db5afbb6f68fbbc75ad49d056f2f/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/9c82f0d5cc7f25c9e852943fb365f2a3/error.txt",
           "slug": "espn3",
           "cdn": "CDN 2"
         }
@@ -399,13 +399,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5d176afba978f772513e52cc969a3580/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/825695dd840d8e117382fd41fc240453/error.txt",
           "slug": "espn4",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5d176afba978f772513e52cc969a3580/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/825695dd840d8e117382fd41fc240453/error.txt",
           "slug": "espn4",
           "cdn": "CDN 2"
         }
@@ -449,13 +449,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/1b8b8b6f9e61d9c5c731636ff4e67566/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/01493b70614a6fa53c49db34e69d157c/error.txt",
           "slug": "espn5",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/1b8b8b6f9e61d9c5c731636ff4e67566/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/01493b70614a6fa53c49db34e69d157c/error.txt",
           "slug": "espn5",
           "cdn": "CDN 2"
         }
@@ -470,13 +470,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/89c36ba405ba84d8f9c4cd38e24cf5cb/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/e2f94ac34b4f547fe206e1ab47ffa6de/error.txt",
           "slug": "bandsports",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/89c36ba405ba84d8f9c4cd38e24cf5cb/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/e2f94ac34b4f547fe206e1ab47ffa6de/error.txt",
           "slug": "bandsports",
           "cdn": "CDN 2"
         }
@@ -491,13 +491,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/b836b021df22971168f5eb47840c435a/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/1d4f89eac9df790655591a5d1495f063/error.txt",
           "slug": "caze1",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/b836b021df22971168f5eb47840c435a/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/1d4f89eac9df790655591a5d1495f063/error.txt",
           "slug": "caze1",
           "cdn": "CDN 2"
         }
@@ -515,13 +515,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/58f8768a482d1373535fe6831f787b1a/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/b01662c7d7504d2019f86f387ecd5d7d/error.txt",
           "slug": "combate",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/58f8768a482d1373535fe6831f787b1a/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/b01662c7d7504d2019f86f387ecd5d7d/error.txt",
           "slug": "combate",
           "cdn": "CDN 2"
         }
@@ -536,13 +536,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/526998ad4e2003e2820da78e437a0237/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/ac1c30ccddd64bbdc8e04bff4cd4f47e/error.txt",
           "slug": "ufcfightpass",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/526998ad4e2003e2820da78e437a0237/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/ac1c30ccddd64bbdc8e04bff4cd4f47e/error.txt",
           "slug": "ufcfightpass",
           "cdn": "CDN 2"
         }
@@ -558,13 +558,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/485168640074cb7884cf3cad83b14354/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/f15de62c442fbdd233b679fc04718370/error.txt",
           "slug": "xsports",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/485168640074cb7884cf3cad83b14354/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/f15de62c442fbdd233b679fc04718370/error.txt",
           "slug": "xsports",
           "cdn": "CDN 2"
         }
@@ -582,13 +582,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/9e63200c27f1ce924706227ddcb10f86/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/2e86edaaceb07fd9300c5c7f20e386c9/error.txt",
           "slug": "hbo",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/9e63200c27f1ce924706227ddcb10f86/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/2e86edaaceb07fd9300c5c7f20e386c9/error.txt",
           "slug": "hbo",
           "cdn": "CDN 2"
         }
@@ -603,13 +603,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/50008842db7f23ee75b7f7f48c3ab7d9/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/6bc3fbe73c51573707c07baee776ea19/error.txt",
           "slug": "hbo2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/50008842db7f23ee75b7f7f48c3ab7d9/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/6bc3fbe73c51573707c07baee776ea19/error.txt",
           "slug": "hbo2",
           "cdn": "CDN 2"
         }
@@ -624,13 +624,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/a89fa5abba76d29a99528a7934fff2e1/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/8ab9e43f4f9ac9b5b19c0c31d34343e8/error.txt",
           "slug": "hboplus",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/a89fa5abba76d29a99528a7934fff2e1/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/8ab9e43f4f9ac9b5b19c0c31d34343e8/error.txt",
           "slug": "hboplus",
           "cdn": "CDN 2"
         }
@@ -666,13 +666,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/afc1d3a1510085f2d42d31fafe3ee474/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/922c358e97d75b9a30b2ed2a9ab9e1b2/error.txt",
           "slug": "hbofamily",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/afc1d3a1510085f2d42d31fafe3ee474/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/922c358e97d75b9a30b2ed2a9ab9e1b2/error.txt",
           "slug": "hbofamily",
           "cdn": "CDN 2"
         }
@@ -687,13 +687,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/c56c9a54b16b8395b04d87e70fa83d1d/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/2bb154fc5f89414a606266aad5892d51/error.txt",
           "slug": "comedycentral",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/c56c9a54b16b8395b04d87e70fa83d1d/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/2bb154fc5f89414a606266aad5892d51/error.txt",
           "slug": "comedycentral",
           "cdn": "CDN 2"
         }
@@ -716,13 +716,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/74cc1eb9325116e8fbe9ac1cc584b826/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/11e7b209ed7c1c99c688cd8e24c8845b/error.txt",
           "slug": "disneyplus1",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/74cc1eb9325116e8fbe9ac1cc584b826/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/11e7b209ed7c1c99c688cd8e24c8845b/error.txt",
           "slug": "disneyplus1",
           "cdn": "CDN 2"
         }
@@ -740,13 +740,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5dcb2a8f6b61a055ce932f440230995e/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/2f19522a6c71436b001d125bb1c588a0/error.txt",
           "slug": "max1",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5dcb2a8f6b61a055ce932f440230995e/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/2f19522a6c71436b001d125bb1c588a0/error.txt",
           "slug": "max1",
           "cdn": "CDN 2"
         }
@@ -764,13 +764,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/a5168d635034b07e6519f8a7802bbec2/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/53c9e963e44ce44cdf0bc766c278a8d2/error.txt",
           "slug": "paramountplus",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/a5168d635034b07e6519f8a7802bbec2/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/53c9e963e44ce44cdf0bc766c278a8d2/error.txt",
           "slug": "paramountplus",
           "cdn": "CDN 2"
         }
@@ -788,13 +788,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/d5f75a3df0ef269891282e718212c5c8/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5a4d287f95294ff78171ad3d1c506ccc/error.txt",
           "slug": "primevideo",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/d5f75a3df0ef269891282e718212c5c8/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5a4d287f95294ff78171ad3d1c506ccc/error.txt",
           "slug": "primevideo",
           "cdn": "CDN 2"
         }
@@ -814,13 +814,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/92fab0077c4e8f6b28ee0c0b030321d3/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/57307ea3eb74c917736021f07b5929c4/error.txt",
           "slug": "cartoonnetwork",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/92fab0077c4e8f6b28ee0c0b030321d3/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/57307ea3eb74c917736021f07b5929c4/error.txt",
           "slug": "cartoonnetwork",
           "cdn": "CDN 2"
         }
@@ -835,13 +835,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/c1868669860a66f8a3c0d9903d71e1b4/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/929cf9e5a046dd36ef11653e36d8fce5/error.txt",
           "slug": "cartoonito",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/c1868669860a66f8a3c0d9903d71e1b4/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/929cf9e5a046dd36ef11653e36d8fce5/error.txt",
           "slug": "cartoonito",
           "cdn": "CDN 2"
         }
@@ -909,13 +909,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/6fcf45d7d49219b8311d108786251327/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/f265bb33ffef81adb5e386323cad8a3c/error.txt",
           "slug": "nickelodeon",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/6fcf45d7d49219b8311d108786251327/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/f265bb33ffef81adb5e386323cad8a3c/error.txt",
           "slug": "nickelodeon",
           "cdn": "CDN 2"
         }
@@ -930,13 +930,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/73bfb51e77c0b6fe522f5d92318abc03/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/38575fdee8ea9fbf21bd800ab36528f3/error.txt",
           "slug": "nickjr",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/73bfb51e77c0b6fe522f5d92318abc03/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/38575fdee8ea9fbf21bd800ab36528f3/error.txt",
           "slug": "nickjr",
           "cdn": "CDN 2"
         }
@@ -951,13 +951,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/80d740017ab9f85bdd5d2821048633f4/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/d35002d2c7c01a13188d44dfc59b1d89/error.txt",
           "slug": "discoverykids",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/80d740017ab9f85bdd5d2821048633f4/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/d35002d2c7c01a13188d44dfc59b1d89/error.txt",
           "slug": "discoverykids",
           "cdn": "CDN 2"
         }
@@ -972,13 +972,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/08d02d153cbe432ff2a8b5d7a43ed6bf/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/9aea7a48600ccb81b24181a02d119e5a/error.txt",
           "slug": "gloob",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/08d02d153cbe432ff2a8b5d7a43ed6bf/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/9aea7a48600ccb81b24181a02d119e5a/error.txt",
           "slug": "gloob",
           "cdn": "CDN 2"
         }
@@ -1016,13 +1016,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/c5a4f867cc28f94f31ce9d3ea5c6a7ab/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/74ee2960d7fd7a33d98e0e6f37cf91bd/error.txt",
           "slug": "discoverychannel",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/c5a4f867cc28f94f31ce9d3ea5c6a7ab/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/74ee2960d7fd7a33d98e0e6f37cf91bd/error.txt",
           "slug": "discoverychannel",
           "cdn": "CDN 2"
         }
@@ -1037,13 +1037,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/75014a75ec0eeb7752ba43e8794c5718/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/46790fc2b17d9a8b9097c7ec349a0329/error.txt",
           "slug": "animalplanet",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/75014a75ec0eeb7752ba43e8794c5718/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/46790fc2b17d9a8b9097c7ec349a0329/error.txt",
           "slug": "animalplanet",
           "cdn": "CDN 2"
         }
@@ -1082,13 +1082,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/825b4f561cc379cff268968a2e3bff92/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/d3bf3b059f0117dfe02aadd4befad102/error.txt",
           "slug": "globonews",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/825b4f561cc379cff268968a2e3bff92/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/d3bf3b059f0117dfe02aadd4befad102/error.txt",
           "slug": "globonews",
           "cdn": "CDN 2"
         }
@@ -1104,13 +1104,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/76e7afbd90d424f501dc5e851c78726d/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/e8f260d07b6320e7fdb2319bde3de2c8/error.txt",
           "slug": "bandnews",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/76e7afbd90d424f501dc5e851c78726d/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/e8f260d07b6320e7fdb2319bde3de2c8/error.txt",
           "slug": "bandnews",
           "cdn": "CDN 2"
         }
@@ -1125,13 +1125,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/5ba07dbf29565f6097b4c04446feb0ad/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/3d266b70a14ae9b1e03ea5b1e70a1670/error.txt",
           "slug": "multishow",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/5ba07dbf29565f6097b4c04446feb0ad/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/3d266b70a14ae9b1e03ea5b1e70a1670/error.txt",
           "slug": "multishow",
           "cdn": "CDN 2"
         }
@@ -1146,13 +1146,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/6c414a75333c3aaf649ebcddf6e1b575/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/3d251d08a8181fc9fa6ae5c6a01922f2/error.txt",
           "slug": "mtv",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/6c414a75333c3aaf649ebcddf6e1b575/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/3d251d08a8181fc9fa6ae5c6a01922f2/error.txt",
           "slug": "mtv",
           "cdn": "CDN 2"
         }
@@ -1169,13 +1169,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/152f3f4057733eb1720c041a9e0273b4/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/bfd058527f58d66d04745ee82090970a/error.txt",
           "slug": "24h_chaves",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/152f3f4057733eb1720c041a9e0273b4/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/bfd058527f58d66d04745ee82090970a/error.txt",
           "slug": "24h_chaves",
           "cdn": "CDN 2"
         }
@@ -1190,13 +1190,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/7359b32d8548fe23b8e0c03a7c57ff71/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/de000ffc880a738fbfa0ba8013dcf461/error.txt",
           "slug": "24h_dragonball",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/7359b32d8548fe23b8e0c03a7c57ff71/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/de000ffc880a738fbfa0ba8013dcf461/error.txt",
           "slug": "24h_dragonball",
           "cdn": "CDN 2"
         }
@@ -1211,13 +1211,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/f53bccf0df8d839a48228bbaa81c3cd8/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/def0206b4abea94a2bc6cebf0fc00974/error.txt",
           "slug": "24h_naruto",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/f53bccf0df8d839a48228bbaa81c3cd8/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/def0206b4abea94a2bc6cebf0fc00974/error.txt",
           "slug": "24h_naruto",
           "cdn": "CDN 2"
         }
@@ -1232,13 +1232,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/620f0f25f1a54f6944e993b43bc66e26/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/db77bb488521614c3e2fdd0951461474/error.txt",
           "slug": "24h_simpsons",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/620f0f25f1a54f6944e993b43bc66e26/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/db77bb488521614c3e2fdd0951461474/error.txt",
           "slug": "24h_simpsons",
           "cdn": "CDN 2"
         }
@@ -1253,13 +1253,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/897f22421e8ad893c0f6e02ef5ff0d94/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/a608e538c06a477b16c604e3d0a1be06/error.txt",
           "slug": "24h_picapau",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/897f22421e8ad893c0f6e02ef5ff0d94/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/a608e538c06a477b16c604e3d0a1be06/error.txt",
           "slug": "24h_picapau",
           "cdn": "CDN 2"
         }
@@ -1274,13 +1274,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/79764687d4bd1131963fe68210da6959/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/6821200016bc81d99832bc19c74c3556/error.txt",
           "slug": "24h_friends",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/79764687d4bd1131963fe68210da6959/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/6821200016bc81d99832bc19c74c3556/error.txt",
           "slug": "24h_friends",
           "cdn": "CDN 2"
         }
@@ -1295,13 +1295,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/2b25eca61a21f47d2a13fa56e9114315/error.txt",
+          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/cf62ba78594479962b7a156955d020dc/error.txt",
           "slug": "24h_odeiachris",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/2b25eca61a21f47d2a13fa56e9114315/error.txt",
+          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/cf62ba78594479962b7a156955d020dc/error.txt",
           "slug": "24h_odeiachris",
           "cdn": "CDN 2"
         }

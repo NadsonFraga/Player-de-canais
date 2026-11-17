@@ -4,14 +4,14 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261116_1602';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261116_1602';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261116_1602';
-import { showToast } from '../core/toast.js?v=20261116_1602';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261116_1602';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261116_1602';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261116_1602';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261116_1602';
+import { store } from '../core/state.js?v=20261117_0941';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261117_0941';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261117_0941';
+import { showToast } from '../core/toast.js?v=20261117_0941';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261117_0941';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261117_0941';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261117_0941';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_0941';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -1317,6 +1317,29 @@ export function renderPlayerView(activeChannel) {
         });
     }
 
+    // Direct stream mounting with synchronized active state and automatic contingency option
+    const startDirectStream = (sourceIdx = activeChannel.sourceIndex) => {
+        const contingencyOptions = activeChannel.data && activeChannel.data.contingency ? Object.entries(activeChannel.data.contingency) : [];
+        const fallbackContingency = contingencyOptions.length > 0 ? () => {
+            const [optName, optUrl] = contingencyOptions[0];
+            activeChannel.serverType = 'contingency';
+            activeChannel.contingencyName = optName;
+            activeChannel.contingencyUrl = optUrl;
+            updateServerButtonsActiveState(activeChannel);
+            mountTvContingencyIframe(optUrl);
+        } : null;
+
+        mountTvDirectStream(
+            activeChannel.data,
+            sourceIdx,
+            () => handleAllDirectSourcesFailed(() => startDirectStream(0), fallbackContingency),
+            (newIdx) => {
+                activeChannel.sourceIndex = newIdx;
+                updateServerButtonsActiveState(activeChannel);
+            }
+        );
+    };
+
     // Populate Direct Servers Buttons
     const directGridEl = document.getElementById("direct-servers-grid");
     if (directGridEl && data.sources) {
@@ -1334,9 +1357,7 @@ export function renderPlayerView(activeChannel) {
                     activeChannel.serverType = 'direct';
                     activeChannel.sourceIndex = idx;
                     updateServerButtonsActiveState(activeChannel);
-                    mountTvDirectStream(activeChannel.data, activeChannel.sourceIndex, () => {
-                        handleAllDirectSourcesFailed(() => mountTvDirectStream(activeChannel.data, 0));
-                    });
+                    startDirectStream(idx);
                 }
             });
             directGridEl.appendChild(btn);
@@ -1378,9 +1399,7 @@ export function renderPlayerView(activeChannel) {
         btnReload.addEventListener("click", () => {
             showToast("Recarregando transmissão...");
             if (activeChannel.serverType === 'direct') {
-                mountTvDirectStream(activeChannel.data, activeChannel.sourceIndex, () => {
-                    handleAllDirectSourcesFailed(() => mountTvDirectStream(activeChannel.data, 0));
-                });
+                startDirectStream(activeChannel.sourceIndex);
             } else {
                 mountTvContingencyIframe(activeChannel.contingencyUrl);
             }
@@ -1389,9 +1408,7 @@ export function renderPlayerView(activeChannel) {
 
     // Initial Mount based on selected serverType
     if (activeChannel.serverType === 'direct') {
-        mountTvDirectStream(activeChannel.data, activeChannel.sourceIndex, () => {
-            handleAllDirectSourcesFailed(() => mountTvDirectStream(activeChannel.data, 0));
-        });
+        startDirectStream(activeChannel.sourceIndex);
     } else {
         mountTvContingencyIframe(activeChannel.contingencyUrl);
     }

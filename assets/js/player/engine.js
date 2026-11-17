@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261116_1602';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261116_1602';
-import { showToast } from '../core/toast.js?v=20261116_1602';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261116_1602';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261116_1602';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261116_1602';
-import { formatClock } from '../core/resume.js?v=20261116_1602';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261116_1602';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261116_1602';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261116_1602';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261116_1602';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261116_1602';
-import { fetchTmdb } from '../core/tmdb.js?v=20261116_1602';
+import { store } from '../core/state.js?v=20261117_0941';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261117_0941';
+import { showToast } from '../core/toast.js?v=20261117_0941';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_0941';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261117_0941';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261117_0941';
+import { formatClock } from '../core/resume.js?v=20261117_0941';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261117_0941';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261117_0941';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261117_0941';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261117_0941';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_0941';
+import { fetchTmdb } from '../core/tmdb.js?v=20261117_0941';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -548,7 +548,7 @@ if (typeof document !== 'undefined') {
 /**
  * Handles error state when all direct HLS sources of a channel fail
  */
-export function handleAllDirectSourcesFailed(onRetry = null) {
+export function handleAllDirectSourcesFailed(onRetry = null, onContingency = null) {
     atomicTvPlayerReset();
 
     const tvContainer = document.getElementById("tv-artplayer-container");
@@ -563,6 +563,7 @@ export function handleAllDirectSourcesFailed(onRetry = null) {
 
     if (tvContainer) {
         tvContainer.classList.remove("hidden");
+        const hasContingency = typeof onContingency === 'function';
         tvContainer.innerHTML = `
             <div class="channel-direct-error-overlay">
                 <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:14px;">
@@ -571,10 +572,18 @@ export function handleAllDirectSourcesFailed(onRetry = null) {
                 <div class="error-overlay-title">Player Principal sem resposta</div>
                 <div class="error-overlay-desc">
                     Nenhuma fonte do Player Principal deste canal respondeu agora.
-                    Você pode tentar reconectar ou escolher um <strong>servidor externo</strong> no seletor abaixo.
+                    ${hasContingency ? 'Você pode tentar um servidor alternativo ou reconectar.' : 'Você pode tentar reconectar ou escolher um servidor externo no seletor abaixo.'}
                 </div>
-                <div class="error-overlay-actions">
-                    <button id="btn-retry-direct-channel" class="btn-error-retry">
+                <div class="error-overlay-actions" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    ${hasContingency ? `
+                        <button id="btn-contingency-channel" class="btn-error-contingency">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            Usar Servidor Alternativo
+                        </button>
+                    ` : ''}
+                    <button id="btn-retry-direct-channel" class="${hasContingency ? 'btn-error-secondary' : 'btn-error-retry'}">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="23 4 23 10 17 10"></polyline>
                             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -589,15 +598,19 @@ export function handleAllDirectSourcesFailed(onRetry = null) {
         if (retryBtn && typeof onRetry === 'function') {
             retryBtn.addEventListener("click", onRetry);
         }
+        const contingencyBtn = tvContainer.querySelector("#btn-contingency-channel");
+        if (contingencyBtn && hasContingency) {
+            contingencyBtn.addEventListener("click", onContingency);
+        }
     }
 
-    showToast("Nenhuma fonte do Player Principal respondeu. Escolha um servidor externo abaixo.", 4500);
+    showToast(hasContingency ? "Player Principal sem resposta. Use o servidor alternativo." : "Nenhuma fonte do Player Principal respondeu. Escolha um servidor externo abaixo.", 4500);
 }
 
 /**
  * Mounts a TV channel using direct HLS stream via Artplayer + Hls.js
  */
-export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFailed = null) {
+export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFailed = null, onSourceChanged = null) {
     if (!playerLibsReady()) {
         // The 12 s source watchdog only starts once the libraries are here, so a slow connection never drops good sources
         atomicTvPlayerReset();
@@ -615,7 +628,7 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
         if (waitLoader) waitLoader.classList.remove("hidden");
         mountWhenPlayerLibsReady('tv', () => {
             setLoaderText(waitLoader, "Carregando transmissão...");
-            mountTvDirectStream(channelData, sourceIndex, onAllDirectFailed);
+            mountTvDirectStream(channelData, sourceIndex, onAllDirectFailed, onSourceChanged);
         }, {
             onSlow: () => setLoaderText(waitLoader, "Conexão lenta, carregando o player..."),
             onFailed: () => {
@@ -623,7 +636,7 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
                     waitLoader.classList.add("hidden");
                     setLoaderText(waitLoader, "Carregando transmissão...");
                 }
-                renderPlayerLibsError(stage, () => mountTvDirectStream(channelData, sourceIndex, onAllDirectFailed));
+                renderPlayerLibsError(stage, () => mountTvDirectStream(channelData, sourceIndex, onAllDirectFailed, onSourceChanged));
             }
         });
         return;
@@ -665,11 +678,12 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
         if (currentIndex + 1 < sources.length) {
             const nextIndex = currentIndex + 1;
             showToast(`Fonte ${currentIndex + 1} não respondeu. Tentando a ${liveSourceLabel(sources[nextIndex], nextIndex)}...`, 2500);
-            mountTvDirectStream(channelData, nextIndex, onAllDirectFailed);
+            if (typeof onSourceChanged === 'function') onSourceChanged(nextIndex);
+            mountTvDirectStream(channelData, nextIndex, onAllDirectFailed, onSourceChanged);
         } else {
             console.warn("[TvPlayer] Todas as fontes diretas esgotadas.");
             if (typeof onAllDirectFailed === 'function') onAllDirectFailed();
-            else handleAllDirectSourcesFailed(() => mountTvDirectStream(channelData, 0, onAllDirectFailed));
+            else handleAllDirectSourcesFailed(() => mountTvDirectStream(channelData, 0, onAllDirectFailed, onSourceChanged));
         }
     }
 
@@ -772,8 +786,13 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
                             if (data.fatal) {
                                 switch (data.type) {
                                     case window.Hls.ErrorTypes.NETWORK_ERROR:
-                                        console.warn("[TvHLS] Fatal Network Error. Tentando recuperar...");
-                                        hls.startLoad();
+                                        if (!isStreamWorking && data.details && (/manifest|level/i.test(data.details) || (data.response && data.response.code >= 400))) {
+                                            console.warn(`[TvHLS] Fatal manifest network error (${data.details}, code: ${data.response?.code}). Cascading immediately...`);
+                                            triggerDirectCascade(`HLS Manifest Error: ${data.details}`);
+                                        } else {
+                                            console.warn("[TvHLS] Fatal Network Error. Tentando recuperar...");
+                                            hls.startLoad();
+                                        }
                                         break;
                                     case window.Hls.ErrorTypes.MEDIA_ERROR:
                                         console.warn("[TvHLS] Fatal Media Error. Tentando recuperar...");
