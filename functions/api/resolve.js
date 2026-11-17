@@ -1610,6 +1610,7 @@ export async function onRequestGet(context) {
     const tmdbId = /^\d+$/.test(id) ? id : null;
     if (tmdbId) {
       const movyData = await timed("movy", resolveMovy({ tmdbId, type, season, episode, imdbId }));
+      providerDebug = movyData?.debug || null;
       if (movyData && movyData.sources && movyData.sources.length > 0) {
         const parsedSources = await Promise.all(movyData.sources.map(async (s) => ({
           label: s.label,

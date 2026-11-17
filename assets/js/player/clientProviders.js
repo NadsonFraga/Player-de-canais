@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261117_0941';
-import { fetchTmdb } from '../core/tmdb.js?v=20261117_0941';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261117_1121';
+import { fetchTmdb } from '../core/tmdb.js?v=20261117_1121';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -443,7 +443,7 @@ export async function resolveMovyClient({ id, type = 'movie', season = 1, episod
 
     // 2. Query sources
     const params = new URLSearchParams({
-      title: encodeURIComponent(title || 'title'),
+      title: title || 'title',
       mediaType,
       seasonId: String(season),
       episodeId: String(episode),
