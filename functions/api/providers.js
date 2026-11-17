@@ -253,9 +253,19 @@ export async function resolveMovy({ tmdbId, type, season = 1, episode = 1, imdbI
     "Accept": "application/json"
   };
 
+  const debug = { endpoint: null, status: null, statusText: null, error: null, streams: 0, body: null };
+
   try {
-    const seedRes = await fetch(`https://api.wecollege.net/seed?mediaId=${tmdbId}`, { headers });
-    if (!seedRes.ok) return null;
+    const seedEndpoint = `https://api.wecollege.net/seed?mediaId=${tmdbId}`;
+    debug.endpoint = seedEndpoint;
+    const seedRes = await fetch(seedEndpoint, { headers });
+    debug.status = seedRes.status;
+    debug.statusText = seedRes.statusText;
+    if (!seedRes.ok) {
+      debug.error = `Seed HTTP error ${seedRes.status}: ${seedRes.statusText}`;
+      try { debug.body = await seedRes.text(); } catch {}
+      return { title: "", sources: [], debug };
+    }
     const { seed } = await seedRes.json();
 
     const params = new URLSearchParams({
@@ -270,12 +280,23 @@ export async function resolveMovy({ tmdbId, type, season = 1, episode = 1, imdbI
       seed
     });
 
-    const sourcesRes = await fetch(`https://api.wecollege.net/miami/sources?${params.toString()}`, { headers });
-    if (!sourcesRes.ok) return null;
+    const sourcesEndpoint = `https://api.wecollege.net/miami/sources?${params.toString()}`;
+    debug.endpoint = sourcesEndpoint;
+    const sourcesRes = await fetch(sourcesEndpoint, { headers });
+    debug.status = sourcesRes.status;
+    debug.statusText = sourcesRes.statusText;
+    if (!sourcesRes.ok) {
+      debug.error = `Sources HTTP error ${sourcesRes.status}: ${sourcesRes.statusText}`;
+      try { debug.body = await sourcesRes.text(); } catch {}
+      return { title: "", sources: [], debug };
+    }
     const encryptedText = await sourcesRes.text();
     const data = decryptMovyPayload(encryptedText, seed, tmdbId);
     const sources = data?.sources || [];
-    if (!sources.length && !data?.playlist) return null;
+    if (!sources.length && !data?.playlist) {
+      debug.error = "No streams found in payload";
+      return { title: "", sources: [], debug };
+    }
 
     const mapped = sources.map(s => {
       const q = s.quality || "";
@@ -304,12 +325,15 @@ export async function resolveMovy({ tmdbId, type, season = 1, episode = 1, imdbI
 
     // Sort by quality descending
     mapped.sort((a, b) => b.quality - a.quality);
+    debug.streams = mapped.length;
 
     return {
       title: "",
-      sources: mapped
+      sources: mapped,
+      debug
     };
-  } catch {
-    return null;
+  } catch (err) {
+    debug.error = err.message || String(err);
+    return { title: "", sources: [], debug };
   }
 }
