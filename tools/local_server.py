@@ -2479,7 +2479,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 referer = "https://www.blogger.com/"
             elif "peliculaplay.com" in target_url or "mgeb.lat" in target_url or "mgeb.top" in target_url or "mgeb.space" in target_url:
                 referer = "https://mgeb.lat/"
-            elif "goldenkite.top" in target_url or "movy.sx" in target_url or "wecollege.net" in target_url:
+            elif "goldenkite.top" in target_url or "lightcobra.top" in target_url or "movy.sx" in target_url or "wecollege.net" in target_url:
                 referer, origin = "https://www.movy.sx/", "https://www.movy.sx"
             else:
                 referer = "https://tvzinhaonline.pages.dev/"
