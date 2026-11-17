@@ -116,13 +116,13 @@ def xor_decrypt(data_str: str, key: str = "otaku-embed-v1") -> str:
 
 def fetch_mgeb(media_type: str, media_id: str, season: int = 1, episode: int = 1):
     if media_type == "movie":
-        url = f"https://mgeb.top/embed/{media_id}"
+        url = f"https://mgeb.lat/embed/{media_id}"
     else:
-        url = f"https://mgeb.top/embed/serie/{media_id}/{season}/{episode}"
+        url = f"https://mgeb.lat/embed/serie/{media_id}/{season}/{episode}"
 
     headers = {
         "User-Agent": USER_AGENT,
-        "Referer": "https://tvzinhaonline.pages.dev/",
+        "Referer": "https://mgeb.lat/",
         "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
     }
     
@@ -215,7 +215,8 @@ def fetch_season_groups(tmdb_id):
         candidates.sort(key=score_season_group_candidate, reverse=True)
         for candidate in candidates[:3]:
             parsed = regular_season_groups(get(f"/tv/episode_group/{candidate['id']}"))
-            if parsed and (len(regular) == 1 or len(parsed) > len(regular)):
+            cand_score = score_season_group_candidate(candidate)
+            if parsed and (len(regular) == 1 or (cand_score >= 65 and len(parsed) > len(regular))):
                 groups = parsed
                 break
     except Exception as e:
@@ -1269,6 +1270,48 @@ TMDB_ALLOWED_PATH = re.compile(r"^/(movie|tv|discover|trending|search|genre|coll
 TMDB_CACHE = {}
 TMDB_CACHE_TTL_S = 1800
 
+# ---------- Subtitle search & proxy (/api/subtitles)
+SUBTITLE_CACHE = {}
+SUBTITLE_CACHE_TTL_S = 14400
+SUBTITLE_LANG_MAP = {
+    "pob": {"code": "pt-BR", "label": "Português (Brasil)", "flag": "br", "priority": 1},
+    "por": {"code": "pt", "label": "Português", "flag": "pt", "priority": 2},
+    "eng": {"code": "en", "label": "Inglês", "flag": "us", "priority": 3},
+    "spa": {"code": "es", "label": "Espanhol", "flag": "es", "priority": 4},
+    "spl": {"code": "es", "label": "Espanhol (Latino)", "flag": "es", "priority": 4},
+    "fre": {"code": "fr", "label": "Francês", "flag": "fr", "priority": 5},
+    "fra": {"code": "fr", "label": "Francês", "flag": "fr", "priority": 5},
+    "ita": {"code": "it", "label": "Italiano", "flag": "it", "priority": 6},
+    "ger": {"code": "de", "label": "Alemão", "flag": "de", "priority": 7},
+    "deu": {"code": "de", "label": "Alemão", "flag": "de", "priority": 7},
+    "jpn": {"code": "ja", "label": "Japonês", "flag": "ja", "priority": 8},
+    "kor": {"code": "ko", "label": "Coreano", "flag": "ko", "priority": 9},
+    "chi": {"code": "zh", "label": "Chinês", "flag": "zh", "priority": 10},
+    "zho": {"code": "zh", "label": "Chinês", "flag": "zh", "priority": 10},
+    "zht": {"code": "zh", "label": "Chinês (Tradicional)", "flag": "zh", "priority": 10},
+    "rus": {"code": "ru", "label": "Russo", "flag": "ru", "priority": 11},
+    "pol": {"code": "pl", "label": "Polonês", "flag": "pl", "priority": 12},
+    "ara": {"code": "ar", "label": "Árabe", "flag": "ar", "priority": 13},
+    "ind": {"code": "id", "label": "Indonésio", "flag": "id", "priority": 14},
+    "tur": {"code": "tr", "label": "Turco", "flag": "tr", "priority": 15},
+    "vie": {"code": "vi", "label": "Vietnamita", "flag": "vi", "priority": 16},
+    "srp": {"code": "sr", "label": "Sérvio", "flag": "sr", "priority": 17},
+    "cat": {"code": "ca", "label": "Catalão", "flag": "es", "priority": 18},
+    "ron": {"code": "ro", "label": "Romeno", "flag": "ro", "priority": 19},
+    "nld": {"code": "nl", "label": "Holandês", "flag": "nl", "priority": 20},
+    "dut": {"code": "nl", "label": "Holandês", "flag": "nl", "priority": 20},
+    "swe": {"code": "sv", "label": "Sueco", "flag": "sv", "priority": 21},
+    "ell": {"code": "el", "label": "Grego", "flag": "el", "priority": 22},
+    "gre": {"code": "el", "label": "Grego", "flag": "el", "priority": 22},
+    "cze": {"code": "cs", "label": "Tcheco", "flag": "cs", "priority": 23},
+    "ces": {"code": "cs", "label": "Tcheco", "flag": "cs", "priority": 23},
+    "hun": {"code": "hu", "label": "Húngaro", "flag": "hu", "priority": 24},
+    "mal": {"code": "ms", "label": "Malaio", "flag": "ms", "priority": 25},
+    "msa": {"code": "ms", "label": "Malaio", "flag": "ms", "priority": 25},
+    "tha": {"code": "th", "label": "Tailandês", "flag": "th", "priority": 26},
+    "hin": {"code": "hi", "label": "Hindi", "flag": "hi", "priority": 27},
+}
+
 
 def tmdb_target(path, key):
     """The TMDB address for `path`, or None when the path is not an allowed read."""
@@ -1324,17 +1367,75 @@ def stream_media_type(upstream_type, url):
     return STREAM_TYPE_BY_EXTENSION.get(extension, "application/octet-stream")
 
 
+def fix_mojibake(text):
+    if not text or not isinstance(text, str):
+        return text
+    if "\u00C2" in text or "\u00C3" in text:
+        try:
+            return text.encode("latin-1").decode("utf-8")
+        except Exception:
+            pass
+    return (
+        text.replace("\u00C3\u00A1", "á").replace("\u00C3\u00A0", "à").replace("\u00C3\u00A2", "â").replace("\u00C3\u00A3", "ã")
+        .replace("\u00C3\u00A9", "é").replace("\u00C3\u00AA", "ê").replace("\u00C3\u00AD", "í")
+        .replace("\u00C3\u00B3", "ó").replace("\u00C3\u00B4", "ô").replace("\u00C3\u00B5", "õ")
+        .replace("\u00C3\u00BA", "ú").replace("\u00C3\u00A7", "ç")
+        .replace("\u00C3\u0081", "Á").replace("\u00C3\u0080", "À").replace("\u00C3\u0082", "Â").replace("\u00C3\u0083", "Ã")
+        .replace("\u00C3\u0089", "É").replace("\u00C3\u008A", "Ê").replace("\u00C3\u008D", "Í")
+        .replace("\u00C3\u0093", "Ó").replace("\u00C3\u0094", "Ô").replace("\u00C3\u0095", "Õ")
+        .replace("\u00C3\u009A", "Ú").replace("\u00C3\u0087", "Ç")
+    )
+
+
 def clean_vtt(text):
-    """Subtitle cues keep italics, bold and underline only. Any other complete tag is dropped and a stray "<" or ">"
-    (a tag split over two lines) is escaped, so the player can draw the cue as HTML without running anything."""
+    if not text:
+        return "WEBVTT\n\n"
+    text = fix_mojibake(text)
+    # Convert ASS line break notation to newline
+    text = re.sub(r'\\N', '\n', text)
+    """Subtitle cues keep italics, bold and underline only. All SSA/ASS override tags ({...}) are stripped.
+    Any other complete tag is dropped and stray brackets escaped."""
     lines = []
     for line in text.split("\n"):
         if "-->" not in line:
+            # Strip all SSA/ASS override tags and MicroDVD tags: {...}
+            line = re.sub(r'\{[^}]*\}', '', line)
             line = re.sub(r"</?[a-zA-Z][^<>]*>", lambda m: m.group(0).lower() if re.fullmatch(r"</?[ibu]>", m.group(0), re.I) else "", line)
             line = re.sub(r"<(?!/?[ibu]>)", "&lt;", line)
             line = re.sub(r"(?<!<[ibu])(?<!</[ibu])>", "&gt;", line)
         lines.append(line)
     return "\n".join(lines)
+
+
+def srt_to_vtt(text):
+    """Converts SubRip (.srt) subtitle text to standard WebVTT format and sanitizes tags."""
+    if not text:
+        return "WEBVTT\n\n"
+    s = text.lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+    if s.strip().startswith("WEBVTT"):
+        return clean_vtt(s)
+    s = re.sub(r"(\d{1,2}:\d{2}:\d{2}),(\d{3})\s*-->\s*(\d{1,2}:\d{2}:\d{2}),(\d{3})", r"\1.\2 --> \3.\4", s)
+    return "WEBVTT\n\n" + clean_vtt(s)
+
+
+def is_safe_subtitle_url(url_str):
+    """Checks whether an outbound subtitle URL is safe to fetch (anti-SSRF guard)."""
+    try:
+        parsed = urllib.parse.urlsplit(url_str or "")
+        if parsed.scheme not in ("http", "https"):
+            return False
+        host = (parsed.hostname or "").lower()
+        if host in ("localhost", "127.0.0.1", "::1"):
+            return False
+        if re.match(r"^192\.168\.\d{1,3}\.\d{1,3}$", host):
+            return False
+        if re.match(r"^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$", host):
+            return False
+        if re.match(r"^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$", host):
+            return False
+        return True
+    except Exception:
+        return False
 
 
 def read_capped(resp):
@@ -1585,7 +1686,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         parsed = urllib.parse.urlparse(self.path)
         origin = self.headers.get("Origin")
-        restricted = parsed.path in ("/api/resolve", "/api/tmdb")
+        restricted = parsed.path in ("/api/resolve", "/api/tmdb", "/api/subtitles")
         if restricted and not is_allowed_origin(origin):
             self.send_response(403)
             self.end_headers()
@@ -1635,7 +1736,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             if not path.startswith("/api/") and is_blocked_path(self.path.split("?", 1)[0]):
                 self.send_not_found()
                 return
-            if path in ("/api/resolve", "/api/tmdb"):
+            if path in ("/api/resolve", "/api/tmdb", "/api/subtitles"):
                 wait = api_ip_blocked_for(self.client_address[0] if self.client_address else "")
                 if wait:
                     self.send_response(429)
@@ -1655,6 +1756,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 self.handle_resolve(params, origin=origin)
             elif path == "/api/tmdb":
                 self.handle_tmdb(params, origin=self.headers.get("Origin"))
+            elif path == "/api/subtitles":
+                self.handle_subtitles(params, origin=self.headers.get("Origin"))
             elif path.startswith("/api/account/"):
                 self.handle_account("GET", path)
             elif path == "/api/sync":
@@ -1835,6 +1938,126 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         except Exception:
             self.send_json(502, {"error": "tmdb_unreachable"}, origin)
 
+    def handle_subtitles(self, params, origin=None):
+        """/api/subtitles: Multi-source subtitle search & WebVTT conversion proxy."""
+        if not is_allowed_origin(origin):
+            self.send_response(403)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b'{"error":"origin_forbidden"}')
+            return
+
+        action = (params.get("action") or [""])[0]
+
+        # Proxy action
+        if action == "proxy":
+            target_url = (params.get("url") or [""])[0]
+            if not target_url or not is_safe_subtitle_url(target_url):
+                self.send_json(400, {"error": "invalid_url"}, origin)
+                return
+            try:
+                req = urllib.request.Request(target_url, headers={"User-Agent": USER_AGENT})
+                with urllib.request.urlopen(req, timeout=15) as res:
+                    raw_data = res.read(2 * 1024 * 1024 + 1)
+                if len(raw_data) > 2 * 1024 * 1024:
+                    self.send_json(502, {"error": "subtitle_too_large"}, origin)
+                    return
+                try:
+                    text = raw_data.decode("utf-8")
+                    text = fix_mojibake(text)
+                except UnicodeDecodeError:
+                    try:
+                        text = raw_data.decode("cp1252")
+                    except UnicodeDecodeError:
+                        text = raw_data.decode("latin-1", errors="replace")
+                vtt_text = srt_to_vtt(text)
+                body = vtt_text.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/vtt; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.send_header("X-Content-Type-Options", "nosniff")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except Exception as e:
+                self.send_json(502, {"error": "upstream_unreachable"}, origin)
+                return
+
+        # Search action
+        raw_type = (params.get("type") or params.get("mediaType") or ["movie"])[0].lower()
+        media_type = "series" if raw_type in ("tv", "anime", "series", "serie") else "movie"
+        imdb_id = (params.get("imdb_id") or params.get("imdbId") or [""])[0]
+        tmdb_id = (params.get("tmdb_id") or params.get("tmdbId") or params.get("id") or [""])[0]
+        try:
+            season = int((params.get("season") or ["1"])[0])
+        except (ValueError, TypeError):
+            season = 1
+        try:
+            episode = int((params.get("episode") or ["1"])[0])
+        except (ValueError, TypeError):
+            episode = 1
+
+        if (not imdb_id or not imdb_id.startswith("tt")) and tmdb_id:
+            imdb_id = fetch_imdb_id(tmdb_id, "serie" if media_type == "series" else "movie") or ""
+
+        if not imdb_id or not imdb_id.startswith("tt"):
+            self.send_json(200, {"imdb_id": None, "subtitles": []}, origin)
+            return
+
+        cache_key = f"movie:{imdb_id}" if media_type == "movie" else f"series:{imdb_id}:{season}:{episode}"
+        cached = SUBTITLE_CACHE.get(cache_key)
+        if cached and time.time() - cached[0] < SUBTITLE_CACHE_TTL_S:
+            self.send_json(200, cached[1], origin)
+            return
+
+        stremio_url = (
+            f"https://opensubtitles-v3.strem.io/subtitles/movie/{imdb_id}.json"
+            if media_type == "movie"
+            else f"https://opensubtitles-v3.strem.io/subtitles/series/{imdb_id}:{season}:{episode}.json"
+        )
+
+        try:
+            req = urllib.request.Request(stremio_url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=12) as res:
+                data = json.loads(res.read().decode("utf-8", errors="replace"))
+
+            raw_list = data.get("subtitles") if isinstance(data, dict) and isinstance(data.get("subtitles"), list) else []
+            processed = []
+            for idx, sub in enumerate(raw_list):
+                raw_lang = str(sub.get("lang") or "").lower()
+                info = SUBTITLE_LANG_MAP.get(raw_lang, {
+                    "code": raw_lang,
+                    "label": str(sub.get("lang") or "Outro").upper(),
+                    "flag": "other",
+                    "priority": 99,
+                })
+
+                release = (sub.get("releaseGroup") or sub.get("releaseFormat") or sub.get("movieReleaseName") or sub.get("subtitleFileName") or "")
+                release = re.sub(r"\.srt$", "", release, flags=re.I).strip()
+
+                sub_url = sub.get("url") or ""
+                processed.append({
+                    "id": str(sub.get("id") or idx),
+                    "lang": info["code"],
+                    "label": info["label"],
+                    "flag": info["flag"],
+                    "priority": info["priority"],
+                    "release": release or info["label"],
+                    "fileName": sub.get("subtitleFileName") or "",
+                    "format": "vtt",
+                    "url": f"/api/subtitles?action=proxy&url={urllib.parse.quote(sub_url)}",
+                    "direct_url": sub_url,
+                })
+
+            processed.sort(key=lambda s: s["priority"])
+            payload = {"imdb_id": imdb_id, "subtitles": processed}
+            SUBTITLE_CACHE[cache_key] = (time.time(), payload)
+            self.send_json(200, payload, origin)
+        except Exception as e:
+            self.send_json(200, {"imdb_id": imdb_id, "subtitles": []}, origin)
+
     def handle_resolve(self, params, origin=None):
         host_header = self.headers.get("Host", f"127.0.0.1:{PORT}")
         proxy_base = f"http://{host_header}/api/stream"
@@ -1980,23 +2203,33 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         # Route 2: FenixFlix (PT-BR Dublado)
         if not result and requested_source == "fenixflix" and (media_id or imdb_id):
-            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, imdb_id, media_type, season, episode, "dubbed")
+            active_imdb_id = imdb_id
+            if not active_imdb_id and media_id and tmdb_api_key:
+                active_imdb_id = timed("imdb", fetch_imdb_id, media_id, "movie" if media_type == "movie" else "serie")
+            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, active_imdb_id, media_type, season, episode, "dubbed")
             if fenix_data and fenix_data.get("sources"):
                 parsed = []
                 for s in fenix_data["sources"]:
                     raw_file = s["file"].strip()
-                    referer = s.get("referer", "https://embedplayer2.xyz/")
+                    raw_lower = raw_file.lower()
+                    if "zunderflix" in raw_lower or "zunder" in raw_lower:
+                        referer = "https://zunderflix.lat/"
+                        origin = "https://zunderflix.lat"
+                    elif "hollymovies" in raw_lower:
+                        referer = "https://hollymovies.org/"
+                        origin = "https://hollymovies.org"
+                    else:
+                        referer = s.get("referer", "https://embedplayer2.xyz/")
+                        origin = "https://embedplayer2.xyz"
+                    # FenixHub and Fenixbot streams redirect to upstream CDNs with self-signed SSL certs (e.g. dbonline.tech-cdn.top).
+                    # They MUST be proxied via /api/stream to guarantee valid HTTPS, HTTP 206 Range, and open CORS without browser ERR_CERT_AUTHORITY_INVALID.
                     is_mp4 = (".mp4" in raw_file or "/stream/" in raw_file) and (
                         is_brazilian_cdn(raw_file)
-                        or "fenixhub" in raw_file
-                        or "koyeb.app" in raw_file
-                        or "squareweb.app" in raw_file
-                        or "fenixbot" in raw_file
                         or "/movies/" in raw_file
                         or "/series/" in raw_file
-                    )
+                    ) and not any(k in raw_file for k in ("fenixhub", "fenixflix", "fenixbot", "tech-cdn"))
                     clean_url = re.sub(r'^http://', 'https://', raw_file).replace(':80/', '/') if is_mp4 else raw_file
-                    stream_url = clean_url if is_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
+                    stream_url = clean_url if is_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer, origin=origin)
                     is_hls = s.get("type") == "hls" or ".m3u8" in raw_file
                     parsed.append({
                         "label": s.get("label", f"FenixFlix {s.get('quality', 1080)}p"),
@@ -2004,7 +2237,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         "stream_url": stream_url,
                         "direct_url": raw_file if (not is_mp4 and is_hls and raw_file.startswith("https://")) else None,
                         "raw_url": clean_url,
-                        "headers": {"Referer": referer},
+                        "headers": {"Referer": referer, "Origin": origin},
                         "quality": s.get("quality", 1080)
                     })
                 ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: 90, media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
@@ -2119,7 +2352,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 raw_sources = mgeb_data["sources"]
                 parsed_sources = []
                 for idx, s in enumerate(raw_sources):
-                    raw_file = s.get("file", "").strip().replace("mgeb.top/../", "mgeb.top/").replace("mgeb.top/..", "mgeb.top")
+                    raw_file = re.sub(r'mgeb\.(lat|top|site|space)/\.\./?', r'mgeb.\1/', s.get("file", "").strip())
                     is_direct_mp4 = ".mp4" in raw_file and is_brazilian_cdn(raw_file)
                     direct_clean_url = raw_file
                     if is_direct_mp4:
@@ -2127,8 +2360,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         direct_clean_url = re.sub(r'^http://', 'https://', raw_file, flags=re.I).replace(':80/', '/')
 
                     referer = "https://embedplayer2.xyz/"
-                    if "peliculaplay.com" in raw_file or "cache/hls" in raw_file or "mgeb.top" in raw_file:
-                        referer = "https://mgeb.top/"
+                    if any(k in raw_file for k in ("peliculaplay.com", "cache/hls", "mgeb.lat", "mgeb.top", "mgeb.space")):
+                        referer = "https://mgeb.lat/"
 
                     final_stream_url = direct_clean_url if is_direct_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
                     source_type = s.get("type") or ("hls" if ".m3u8" in raw_file else "mp4")
@@ -2238,12 +2471,14 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         if not referer:
             if "dramahot.top" in target_url or "zokoanime.video" in target_url:
                 referer, origin = "https://zokoanime.video/", "https://zokoanime.video"
+            elif "zunderflix" in target_url or "zunder" in target_url:
+                referer, origin = "https://zunderflix.lat/", "https://zunderflix.lat"
             elif "playercdn.workers.dev" in target_url or "embedplayer2.xyz" in target_url:
                 referer, origin = "https://embedplayer2.xyz/", "https://embedplayer2.xyz"
             elif "googlevideo.com" in target_url or "blogger.com" in target_url:
                 referer = "https://www.blogger.com/"
-            elif "peliculaplay.com" in target_url:
-                referer = "https://mgeb.top/"
+            elif "peliculaplay.com" in target_url or "mgeb.lat" in target_url or "mgeb.top" in target_url or "mgeb.space" in target_url:
+                referer = "https://mgeb.lat/"
             else:
                 referer = "https://tvzinhaonline.pages.dev/"
         # The anime host checks Origin together with its Referer (the resolver's probe sends both)
@@ -2270,7 +2505,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         with resp:
             content_type = (resp.headers.get("Content-Type", "") or "").lower()
-            is_m3u8 = ".m3u8" in target_url or ".m3u8" in final_url or "mpegurl" in content_type
+            is_m3u8 = ".m3u8" in target_url or ".m3u8" in final_url or "hls-proxy" in target_url or "mpegurl" in content_type
             is_vtt = ".vtt" in target_url or ".vtt" in final_url or "text/vtt" in content_type
             is_ok = 200 <= resp.status < 300
 
@@ -2289,7 +2524,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
                 def proxied(uri):
                     # The playlist's parts expire with the playlist
-                    return proxied_stream_url(proxy_base, signing_key, urllib.parse.urljoin(final_url, uri), referer, exp=link_exp)
+                    return proxied_stream_url(proxy_base, signing_key, urllib.parse.urljoin(final_url, uri), referer, origin=origin, exp=link_exp)
 
                 rewritten_lines = []
                 for line in raw.decode("utf-8", errors="ignore").split("\n"):

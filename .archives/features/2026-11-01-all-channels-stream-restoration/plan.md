@@ -72,3 +72,4 @@ Per user request, this hotfix branches directly from production (`master`), rest
 - **Failover Redundancy:** Ensure both Primary (CDN 1) and Backup (CDN 2) are present on each channel.
 - **Clean Production History:** Verify `master` history contains zero unreviewed subtitle commits.
 - **Back-Merge Integrity:** Ensure merging `master` into `staging` produces zero git conflicts.
+

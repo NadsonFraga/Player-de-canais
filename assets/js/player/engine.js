@@ -3,16 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261101_1742';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261101_1742';
-import { showToast } from '../core/toast.js?v=20261101_1742';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261101_1742';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261101_1742';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261101_1742';
-import { formatClock } from '../core/resume.js?v=20261101_1742';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261101_1742';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261101_1742';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261101_1742';
+import { store } from '../core/state.js?v=20261116_1602';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261116_1602';
+import { showToast } from '../core/toast.js?v=20261116_1602';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261116_1602';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261116_1602';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261116_1602';
+import { formatClock } from '../core/resume.js?v=20261116_1602';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261116_1602';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261116_1602';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261116_1602';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261116_1602';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261116_1602';
+import { fetchTmdb } from '../core/tmdb.js?v=20261116_1602';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -534,6 +537,10 @@ if (typeof document !== 'undefined') {
             if (['l', 'L', ' ', 'k', 'K', 'm', 'M', 'f', 'F'].includes(e.key)) {
                 handleTvKeyboardShortcuts(e, window.tvArtInstance);
             }
+        }
+        if ((e.key === 'c' || e.key === 'C') && activeNativeSession) {
+            e.preventDefault();
+            toggleSubtitlesFlyout(activeNativeSession);
         }
     });
 }
@@ -1067,7 +1074,7 @@ const NATIVE_ICONS = {
     quality: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.2" fill="#000"/><circle cx="15" cy="12" r="2.2" fill="#000"/><circle cx="7" cy="17" r="2.2" fill="#000"/></svg>',
     audio: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
     fit: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>',
-    subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10.5 10.2a2.2 2.2 0 1 0 0 3.6M16.5 10.2a2.2 2.2 0 1 0 0 3.6" stroke-linecap="round"/></svg>',
+    subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="3.5" style="fill:none !important;stroke:currentColor !important;"/><path style="fill:none !important;stroke:currentColor !important;" d="M9.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/><path style="fill:none !important;stroke:currentColor !important;" d="M16.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/></svg>',
     cast: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8"/><path d="M3 16a4 4 0 0 1 4 4"/><path d="M3 20h.01"/></svg>'
 };
 
@@ -1109,6 +1116,20 @@ const NATIVE_I18N = {
 // Only the most recent native session may react to player events
 let activeNativeSession = null;
 let nativeSessionCounter = 0;
+
+// Cross-server in-memory subtitle cache per media item/episode
+const mediaSubtitlesCache = new Map();
+
+function getMediaSubtitleCacheKey(ctx) {
+    if (!ctx) return null;
+    const type = String(ctx.type || 'movie').toLowerCase();
+    const isSeries = type === 'tv' || type === 'anime' || type === 'series' || type === 'serie';
+    const s = ctx.tmdb_season != null ? ctx.tmdb_season : (ctx.season || 1);
+    const e = ctx.tmdb_episode != null ? ctx.tmdb_episode : (ctx.episode || 1);
+    const primaryId = ctx.id || ctx.imdbId || ctx.imdb_id;
+    if (!primaryId) return null;
+    return isSeries ? `series:${primaryId}:${s}:${e}` : `movie:${primaryId}`;
+}
 
 /**
  * Maps a frame size to a standard quality class (2160, 1440, 1080, 720, 480, 360, 240).
@@ -1216,6 +1237,29 @@ export function mountNativePlayer(options) {
         return null;
     }
 
+    const mediaCacheKey = getMediaSubtitleCacheKey(options.mediaContext);
+    const initialSubtitles = Array.isArray(subtitles) ? subtitles.map(s => ({
+        ...s,
+        isNative: true,
+        badge: '(Original da Fonte)'
+    })) : [];
+
+    // Inherit cached subtitles from previous server runs on the same title/episode
+    if (mediaCacheKey && mediaSubtitlesCache.has(mediaCacheKey)) {
+        const cachedList = mediaSubtitlesCache.get(mediaCacheKey) || [];
+        const existingUrls = new Set(initialSubtitles.map(s => s.url || s.file));
+        cachedList.forEach(cachedSub => {
+            const u = cachedSub.url || cachedSub.file;
+            if (u && !existingUrls.has(u)) {
+                initialSubtitles.push(cachedSub);
+                existingUrls.add(u);
+            }
+        });
+    }
+    if (mediaCacheKey && initialSubtitles.length) {
+        mediaSubtitlesCache.set(mediaCacheKey, [...initialSubtitles]);
+    }
+
     const session = {
         id: ++nativeSessionCounter,
         containerId,
@@ -1223,7 +1267,9 @@ export function mountNativePlayer(options) {
         poster,
         audio,
         userSelectedAudio: false,
-        subtitles: Array.isArray(subtitles) ? subtitles : [],
+        subtitles: initialSubtitles,
+        userToggledSubtitles: false,
+        activeSubtitleUrl: null,
         onAllFailed,
         onNearEnd,
         nearEndFired: false,
@@ -1296,7 +1342,9 @@ export function mountNativePlayer(options) {
             }
         }
     }
-    return mountNativeSource(session, firstIndex, { startTime });
+    const mounted = mountNativeSource(session, firstIndex, { startTime });
+    fetchExternalSubtitles(session);
+    return mounted;
 }
 
 /* ---------- Where the viewer is (resume) ---------- */
@@ -1618,7 +1666,10 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
     }, 1000);
 
     const subtitles = session.subtitles;
-    const chosenSubtitle = chosenSubtitleIndex(subtitles);
+    const chosenSubtitle = chosenSubtitleIndex(session);
+    if (chosenSubtitle >= 0 && subtitles[chosenSubtitle]) {
+        session.activeSubtitleUrl = subtitles[chosenSubtitle].url || subtitles[chosenSubtitle].file;
+    }
     const defaultSubtitle = subtitles[chosenSubtitle >= 0 ? chosenSubtitle : 0];
     // Taller rows and a wider main panel for the YouTube-like settings (Artplayer sizes panels from these constants)
     window.Artplayer.SETTING_ITEM_HEIGHT = 40;
@@ -1649,6 +1700,17 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             aspectRatio: false,
             hotkey: true,
             airplay: true,
+            controls: [
+                {
+                    name: 'tvz-subtitles-btn',
+                    position: 'right',
+                    index: 15,
+                    html: `<i class="art-icon art-control-subtitle-btn" role="button" aria-label="Legendas (C)" title="Legendas (C)">${NATIVE_ICONS.subtitle}</i>`,
+                    click: () => {
+                        toggleSubtitlesFlyout(session);
+                    }
+                }
+            ],
             subtitle: subtitles.length > 0 && chosenSubtitle >= 0 ? {
                 url: defaultSubtitle.url || defaultSubtitle.file,
                 type: 'vtt',
@@ -1765,6 +1827,8 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         installHorizontalVolume(art);
         installDoubleTapSeek(art);
         installNoSwipeSeek(art);
+        refreshSubtitleMenu(session);
+        updateSubtitlesControlActiveState(session);
         const total = session.sources.length;
         setSourceStatus(session, [session.statusNote, total > 1 ? `Conectando à fonte ${index + 1} de ${total}...` : 'Conectando...'].filter(Boolean).join(' '));
 
@@ -1779,6 +1843,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             refreshSubtitleMenu(session);
             installFitSetting(art);
             installCastSetting(session);
+            installSubtitleControl(session);
             routeFullscreenToStage(art);
             applyPlaybackPrefs(art);
             // The controls area changes height (window, fullscreen, phone): keep the side cards right above it
@@ -2232,12 +2297,44 @@ function storedFit() {
     return getPlayerPrefs().fit === 'cover' ? 'cover' : 'contain';
 }
 
-/** Volume, mute and speed from the player preferences, and saved again whenever the viewer changes them. */
+export function applySubtitleStyles(art, prefs = getPlayerPrefs()) {
+    if (!art || !art.template || !art.template.$subtitle) return;
+    const el = art.template.$subtitle;
+    const player = art.template.$player;
+    const size = prefs.subtitle_size || 100;
+    const color = prefs.subtitle_color || '#ffffff';
+    const bg = prefs.subtitle_bg || 'shadow';
+
+    const scale = (size / 100).toFixed(2);
+    if (player) player.style.setProperty('--tvz-sub-scale', scale);
+    el.style.setProperty('--tvz-sub-scale', scale);
+    el.style.setProperty('--tvz-sub-color', color);
+    el.style.fontSize = '';
+    el.style.color = color;
+
+    el.setAttribute('data-bg', bg);
+    if (bg === 'box') {
+        el.style.textShadow = 'none';
+        el.style.webkitTextStroke = 'none';
+        el.style.backgroundColor = 'transparent';
+        el.style.padding = '0';
+        el.style.borderRadius = '0';
+    } else {
+        el.style.textShadow = '0 0 3px #000000, 0 0 5px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.95), 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.6)';
+        el.style.webkitTextStroke = '0.35px rgba(0, 0, 0, 0.3)';
+        el.style.backgroundColor = 'transparent';
+        el.style.padding = '0';
+        el.style.borderRadius = '0';
+    }
+}
+
+/** Volume, mute, speed, and subtitle styling from preferences. */
 function applyPlaybackPrefs(art) {
     const prefs = getPlayerPrefs();
     try {
         art.muted = Boolean(prefs.muted);
         if (prefs.playbackRate && prefs.playbackRate !== 1) art.playbackRate = prefs.playbackRate;
+        applySubtitleStyles(art, prefs);
     } catch (e) {
         // Optional
     }
@@ -2885,81 +2982,1034 @@ function refreshAudioMenu(session) {
  * default, then English. The host's own order is alphabetical (Arabic first), so it must not decide.
  */
 /**
- * Subtitle to start with: the language the viewer picked last when this title has it, nothing when they turned
- * subtitles off, else the default order below. -1 means off.
+ * Fetches external subtitles in background without blocking video playback.
  */
-function chosenSubtitleIndex(subtitles) {
+async function fetchExternalSubtitles(session) {
+    const ctx = session.mediaContext;
+    if (!ctx || (!ctx.id && !ctx.imdbId && !ctx.imdb_id)) return;
+    const sessionId = session.id;
+    const cacheKey = getMediaSubtitleCacheKey(ctx);
+
+    // If already cached, populate immediately without wait
+    if (cacheKey && mediaSubtitlesCache.has(cacheKey)) {
+        const cachedList = mediaSubtitlesCache.get(cacheKey) || [];
+        const existingUrls = new Set(session.subtitles.map(s => s.url || s.file));
+        let added = false;
+        cachedList.forEach(c => {
+            const u = c.url || c.file;
+            if (u && !existingUrls.has(u)) {
+                session.subtitles.push(c);
+                existingUrls.add(u);
+                added = true;
+            }
+        });
+        if (added) {
+            refreshSubtitleMenu(session);
+            updateSubtitlesControlActiveState(session);
+        }
+    }
+
+    session.fetchingSubtitles = true;
+    refreshSubtitleMenu(session);
+
+    const rawType = String(ctx.type || 'movie').toLowerCase();
+    const type = rawType === 'tv' || rawType === 'anime' || rawType === 'series' || rawType === 'serie' ? 'series' : 'movie';
+    let imdbId = ctx.imdbId || ctx.imdb_id;
+
+    if (!imdbId && ctx.id) {
+        try {
+            const tmdbPath = type === 'movie' ? `movie/${ctx.id}` : `tv/${ctx.id}/external_ids`;
+            const tmdbData = await fetchTmdb(tmdbPath);
+            if (tmdbData && tmdbData.imdb_id) {
+                imdbId = String(tmdbData.imdb_id);
+                ctx.imdbId = imdbId;
+            }
+        } catch (e) {
+            // Keep going, server also has fallback resolver
+        }
+    }
+
+    if (session.id !== sessionId || (activeNativeSession && activeNativeSession.id !== sessionId)) {
+        session.fetchingSubtitles = false;
+        return;
+    }
+
+    const season = String(ctx.tmdb_season != null ? ctx.tmdb_season : (ctx.season || 1));
+    const episode = String(ctx.tmdb_episode != null ? ctx.tmdb_episode : (ctx.episode || 1));
+
+    const params = new URLSearchParams({
+        type,
+        season,
+        episode
+    });
+    if (ctx.id) {
+        params.set('tmdb_id', String(ctx.id));
+        params.set('id', String(ctx.id));
+    }
+    if (imdbId) {
+        params.set('imdb_id', String(imdbId));
+    }
+
+    fetch(`/api/subtitles?${params.toString()}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+            session.fetchingSubtitles = false;
+            if (session.id !== sessionId || (activeNativeSession && activeNativeSession.id !== sessionId)) return;
+            if (!data || !Array.isArray(data.subtitles) || !data.subtitles.length) {
+                refreshSubtitleMenu(session);
+                return;
+            }
+
+            const existingUrls = new Set(session.subtitles.map(s => s.url || s.file));
+            const newTracks = data.subtitles.filter(s => !existingUrls.has(s.url)).map(s => ({
+                ...s,
+                isExternal: true
+            }));
+
+            if (!newTracks.length) {
+                refreshSubtitleMenu(session);
+                return;
+            }
+
+            // Retain native tracks at top, external underneath
+            session.subtitles = [...session.subtitles, ...newTracks];
+            if (cacheKey) {
+                mediaSubtitlesCache.set(cacheKey, [...session.subtitles]);
+            }
+
+            const art = session.art;
+            // Smart auto-activation on subtitled audio if user hasn't explicitly chosen yet
+            if (art && !session.userToggledSubtitles) {
+                const isSubtitledAudio = session.audio === 'subtitled' || (session.mediaContext && session.mediaContext.type === 'anime');
+                const userPref = getPlayerPrefs().subtitle;
+                if (userPref !== 'off' && isSubtitledAudio) {
+                    const bestIdx = defaultSubtitleIndex(session.subtitles);
+                    if (bestIdx >= 0) {
+                        const best = session.subtitles[bestIdx];
+                        const currentSub = session.subtitles.find(s => (s.url || s.file) === session.activeSubtitleUrl);
+                        const currentRank = currentSub ? subtitleLanguageRank(currentSub) : 999;
+                        if (!session.activeSubtitleUrl || subtitleLanguageRank(best) < currentRank) {
+                            session.activeSubtitleUrl = best.url || best.file;
+                            patchArtplayerSubtitleEngine(art);
+                            art.subtitle.switch(session.activeSubtitleUrl, { name: best.release || best.label, type: 'vtt' })
+                                .then(() => {
+                                    art.subtitle.show = true;
+                                    disableEmbeddedTextTracks(art);
+                                    applySubtitleStyles(art);
+                                })
+                                .catch(() => {});
+                        }
+                    }
+                }
+            }
+
+            refreshSubtitleMenu(session);
+            refreshSubtitleMenu(session);
+            updateSubtitlesControlActiveState(session);
+        })
+        .catch(err => {
+            session.fetchingSubtitles = false;
+            console.warn('[PlayerEngine] Falha ao carregar legendas externas:', err);
+            refreshSubtitleMenu(session);
+        });
+}
+
+/**
+ * Subtitle to start with: respects user profile preference, title context, and dubbed/sub heuristics.
+ * -1 means off.
+ */
+function chosenSubtitleIndex(session) {
+    const subtitles = session.subtitles;
+    if (!subtitles || !subtitles.length) return -1;
     const pref = getPlayerPrefs().subtitle;
     if (pref === 'off') return -1;
+    if (session.userToggledSubtitles && !session.activeSubtitleUrl) return -1;
+
     if (pref) {
         const wanted = String(pref).toLowerCase();
         const lang = sub => String(sub.lang || '').toLowerCase();
         let match = subtitles.findIndex(sub => lang(sub) === wanted);
-        // "Inglês" in Configurações saves 'en': an 'en-US' track is English too
         if (match < 0) match = subtitles.findIndex(sub => lang(sub).split(/[-_]/)[0] === wanted.split(/[-_]/)[0]);
         if (match >= 0) return match;
+    }
+
+    // Heuristic: dubbed content starts with subtitles OFF to avoid screen clutter;
+    // subtitled/anime content starts with subtitles ON.
+    const isSubtitledAudio = session.audio === 'subtitled' || (session.mediaContext && session.mediaContext.type === 'anime');
+    if (!isSubtitledAudio) {
+        return -1;
     }
     return defaultSubtitleIndex(subtitles);
 }
 
+const LANG_PRIORITIES = {
+    'pt-BR': 1, 'pt': 2, 'en': 3, 'es': 4, 'fr': 5, 'it': 6, 'de': 7,
+    'ja': 8, 'ko': 9, 'zh': 10, 'ru': 11, 'pl': 12, 'ar': 13, 'id': 14,
+    'tr': 15, 'vi': 16, 'sr': 17, 'ro': 18, 'nl': 19, 'sv': 20,
+    'el': 21, 'cs': 22, 'hu': 23, 'ms': 24, 'th': 25, 'hi': 26
+};
+
+const LANG_NAMES = {
+    'pt-BR': 'Português (Brasil)', 'pt': 'Português', 'en': 'Inglês', 'es': 'Espanhol',
+    'fr': 'Francês', 'it': 'Italiano', 'de': 'Alemão', 'ja': 'Japonês', 'ko': 'Coreano',
+    'zh': 'Chinês', 'ru': 'Russo', 'pl': 'Polonês', 'ar': 'Árabe', 'id': 'Indonésio',
+    'tr': 'Turco', 'vi': 'Vietnamita', 'sr': 'Sérvio', 'ro': 'Romeno', 'nl': 'Holandês',
+    'sv': 'Sueco', 'el': 'Grego', 'cs': 'Tcheco', 'hu': 'Húngaro', 'ms': 'Malaio',
+    'th': 'Tailandês', 'hi': 'Hindi'
+};
+
+function normLang(l) {
+    if (!l) return 'other';
+    const s = String(l).toLowerCase().replace('_', '-').trim();
+    if (s === 'pt-br' || s === 'pob' || s === 'br' || s.includes('brasil')) return 'pt-BR';
+    if (s === 'pt' || s === 'por' || s.startsWith('portug')) return 'pt';
+    if (s === 'en' || s === 'eng' || s === 'us' || s.startsWith('ingl')) return 'en';
+    if (s === 'es' || s === 'spa' || s === 'spl' || s === 'cat' || s === 'ca' || s.startsWith('espan')) return 'es';
+    if (s === 'fr' || s === 'fre' || s === 'fra' || s.startsWith('franc')) return 'fr';
+    if (s === 'it' || s === 'ita' || s.startsWith('ital')) return 'it';
+    if (s === 'de' || s === 'ger' || s === 'deu' || s.startsWith('alem')) return 'de';
+    if (s === 'ja' || s === 'jpn' || s === 'jp' || s.startsWith('japon')) return 'ja';
+    if (s === 'ko' || s === 'kor' || s === 'kr' || s.startsWith('core')) return 'ko';
+    if (s === 'zh' || s === 'chi' || s === 'zho' || s === 'zht' || s === 'cn' || s.startsWith('chin')) return 'zh';
+    if (s === 'ru' || s === 'rus' || s.startsWith('russ')) return 'ru';
+    if (s === 'pl' || s === 'pol' || s.startsWith('polon')) return 'pl';
+    if (s === 'ar' || s === 'ara' || s.startsWith('árab') || s.startsWith('arab')) return 'ar';
+    if (s === 'id' || s === 'ind' || s.startsWith('indon')) return 'id';
+    if (s === 'tr' || s === 'tur' || s.startsWith('turc')) return 'tr';
+    if (s === 'vi' || s === 'vie' || s.startsWith('viet')) return 'vi';
+    if (s === 'sr' || s === 'srp' || s.startsWith('sérv') || s.startsWith('serv')) return 'sr';
+    if (s === 'ro' || s === 'ron' || s.startsWith('romen')) return 'ro';
+    if (s === 'nl' || s === 'nld' || s === 'dut' || s.startsWith('holan')) return 'nl';
+    if (s === 'sv' || s === 'swe' || s.startsWith('suec')) return 'sv';
+    if (s === 'el' || s === 'ell' || s === 'gre' || s.startsWith('greg')) return 'el';
+    if (s === 'cs' || s === 'cze' || s === 'ces' || s.startsWith('tchec') || s.startsWith('czech')) return 'cs';
+    if (s === 'hu' || s === 'hun' || s === 'mag' || s.startsWith('húng') || s.startsWith('hung')) return 'hu';
+    if (s === 'ms' || s === 'mal' || s === 'may' || s === 'msa' || s.startsWith('malai') || s.startsWith('malay')) return 'ms';
+    if (s === 'th' || s === 'tha' || s.startsWith('tail') || s.startsWith('thai')) return 'th';
+    if (s === 'hi' || s === 'hin' || s.startsWith('hind')) return 'hi';
+    return s;
+}
+
+function subtitleLanguageRank(sub) {
+    if (!sub) return 999;
+    const lang = String(sub.lang || '').toLowerCase().replace('_', '-');
+    // PT-BR is ALWAYS highest priority (#1)
+    if (lang === 'pt-br' || lang === 'pob' || lang === 'br' || lang.includes('brasil')) {
+        return sub.isNative ? 1 : 2;
+    }
+    // PT (Portugal) is second priority (#2)
+    if (lang === 'pt' || lang === 'por' || lang.startsWith('portug')) {
+        return sub.isNative ? 3 : 4;
+    }
+    // English
+    if (lang === 'en' || lang === 'eng' || lang === 'us' || lang.startsWith('ingl')) {
+        return sub.isNative ? 10 : 11;
+    }
+    // Spanish
+    if (lang === 'es' || lang === 'spa' || lang === 'spl' || lang.startsWith('espan')) {
+        return sub.isNative ? 12 : 13;
+    }
+    // Other languages
+    return sub.isNative ? 20 : 21;
+}
+
 function defaultSubtitleIndex(subtitles) {
-    const rank = sub => {
-        const lang = String(sub.lang || '').toLowerCase();
-        if (/^pt[-_]?br$/.test(lang)) return 0;
-        if (lang.startsWith('pt')) return 1;
-        if (sub.default) return 2;
-        if (lang.startsWith('en')) return 3;
-        return 4;
-    };
+    if (!subtitles || !subtitles.length) return -1;
     let best = 0;
-    subtitles.forEach((sub, idx) => {
-        if (rank(sub) < rank(subtitles[best])) best = idx;
-    });
+    for (let i = 1; i < subtitles.length; i++) {
+        if (subtitleLanguageRank(subtitles[i]) < subtitleLanguageRank(subtitles[best])) {
+            best = i;
+        }
+    }
     return best;
+}
+
+function installSettingSubtitleInterceptor(art, session) {
+    if (!art || !art.template || !art.template.$setting || art.template.$setting._tvzSubClick) return;
+    art.template.$setting._tvzSubClick = true;
+    art.template.$setting.addEventListener('click', (e) => {
+        const item = e.target && e.target.closest && e.target.closest('.art-setting-item');
+        if (!item) return;
+        const panel = item.closest('.art-setting-panel');
+        const isRoot = panel && panel === panel.parentNode?.firstElementChild;
+        if (!isRoot) return;
+        const text = item.querySelector('.art-setting-item-left-text')?.textContent || item.textContent;
+        if (text && text.trim().startsWith('Legendas')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            session.openedFromSettings = true;
+            art.setting.show = false;
+            toggleSubtitlesFlyout(session, true);
+        }
+    }, true);
 }
 
 function refreshSubtitleMenu(session) {
     const art = session.art;
-    const subtitles = session.subtitles;
     if (!art) return;
-    if (!subtitles.length) {
-        // Every player has the row, so external subtitles can be added to it later
-        upsertSetting(art, {
-            name: 'subtitle',
-            html: 'Legendas',
-            icon: NATIVE_ICONS.subtitle,
-            width: NATIVE_SETTING_WIDTH,
-            tooltip: SUBTITLES_NONE_LABEL,
-            selector: [{ default: true, html: SUBTITLES_NONE_LABEL }],
-            onSelect: (item) => item.html,
-        });
-        return;
+
+    renderSubtitlesFlyout(session);
+
+    let activeTooltip = 'Desativada';
+    if (session.activeSubtitleUrl) {
+        const activeSub = (session.subtitles || []).find(s => (s.url || s.file) === session.activeSubtitleUrl);
+        if (activeSub) {
+            const norm = String(activeSub.lang || '').toLowerCase();
+            if (norm.includes('brasil') || norm === 'pt-br' || norm === 'pob' || norm === 'br') {
+                activeTooltip = 'Português (Brasil)';
+            } else if (norm.startsWith('portug') || norm === 'pt' || norm === 'por') {
+                activeTooltip = 'Português';
+            } else if (norm.startsWith('ingl') || norm === 'en' || norm === 'eng' || norm === 'us') {
+                activeTooltip = 'Inglês';
+            } else {
+                activeTooltip = activeSub.label || activeSub.release || 'Ativada';
+            }
+        } else {
+            activeTooltip = 'Ativada';
+        }
     }
-    const preferred = chosenSubtitleIndex(subtitles);
-    const selector = subtitles.map((sub, idx) => ({
-        default: idx === preferred,
-        html: sub.label || sub.name || `Legenda ${idx + 1}`,
-        url: sub.url || sub.file,
-        lang: sub.lang || ''
-    }));
-    selector.unshift({ default: preferred < 0, html: 'Desativada', url: '', lang: 'off' });
+
+    const subtitles = session.subtitles || [];
+    const isOff = !session.activeSubtitleUrl;
+    const selector = [];
+    selector.push({
+        default: isOff,
+        html: 'Desativada',
+        url: '',
+        lang: 'off'
+    });
+
+    const sortedSubs = [...subtitles].map((sub, origIdx) => ({ sub, origIdx }))
+        .sort((a, b) => subtitleLanguageRank(a.sub) - subtitleLanguageRank(b.sub));
+
+    const langCounts = {};
+    sortedSubs.forEach(({ sub }) => {
+        const k = normLang(sub.lang);
+        langCounts[k] = (langCounts[k] || 0) + 1;
+    });
+
+    sortedSubs.forEach(({ sub }) => {
+        const k = normLang(sub.lang);
+        const isCurrent = (sub.url || sub.file) === session.activeSubtitleUrl;
+        let label = sub.label || (LANG_NAMES[k] || k.toUpperCase());
+        if (langCounts[k] > 1 && sub.release) {
+            label = `${LANG_NAMES[k] || k.toUpperCase()} (${sub.release})`;
+        }
+        selector.push({
+            default: isCurrent,
+            html: label,
+            url: sub.url || sub.file,
+            lang: sub.lang
+        });
+    });
 
     upsertSetting(art, {
         name: 'subtitle',
         html: 'Legendas',
         icon: NATIVE_ICONS.subtitle,
-        width: NATIVE_SETTING_WIDTH,
-        tooltip: selector[preferred + 1]?.html || 'Ativada',
-        selector,
-        onSelect: (item) => {
-            setPlayerPref('subtitle', item.url ? (item.lang || null) : 'off');
-            if (!item.url) {
-                art.subtitle.show = false;
-            } else {
-                art.subtitle.switch(item.url, { name: item.html });
-                art.subtitle.show = true;
-            }
-            return item.html;
-        }
+        tooltip: activeTooltip,
+        selector
     });
+
+    installSettingSubtitleInterceptor(art, session);
+}
+
+function getSubtitleDelayKey(session) {
+    const ctx = session.mediaContext;
+    if (!ctx) return null;
+    const s = ctx.tmdb_season != null ? ctx.tmdb_season : (ctx.season || 1);
+    const e = ctx.tmdb_episode != null ? ctx.tmdb_episode : (ctx.episode || 1);
+    const primaryId = ctx.id || ctx.imdbId || ctx.imdb_id;
+    const type = ctx.type === 'movie' ? 'movie' : 'series';
+    return type === 'movie'
+        ? `tvz_sub_delay:movie:${primaryId}`
+        : `tvz_sub_delay:series:${primaryId}:${s}:${e}`;
+}
+
+function getStoredSubtitleDelay(session) {
+    try {
+        const key = getSubtitleDelayKey(session);
+        if (!key) return 0;
+        const val = parseFloat(localStorage.getItem(key));
+        return isNaN(val) ? 0 : val;
+    } catch (e) {
+        return 0;
+    }
+}
+
+function setStoredSubtitleDelay(session, delay) {
+    try {
+        const key = getSubtitleDelayKey(session);
+        if (!key) return;
+        if (Math.abs(delay) < 0.05) {
+            localStorage.removeItem(key);
+        } else {
+            localStorage.setItem(key, String(Math.round(delay * 10) / 10));
+        }
+    } catch (e) {
+        // Optional
+    }
+}
+
+function setSubtitleDelay(session, delay) {
+    const art = session.art;
+    const clamped = Math.max(-10, Math.min(10, Math.round(delay * 10) / 10));
+    session.subDelay = clamped;
+    if (art) art.subtitleOffset = clamped;
+    setStoredSubtitleDelay(session, clamped);
+    showToast(`Sincronia: ${clamped >= 0 ? '+' : ''}${clamped.toFixed(1)}s`);
+}
+
+function updateSubtitlesControlActiveState(session) {
+    const art = session.art;
+    if (!art || !art.template) return;
+    const btn = art.template.$controls?.querySelector('.art-control-subtitle-btn');
+    if (btn) {
+        const isActive = Boolean(session.activeSubtitleUrl && art.subtitle && art.subtitle.show);
+        btn.classList.toggle('is-active', isActive);
+    }
+}
+
+function createSubtitlesFlyout(session) {
+    const art = session.art;
+    const player = art && art.template && art.template.$player;
+    if (!player) return;
+
+    installSubtitleSanitizer(art);
+
+    let backdrop = player.querySelector(`.tvz-subtitles-backdrop[data-session="${session.id}"]`);
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'tvz-subtitles-backdrop';
+        backdrop.dataset.session = String(session.id);
+        player.appendChild(backdrop);
+    }
+
+    let panel = player.querySelector(`.tvz-subtitles-panel[data-session="${session.id}"]`);
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.className = 'tvz-subtitles-panel';
+        panel.dataset.session = String(session.id);
+        player.appendChild(panel);
+    }
+
+    session.subtitlesBackdrop = backdrop;
+    session.subtitlesFlyoutPanel = panel;
+    session.activeLangDrilldown = null;
+    session.activeView = 'list';
+
+    // Prevent any tap/gesture on the panel from bleeding through to underlying video or timeline
+    ['pointerdown', 'mousedown', 'touchstart', 'touchend', 'click'].forEach(evt => {
+        panel.addEventListener(evt, (e) => {
+            e.stopPropagation();
+        }, { passive: false });
+    });
+
+    // Tapping the backdrop closes the flyout safely without triggering video seek or controls
+    const onBackdropDismiss = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSubtitlesFlyout(session, false);
+    };
+    ['pointerdown', 'touchstart', 'click'].forEach(evt => {
+        backdrop.addEventListener(evt, onBackdropDismiss, { passive: false });
+    });
+
+    renderSubtitlesFlyout(session);
+
+    const onDocPointerDown = (e) => {
+        if (!panel.classList.contains('is-open')) return;
+        if (!panel.contains(e.target) && !e.target.closest('.art-control-subtitle-btn')) {
+            toggleSubtitlesFlyout(session, false);
+        }
+    };
+    document.addEventListener('pointerdown', onDocPointerDown);
+
+    art.on('destroy', () => {
+        document.removeEventListener('pointerdown', onDocPointerDown);
+        if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+        if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+    });
+}
+
+function toggleSubtitlesFlyout(session, forceState) {
+    let panel = session.subtitlesFlyoutPanel;
+    let backdrop = session.subtitlesBackdrop;
+    if (!panel && session.art) {
+        createSubtitlesFlyout(session);
+        panel = session.subtitlesFlyoutPanel;
+        backdrop = session.subtitlesBackdrop;
+    }
+    if (!panel) return;
+
+    const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
+    if (willOpen) {
+        if (session.art && session.art.setting) session.art.setting.show = false;
+        session.activeLangDrilldown = null;
+        session.activeView = 'list';
+        renderSubtitlesFlyout(session);
+        panel.classList.add('is-open');
+        if (backdrop) backdrop.classList.add('is-open');
+        if (session.art && session.art.controls) {
+            session.art.controls.show = true;
+        }
+    } else {
+        panel.classList.remove('is-open');
+        if (backdrop) backdrop.classList.remove('is-open');
+    }
+}
+
+function renderSubtitlesFlyout(session) {
+    const panel = session.subtitlesFlyoutPanel;
+    if (!panel) return;
+
+    // View: Customizer / Configurações de Legenda
+    if (session.activeView === 'customize') {
+        const prefs = getPlayerPrefs();
+        const curDelay = session.subDelay || 0;
+        const curSize = prefs.subtitle_size || 100;
+        const curColor = prefs.subtitle_color || '#ffffff';
+        const curBg = prefs.subtitle_bg || 'shadow';
+
+        panel.innerHTML = `
+        <div class="tvz-sub-header tvz-sub-header-customize">
+            <div class="tvz-sub-header-left is-clickable tvz-sub-back-to-list" role="button" title="Voltar para legendas" aria-label="Voltar para legendas">
+                <div class="tvz-sub-header-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </div>
+                <span class="tvz-sub-title">Configurações de Legenda</span>
+            </div>
+            <div class="tvz-sub-header-right">
+                <button type="button" class="tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="tvz-sub-custom-body">
+            <!-- Delay / Sync -->
+            <div class="tvz-custom-section">
+                <div class="tvz-custom-label">
+                    <span>Atraso / Sincronia</span>
+                    <span class="tvz-delay-value">${curDelay >= 0 ? '+' : ''}${curDelay.toFixed(1)}s</span>
+                </div>
+                <div class="tvz-delay-controls">
+                    <button type="button" class="tvz-delay-btn" data-step="-0.5">-0.5s</button>
+                    <button type="button" class="tvz-delay-btn" data-step="0">Zerar</button>
+                    <button type="button" class="tvz-delay-btn" data-step="0.5">+0.5s</button>
+                </div>
+                <input type="range" class="tvz-delay-slider" min="-10" max="10" step="0.1" value="${curDelay}">
+            </div>
+
+            <!-- Font Size -->
+            <div class="tvz-custom-section">
+                <div class="tvz-custom-label"><span>Tamanho da Fonte</span></div>
+                <div class="tvz-pills-row">
+                    <button type="button" class="tvz-pill-btn tvz-size-pill ${curSize === 75 ? 'is-active' : ''}" data-size="75">75%</button>
+                    <button type="button" class="tvz-pill-btn tvz-size-pill ${curSize === 100 ? 'is-active' : ''}" data-size="100">100%</button>
+                    <button type="button" class="tvz-pill-btn tvz-size-pill ${curSize === 125 ? 'is-active' : ''}" data-size="125">125%</button>
+                    <button type="button" class="tvz-pill-btn tvz-size-pill ${curSize === 150 ? 'is-active' : ''}" data-size="150">150%</button>
+                </div>
+            </div>
+
+            <!-- Font Color -->
+            <div class="tvz-custom-section">
+                <div class="tvz-custom-label"><span>Cor do Texto</span></div>
+                <div class="tvz-color-swatches">
+                    <button type="button" class="tvz-color-swatch ${curColor === '#ffffff' ? 'is-active' : ''}" data-color="#ffffff" style="background:#ffffff;" title="Branco"></button>
+                    <button type="button" class="tvz-color-swatch ${curColor === '#facc15' ? 'is-active' : ''}" data-color="#facc15" style="background:#facc15;" title="Amarelo"></button>
+                    <button type="button" class="tvz-color-swatch ${curColor === '#22d3ee' ? 'is-active' : ''}" data-color="#22d3ee" style="background:#22d3ee;" title="Ciano"></button>
+                    <button type="button" class="tvz-color-swatch ${curColor === '#4ade80' ? 'is-active' : ''}" data-color="#4ade80" style="background:#4ade80;" title="Verde"></button>
+                </div>
+            </div>
+
+            <!-- Background Contrast -->
+            <div class="tvz-custom-section">
+                <div class="tvz-custom-label"><span>Contraste do Fundo</span></div>
+                <div class="tvz-pills-row">
+                    <button type="button" class="tvz-pill-btn tvz-bg-pill ${curBg === 'shadow' ? 'is-active' : ''}" data-bg="shadow">Sombra</button>
+                    <button type="button" class="tvz-pill-btn tvz-bg-pill ${curBg === 'box' ? 'is-active' : ''}" data-bg="box">Caixa</button>
+                </div>
+            </div>
+        </div>`;
+
+        const backBtn = panel.querySelector('.tvz-sub-back-to-list');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                session.activeView = 'list';
+                renderSubtitlesFlyout(session);
+            });
+        }
+
+        const closeBtn = panel.querySelector('.tvz-sub-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                session.openedFromSettings = false;
+                toggleSubtitlesFlyout(session, false);
+            });
+        }
+
+        panel.querySelectorAll('.tvz-delay-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const step = parseFloat(btn.getAttribute('data-step') || '0');
+                let nextDelay = step === 0 ? 0 : Math.round(((session.subDelay || 0) + step) * 10) / 10;
+                nextDelay = Math.max(-10, Math.min(10, nextDelay));
+                setSubtitleDelay(session, nextDelay);
+                renderSubtitlesFlyout(session);
+            });
+        });
+
+        const slider = panel.querySelector('.tvz-delay-slider');
+        if (slider) {
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                setSubtitleDelay(session, val);
+                const disp = panel.querySelector('.tvz-delay-value');
+                if (disp) disp.textContent = `${val >= 0 ? '+' : ''}${val.toFixed(1)}s`;
+            });
+        }
+
+        panel.querySelectorAll('.tvz-size-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const size = parseInt(btn.getAttribute('data-size') || '100', 10);
+                setPlayerPref('subtitle_size', size);
+                applySubtitleStyles(session.art);
+                renderSubtitlesFlyout(session);
+            });
+        });
+
+        panel.querySelectorAll('.tvz-color-swatch').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const color = btn.getAttribute('data-color') || '#ffffff';
+                setPlayerPref('subtitle_color', color);
+                applySubtitleStyles(session.art);
+                renderSubtitlesFlyout(session);
+            });
+        });
+
+        panel.querySelectorAll('.tvz-bg-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const bg = btn.getAttribute('data-bg') || 'shadow';
+                setPlayerPref('subtitle_bg', bg);
+                applySubtitleStyles(session.art);
+                renderSubtitlesFlyout(session);
+            });
+        });
+        return;
+    }
+
+    const subtitles = session.subtitles || [];
+    const activeUrl = session.activeSubtitleUrl;
+    const isDrilldown = Boolean(session.activeLangDrilldown);
+
+    let html = '';
+
+    // Header
+    if (isDrilldown) {
+        html += `
+        <div class="tvz-sub-header tvz-sub-header-drilldown">
+            <div class="tvz-sub-header-left is-clickable tvz-sub-back-btn" role="button" title="Voltar para todos os idiomas" aria-label="Voltar">
+                <div class="tvz-sub-header-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </div>
+                <span class="tvz-sub-title">${escapeHtml(session.activeLangDrilldownLabel || 'Voltar')}</span>
+            </div>
+            <div class="tvz-sub-header-right">
+                <button type="button" class="tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>`;
+    } else {
+        html += `
+        <div class="tvz-sub-header tvz-sub-header-main">
+            <div class="tvz-sub-header-left is-clickable tvz-sub-header-back" role="button" title="Voltar" aria-label="Voltar">
+                <div class="tvz-sub-header-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </div>
+                <span class="tvz-sub-title">Legendas</span>
+            </div>
+            <div class="tvz-sub-header-right">
+                <button type="button" class="tvz-sub-custom-trigger" title="Personalizar sincronia e aparência">Customizar</button>
+                <button type="button" class="tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>`;
+    }
+
+    html += '<div class="tvz-sub-list">';
+
+    if (isDrilldown) {
+        const groupSubs = subtitles.filter(s => normLang(s.lang) === session.activeLangDrilldown);
+        // Native tracks first in drilldown list
+        groupSubs.sort((a, b) => (b.isNative ? 1 : 0) - (a.isNative ? 1 : 0));
+        groupSubs.forEach((sub, idx) => {
+            const isSelected = activeUrl === (sub.url || sub.file);
+            const releaseLabel = sub.isNative
+                ? `${sub.label || 'Original da Fonte'}`
+                : (sub.release || `Versão ${idx + 1}`);
+            html += `
+            <div class="tvz-sub-item ${isSelected ? 'is-selected' : ''}" data-url="${escapeAttr(sub.url || sub.file)}" data-lang="${escapeAttr(sub.lang)}">
+                <div class="tvz-sub-item-left">
+                    <span class="tvz-sub-item-text">${escapeHtml(releaseLabel)}</span>
+                    ${sub.isNative ? '<span class="tvz-sub-badge">Fonte</span>' : ''}
+                </div>
+                <div class="tvz-sub-item-right">
+                    ${isSelected ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
+                </div>
+            </div>`;
+        });
+    } else {
+        const isOff = !activeUrl;
+        html += `
+        <div class="tvz-sub-item ${isOff ? 'is-selected' : ''}" data-url="" data-lang="off">
+            <div class="tvz-sub-item-left">
+                <span class="tvz-sub-item-text">Desativada</span>
+            </div>
+            <div class="tvz-sub-item-right">
+                ${isOff ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
+            </div>
+        </div>`;
+
+        // Group subtitles by normalized language
+        const groups = {};
+        subtitles.forEach(sub => {
+            const k = normLang(sub.lang);
+            if (!groups[k]) {
+                groups[k] = {
+                    key: k,
+                    label: LANG_NAMES[k] || sub.label || k.toUpperCase(),
+                    items: []
+                };
+            }
+            groups[k].items.push(sub);
+        });
+
+        const sortedGroups = Object.values(groups).sort((a, b) => {
+            const pA = LANG_PRIORITIES[a.key] || 99;
+            const pB = LANG_PRIORITIES[b.key] || 99;
+            return pA - pB;
+        });
+
+        sortedGroups.forEach(group => {
+            const langKey = group.key;
+            const items = group.items;
+            const hasActiveInGroup = items.some(s => (s.url || s.file) === activeUrl);
+            const activeSubInGroup = items.find(s => (s.url || s.file) === activeUrl);
+
+            if (items.length === 1) {
+                const sub = items[0];
+                const isSelected = activeUrl === (sub.url || sub.file);
+                html += `
+                <div class="tvz-sub-item ${isSelected ? 'is-selected' : ''}" data-url="${escapeAttr(sub.url || sub.file)}" data-lang="${escapeAttr(sub.lang)}">
+                    <div class="tvz-sub-item-left">
+                        ${getFlagSvg(langKey)}
+                        <span class="tvz-sub-item-text">${escapeHtml(group.label)}</span>
+                        ${sub.isNative ? '<span class="tvz-sub-badge">Original da Fonte</span>' : ''}
+                    </div>
+                    <div class="tvz-sub-item-right">
+                        ${isSelected ? '<span class="tvz-sub-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
+                    </div>
+                </div>`;
+            } else {
+                html += `
+                <div class="tvz-sub-item ${hasActiveInGroup ? 'is-selected' : ''}" data-drill="${escapeAttr(langKey)}" data-label="${escapeAttr(group.label)}">
+                    <div class="tvz-sub-item-left">
+                        ${getFlagSvg(langKey)}
+                        <span class="tvz-sub-item-text">${escapeHtml(group.label)}</span>
+                        ${activeSubInGroup && activeSubInGroup.isNative ? '<span class="tvz-sub-badge">Fonte</span>' : ''}
+                    </div>
+                    <div class="tvz-sub-item-right">
+                        <span class="tvz-sub-count">${items.length}</span>
+                        <span class="tvz-sub-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
+                    </div>
+                </div>`;
+            }
+        });
+
+        if (session.fetchingSubtitles) {
+            html += `
+            <div class="tvz-sub-item" style="opacity: 0.65; cursor: default;">
+                <div class="tvz-sub-item-left" style="gap: 8px;">
+                    <svg class="tvz-sub-spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    <span class="tvz-sub-item-text" style="font-size: 13px;">Buscando legendas online...</span>
+                </div>
+            </div>`;
+        } else if (subtitles.length === 0) {
+            html += `
+            <div class="tvz-sub-item" style="opacity: 0.6; cursor: default;">
+                <div class="tvz-sub-item-left">
+                    <span class="tvz-sub-item-text" style="font-size: 13px;">Nenhuma legenda encontrada</span>
+                </div>
+            </div>`;
+        }
+
+        html += `
+        <div class="tvz-sub-divider"></div>
+        <label class="tvz-sub-item tvz-sub-upload-trigger" role="button">
+            <div class="tvz-sub-item-left">
+                <span class="tvz-sub-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </span>
+                <span class="tvz-sub-item-text">Enviar arquivo (.srt / .vtt)</span>
+            </div>
+            <input type="file" accept=".srt,.vtt" class="tvz-sub-file-input" style="display:none">
+        </label>`;
+    }
+    html += '</div>';
+
+    panel.innerHTML = html;
+
+    panel.querySelectorAll('.tvz-sub-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (e.target && e.target.tagName === 'INPUT') return;
+
+            const drillLang = el.getAttribute('data-drill');
+            if (drillLang) {
+                session.activeLangDrilldown = drillLang;
+                session.activeLangDrilldownLabel = el.getAttribute('data-label') || '';
+                renderSubtitlesFlyout(session);
+                return;
+            }
+
+            const url = el.getAttribute('data-url');
+            if (url !== null) {
+                const lang = el.getAttribute('data-lang');
+                session.userToggledSubtitles = true;
+                session.activeSubtitleUrl = url || null;
+                setPlayerPref('subtitle', url ? (lang || null) : 'off');
+                if (!url) {
+                    session.art.subtitle.show = false;
+                    disableEmbeddedTextTracks(session.art);
+                    updateSubtitlesControlActiveState(session);
+                    renderSubtitlesFlyout(session);
+                    refreshSubtitleMenu(session);
+                } else {
+                    patchArtplayerSubtitleEngine(session.art);
+                    const matchedSub = (session.subtitles || []).find(s => (s.url || s.file) === url);
+                    const name = matchedSub ? (matchedSub.release || matchedSub.label || 'Legenda') : 'Legenda';
+                    (async () => {
+                        try {
+                            await session.art.subtitle.switch(url, { name, type: 'vtt' });
+                            session.art.subtitle.show = true;
+                            disableEmbeddedTextTracks(session.art);
+                            applySubtitleStyles(session.art);
+                        } catch (err) {
+                            console.warn('[Subtitles] Falha ao carregar faixa selecionada:', err);
+                            const sameLangSubs = matchedSub
+                                ? (session.subtitles || []).filter(s => s.lang === matchedSub.lang && (s.url || s.file) !== url)
+                                : [];
+                            if (sameLangSubs.length > 0) {
+                                const fallback = sameLangSubs[0];
+                                const fbUrl = fallback.url || fallback.file;
+                                const fbName = fallback.release || fallback.label || 'Legenda alternativa';
+                                if (session.art.notice) session.art.notice.show = 'Legenda indisponível. Tentando alternativa...';
+                                try {
+                                    await session.art.subtitle.switch(fbUrl, { name: fbName, type: 'vtt' });
+                                    session.activeSubtitleUrl = fbUrl;
+                                    session.art.subtitle.show = true;
+                                    disableEmbeddedTextTracks(session.art);
+                                    applySubtitleStyles(session.art);
+                                    renderSubtitlesFlyout(session);
+                                    updateSubtitlesControlActiveState(session);
+                                    return;
+                                } catch (fbErr) {}
+                            }
+                            if (session.art.notice) session.art.notice.show = 'Não foi possível carregar a legenda.';
+                        }
+                        updateSubtitlesControlActiveState(session);
+                        renderSubtitlesFlyout(session);
+                        refreshSubtitleMenu(session);
+                    })();
+                }
+            }
+        });
+    });
+
+    const backBtn = panel.querySelector('.tvz-sub-back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            session.activeLangDrilldown = null;
+            renderSubtitlesFlyout(session);
+        });
+    }
+
+    const headerBack = panel.querySelector('.tvz-sub-header-back');
+    if (headerBack) {
+        headerBack.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const backToSettings = Boolean(session.openedFromSettings);
+            session.openedFromSettings = false;
+            toggleSubtitlesFlyout(session, false);
+            if (backToSettings && session.art && session.art.setting) {
+                session.art.setting.show = true;
+            }
+        });
+    }
+
+    panel.querySelectorAll('.tvz-sub-close-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            session.openedFromSettings = false;
+            toggleSubtitlesFlyout(session, false);
+        });
+    });
+
+    const customTrigger = panel.querySelector('.tvz-sub-custom-trigger');
+    if (customTrigger) {
+        customTrigger.addEventListener('click', () => {
+            session.activeView = 'customize';
+            renderSubtitlesFlyout(session);
+        });
+    }
+
+    const fileInput = panel.querySelector('.tvz-sub-file-input');
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target.result;
+                const vttText = srtToVtt(text);
+                const blob = new Blob([vttText], { type: 'text/vtt;charset=utf-8' });
+                const blobUrl = URL.createObjectURL(blob);
+                const customTrack = {
+                    id: `local_${Date.now()}`,
+                    label: file.name.replace(/\.[^.]+$/, '') || 'Legenda Local',
+                    lang: 'pt-BR',
+                    url: blobUrl,
+                    isNative: false,
+                    isCustom: true
+                };
+                session.subtitles.unshift(customTrack);
+                session.userToggledSubtitles = true;
+                session.activeSubtitleUrl = blobUrl;
+                patchArtplayerSubtitleEngine(session.art);
+                session.art.subtitle.switch(blobUrl, { name: customTrack.label, type: 'vtt' });
+                disableEmbeddedTextTracks(session.art);
+                session.art.subtitle.show = true;
+                updateSubtitlesControlActiveState(session);
+                renderSubtitlesFlyout(session);
+                refreshSubtitleMenu(session);
+                showToast('Legenda personalizada carregada!');
+            };
+            reader.readAsText(file, 'utf-8');
+        });
+    }
+}
+
+export function patchArtplayerSubtitleEngine(art) {
+    if (!art || !art.subtitle || art._tvzSubEnginePatched) return;
+    art._tvzSubEnginePatched = true;
+
+    try {
+        Object.defineProperty(art.subtitle, 'textTrack', {
+            get() {
+                if (art.template && art.template.$track && art.template.$track.track) {
+                    return art.template.$track.track;
+                }
+                return art.template?.$video?.textTracks?.[0] || null;
+            },
+            configurable: true
+        });
+
+        Object.defineProperty(art.subtitle, 'activeCue', {
+            get() {
+                const track = this.textTrack;
+                return track && track.activeCues ? track.activeCues[0] : null;
+            },
+            configurable: true
+        });
+    } catch (e) {
+        console.warn('[PlayerEngine] Subtitle engine patch notice:', e);
+    }
+}
+
+export function disableEmbeddedTextTracks(art) {
+    try {
+        const video = art?.template?.$video;
+        if (video && video.textTracks) {
+            for (let i = 0; i < video.textTracks.length; i++) {
+                const track = video.textTracks[i];
+                if (art.template?.$track && track === art.template.$track.track) continue;
+                track.mode = 'disabled';
+            }
+        }
+    } catch (e) {}
+}
+
+function installSubtitleSanitizer(art) {
+    patchArtplayerSubtitleEngine(art);
+    if (!art || !art.template || !art.template.$subtitle || art._tvzSubSanitizer) return;
+    art._tvzSubSanitizer = true;
+
+    function sanitizeSubtitleDom(el) {
+        if (!el) return;
+        const lines = el.querySelectorAll('.art-subtitle-line');
+        if (lines && lines.length > 0) {
+            lines.forEach(line => {
+                if (line.innerHTML && (line.innerHTML.includes('{') || line.innerHTML.includes('\\N'))) {
+                    line.innerHTML = line.innerHTML
+                        .replace(/\\N/g, '<br>')
+                        .replace(/\{[^}]*\}/g, '')
+                        .trim();
+                }
+            });
+        } else if (el.innerHTML && (el.innerHTML.includes('{') || el.innerHTML.includes('\\N'))) {
+            el.innerHTML = el.innerHTML
+                .replace(/\\N/g, '<br>')
+                .replace(/\{[^}]*\}/g, '')
+                .trim();
+        }
+    }
+
+    art.on('subtitleUpdate', () => {
+        sanitizeSubtitleDom(art.template.$subtitle);
+    });
+
+    if (window.MutationObserver) {
+        const observer = new MutationObserver(() => {
+            sanitizeSubtitleDom(art.template.$subtitle);
+        });
+        observer.observe(art.template.$subtitle, { childList: true, subtree: true, characterData: true });
+        art.on('destroy', () => observer.disconnect());
+    }
+}
+
+function installSubtitleControl(session) {
+    const art = session.art;
+    if (!art || art.tvzSubtitlesInstalled) return;
+    art.tvzSubtitlesInstalled = true;
+
+    // Restore subtitle delay offset for this title
+    const savedDelay = getStoredSubtitleDelay(session);
+    if (savedDelay !== 0) {
+        session.subDelay = savedDelay;
+        art.subtitleOffset = savedDelay;
+    }
+
+    createSubtitlesFlyout(session);
+
+    // Fallback if controls array was not created on instantiation
+    if (art.controls && !art.template.$controls?.querySelector('.art-control-subtitle-btn')) {
+        try {
+            art.controls.add({
+                name: 'tvz-subtitles-btn',
+                position: 'right',
+                index: 15,
+                html: `<i class="art-icon art-control-subtitle-btn" role="button" aria-label="Legendas (C)" title="Legendas (C)">${NATIVE_ICONS.subtitle}</i>`,
+                click: () => {
+                    session.openedFromSettings = false;
+                    toggleSubtitlesFlyout(session);
+                }
+            });
+        } catch (e) {
+            // Optional control
+        }
+    }
+
+    refreshSubtitleMenu(session);
+    updateSubtitlesControlActiveState(session);
 }
