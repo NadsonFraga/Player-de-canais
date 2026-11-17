@@ -13,17 +13,17 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261117_0941';
-import { fetchTmdb } from '../core/tmdb.js?v=20261117_0941';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_0941';
-import { showToast } from '../core/toast.js?v=20261117_0941';
-import { syncPageLock } from '../core/activity.js?v=20261117_0941';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261117_0941';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261117_0941';
-import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261117_0941';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261117_0941';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261117_0941';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261117_0941';
+} from '../core/constants.js?v=20261117_1156';
+import { fetchTmdb } from '../core/tmdb.js?v=20261117_1156';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1156';
+import { showToast } from '../core/toast.js?v=20261117_1156';
+import { syncPageLock } from '../core/activity.js?v=20261117_1156';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261117_1156';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261117_1156';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261117_1156';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261117_1156';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261117_1156';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261117_1156';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -33,7 +33,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261117_0941';
+} from './series.js?v=20261117_1156';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
@@ -955,8 +955,11 @@ function openTrailer(key, name) {
     const iframe = document.createElement('iframe');
     iframe.src = `https://www.youtube-nocookie.com/embed/${key}?autoplay=1&rel=0&playsinline=1`;
     iframe.title = name || 'Trailer';
-    iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-    iframe.setAttribute('allowfullscreen', '');
+    iframe.allow = 'autoplay *; encrypted-media *; picture-in-picture *; fullscreen *';
+    iframe.allowFullscreen = true;
+    iframe.setAttribute('allowfullscreen', 'true');
+    iframe.setAttribute('webkitallowfullscreen', 'true');
+    iframe.setAttribute('mozallowfullscreen', 'true');
     iframe.referrerPolicy = 'strict-origin-when-cross-origin';
     frame.appendChild(iframe);
     const wasHidden = modal.classList.contains('hidden');

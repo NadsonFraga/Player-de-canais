@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261117_0941';
-import { showToast } from '../core/toast.js?v=20261117_0941';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261117_0941';
-import { buildFeedRows } from '../core/feedRows.js?v=20261117_0941';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261117_0941';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_0941';
-import { getUiSvg } from '../core/icons.js?v=20261117_0941';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261117_0941';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261117_0941';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_0941';
-import { fetchTmdb } from '../core/tmdb.js?v=20261117_0941';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261117_0941';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261117_0941';
-import { resumeStartTime } from '../core/resume.js?v=20261117_0941';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261117_0941';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261117_0941';
+} from '../core/constants.js?v=20261117_1156';
+import { showToast } from '../core/toast.js?v=20261117_1156';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261117_1156';
+import { buildFeedRows } from '../core/feedRows.js?v=20261117_1156';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261117_1156';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_1156';
+import { getUiSvg } from '../core/icons.js?v=20261117_1156';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261117_1156';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261117_1156';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1156';
+import { fetchTmdb } from '../core/tmdb.js?v=20261117_1156';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261117_1156';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261117_1156';
+import { resumeStartTime } from '../core/resume.js?v=20261117_1156';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261117_1156';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261117_1156';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -58,12 +58,19 @@ function getOrCreateMovieIframe() {
         iframe = document.createElement("iframe");
         iframe.id = "movie-modal-iframe";
         iframe.className = "movie-modal-iframe";
-        iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
-        iframe.setAttribute("allowfullscreen", "");
-        iframe.setAttribute("webkitallowfullscreen", "");
-        iframe.setAttribute("mozallowfullscreen", "");
+        iframe.allow = "autoplay *; encrypted-media *; picture-in-picture *; fullscreen *";
+        iframe.allowFullscreen = true;
+        iframe.setAttribute("allowfullscreen", "true");
+        iframe.setAttribute("webkitallowfullscreen", "true");
+        iframe.setAttribute("mozallowfullscreen", "true");
         iframe.setAttribute("referrerpolicy", "no-referrer");
         stage.appendChild(iframe);
+    } else {
+        iframe.allow = "autoplay *; encrypted-media *; picture-in-picture *; fullscreen *";
+        iframe.allowFullscreen = true;
+        iframe.setAttribute("allowfullscreen", "true");
+        iframe.setAttribute("webkitallowfullscreen", "true");
+        iframe.setAttribute("mozallowfullscreen", "true");
     }
     return iframe;
 }
@@ -1167,6 +1174,52 @@ export function setupMoviePlayer() {
 
 let currentMoviePlayOptions = {};
 
+/** Populates the Netflix/MGEB style Obra Card at top-left of the player */
+function updateMovieObraCard(movie) {
+    if (!movie) return;
+    const card = document.getElementById("movie-obra-card");
+    if (!card) return;
+    const posterEl = document.getElementById("movie-obra-poster");
+    const titleEl = document.getElementById("movie-obra-title");
+    const ratingEl = document.getElementById("movie-obra-rating");
+    const yearEl = document.getElementById("movie-obra-year");
+    const certEl = document.getElementById("movie-obra-cert");
+    const genresEl = document.getElementById("movie-obra-genres");
+    const overviewEl = document.getElementById("movie-obra-overview");
+
+    if (posterEl) {
+        posterEl.src = movie.poster_path ? `${TMDB_IMG_W500}${movie.poster_path}` : '';
+        posterEl.alt = movie.title || '';
+    }
+    if (titleEl) titleEl.textContent = movie.title || '';
+    if (ratingEl) {
+        const vote = movie.vote_average ? movie.vote_average.toFixed(1) : '';
+        ratingEl.textContent = vote ? `★ ${vote}` : '';
+        ratingEl.style.display = vote ? 'inline-flex' : 'none';
+    }
+    if (yearEl) {
+        const year = (movie.release_date || '').substring(0, 4);
+        yearEl.textContent = year;
+        yearEl.style.display = year ? 'inline-flex' : 'none';
+    }
+    if (certEl) {
+        certEl.textContent = movie.certification || movie.content_rating || '';
+        certEl.style.display = certEl.textContent ? 'inline-flex' : 'none';
+    }
+    if (genresEl) {
+        let genreNames = [];
+        if (Array.isArray(movie.genres)) {
+            genreNames = movie.genres.map(g => (typeof g === 'object' ? g.name : g)).filter(Boolean);
+        } else if (Array.isArray(movie.genre_ids)) {
+            genreNames = movie.genre_ids.map(id => TMDB_GENRES[id]).filter(Boolean);
+        }
+        genresEl.textContent = genreNames.slice(0, 4).join(', ');
+    }
+    if (overviewEl) {
+        overviewEl.textContent = movie.overview || 'Sinopse não disponível em português.';
+    }
+}
+
 /** Opens the movie player page over the title page and starts the Player Principal. */
 export function playMovie(movie, options = {}) {
     if (!movie || movie.id == null) return;
@@ -1176,6 +1229,8 @@ export function playMovie(movie, options = {}) {
     if (!view) return;
     currentSelectedMovie = movie;
     activeMovieServer = null;
+
+    updateMovieObraCard(movie);
 
     let firstButton = null;
     const serversGrid = document.getElementById("movie-servers-grid");

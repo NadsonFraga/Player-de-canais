@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261117_0941';
-import { showToast } from '../core/toast.js?v=20261117_0941';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261117_0941';
-import { buildFeedRows } from '../core/feedRows.js?v=20261117_0941';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261117_0941';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_0941';
-import { resumeStartTime } from '../core/resume.js?v=20261117_0941';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261117_0941';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261117_0941';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_0941';
-import { fetchTmdb } from '../core/tmdb.js?v=20261117_0941';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261117_0941';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261117_0941';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261117_0941';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261117_0941';
+} from '../core/constants.js?v=20261117_1156';
+import { showToast } from '../core/toast.js?v=20261117_1156';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261117_1156';
+import { buildFeedRows } from '../core/feedRows.js?v=20261117_1156';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261117_1156';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_1156';
+import { resumeStartTime } from '../core/resume.js?v=20261117_1156';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261117_1156';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261117_1156';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1156';
+import { fetchTmdb } from '../core/tmdb.js?v=20261117_1156';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261117_1156';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261117_1156';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261117_1156';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261117_1156';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -95,12 +95,19 @@ function getOrCreateSeriesIframe() {
         iframe = document.createElement("iframe");
         iframe.id = "series-modal-iframe";
         iframe.className = "movie-modal-iframe series-theater-iframe";
-        iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
-        iframe.setAttribute("allowfullscreen", "");
-        iframe.setAttribute("webkitallowfullscreen", "");
-        iframe.setAttribute("mozallowfullscreen", "");
+        iframe.allow = "autoplay *; encrypted-media *; picture-in-picture *; fullscreen *";
+        iframe.allowFullscreen = true;
+        iframe.setAttribute("allowfullscreen", "true");
+        iframe.setAttribute("webkitallowfullscreen", "true");
+        iframe.setAttribute("mozallowfullscreen", "true");
         iframe.setAttribute("referrerpolicy", "no-referrer");
         stage.appendChild(iframe);
+    } else {
+        iframe.allow = "autoplay *; encrypted-media *; picture-in-picture *; fullscreen *";
+        iframe.allowFullscreen = true;
+        iframe.setAttribute("allowfullscreen", "true");
+        iframe.setAttribute("webkitallowfullscreen", "true");
+        iframe.setAttribute("mozallowfullscreen", "true");
     }
     return iframe;
 }
@@ -2744,6 +2751,65 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber) {
     return openEpisode(showItem, { season: seasonNumber, episode: episodeNumber });
 }
 
+/** Populates the Netflix/MGEB style Obra Card for Series and Anime at top-left of the player */
+function updateSeriesObraCard(showItem, seasonNumber, episodeNumber, epData, context = {}) {
+    if (!showItem) return;
+    const card = document.getElementById("series-obra-card");
+    if (!card) return;
+    const posterEl = document.getElementById("series-obra-poster");
+    const titleEl = document.getElementById("series-obra-title");
+    const ratingEl = document.getElementById("series-obra-rating");
+    const yearEl = document.getElementById("series-obra-year");
+    const certEl = document.getElementById("series-obra-cert");
+    const epMetaEl = document.getElementById("series-obra-ep-meta");
+    const genresEl = document.getElementById("series-obra-genres");
+    const overviewEl = document.getElementById("series-obra-overview");
+
+    if (posterEl) {
+        const still = epData?.still_path;
+        const poster = still ? `${TMDB_IMG_W500}${still}` : (showItem.poster_path ? `${TMDB_IMG_W500}${showItem.poster_path}` : '');
+        posterEl.src = poster;
+        posterEl.alt = showItem.name || showItem.title || '';
+    }
+    if (titleEl) {
+        const showName = showItem.name || showItem.title || 'Série';
+        const epName = epData?.name && !isGenericEpisodeName(epData.name) ? ` - ${epData.name}` : '';
+        titleEl.textContent = `${showName}${epName}`;
+    }
+    if (ratingEl) {
+        const vote = epData?.vote_average || showItem.vote_average;
+        const voteStr = vote ? Number(vote).toFixed(1) : '';
+        ratingEl.textContent = voteStr ? `★ ${voteStr}` : '';
+        ratingEl.style.display = voteStr ? 'inline-flex' : 'none';
+    }
+    if (yearEl) {
+        const year = (showItem.first_air_date || showItem.release_date || '').substring(0, 4);
+        yearEl.textContent = year;
+        yearEl.style.display = year ? 'inline-flex' : 'none';
+    }
+    if (certEl) {
+        certEl.textContent = showItem.certification || showItem.content_rating || '';
+        certEl.style.display = certEl.textContent ? 'inline-flex' : 'none';
+    }
+    if (epMetaEl) {
+        const absNum = activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode;
+        epMetaEl.textContent = context && context.isAnime && absNum ? `Ep. ${absNum}` : `T${seasonNumber}:E${episodeNumber}`;
+        epMetaEl.style.display = 'inline-flex';
+    }
+    if (genresEl) {
+        let genreNames = [];
+        if (Array.isArray(showItem.genres)) {
+            genreNames = showItem.genres.map(g => (typeof g === 'object' ? g.name : g)).filter(Boolean);
+        } else if (Array.isArray(showItem.genre_ids)) {
+            genreNames = showItem.genre_ids.map(id => TMDB_GENRES[id]).filter(Boolean);
+        }
+        genresEl.textContent = genreNames.slice(0, 4).join(', ');
+    }
+    if (overviewEl) {
+        overviewEl.textContent = epData?.overview || showItem.overview || 'Sinopse não disponível em português.';
+    }
+}
+
 /** Starts a resolved episode (see resolveEpisodeContext). Only openEpisode calls it. */
 function startEpisodePlayback(context, options = {}) {
     const showItem = context.show;
@@ -2813,6 +2879,7 @@ function startEpisodePlayback(context, options = {}) {
             if (currentOverviewEl && match.overview) {
                 currentOverviewEl.textContent = match.overview;
             }
+            updateSeriesObraCard(showItem, seasonNumber, episodeNumber, activeSeriesPlaying.episodeData, context);
         }).catch(err => {
             console.warn("[Series] Não foi possível obter o nome do episódio do TMDB:", err);
         });
@@ -2869,6 +2936,7 @@ function startEpisodePlayback(context, options = {}) {
     if (overviewEl) {
         overviewEl.textContent = epData?.overview || showItem.overview || "Sinopse não disponível em português.";
     }
+    updateSeriesObraCard(showItem, seasonNumber, episodeNumber, epData, context);
 
     const seriesArt = document.getElementById("series-artplayer-container");
     const seriesLoader = document.getElementById("series-theater-loader");

@@ -4,14 +4,14 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261117_0941';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261117_0941';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261117_0941';
-import { showToast } from '../core/toast.js?v=20261117_0941';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261117_0941';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261117_0941';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261117_0941';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_0941';
+import { store } from '../core/state.js?v=20261117_1156';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261117_1156';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261117_1156';
+import { showToast } from '../core/toast.js?v=20261117_1156';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261117_1156';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261117_1156';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261117_1156';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1156';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -1264,10 +1264,10 @@ export function renderPlayerView(activeChannel) {
                 <iframe 
                     id="stream-iframe"
                     src="" 
-                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
-                    allowfullscreen
-                    webkitallowfullscreen
-                    mozallowfullscreen
+                    allow="autoplay *; encrypted-media *; picture-in-picture *; fullscreen *" 
+                    allowfullscreen="true"
+                    webkitallowfullscreen="true"
+                    mozallowfullscreen="true"
                     referrerpolicy="no-referrer"
                     class="hidden"
                 ></iframe>
