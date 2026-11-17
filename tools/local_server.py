@@ -1675,7 +1675,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         if b"referrer-policy" not in already_sent:
             self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
         if b"permissions-policy" not in already_sent:
-            self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()")
+            self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=(), fullscreen=*")
         if b"x-frame-options" not in already_sent:
             self.send_header("X-Frame-Options", "SAMEORIGIN")
         # The production CSP from _headers ("/*" block); /api/stream sends its own sandbox policy
