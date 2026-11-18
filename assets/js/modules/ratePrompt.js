@@ -6,10 +6,10 @@
  * The card lives in the player stage (the element that goes fullscreen), outside Artplayer's box, so it shows in
  * fullscreen and keeps its own colors. Asked once per title per visit, and never for a title already rated.
  */
-import { escapeHtml } from '../core/sanitize.js?v=20261118_1711';
-import { showToast } from '../core/toast.js?v=20261118_1711';
-import { getLibraryState, setRating, setWatched } from '../core/library.js?v=20261118_1711';
-import { createRateStars, formatStars } from '../core/rateStars.js?v=20261118_1711';
+import { escapeHtml } from '../core/sanitize.js?v=20261118_1757';
+import { showToast } from '../core/toast.js?v=20261118_1757';
+import { getLibraryState, setRating, setWatched } from '../core/library.js?v=20261118_1757';
+import { createRateStars, formatStars } from '../core/rateStars.js?v=20261118_1757';
 
 const asked = new Set();
 

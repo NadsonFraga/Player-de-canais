@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261118_1711';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1711';
-import { showToast } from '../core/toast.js?v=20261118_1711';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1711';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1711';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1711';
-import { formatClock } from '../core/resume.js?v=20261118_1711';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1711';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1711';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1711';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1711';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1711';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1711';
+import { store } from '../core/state.js?v=20261118_1757';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1757';
+import { showToast } from '../core/toast.js?v=20261118_1757';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1757';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1757';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1757';
+import { formatClock } from '../core/resume.js?v=20261118_1757';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1757';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1757';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1757';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1757';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1757';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1757';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1923,13 +1923,14 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             createSettingsFlyout(session);
 
             // Canvas Click Handler: Clicking the video reliably toggles playback (Play/Pause)
-            if (art.template && art.template.$mask) {
-                art.template.$mask.addEventListener('click', (e) => {
+            if (art.template && art.template.$player) {
+                const handleCanvasClick = (e) => {
                     if (e.button !== 0) return;
-                    if (e.target.closest && e.target.closest(
+                    const isStateIcon = Boolean(e.target && e.target.closest && e.target.closest('.art-state'));
+                    if (!isStateIcon && e.target && e.target.closest && e.target.closest(
                         '.tvz-settings-panel, .tvz-subtitles-panel, .tvz-servers-panel, .series-player-drawer, ' +
                         '.art-controls, .art-bottom, .art-top, .movie-player-top-bar, .series-player-top-bar, ' +
-                        '.tvz-side-card, .art-control, .art-state, button, a, select, input'
+                        '.tvz-side-card, .art-control, button, a, select, input'
                     )) return;
 
                     // If any flyout/drawer is open, clicking canvas closes it
@@ -1942,20 +1943,22 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                         return;
                     }
 
-                    // On mouse or non-mobile devices, toggle playback directly
-                    if (window.matchMedia('(pointer: fine)').matches || !art.template.$player.classList.contains('art-mobile')) {
-                        e.stopImmediatePropagation();
-                        if (art.video) {
-                            if (art.video.paused) {
-                                art.play();
-                            } else {
-                                art.pause();
-                            }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    if (art.video) {
+                        if (art.video.paused) {
+                            art.play();
                         } else {
-                            art.toggle();
+                            art.pause();
                         }
+                    } else {
+                        art.toggle();
                     }
-                }, true);
+                };
+
+                art.template.$mask?.addEventListener('click', handleCanvasClick, true);
+                art.template.$player.querySelector('.art-state')?.addEventListener('click', handleCanvasClick, true);
             }
 
             // Reliable auto-hide controls: hides controls on inactivity or when mouse leaves window
@@ -1968,6 +1971,30 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                     document.getElementById('movie-servers-flyout-panel')?.classList.contains('is-open') ||
                     document.getElementById('series-servers-flyout-panel')?.classList.contains('is-open') ||
                     !document.getElementById('series-player-drawer')?.classList.contains('hidden')) return;
+
+                controlsHideTimer = setTimeout(() => {
+                    if (!art.video || art.video.paused) return;
+                    if (session.settingsFlyoutPanel?.classList.contains('is-open') ||
+                        session.subtitlesFlyoutPanel?.classList.contains('is-open') ||
+                        document.getElementById('movie-servers-flyout-panel')?.classList.contains('is-open') ||
+                        document.getElementById('series-servers-flyout-panel')?.classList.contains('is-open') ||
+                        !document.getElementById('series-player-drawer')?.classList.contains('hidden')) return;
+
+                    art.controls.show = false;
+                    art.hover = false;
+                    if (art.template?.$player) {
+                        art.template.$player.classList.remove('art-hover', 'art-control-show');
+                    }
+                    if (document.activeElement && art.template.$player?.contains(document.activeElement)) {
+                        document.activeElement.blur();
+                    }
+                }, delayMs);
+            };
+
+            art.template.$player?.addEventListener('mousemove', () => scheduleControlsHide(2800));
+            art.template.$player?.addEventListener('mouseleave', () => scheduleControlsHide(400));
+            document.documentElement.addEventListener('mouseleave', () => scheduleControlsHide(200));
+            window.addEventListener('blur', () => scheduleControlsHide(200));
 
                 controlsHideTimer = setTimeout(() => {
                     if (!art.video || art.video.paused) return;
@@ -3655,14 +3682,15 @@ function renderSubtitlesFlyout(session) {
 
         panel.innerHTML = `
         <div class="tvz-sub-header tvz-sub-header-customize">
-            <div class="tvz-sub-header-left is-clickable tvz-sub-back-to-list" role="button" title="Voltar para legendas" aria-label="Voltar para legendas">
-                <div class="tvz-sub-header-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </div>
-                <span class="tvz-sub-title">Configurações de Legenda</span>
+            <div class="tvz-sub-header-left">
+                <button type="button" class="tvz-panel-back-btn tvz-sub-back-to-list" title="Voltar" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    <span>Voltar</span>
+                </button>
+                <span class="tvz-sub-title">Customizar Legendas</span>
             </div>
             <div class="tvz-sub-header-right">
-                <button type="button" class="tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
+                <button type="button" class="tvz-panel-close-btn tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
@@ -3789,14 +3817,15 @@ function renderSubtitlesFlyout(session) {
     if (isDrilldown) {
         html += `
         <div class="tvz-sub-header tvz-sub-header-drilldown">
-            <div class="tvz-sub-header-left is-clickable tvz-sub-back-btn" role="button" title="Voltar para todos os idiomas" aria-label="Voltar">
-                <div class="tvz-sub-header-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </div>
+            <div class="tvz-sub-header-left">
+                <button type="button" class="tvz-panel-back-btn tvz-sub-back-btn" title="Voltar para todos os idiomas" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    <span>Voltar</span>
+                </button>
                 <span class="tvz-sub-title">${escapeHtml(session.activeLangDrilldownLabel || 'Voltar')}</span>
             </div>
             <div class="tvz-sub-header-right">
-                <button type="button" class="tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
+                <button type="button" class="tvz-panel-close-btn tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
@@ -3804,15 +3833,20 @@ function renderSubtitlesFlyout(session) {
     } else {
         html += `
         <div class="tvz-sub-header tvz-sub-header-main">
-            <div class="tvz-sub-header-left is-clickable tvz-sub-header-back" role="button" title="Voltar" aria-label="Voltar">
+            <div class="tvz-sub-header-left">
+                ${session.openedFromSettings ? `
+                <button type="button" class="tvz-panel-back-btn tvz-sub-back-to-settings" title="Voltar às Configurações" aria-label="Voltar às Configurações">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    <span>Voltar</span>
+                </button>` : `
                 <div class="tvz-sub-header-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </div>
+                    ${NATIVE_ICONS.subtitle}
+                </div>`}
                 <span class="tvz-sub-title">Legendas</span>
             </div>
             <div class="tvz-sub-header-right">
-                <button type="button" class="tvz-sub-custom-trigger" title="Personalizar sincronia e aparência">Customizar</button>
-                <button type="button" class="tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
+                <button type="button" class="tvz-panel-action-btn tvz-sub-custom-trigger" title="Personalizar sincronia e aparência">Customizar</button>
+                <button type="button" class="tvz-panel-close-btn tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
@@ -4016,16 +4050,13 @@ function renderSubtitlesFlyout(session) {
         });
     }
 
-    const headerBack = panel.querySelector('.tvz-sub-header-back');
-    if (headerBack) {
-        headerBack.addEventListener('click', (e) => {
+    const backToSettings = panel.querySelector('.tvz-sub-back-to-settings');
+    if (backToSettings) {
+        backToSettings.addEventListener('click', (e) => {
             e.stopPropagation();
-            const backToSettings = Boolean(session.openedFromSettings);
             session.openedFromSettings = false;
             toggleSubtitlesFlyout(session, false);
-            if (backToSettings && session.art && session.art.setting) {
-                session.art.setting.show = true;
-            }
+            toggleSettingsFlyout(session, true);
         });
     }
 
@@ -4415,6 +4446,7 @@ function renderSettingsFlyout(session) {
         });
         panel.querySelector('[data-action="open-subtitles-panel"]')?.addEventListener('click', (e) => {
             if (e.target.closest('.tvz-toggle-switch')) return;
+            session.openedFromSettings = true;
             toggleSettingsFlyout(session, false);
             toggleSubtitlesFlyout(session, true);
         });
@@ -4610,11 +4642,16 @@ function renderSettingsFlyout(session) {
 
     panel.innerHTML = `
         <div class="tvz-settings-sub-header">
-            <button type="button" class="tvz-settings-back-btn" title="Voltar" aria-label="Voltar">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                <span>Voltar</span>
+            <div class="tvz-settings-header-left">
+                <button type="button" class="tvz-settings-back-btn" title="Voltar" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>Voltar</span>
+                </button>
+                <span class="tvz-settings-sub-title">${subTitle}</span>
+            </div>
+            <button type="button" class="tvz-panel-close-btn tvz-settings-sub-close-btn" title="Fechar" aria-label="Fechar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
-            <span class="tvz-settings-sub-title">${subTitle}</span>
         </div>
         <div class="tvz-settings-body">
             ${bodyHtml}
@@ -4624,6 +4661,10 @@ function renderSettingsFlyout(session) {
     panel.querySelector('.tvz-settings-back-btn')?.addEventListener('click', () => {
         session.settingsView = 'main';
         renderSettingsFlyout(session);
+    });
+
+    panel.querySelector('.tvz-settings-sub-close-btn')?.addEventListener('click', () => {
+        toggleSettingsFlyout(session, false);
     });
 
     if (currentView === 'quality') {

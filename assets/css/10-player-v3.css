@@ -1001,13 +1001,13 @@
 
     /* Streaming Industry Standard Typography */
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     letter-spacing: 0.02em !important;
     line-height: 1.35 !important;
     text-align: center !important;
 
     /* Responsive font-size in windowed mode, multiplied by user scale */
-    font-size: calc(clamp(23px, 2.3vw, 29px) * var(--tvz-sub-scale, 1)) !important;
+    font-size: calc(clamp(26px, 2.8vw, 36px) * var(--tvz-sub-scale, 1)) !important;
     color: var(--tvz-sub-color, #ffffff) !important;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -1020,9 +1020,9 @@
         0 1px 3px rgba(0, 0, 0, 0.95),
         0 2px 4px rgba(0, 0, 0, 0.95),
         0 0 8px rgba(0, 0, 0, 0.6) !important;
-    -webkit-text-stroke: 0.35px rgba(0, 0, 0, 0.3);
+    -webkit-text-stroke: 0.4px rgba(0, 0, 0, 0.35);
 
-    bottom: 58px !important;
+    bottom: 80px !important;
     transition: bottom 0.2s cubic-bezier(0.2, 0, 0, 1), font-size 0.15s ease;
 }
 
@@ -1052,10 +1052,10 @@
 /* Native video ::cue fallback in case browser native cues activate */
 .art-video-player video::cue {
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     background-color: rgba(0, 0, 0, 0.75) !important;
     color: #ffffff !important;
-    font-size: 1.15rem !important;
+    font-size: 1.25rem !important;
     line-height: 1.35 !important;
     text-shadow: 0 0 3px #000000, 0 1px 3px rgba(0, 0, 0, 0.95) !important;
 }
@@ -1063,16 +1063,15 @@
 /* Controls visible in windowed mode: lift subtitle slightly */
 .art-video-player.art-control-show .art-subtitle,
 .art-video-player.art-hover .art-subtitle {
-    bottom: 96px !important;
+    bottom: 115px !important;
 }
 
-/* Fullscreen mode on desktop / TV / Web Fullscreen:
-   Proportionally scaled to 2.7vh (~29px at 1080p, ~34px at 1440p) */
+/* Fullscreen mode on desktop / TV / Web Fullscreen */
 .art-video-player.art-fullscreen .art-subtitle,
 .art-video-player.art-fullscreen-web .art-subtitle,
 :fullscreen .art-video-player .art-subtitle {
-    font-size: calc(clamp(28px, 3.2vh, 38px) * var(--tvz-sub-scale, 1)) !important;
-    bottom: 70px !important;
+    font-size: calc(clamp(32px, 3.8vh, 48px) * var(--tvz-sub-scale, 1)) !important;
+    bottom: 85px !important;
 }
 
 /* When controls appear in fullscreen mode: lift subtitle above player bar */
@@ -1080,20 +1079,20 @@
 .art-video-player.art-fullscreen-web.art-control-show .art-subtitle,
 .art-video-player.art-fullscreen.art-hover .art-subtitle,
 .art-video-player.art-fullscreen-web.art-hover .art-subtitle {
-    bottom: 112px !important;
+    bottom: 125px !important;
 }
 
 /* Mobile Devices in Portrait */
 @media (max-width: 768px) and (orientation: portrait) {
     .art-video-player .art-subtitle {
-        font-size: calc(clamp(15px, 3.8vw, 18px) * var(--tvz-sub-scale, 1)) !important;
-        bottom: 30px !important;
+        font-size: calc(clamp(18px, 4.2vw, 22px) * var(--tvz-sub-scale, 1)) !important;
+        bottom: 42px !important;
     }
     .art-video-player .art-subtitle .art-subtitle-line {
         max-width: 92% !important;
     }
     .art-video-player.art-control-show .art-subtitle {
-        bottom: 60px !important;
+        bottom: 72px !important;
     }
 }
 
@@ -1101,8 +1100,8 @@
 @media (max-height: 520px) and (orientation: landscape) {
     .art-video-player.art-fullscreen .art-subtitle,
     .art-video-player.art-fullscreen-web .art-subtitle {
-        font-size: calc(clamp(16px, 4.2vh, 21px) * var(--tvz-sub-scale, 1)) !important;
-        bottom: 25px !important;
+        font-size: calc(clamp(20px, 4.8vh, 26px) * var(--tvz-sub-scale, 1)) !important;
+        bottom: 36px !important;
     }
     .art-video-player .art-subtitle .art-subtitle-line,
     .art-video-player.art-fullscreen .art-subtitle .art-subtitle-line,
@@ -1111,7 +1110,7 @@
     }
     .art-video-player.art-fullscreen.art-control-show .art-subtitle,
     .art-video-player.art-fullscreen-web.art-control-show .art-subtitle {
-        bottom: 65px !important;
+        bottom: 72px !important;
     }
 }
 
@@ -1197,31 +1196,33 @@
     pointer-events: auto;
 }
 
-/* Subtitle Panel - Strictly aligned with native Artplayer Settings (.art-settings) */
+/* Subtitle Panel - Strictly unified with TVZINHA Settings Panel */
 .tvz-subtitles-panel {
     position: absolute;
-    right: 12px;
-    bottom: 65px;
+    right: 20px;
+    bottom: 74px;
     z-index: 160;
-    width: 290px;
-    max-width: calc(100% - 24px);
-    max-height: calc(100% - 85px);
-    background: rgba(20, 20, 22, 0.94) !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
+    width: 330px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100% - 90px);
+    background: rgba(10, 16, 26, 0.95) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75) !important;
-    color: #f1f1f1;
-    font-size: 14px;
+    border-radius: 16px !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+    color: #ffffff !important;
+    font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif) !important;
+    font-size: 13.5px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
     transform: translateY(8px);
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: none;
+    animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .tvz-subtitles-panel.is-open {
@@ -1230,44 +1231,33 @@
     transform: translateY(0);
 }
 
-/* Subtitle Panel Header - Mirrors .art-setting-item-back */
+/* Subtitle Panel Header */
 .tvz-sub-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 40px;
-    min-height: 40px;
-    padding: 0 10px 0 10px;
-    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+    padding: 14px 18px;
+    min-height: 52px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     font-weight: 600;
     font-size: 14px;
     color: #ffffff;
     user-select: none;
+    flex-shrink: 0;
 }
 
 .tvz-sub-header-left {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
     min-width: 0;
     flex: 1;
-}
-
-.tvz-sub-header-left.is-clickable {
-    cursor: pointer;
-    border-radius: 6px;
-    padding: 4px 6px 4px 2px;
-    transition: background-color 0.15s ease;
-}
-
-.tvz-sub-header-left.is-clickable:hover {
-    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .tvz-sub-header-right {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
 }
 
@@ -1277,36 +1267,47 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ffffff;
+    color: #facc15;
 }
 
 .tvz-sub-title {
-    font-weight: 600;
-    color: #ffffff;
-    font-size: 14px;
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 15px;
+    font-weight: 700;
+    color: #f8fafc;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.tvz-sub-custom-trigger {
-    color: var(--tvz-player-accent, #eab308) !important;
-    font-size: 13px;
-    font-weight: 600;
+/* Universal Panel Buttons */
+.tvz-panel-back-btn,
+.tvz-settings-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: transparent;
     border: none;
+    color: #facc15;
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
     padding: 4px 6px;
-    border-radius: 4px;
-    transition: opacity 0.15s ease, background-color 0.15s ease;
-    flex-shrink: 0;
+    margin-left: -6px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
-.tvz-sub-custom-trigger:hover {
-    background-color: rgba(234, 179, 8, 0.14);
+.tvz-panel-back-btn:hover,
+.tvz-settings-back-btn:hover {
+    background: rgba(234, 179, 8, 0.12);
+    color: #fef08a;
 }
 
-.tvz-sub-close-btn {
+.tvz-panel-close-btn,
+.tvz-settings-close-btn,
+.tvz-sub-close-btn,
+.tvz-servers-close-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1315,22 +1316,51 @@
     border-radius: 6px;
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.65);
+    color: #94a3b8;
     cursor: pointer;
-    transition: color 0.15s ease, background-color 0.15s ease;
+    transition: color 0.15s ease, background 0.15s ease;
     padding: 0;
 }
 
-.tvz-sub-close-btn:hover {
+.tvz-panel-close-btn:hover,
+.tvz-settings-close-btn:hover,
+.tvz-sub-close-btn:hover,
+.tvz-servers-close-btn:hover {
     color: #ffffff;
     background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tvz-panel-action-btn,
+.tvz-sub-custom-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(234, 179, 8, 0.12) !important;
+    border: 1px solid rgba(234, 179, 8, 0.3) !important;
+    color: #facc15 !important;
+    border-radius: 6px !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.tvz-panel-action-btn:hover,
+.tvz-sub-custom-trigger:hover {
+    background: rgba(234, 179, 8, 0.22) !important;
+    border-color: rgba(234, 179, 8, 0.5) !important;
+    color: #fef08a !important;
 }
 
 /* Subtitle Items List */
 .tvz-sub-list {
     overflow-y: auto;
-    padding: 4px 0;
-    max-height: 280px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 320px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
 }
@@ -1356,29 +1386,36 @@
     background: rgba(255, 255, 255, 0.4);
 }
 
-/* Subtitle Item Rows - Mirrors .art-setting-item */
+/* Subtitle Item Rows - Harmonized with .tvz-settings-option */
 .tvz-sub-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 40px;
-    min-height: 40px;
-    padding: 0 14px 0 10px;
-    cursor: pointer;
-    font-size: 14px;
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 13.5px;
     font-weight: 500;
-    color: #f1f1f1;
-    transition: background-color 0.15s ease;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+    min-height: 42px;
     user-select: none;
 }
 
 .tvz-sub-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
 }
 
 .tvz-sub-item.is-selected {
-    color: #ffffff;
-    font-weight: 600;
+    background: rgba(234, 179, 8, 0.14) !important;
+    border-color: rgba(234, 179, 8, 0.4) !important;
+    color: #fde047 !important;
+    font-weight: 600 !important;
 }
 
 .tvz-sub-item-left {
@@ -1436,7 +1473,7 @@
 }
 
 .tvz-sub-check {
-    color: var(--tvz-player-accent, #eab308);
+    color: #facc15;
     display: flex;
     align-items: center;
 }
@@ -1619,11 +1656,12 @@
 }
 
 .tvz-player-title-info {
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     gap: 12px !important;
-    flex: 1 !important;
+    flex: 0 1 auto !important;
     min-width: 0 !important;
+    width: fit-content !important;
     pointer-events: auto !important;
 }
 
@@ -1645,9 +1683,11 @@
 .tvz-player-title-meta {
     display: flex !important;
     flex-direction: column !important;
+    justify-content: center !important;
     gap: 3px !important;
-    flex: 1 !important;
+    flex: 0 1 auto !important;
     min-width: 0 !important;
+    width: fit-content !important;
 }
 
 .tvz-player-main-title {
@@ -1663,11 +1703,12 @@
 }
 
 .tvz-player-meta-badges {
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     gap: 6px !important;
     flex-wrap: nowrap !important;
-    flex: 1 !important;
+    flex: 0 1 auto !important;
+    width: fit-content !important;
     min-width: 0 !important;
 }
 
@@ -1676,6 +1717,22 @@
     font-weight: 500 !important;
     color: #94a3b8 !important;
     white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+}
+
+.movie-player-server-title,
+.series-player-header-title,
+#series-player-current-ep {
+    flex: 0 1 auto !important;
+    margin-right: 0 !important;
+    max-width: 360px !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     line-height: 1.2 !important;
@@ -1850,21 +1907,19 @@
     transform: scale(1.15) !important;
 }
 
-/* Shown when UI is visible, paused, loading, hovering hover zone, or when servers flyout is open */
+/* Top Bar Overlay: Synchronized with bottom controls HUD */
 .player-page-card.is-ui-visible .movie-player-top-bar,
 .player-page-card.is-ui-visible .series-player-top-bar,
+.player-page-card:has(.art-video-player.art-control-show) .movie-player-top-bar,
+.player-page-card:has(.art-video-player.art-control-show) .series-player-top-bar,
+.player-page-card:has(.art-video-player.art-hover) .movie-player-top-bar,
+.player-page-card:has(.art-video-player.art-hover) .series-player-top-bar,
 .player-page-card.is-paused .movie-player-top-bar,
 .player-page-card.is-paused .series-player-top-bar,
 .player-page-card.is-loading .movie-player-top-bar,
 .player-page-card.is-loading .series-player-top-bar,
 .player-page-card.has-servers-open .movie-player-top-bar,
-.player-page-card.has-servers-open .series-player-top-bar,
-.is-paused .movie-player-top-bar,
-.is-paused .series-player-top-bar,
-.tvz-player-top-hover-zone:hover ~ .movie-player-top-bar,
-.tvz-player-top-hover-zone:hover ~ .series-player-top-bar,
-.movie-player-top-bar:hover,
-.series-player-top-bar:hover {
+.player-page-card.has-servers-open .series-player-top-bar {
     opacity: 1 !important;
     transform: translateY(0) !important;
     pointer-events: auto !important;
@@ -1969,7 +2024,7 @@
     max-width: calc(100vw - 32px) !important;
     max-height: calc(100% - 90px) !important;
     height: 520px !important;
-    background: rgba(10, 14, 22, 0.95) !important;
+    background: rgba(10, 16, 26, 0.95) !important;
     backdrop-filter: blur(24px) !important;
     -webkit-backdrop-filter: blur(24px) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -1990,13 +2045,35 @@
 }
 
 .series-drawer-header {
-    padding: 12px 16px !important;
+    padding: 14px 18px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    background: rgba(255, 255, 255, 0.02) !important;
+    background: transparent !important;
     flex-shrink: 0 !important;
+    min-height: 52px !important;
+}
+
+.series-drawer-header-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #f8fafc !important;
+}
+
+.series-drawer-header-left svg {
+    color: #facc15 !important;
+    flex-shrink: 0 !important;
+}
+
+.series-drawer-header-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }
 
 .series-drawer-heading {
@@ -2229,18 +2306,19 @@
     width: 320px;
     max-width: calc(100vw - 32px);
     max-height: calc(100% - 100px);
-    background: var(--tvz-player-bg, rgba(14, 18, 25, 0.92));
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--tvz-player-border, rgba(255, 255, 255, 0.08));
-    border-radius: 14px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    background: rgba(10, 16, 26, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
     z-index: 160;
     display: none;
     flex-direction: column;
     overflow: hidden;
     color: #ffffff;
     user-select: none;
+    font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif);
     animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2253,6 +2331,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 18px;
+    min-height: 52px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -2260,8 +2339,9 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    font-family: var(--font-heading, 'Outfit', sans-serif);
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
     color: #f8fafc;
 }
 
@@ -2353,17 +2433,6 @@
     }
 }
 
-/* Top Hover Trigger Zone (covers the top 64px over video / iframe) */
-.tvz-player-top-hover-zone {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 64px;
-    z-index: 139;
-    pointer-events: auto;
-    background: transparent;
-}
 
 /* Server Selector Pill in Top Bar */
 .btn-player-pill.btn-player-servers {
@@ -2469,6 +2538,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 18px;
+    min-height: 52px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     flex-shrink: 0;
 }
@@ -2481,11 +2551,6 @@
     font-size: 15px;
     font-weight: 700;
     color: #f8fafc;
-}
-
-.tvz-settings-sub-header {
-    justify-content: flex-start;
-    gap: 12px;
 }
 
 .tvz-settings-back-btn {
