@@ -1,13 +1,13 @@
 /**
- * Tvzinha Online - Client-Side Stream Extractors (FenixFlix, Movy)
+ * Tvzinha Online - Client-Side Stream Extractors (FenixFlix)
  * 
  * Executes directly in the user's browser to bypass Cloudflare-to-Cloudflare WAF / CF-Worker blocks,
  * utilizing the user's residential/mobile IP with open CORS (Access-Control-Allow-Origin: *).
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1010';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1010';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1115';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1115';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER

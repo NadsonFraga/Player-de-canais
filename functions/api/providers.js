@@ -10,24 +10,24 @@ const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
  * ============================================================ */
 export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode = 1, audio = "dubbed" }) {
   const isSeries = type === "series" || type === "serie" || type === "tv" || type === "anime";
+  const resolvedImdbId = await Promise.resolve(imdbId).catch(() => null);
   const queryCandidates = [];
-  if (imdbId && imdbId.startsWith("tt")) {
-    queryCandidates.push(imdbId);
+  if (resolvedImdbId && String(resolvedImdbId).startsWith("tt")) {
+    queryCandidates.push(String(resolvedImdbId));
   }
   if (id) {
-    queryCandidates.push(String(id).startsWith("tmdb:") ? id : `tmdb:${id}`);
+    const rawId = String(id);
+    queryCandidates.push(rawId.startsWith("tmdb:") ? rawId : `tmdb:${rawId}`);
   }
 
-  let data = null;
-  let rawStreams = [];
   const debug = { endpoint: null, status: null, statusText: null, error: null, streams: 0, body: null };
+  let rawStreams = [];
+  let dataTitle = "";
 
-  for (const qId of queryCandidates) {
+  const fetchCandidate = async (qId) => {
     const endpoint = isSeries
       ? `https://fenixflix.fenixhub.online/stream/series/${qId}:${season}:${episode}.json`
       : `https://fenixflix.fenixhub.online/stream/movie/${qId}.json`;
-    debug.endpoint = endpoint;
-
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 6000);
     try {
@@ -36,22 +36,38 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
         signal: controller.signal
       });
       clearTimeout(timer);
-      debug.status = res.status;
-      debug.statusText = res.statusText;
       if (res.ok) {
         const j = await res.json();
         if (Array.isArray(j.streams) && j.streams.length > 0) {
-          data = j;
-          rawStreams = j.streams;
-          debug.streams = rawStreams.length;
-          break;
+          return { endpoint, status: res.status, title: j.title || "", streams: j.streams };
         }
       }
+      return { endpoint, status: res.status, title: "", streams: [] };
     } catch (e) {
       clearTimeout(timer);
-      debug.error = e.message || String(e);
+      return { endpoint, status: null, error: e.message || String(e), streams: [] };
+    }
+  };
+
+  const results = await Promise.allSettled(queryCandidates.map(fetchCandidate));
+  const seenUrls = new Set();
+  for (const r of results) {
+    if (r.status === "fulfilled" && r.value) {
+      const val = r.value;
+      if (!debug.endpoint) {
+        debug.endpoint = val.endpoint;
+        debug.status = val.status;
+      }
+      if (val.title && !dataTitle) dataTitle = val.title;
+      for (const s of (val.streams || [])) {
+        if (s && s.url && !seenUrls.has(s.url)) {
+          seenUrls.add(s.url);
+          rawStreams.push(s);
+        }
+      }
     }
   }
+  debug.streams = rawStreams.length;
 
   try {
     if (!rawStreams.length) return { title: "", sources: [], debug };
@@ -128,7 +144,7 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
     });
 
     return {
-      title: data.title || "",
+      title: dataTitle || "",
       sources: filtered,
       debug
     };
@@ -137,8 +153,3 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
     return { title: "", sources: [], debug };
   }
 }
-
-
-
-
-
