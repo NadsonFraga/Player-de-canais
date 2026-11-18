@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261118_1520';
-import { showToast } from '../core/toast.js?v=20261118_1520';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1520';
-import { buildFeedRows } from '../core/feedRows.js?v=20261118_1520';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1520';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1520';
-import { getUiSvg } from '../core/icons.js?v=20261118_1520';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1520';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1520';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1520';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1520';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1520';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261118_1520';
-import { resumeStartTime } from '../core/resume.js?v=20261118_1520';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1520';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1520';
+} from '../core/constants.js?v=20261118_1614';
+import { showToast } from '../core/toast.js?v=20261118_1614';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1614';
+import { buildFeedRows } from '../core/feedRows.js?v=20261118_1614';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1614';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1614';
+import { getUiSvg } from '../core/icons.js?v=20261118_1614';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1614';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1614';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1614';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1614';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1614';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261118_1614';
+import { resumeStartTime } from '../core/resume.js?v=20261118_1614';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1614';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1614';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1281,36 +1281,6 @@ export function updateMovieObraCard(movie) {
     }
 }
 
-/** Renders quick server switching chips directly in the loader overlay. */
-function renderMovieLoaderServers(activeServerId) {
-    const container = document.getElementById("movie-loader-servers");
-    if (!container) return;
-    container.innerHTML = `
-        <span class="tvz-loader-servers-label">Trocar servidor:</span>
-        <div class="tvz-loader-chips-list">
-            ${MOVIE_SERVERS.map(s => {
-                const isActive = s.id === activeServerId;
-                const safeName = escapeHtml(s.name.replace(' (BETA)', ''));
-                return `<button type="button" class="tvz-loader-server-chip ${isActive ? 'active' : ''}" data-server-id="${s.id}">
-                    <span>${safeName}</span>
-                </button>`;
-            }).join('')}
-        </div>
-    `;
-
-    container.querySelectorAll('.tvz-loader-server-chip').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const sid = btn.dataset.serverId;
-            const target = MOVIE_SERVERS.find(s => s.id === sid);
-            if (target && target.id !== activeMovieServer?.id) {
-                const domBtn = document.querySelector(`#movie-servers-grid .btn-movie-server[data-server="${target.id}"]`);
-                selectMovieServer(target, domBtn);
-            }
-        });
-    });
-}
-
 /** Renders the top bar server switcher flyout panel. */
 export function renderMovieTopServersFlyout() {
     const panel = document.getElementById("movie-servers-flyout-panel");
@@ -1520,7 +1490,6 @@ export function selectMovieServer(server, buttonElement = null) {
     }
     const sName = server.name || 'Player Principal';
     setLoaderText(movieLoader, `Conectando ao ${sName}...`);
-    renderMovieLoaderServers(server.id);
     if (movieLoader) movieLoader.classList.remove("hidden");
 
     if (server.isNative) {
@@ -1623,7 +1592,6 @@ export function selectMovieServer(server, buttonElement = null) {
         if (window.tvzinhaSetContingencyState) window.tvzinhaSetContingencyState(true);
         iframe.classList.remove("hidden");
         setLoaderText(movieLoader, "Carregando filme...");
-        renderMovieLoaderServers(server.id);
         if (movieLoader) movieLoader.classList.remove("hidden");
 
         const embedUrl = server.buildUrl(currentSelectedMovie.id);

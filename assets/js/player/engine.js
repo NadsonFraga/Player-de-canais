@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261118_1520';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1520';
-import { showToast } from '../core/toast.js?v=20261118_1520';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1520';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1520';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1520';
-import { formatClock } from '../core/resume.js?v=20261118_1520';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1520';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1520';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1520';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1520';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1520';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1520';
+import { store } from '../core/state.js?v=20261118_1614';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1614';
+import { showToast } from '../core/toast.js?v=20261118_1614';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1614';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1614';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1614';
+import { formatClock } from '../core/resume.js?v=20261118_1614';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1614';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1614';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1614';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1614';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1614';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1614';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1107,7 +1107,10 @@ const NATIVE_ICONS = {
     backward10: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path style="fill:none !important;stroke:currentColor !important;" d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path style="fill:none !important;stroke:currentColor !important;" d="M3 3v5h5"/><text x="12" y="15.5" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" style="fill:currentColor !important;stroke:none !important;">10</text></svg>',
     forward10: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path style="fill:none !important;stroke:currentColor !important;" d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path style="fill:none !important;stroke:currentColor !important;" d="M21 3v5h-5"/><text x="12" y="15.5" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" style="fill:currentColor !important;stroke:none !important;">10</text></svg>',
     server: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect style="fill:none !important;stroke:currentColor !important;" x="2" y="3" width="20" height="6" rx="2"/><rect style="fill:none !important;stroke:currentColor !important;" x="2" y="15" width="20" height="6" rx="2"/><line style="fill:none !important;stroke:currentColor !important;" x1="6" y1="6" x2="6.01" y2="6"/><line style="fill:none !important;stroke:currentColor !important;" x1="6" y1="18" x2="6.01" y2="18"/></svg>',
-    episodes: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect style="fill:none !important;stroke:currentColor !important;" x="3" y="3" width="7" height="7" rx="1.5"/><rect style="fill:none !important;stroke:currentColor !important;" x="14" y="3" width="7" height="7" rx="1.5"/><rect style="fill:none !important;stroke:currentColor !important;" x="14" y="14" width="7" height="7" rx="1.5"/><rect style="fill:none !important;stroke:currentColor !important;" x="3" y="14" width="7" height="7" rx="1.5"/></svg>'
+    episodes: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect style="fill:none !important;stroke:currentColor !important;" x="3" y="3" width="7" height="7" rx="1.5"/><rect style="fill:none !important;stroke:currentColor !important;" x="14" y="3" width="7" height="7" rx="1.5"/><rect style="fill:none !important;stroke:currentColor !important;" x="14" y="14" width="7" height="7" rx="1.5"/><rect style="fill:none !important;stroke:currentColor !important;" x="3" y="14" width="7" height="7" rx="1.5"/></svg>',
+    setting: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" style="fill:none !important;stroke:currentColor !important;"/><path style="fill:none !important;stroke:currentColor !important;" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    speed: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" style="fill:none !important;stroke:currentColor !important;"/><polyline points="12 6 12 12 16 14" style="fill:none !important;stroke:currentColor !important;"/></svg>',
+    check: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
 };
 
 const NATIVE_I18N = {
@@ -1776,15 +1779,6 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                     click: () => {
                         toggleSubtitlesFlyout(session);
                     }
-                },
-                {
-                    name: 'tvz-servers-btn',
-                    position: 'right',
-                    index: 25,
-                    html: `<i class="art-icon art-control-servers-btn" role="button" aria-label="Servidores" title="Servidores">${NATIVE_ICONS.server}</i>`,
-                    click: () => {
-                        toggleServersFlyout(session);
-                    }
                 }
             ],
             subtitle: subtitles.length > 0 && chosenSubtitle >= 0 ? {
@@ -1926,7 +1920,19 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             placeSideCards(art);
             ['resize', 'fullscreen', 'control'].forEach(name => art.on(name, () => requestAnimationFrame(() => placeSideCards(art))));
 
-            createServersFlyout(session);
+            createSettingsFlyout(session);
+
+            // Desktop: ensure clicking screen/video reliably toggles playback (unpauses when paused, pauses when playing)
+            if (art.template && art.template.$mask) {
+                art.template.$mask.addEventListener('click', (e) => {
+                    if (e.button !== 0) return;
+                    if (e.target.closest && e.target.closest('.tvz-settings-panel, .tvz-subtitles-panel, .art-controls, .art-bottom, .tvz-side-card, .art-control, .tvz-obra-card')) return;
+                    if (!art.template.$player.classList.contains('art-mobile')) {
+                        e.stopImmediatePropagation();
+                        art.toggle();
+                    }
+                }, true);
+            }
 
             art.on('control', (visible) => {
                 const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
@@ -3539,6 +3545,9 @@ function toggleSubtitlesFlyout(session, forceState) {
 
     const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
     if (willOpen) {
+        if (session.settingsFlyoutPanel && typeof toggleSettingsFlyout === 'function') {
+            toggleSettingsFlyout(session, false);
+        }
         if (session.art && session.art.setting) session.art.setting.show = false;
         session.activeLangDrilldown = null;
         session.activeView = 'list';
@@ -4109,32 +4118,68 @@ function installSubtitleControl(session) {
 }
 
 /* ============================================================
-   TVZINHA SERVERS FLYOUT (Instant switching popover)
+   TVZINHA SETTINGS FLYOUT (Atlantic-inspired Frosted Glass UI)
    ============================================================ */
 
-function createServersFlyout(session) {
+function getQualityDisplay(session) {
+    if (session.autoMode) {
+        const q = activeQuality(session);
+        return q ? `Auto (${qualityText(q)})` : 'Auto';
+    }
+    return session.lockedQuality ? `${session.lockedQuality}p` : 'Auto';
+}
+
+function getAudioDisplay(session) {
+    const hls = session.hls;
+    if (hls && Array.isArray(hls.audioTracks) && hls.audioTracks.length > 1 && hls.audioTrack >= 0) {
+        const trk = hls.audioTracks[hls.audioTrack];
+        return trk ? (trk.name || trk.lang || `Áudio ${hls.audioTrack + 1}`) : 'Padrão';
+    }
+    return 'Padrão';
+}
+
+function getSubtitlesDisplay(session) {
+    const art = session.art;
+    if (!art || !art.subtitle || !art.subtitle.show || !session.activeSubtitleUrl) {
+        return 'Desativada';
+    }
+    const currentSub = session.subtitles && session.subtitles.find(s => (s.url || s.file) === session.activeSubtitleUrl);
+    return currentSub ? (currentSub.release || currentSub.label || 'Ativada') : 'Ativada';
+}
+
+function getSpeedDisplay(session) {
+    const rate = session.art?.playbackRate || 1;
+    return rate === 1 ? 'Normal' : `${rate}x`;
+}
+
+function getFitDisplay(session) {
+    return storedFit() === 'cover' ? 'Preencher' : 'Ajustar';
+}
+
+function createSettingsFlyout(session) {
     const art = session.art;
     const player = art && art.template && art.template.$player;
     if (!player) return;
 
-    let backdrop = player.querySelector(`.tvz-servers-backdrop[data-session="${session.id}"]`);
+    let backdrop = player.querySelector(`.tvz-settings-backdrop[data-session="${session.id}"]`);
     if (!backdrop) {
         backdrop = document.createElement('div');
-        backdrop.className = 'tvz-servers-backdrop';
+        backdrop.className = 'tvz-settings-backdrop';
         backdrop.dataset.session = String(session.id);
         player.appendChild(backdrop);
     }
 
-    let panel = player.querySelector(`.tvz-servers-panel[data-session="${session.id}"]`);
+    let panel = player.querySelector(`.tvz-settings-panel[data-session="${session.id}"]`);
     if (!panel) {
         panel = document.createElement('div');
-        panel.className = 'tvz-servers-panel';
+        panel.className = 'tvz-settings-panel';
         panel.dataset.session = String(session.id);
         player.appendChild(panel);
     }
 
-    session.serversBackdrop = backdrop;
-    session.serversFlyoutPanel = panel;
+    session.settingsBackdrop = backdrop;
+    session.settingsFlyoutPanel = panel;
+    session.settingsView = session.settingsView || 'main';
 
     ['pointerdown', 'mousedown', 'touchstart', 'touchend', 'click'].forEach(evt => {
         panel.addEventListener(evt, (e) => e.stopPropagation(), { passive: false });
@@ -4143,18 +4188,26 @@ function createServersFlyout(session) {
     const onBackdropDismiss = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleServersFlyout(session, false);
+        toggleSettingsFlyout(session, false);
     };
     ['pointerdown', 'touchstart', 'click'].forEach(evt => {
         backdrop.addEventListener(evt, onBackdropDismiss, { passive: false });
     });
 
-    renderServersFlyout(session);
+    // Intercept clicks on the Artplayer gear control button
+    art.template.$controls?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.art-control-setting');
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSettingsFlyout(session);
+        }
+    }, true);
 
     const onDocPointerDown = (e) => {
         if (!panel.classList.contains('is-open')) return;
-        if (!panel.contains(e.target) && !e.target.closest('.art-control-servers-btn')) {
-            toggleServersFlyout(session, false);
+        if (!panel.contains(e.target) && !e.target.closest('.art-control-setting')) {
+            toggleSettingsFlyout(session, false);
         }
     };
     document.addEventListener('pointerdown', onDocPointerDown);
@@ -4164,92 +4217,458 @@ function createServersFlyout(session) {
         try { if (backdrop) backdrop.remove(); } catch (e) {}
         try { if (panel) panel.remove(); } catch (e) {}
     });
+
+    renderSettingsFlyout(session);
 }
 
-function renderServersFlyout(session) {
-    const panel = session.serversFlyoutPanel;
-    if (!panel) return;
+function renderSettingsFlyout(session) {
+    const panel = session.settingsFlyoutPanel;
+    const art = session.art;
+    if (!panel || !art) return;
 
-    const servers = session.serversList || [];
-    const activeServerId = session.activeServerId || session.provider || 'mgeb';
+    const currentView = session.settingsView || 'main';
 
-    const nativeServers = servers.filter(s => s.isNative);
-    const iframeServers = servers.filter(s => !s.isNative);
-
-    let html = `
-        <div class="tvz-servers-header">
-            <div class="tvz-servers-header-left">
-                ${NATIVE_ICONS.server}
-                <span>Servidores</span>
+    if (currentView === 'main') {
+        const isSubtitlesActive = Boolean(art.subtitle && art.subtitle.show && session.activeSubtitleUrl);
+        panel.innerHTML = `
+            <div class="tvz-settings-header">
+                <div class="tvz-settings-header-left">
+                    ${NATIVE_ICONS.setting}
+                    <span>Configurações</span>
+                </div>
+                <button type="button" class="tvz-settings-close-btn" title="Fechar" aria-label="Fechar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
-            <button type="button" class="tvz-servers-close-btn" title="Fechar" aria-label="Fechar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-        </div>
-        <div class="tvz-servers-body">
-    `;
+            <div class="tvz-settings-body">
+                <div class="tvz-settings-grid">
+                    <button type="button" class="tvz-setting-tile" data-action="view-quality">
+                        <div class="tvz-setting-tile-top">
+                            <span class="tvz-setting-tile-icon tvz-icon-hq">HQ</span>
+                            <span class="tvz-setting-tile-label">QUALIDADE</span>
+                        </div>
+                        <div class="tvz-setting-tile-value">${escapeHtml(getQualityDisplay(session))}</div>
+                    </button>
 
-    if (nativeServers.length > 0) {
-        html += `<div class="tvz-servers-group-title">Players Principais (Direto)</div>`;
-        nativeServers.forEach(s => {
-            const isActive = s.id === activeServerId;
-            html += `
-                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
-                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
-                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'HD'}</span>
+                    <button type="button" class="tvz-setting-tile" data-action="view-audio">
+                        <div class="tvz-setting-tile-top">
+                            ${NATIVE_ICONS.audio}
+                            <span class="tvz-setting-tile-label">ÁUDIO</span>
+                        </div>
+                        <div class="tvz-setting-tile-value">${escapeHtml(getAudioDisplay(session))}</div>
+                    </button>
+
+                    <button type="button" class="tvz-setting-tile" data-action="view-subtitles">
+                        <div class="tvz-setting-tile-top">
+                            ${NATIVE_ICONS.subtitle}
+                            <span class="tvz-setting-tile-label">LEGENDAS</span>
+                        </div>
+                        <div class="tvz-setting-tile-value">${escapeHtml(getSubtitlesDisplay(session))}</div>
+                    </button>
+
+                    <button type="button" class="tvz-setting-tile" data-action="view-speed">
+                        <div class="tvz-setting-tile-top">
+                            ${NATIVE_ICONS.speed}
+                            <span class="tvz-setting-tile-label">VELOCIDADE</span>
+                        </div>
+                        <div class="tvz-setting-tile-value">${escapeHtml(getSpeedDisplay(session))}</div>
+                    </button>
                 </div>
-            `;
-        });
-    }
 
-    if (iframeServers.length > 0) {
-        html += `<div class="tvz-servers-group-title">Servidores Externos (Iframe)</div>`;
-        iframeServers.forEach(s => {
-            const isActive = s.id === activeServerId;
-            html += `
-                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
-                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
-                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'Reproduzir'}</span>
+                <div class="tvz-settings-divider"></div>
+
+                <div class="tvz-settings-list">
+                    <div class="tvz-setting-row tvz-setting-toggle-row">
+                        <div class="tvz-setting-row-left">
+                            ${NATIVE_ICONS.subtitle}
+                            <span>Ativar Legendas</span>
+                        </div>
+                        <label class="tvz-toggle-switch">
+                            <input type="checkbox" class="tvz-subtitles-toggle-input" ${isSubtitlesActive ? 'checked' : ''}>
+                            <span class="tvz-toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <button type="button" class="tvz-setting-row" data-action="view-subtitle-settings">
+                        <div class="tvz-setting-row-left">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                            <span>Configurações de Legenda</span>
+                        </div>
+                        <svg class="tvz-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+
+                    <button type="button" class="tvz-setting-row" data-action="view-fit">
+                        <div class="tvz-setting-row-left">
+                            ${NATIVE_ICONS.fit}
+                            <span>Ajuste de Tela</span>
+                        </div>
+                        <div class="tvz-setting-row-right">
+                            <span class="tvz-setting-row-val">${escapeHtml(getFitDisplay(session))}</span>
+                            <svg class="tvz-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </button>
+
+                    ${canCastToApp() ? `
+                    <button type="button" class="tvz-setting-row" data-action="trigger-cast">
+                        <div class="tvz-setting-row-left">
+                            ${NATIVE_ICONS.cast}
+                            <span>Transmissão (Cast)</span>
+                        </div>
+                        <div class="tvz-setting-row-right">
+                            <span class="tvz-setting-row-val">Web Video Caster</span>
+                            <svg class="tvz-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </button>` : ''}
                 </div>
-            `;
+            </div>
+        `;
+
+        panel.querySelector('.tvz-settings-close-btn')?.addEventListener('click', () => toggleSettingsFlyout(session, false));
+
+        panel.querySelector('[data-action="view-quality"]')?.addEventListener('click', () => {
+            session.settingsView = 'quality';
+            renderSettingsFlyout(session);
         });
-    }
-
-    html += `</div>`;
-    panel.innerHTML = html;
-
-    const closeBtn = panel.querySelector('.tvz-servers-close-btn');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => toggleServersFlyout(session, false));
-    }
-
-    panel.querySelectorAll('.tvz-server-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const serverId = item.getAttribute('data-server-id');
-            const targetServer = servers.find(s => s.id === serverId);
-            if (targetServer) {
-                toggleServersFlyout(session, false);
-                if (typeof session.onSelectServer === 'function') {
-                    session.onSelectServer(targetServer);
-                }
+        panel.querySelector('[data-action="view-audio"]')?.addEventListener('click', () => {
+            session.settingsView = 'audio';
+            renderSettingsFlyout(session);
+        });
+        panel.querySelector('[data-action="view-subtitles"]')?.addEventListener('click', () => {
+            session.settingsView = 'subtitles';
+            renderSettingsFlyout(session);
+        });
+        panel.querySelector('[data-action="view-speed"]')?.addEventListener('click', () => {
+            session.settingsView = 'speed';
+            renderSettingsFlyout(session);
+        });
+        panel.querySelector('[data-action="view-subtitle-settings"]')?.addEventListener('click', () => {
+            session.settingsView = 'subtitle_settings';
+            renderSettingsFlyout(session);
+        });
+        panel.querySelector('[data-action="view-fit"]')?.addEventListener('click', () => {
+            session.settingsView = 'fit';
+            renderSettingsFlyout(session);
+        });
+        panel.querySelector('[data-action="trigger-cast"]')?.addEventListener('click', () => {
+            const source = session.sources && session.sources[session.currentIndex];
+            if (source && isSessionLive(session)) {
+                art.pause();
+                window.location.href = castIntentUrl(source.url, session.title, isHlsSource(source));
             }
         });
+
+        const toggleInput = panel.querySelector('.tvz-subtitles-toggle-input');
+        if (toggleInput) {
+            toggleInput.addEventListener('change', (e) => {
+                const checked = e.target.checked;
+                session.userToggledSubtitles = true;
+                if (!checked) {
+                    art.subtitle.show = false;
+                    session.activeSubtitleUrl = null;
+                    setPlayerPref('subtitle', 'off');
+                } else {
+                    const bestIdx = defaultSubtitleIndex(session.subtitles || []);
+                    if (bestIdx >= 0 && session.subtitles && session.subtitles[bestIdx]) {
+                        const targetSub = session.subtitles[bestIdx];
+                        session.activeSubtitleUrl = targetSub.url || targetSub.file;
+                        patchArtplayerSubtitleEngine(art);
+                        art.subtitle.switch(session.activeSubtitleUrl, { name: targetSub.release || targetSub.label, type: 'vtt' })
+                            .then(() => {
+                                art.subtitle.show = true;
+                                disableEmbeddedTextTracks(art);
+                                applySubtitleStyles(art);
+                            })
+                            .catch(() => {});
+                        setPlayerPref('subtitle', targetSub.lang || 'pt');
+                    } else {
+                        art.subtitle.show = true;
+                    }
+                }
+                updateSubtitlesControlActiveState(session);
+                renderSettingsFlyout(session);
+            });
+        }
+        return;
+    }
+
+    // Subviews rendering:
+    let subTitle = '';
+    let bodyHtml = '';
+
+    if (currentView === 'quality') {
+        subTitle = 'Qualidade';
+        const entries = session.qualityEntries || buildQualityEntries(session);
+        session.qualityEntries = entries;
+
+        const isAuto = Boolean(session.autoMode);
+        bodyHtml += `
+            <button type="button" class="tvz-settings-option ${isAuto ? 'is-active' : ''}" data-val="auto">
+                <span>${autoLabel(session)}</span>
+                ${isAuto ? `<span class="tvz-option-check">${NATIVE_ICONS.check}</span>` : ''}
+            </button>
+        `;
+
+        for (const quality of entries.keys()) {
+            const isActive = !session.autoMode && session.lockedQuality === quality;
+            bodyHtml += `
+                <button type="button" class="tvz-settings-option ${isActive ? 'is-active' : ''}" data-val="${quality}">
+                    <span>${qualityLabel(quality)}</span>
+                    ${isActive ? `<span class="tvz-option-check">${NATIVE_ICONS.check}</span>` : ''}
+                </button>
+            `;
+        }
+
+        if (qualitySearchCandidates(session, true).length) {
+            bodyHtml += `
+                <button type="button" class="tvz-settings-option" data-val="search">
+                    <span>${session.qualitySearching ? 'Buscando qualidade melhor...' : 'Buscar qualidade melhor'}</span>
+                </button>
+            `;
+        }
+    } else if (currentView === 'audio') {
+        subTitle = 'Áudio';
+        const hls = session.hls;
+        if (!hls || !Array.isArray(hls.audioTracks) || hls.audioTracks.length <= 1) {
+            bodyHtml += `
+                <button type="button" class="tvz-settings-option is-active" data-val="default">
+                    <span>Padrão / Original</span>
+                    <span class="tvz-option-check">${NATIVE_ICONS.check}</span>
+                </button>
+            `;
+        } else {
+            hls.audioTracks.forEach((trk, idx) => {
+                const isActive = idx === hls.audioTrack;
+                bodyHtml += `
+                    <button type="button" class="tvz-settings-option ${isActive ? 'is-active' : ''}" data-track-index="${idx}">
+                        <span>${escapeHtml(trk.name || trk.lang || `Áudio ${idx + 1}`)}</span>
+                        ${isActive ? `<span class="tvz-option-check">${NATIVE_ICONS.check}</span>` : ''}
+                    </button>
+                `;
+            });
+        }
+    } else if (currentView === 'subtitles') {
+        subTitle = 'Legendas';
+        const subtitles = session.subtitles || [];
+        const isOff = !art.subtitle?.show || !session.activeSubtitleUrl;
+
+        bodyHtml += `
+            <button type="button" class="tvz-settings-option ${isOff ? 'is-active' : ''}" data-sub-url="off">
+                <span>Desativada</span>
+                ${isOff ? `<span class="tvz-option-check">${NATIVE_ICONS.check}</span>` : ''}
+            </button>
+        `;
+
+        subtitles.forEach(sub => {
+            const url = sub.url || sub.file;
+            const isActive = !isOff && session.activeSubtitleUrl === url;
+            const label = sub.release || sub.label || normLang(sub.lang);
+            bodyHtml += `
+                <button type="button" class="tvz-settings-option ${isActive ? 'is-active' : ''}" data-sub-url="${escapeHtml(url)}">
+                    <span>${escapeHtml(label)}</span>
+                    ${isActive ? `<span class="tvz-option-check">${NATIVE_ICONS.check}</span>` : ''}
+                </button>
+            `;
+        });
+    } else if (currentView === 'speed') {
+        subTitle = 'Velocidade';
+        const currentRate = art.playbackRate || 1;
+        const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+        speeds.forEach(s => {
+            const isActive = Math.abs(currentRate - s) < 0.05;
+            const label = s === 1 ? 'Normal (1x)' : `${s}x`;
+            bodyHtml += `
+                <button type="button" class="tvz-settings-option ${isActive ? 'is-active' : ''}" data-speed="${s}">
+                    <span>${label}</span>
+                    ${isActive ? `<span class="tvz-option-check">${NATIVE_ICONS.check}</span>` : ''}
+                </button>
+            `;
+        });
+    } else if (currentView === 'fit') {
+        subTitle = 'Ajuste de Tela';
+        const currentFit = storedFit();
+        const options = [
+            { value: 'contain', label: 'Ajustar (Original)' },
+            { value: 'cover', label: 'Preencher tela' }
+        ];
+        options.forEach(opt => {
+            const isActive = currentFit === opt.value;
+            bodyHtml += `
+                <button type="button" class="tvz-settings-option ${isActive ? 'is-active' : ''}" data-fit="${opt.value}">
+                    <span>${opt.label}</span>
+                    ${isActive ? `<span class="tvz-option-check">${NATIVE_ICONS.check}</span>` : ''}
+                </button>
+            `;
+        });
+    } else if (currentView === 'subtitle_settings') {
+        subTitle = 'Estilo da Legenda';
+        const prefs = getPlayerPrefs();
+        const curSize = prefs.subtitle_size || 100;
+        const curColor = prefs.subtitle_color || '#ffffff';
+        const curBg = prefs.subtitle_bg || 'shadow';
+
+        bodyHtml += `
+            <div class="tvz-sub-settings-group">
+                <span class="tvz-sub-settings-label">Tamanho da Fonte</span>
+                <div class="tvz-sub-settings-chips">
+                    ${[80, 100, 125, 150].map(sz => `
+                        <button type="button" class="tvz-sub-chip ${curSize === sz ? 'is-active' : ''}" data-sub-size="${sz}">${sz}%</button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="tvz-sub-settings-group">
+                <span class="tvz-sub-settings-label">Cor da Fonte</span>
+                <div class="tvz-sub-settings-chips">
+                    <button type="button" class="tvz-sub-chip ${curColor === '#ffffff' ? 'is-active' : ''}" data-sub-color="#ffffff">Branco</button>
+                    <button type="button" class="tvz-sub-chip ${curColor === '#facc15' ? 'is-active' : ''}" data-sub-color="#facc15">Amarelo</button>
+                    <button type="button" class="tvz-sub-chip ${curColor === '#38bdf8' ? 'is-active' : ''}" data-sub-color="#38bdf8">Ciano</button>
+                </div>
+            </div>
+
+            <div class="tvz-sub-settings-group">
+                <span class="tvz-sub-settings-label">Estilo de Fundo</span>
+                <div class="tvz-sub-settings-chips">
+                    <button type="button" class="tvz-sub-chip ${curBg === 'shadow' ? 'is-active' : ''}" data-sub-bg="shadow">Sombra</button>
+                    <button type="button" class="tvz-sub-chip ${curBg === 'box' ? 'is-active' : ''}" data-sub-bg="box">Caixa</button>
+                </div>
+            </div>
+        `;
+    }
+
+    panel.innerHTML = `
+        <div class="tvz-settings-sub-header">
+            <button type="button" class="tvz-settings-back-btn" title="Voltar" aria-label="Voltar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                <span>Voltar</span>
+            </button>
+            <span class="tvz-settings-sub-title">${subTitle}</span>
+        </div>
+        <div class="tvz-settings-body">
+            ${bodyHtml}
+        </div>
+    `;
+
+    panel.querySelector('.tvz-settings-back-btn')?.addEventListener('click', () => {
+        session.settingsView = 'main';
+        renderSettingsFlyout(session);
     });
+
+    if (currentView === 'quality') {
+        panel.querySelectorAll('.tvz-settings-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.getAttribute('data-val');
+                if (val === 'search') {
+                    searchBetterQuality(session, true);
+                    renderSettingsFlyout(session);
+                    return;
+                }
+                setPlayerPref('quality', val === 'auto' ? 'auto' : Number(val));
+                selectNativeQuality(session, val);
+                renderSettingsFlyout(session);
+            });
+        });
+    } else if (currentView === 'audio') {
+        panel.querySelectorAll('.tvz-settings-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idxStr = btn.getAttribute('data-track-index');
+                if (idxStr != null && session.hls) {
+                    session.userSelectedAudio = true;
+                    session.hls.audioTrack = Number(idxStr);
+                    renderSettingsFlyout(session);
+                }
+            });
+        });
+    } else if (currentView === 'subtitles') {
+        panel.querySelectorAll('.tvz-settings-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const subUrl = btn.getAttribute('data-sub-url');
+                session.userToggledSubtitles = true;
+                if (subUrl === 'off') {
+                    art.subtitle.show = false;
+                    session.activeSubtitleUrl = null;
+                    setPlayerPref('subtitle', 'off');
+                } else {
+                    const targetSub = (session.subtitles || []).find(s => (s.url || s.file) === subUrl);
+                    if (targetSub) {
+                        session.activeSubtitleUrl = subUrl;
+                        patchArtplayerSubtitleEngine(art);
+                        art.subtitle.switch(subUrl, { name: targetSub.release || targetSub.label, type: 'vtt' })
+                            .then(() => {
+                                art.subtitle.show = true;
+                                disableEmbeddedTextTracks(art);
+                                applySubtitleStyles(art);
+                            })
+                            .catch(() => {});
+                        setPlayerPref('subtitle', targetSub.lang || 'pt');
+                    }
+                }
+                updateSubtitlesControlActiveState(session);
+                renderSettingsFlyout(session);
+            });
+        });
+    } else if (currentView === 'speed') {
+        panel.querySelectorAll('.tvz-settings-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const s = Number(btn.getAttribute('data-speed'));
+                art.playbackRate = s;
+                setPlayerPref('playbackRate', s);
+                renderSettingsFlyout(session);
+            });
+        });
+    } else if (currentView === 'fit') {
+        panel.querySelectorAll('.tvz-settings-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.getAttribute('data-fit');
+                applyFit(art, val);
+                setPlayerPref('fit', val);
+                renderSettingsFlyout(session);
+            });
+        });
+    } else if (currentView === 'subtitle_settings') {
+        panel.querySelectorAll('[data-sub-size]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const sz = Number(btn.getAttribute('data-sub-size'));
+                setPlayerPref('subtitle_size', sz);
+                applySubtitleStyles(art);
+                renderSettingsFlyout(session);
+            });
+        });
+        panel.querySelectorAll('[data-sub-color]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const col = btn.getAttribute('data-sub-color');
+                setPlayerPref('subtitle_color', col);
+                applySubtitleStyles(art);
+                renderSettingsFlyout(session);
+            });
+        });
+        panel.querySelectorAll('[data-sub-bg]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const bg = btn.getAttribute('data-sub-bg');
+                setPlayerPref('subtitle_bg', bg);
+                applySubtitleStyles(art);
+                renderSettingsFlyout(session);
+            });
+        });
+    }
 }
 
-function toggleServersFlyout(session, forceState) {
-    let panel = session.serversFlyoutPanel;
-    let backdrop = session.serversBackdrop;
+function toggleSettingsFlyout(session, forceState) {
+    let panel = session.settingsFlyoutPanel;
+    let backdrop = session.settingsBackdrop;
     if (!panel && session.art) {
-        createServersFlyout(session);
-        panel = session.serversFlyoutPanel;
-        backdrop = session.serversBackdrop;
+        createSettingsFlyout(session);
+        panel = session.settingsFlyoutPanel;
+        backdrop = session.settingsBackdrop;
     }
     if (!panel) return;
 
     const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
     if (willOpen) {
-        renderServersFlyout(session);
+        if (session.subtitlesFlyoutPanel && typeof toggleSubtitlesFlyout === 'function') {
+            toggleSubtitlesFlyout(session, false);
+        }
+        session.settingsView = 'main';
+        renderSettingsFlyout(session);
         panel.classList.add('is-open');
         if (backdrop) backdrop.classList.add('is-open');
     } else {

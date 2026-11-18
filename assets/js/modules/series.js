@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261118_1520';
-import { showToast } from '../core/toast.js?v=20261118_1520';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1520';
-import { buildFeedRows } from '../core/feedRows.js?v=20261118_1520';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1520';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1520';
-import { resumeStartTime } from '../core/resume.js?v=20261118_1520';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1520';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1520';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1520';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1520';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1520';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1520';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1520';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1520';
+} from '../core/constants.js?v=20261118_1614';
+import { showToast } from '../core/toast.js?v=20261118_1614';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1614';
+import { buildFeedRows } from '../core/feedRows.js?v=20261118_1614';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1614';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1614';
+import { resumeStartTime } from '../core/resume.js?v=20261118_1614';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1614';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1614';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1614';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1614';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1614';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1614';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1614';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1614';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -2968,40 +2968,6 @@ export function updateSeriesObraCard(show, epData, context) {
     }
 }
 
-/** Renders quick server switching chips directly in the series loader overlay. */
-function renderSeriesLoaderServers(activeServerId, isAnime) {
-    const container = document.getElementById("series-loader-servers");
-    if (!container) return;
-    const available = SERIES_SERVER_OPTIONS.filter(s => !s.animeOnly || isAnime);
-    container.innerHTML = `
-        <span class="tvz-loader-servers-label">Trocar servidor:</span>
-        <div class="tvz-loader-chips-list">
-            ${available.map(s => {
-                const isActive = s.id === activeServerId;
-                const safeName = escapeHtml(s.name.replace(' (BETA)', ''));
-                return `<button type="button" class="tvz-loader-server-chip ${isActive ? 'active' : ''}" data-server-id="${s.id}">
-                    <span>${safeName}</span>
-                </button>`;
-            }).join('')}
-        </div>
-    `;
-
-    container.querySelectorAll('.tvz-loader-server-chip').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const sid = btn.dataset.serverId;
-            if (sid !== activeSeriesPlaying.server && activeSeriesPlaying.show) {
-                activeSeriesPlaying.server = sid;
-                activeSeriesPlaying.userSelectedServer = true;
-                openEpisode(activeSeriesPlaying.show, {
-                    season: activeSeriesPlaying.seasonNumber,
-                    episode: activeSeriesPlaying.episodeNumber
-                }, { keepPosition: true });
-            }
-        });
-    });
-}
-
 /** Toggles the Series Episode Drawer with smooth populate. */
 export function toggleSeriesDrawer(forceState) {
     const drawer = document.getElementById("series-player-drawer");
@@ -3169,8 +3135,6 @@ function startEpisodePlayback(context, options = {}) {
     if (activeLabel) {
         activeLabel.textContent = (serverDef.name || 'Servidores').replace(' (BETA)', '').replace(' (BETA - Legendados)', '');
     }
-
-    renderSeriesLoaderServers(serverKey, isAnime);
 
     // Route A: Native Direct Player
     if (serverDef.isNative) {
