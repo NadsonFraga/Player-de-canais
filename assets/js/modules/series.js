@@ -1737,7 +1737,6 @@ const SERIES_SERVER_OPTIONS = [
     { id: 'native_anime',   name: 'Anime Player (Áudio Original)', isNative: true, animeOnly: true, source: 'anime_native' },
     { id: 'native_direct',  name: 'Mgeb Player (BETA)',            isNative: true, source: 'mgeb' },
     { id: 'native_fenix',   name: 'Fenix Player (BETA)',           isNative: true, source: 'fenixflix' },
-    { id: 'native_movy',    name: 'Movy Player (BETA)',            isNative: true, source: 'movy' },
     { id: 'mgeb',          name: 'Servidor 1 (MGEB)' },
     { id: 'superflix',     name: 'Servidor 2 (SuperFlix)' },
     { id: 'myembed',       name: 'Servidor 3 (MyEmbed)' },

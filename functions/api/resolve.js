@@ -164,7 +164,7 @@ function firstThenMerge(lookups, windowMs) {
 }
 
 import { streamSigningKey, proxiedStreamUrl } from "./stream.js";
-import { resolveFenixFlix, resolveMovy } from "./providers.js";
+import { resolveFenixFlix } from "./providers.js";
 
 // Calls per minute from one IP to /api/resolve and /api/tmdb, counted in this isolate's memory (free, approximate):
 // many title pages and catalog rows fit; a script hammering the routes does not
@@ -1467,7 +1467,7 @@ export async function onRequestGet(context) {
     }
   };
 
-  // Determine requested provider (mgeb, fenixflix, movy, anime_native)
+  // Determine requested provider (mgeb, fenixflix, anime_native)
   const requestedSource = urlObj.searchParams.get("source") || (type === "anime" && lang === "sub" ? "anime_native" : "mgeb");
   const imdbId = urlObj.searchParams.get("imdb_id");
 
@@ -1605,36 +1605,7 @@ export async function onRequestGet(context) {
 
 
 
-  // ROTA 5: Movy (Wecollege CDN)
-  if (!result && requestedSource === "movy" && id) {
-    const tmdbId = /^\d+$/.test(id) ? id : null;
-    if (tmdbId) {
-      const movyData = await timed("movy", resolveMovy({ tmdbId, type, season, episode, imdbId }));
-      providerDebug = movyData?.debug || null;
-      if (movyData && movyData.sources && movyData.sources.length > 0) {
-        const parsedSources = await Promise.all(movyData.sources.map(async (s) => ({
-          label: s.label,
-          type: "hls",
-          stream_url: await proxied(s.file, s.referer),
-          direct_url: s.file,
-          raw_url: s.file,
-          headers: { "Referer": s.referer },
-          quality: s.quality || 1080
-        })));
-        result = {
-          success: true,
-          title: titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
-          category: type,
-          audio: "original",
-          provider: "movy",
-          primary_source: parsedSources[0],
-          fallback_sources: parsedSources.slice(1),
-          subtitles: [],
-          aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
-        };
-      }
-    }
-  }
+
 
   // ROTA 6: MGEB (Player Principal Atual)
   let mgebEpisodeMismatch = false;
