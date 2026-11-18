@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261117_1140';
-import { showToast } from '../core/toast.js?v=20261117_1140';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261117_1140';
-import { buildFeedRows } from '../core/feedRows.js?v=20261117_1140';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261117_1140';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_1140';
-import { resumeStartTime } from '../core/resume.js?v=20261117_1140';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261117_1140';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261117_1140';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1140';
-import { fetchTmdb } from '../core/tmdb.js?v=20261117_1140';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261117_1140';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261117_1140';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261117_1140';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261117_1140';
+} from '../core/constants.js?v=20261118_1010';
+import { showToast } from '../core/toast.js?v=20261118_1010';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1010';
+import { buildFeedRows } from '../core/feedRows.js?v=20261118_1010';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1010';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1010';
+import { resumeStartTime } from '../core/resume.js?v=20261118_1010';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1010';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1010';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1010';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1010';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1010';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1010';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1010';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1010';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -1737,7 +1737,6 @@ const SERIES_SERVER_OPTIONS = [
     { id: 'native_anime',   name: 'Anime Player (Áudio Original)', isNative: true, animeOnly: true, source: 'anime_native' },
     { id: 'native_direct',  name: 'Mgeb Player (BETA)',            isNative: true, source: 'mgeb' },
     { id: 'native_fenix',   name: 'Fenix Player (BETA)',           isNative: true, source: 'fenixflix' },
-    { id: 'native_movy',    name: 'Movy Player (BETA)',            isNative: true, source: 'movy' },
     { id: 'mgeb',          name: 'Servidor 1 (MGEB)' },
     { id: 'superflix',     name: 'Servidor 2 (SuperFlix)' },
     { id: 'myembed',       name: 'Servidor 3 (MyEmbed)' },
