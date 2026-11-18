@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261118_1032';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1032';
-import { showToast } from '../core/toast.js?v=20261118_1032';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1032';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1032';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1032';
-import { formatClock } from '../core/resume.js?v=20261118_1032';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1032';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1032';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1032';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1032';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1032';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1032';
+import { store } from '../core/state.js?v=20261118_1150';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1150';
+import { showToast } from '../core/toast.js?v=20261118_1150';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1150';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1150';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1150';
+import { formatClock } from '../core/resume.js?v=20261118_1150';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1150';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1150';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1150';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1150';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1150';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1150';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1931,28 +1931,9 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             art.on('control', (visible) => {
                 const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
                 if (card) {
-                    if (visible && !card.classList.contains('tvz-clean-pause')) {
-                        card.classList.add('is-ui-visible');
-                    } else if (!visible) {
-                        card.classList.remove('is-ui-visible');
-                    }
+                    card.classList.toggle('is-ui-visible', Boolean(visible));
                 }
             });
-
-            const mask = art.template && art.template.$mask;
-            if (mask) {
-                mask.addEventListener('click', (e) => {
-                    if (!art.playing) {
-                        e.stopImmediatePropagation();
-                        e.preventDefault();
-                        const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
-                        if (card) {
-                            const isClean = card.classList.toggle('tvz-clean-pause');
-                            art.controls.show = !isClean;
-                        }
-                    }
-                }, true);
-            }
 
             const playPromise = art.play();
             if (playPromise && typeof playPromise.catch === 'function') {
@@ -1995,7 +1976,6 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
             if (card) {
                 card.classList.remove('is-paused');
-                card.classList.remove('tvz-clean-pause');
             }
             if (isSessionLive(session, token)) {
                 if (session.qualityRollback && session.currentIndex !== session.qualityRollback.previousSourceIndex) {
@@ -2020,7 +2000,6 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
             if (card) {
                 card.classList.add('is-paused');
-                card.classList.remove('tvz-clean-pause');
             }
             setPlaybackActiveState(false);
             if (isSessionLive(session, token)) reportProgress(session, true);

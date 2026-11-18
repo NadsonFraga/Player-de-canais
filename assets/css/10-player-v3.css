@@ -836,9 +836,44 @@
         background: #000000 !important;
     }
 
+    .movie-player-top-bar,
+    .series-player-top-bar {
+        padding: 0 10px !important;
+        gap: 8px !important;
+        height: 52px !important;
+    }
+
+    .btn-player-back {
+        min-width: 36px !important;
+        min-height: 36px !important;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+    }
+
+    .btn-player-back-text {
+        display: none !important;
+    }
+
     .btn-player-icon {
-        width: 38px;
-        height: 38px;
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    .series-player-actions {
+        height: 36px !important;
+    }
+
+    .series-player-title-block {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
+    .movie-player-server-title,
+    .series-player-header-title {
+        font-size: 13px !important;
+        flex: 1 !important;
     }
 }
 
@@ -1533,120 +1568,125 @@
 
 /* Obra Card (Netflix/MGEB style, visible exclusively when paused) */
 .tvz-obra-card {
-    position: absolute;
-    top: 76px;
-    left: 36px;
-    max-width: 560px;
-    display: flex;
-    gap: 18px;
-    align-items: flex-start;
-    z-index: 135;
-    pointer-events: none;
+    position: absolute !important;
+    top: 84px !important;
+    left: 36px !important;
+    max-width: 580px !important;
+    display: flex !important;
+    gap: 20px !important;
+    align-items: flex-start !important;
+    z-index: 135 !important;
+    pointer-events: none !important;
     opacity: 0;
     transform: translateY(-8px);
-    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-    background: transparent;
-    user-select: none;
+    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    background: rgba(10, 14, 22, 0.78) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 18px 22px !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+    user-select: none !important;
 }
 
-/* Pause-only trigger: only when .player-page-card has .is-paused and not .tvz-clean-pause */
-.player-page-card.is-paused:not(.tvz-clean-pause) .tvz-obra-card,
-.movie-player-stage.is-paused:not(.tvz-clean-pause) .tvz-obra-card,
-.series-theater-stage.is-paused:not(.tvz-clean-pause) .tvz-obra-card {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
+/* Pause-only trigger: only when .player-page-card has .is-paused */
+.player-page-card.is-paused .tvz-obra-card,
+.movie-player-stage.is-paused .tvz-obra-card,
+.series-theater-stage.is-paused .tvz-obra-card {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
 }
 
 .tvz-obra-poster-wrap {
-    flex-shrink: 0;
-    width: 100px;
-    height: 148px;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #111827;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.12);
+    flex-shrink: 0 !important;
+    width: 96px !important;
+    height: 142px !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    background: #111827 !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .tvz-obra-poster {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
 }
 
 .tvz-obra-details {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    min-width: 0 !important;
 }
 
 .tvz-obra-title {
-    font-size: clamp(20px, 2.4vw, 28px);
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1.2;
-    margin: 0;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
-    letter-spacing: -0.01em;
+    font-size: clamp(20px, 2.2vw, 26px) !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    letter-spacing: -0.02em !important;
 }
 
 .tvz-obra-meta-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 2px;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: 2px !important;
 }
 
 .tvz-obra-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.14);
-    color: #f1f5f9;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(8px);
-    line-height: 1.3;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    line-height: 1.2 !important;
 }
 
 .tvz-obra-badge.rating {
-    background: rgba(234, 179, 8, 0.2);
-    border-color: rgba(234, 179, 8, 0.4);
-    color: #fde047;
+    background: rgba(234, 179, 8, 0.16) !important;
+    border: 1px solid rgba(234, 179, 8, 0.4) !important;
+    color: #facc15 !important;
+    font-weight: 700 !important;
 }
 
 .tvz-obra-badge.cert {
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 .tvz-obra-badge.ep {
-    background: rgba(56, 189, 248, 0.2);
-    border-color: rgba(56, 189, 248, 0.4);
-    color: #bae6fd;
+    background: rgba(56, 189, 248, 0.16) !important;
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    color: #7dd3fc !important;
 }
 
 .tvz-obra-genres {
-    font-size: 13px;
-    color: #cbd5e1;
-    font-weight: 500;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+    font-size: 13px !important;
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+    margin-top: 2px !important;
 }
 
 .tvz-obra-overview {
-    font-size: 13px;
-    line-height: 1.5;
-    color: #94a3b8;
-    margin: 2px 0 0 0;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    overflow: hidden;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    color: #cbd5e1 !important;
+    margin: 4px 0 0 0 !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 3 !important;
+    overflow: hidden !important;
 }
 
 /* Mobile responsive Obra Card */
@@ -1678,15 +1718,16 @@
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    height: 74px !important;
-
+    height: 80px !important;
     z-index: 140 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding: 0 28px !important;
-    background: linear-gradient(180deg, rgba(8, 10, 15, 0.9) 0%, rgba(8, 10, 15, 0.4) 65%, transparent 100%) !important;
-
+    padding: 0 32px !important;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.25) 60%, transparent 100%) !important;
+    border: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
     pointer-events: none !important;
     opacity: 0;
     transform: translateY(-8px);
@@ -1709,33 +1750,42 @@
 }
 
 .btn-player-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 38px;
-    padding: 0 16px 0 12px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 9999px;
-    color: #f4f4f5;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 6px 10px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #f1f5f9 !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em !important;
+    cursor: pointer !important;
+    transition: color 0.18s ease, transform 0.18s ease !important;
 }
 
 .btn-player-back:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.35);
-    color: #ffffff;
-    transform: translateX(-2px);
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    transform: translateX(-3px) !important;
 }
 
 .btn-player-back svg {
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
+    transition: transform 0.18s ease !important;
+}
+
+.btn-player-back:hover svg {
+    transform: translateX(-2px) !important;
 }
 
 .series-player-title-block {
@@ -1766,6 +1816,10 @@
     text-overflow: ellipsis;
 }
 
+.movie-player-server-title.sr-only {
+    display: none !important;
+}
+
 .btn-player-icon {
     display: inline-flex !important;
     align-items: center !important;
@@ -1773,35 +1827,37 @@
     width: 38px !important;
     height: 38px !important;
     border-radius: 50% !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    color: #e4e4e7 !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #94a3b8 !important;
     cursor: pointer !important;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: color 0.18s ease, transform 0.18s ease !important;
 }
 
 .btn-player-icon:hover {
-    background: rgba(255, 255, 255, 0.2) !important;
-    border-color: rgba(255, 255, 255, 0.35) !important;
+    background: transparent !important;
+    border: none !important;
     color: #ffffff !important;
-    transform: scale(1.06) !important;
+    transform: scale(1.15) !important;
 }
 
 .btn-player-icon.danger:hover {
-    background: rgba(239, 68, 68, 0.3) !important;
-    border-color: rgba(239, 68, 68, 0.6) !important;
-    color: #ffffff !important;
+    background: transparent !important;
+    border: none !important;
+    color: #ef4444 !important;
+    transform: scale(1.15) !important;
 }
 
 /* Shown when UI is visible, paused, or loading */
-.player-page-card.is-ui-visible:not(.tvz-clean-pause) .movie-player-top-bar,
-.player-page-card.is-ui-visible:not(.tvz-clean-pause) .series-player-top-bar,
-.player-page-card.is-paused:not(.tvz-clean-pause) .movie-player-top-bar,
-.player-page-card.is-paused:not(.tvz-clean-pause) .series-player-top-bar,
-.player-page-card.is-loading:not(.tvz-clean-pause) .movie-player-top-bar,
-.player-page-card.is-loading:not(.tvz-clean-pause) .series-player-top-bar {
+.player-page-card.is-ui-visible .movie-player-top-bar,
+.player-page-card.is-ui-visible .series-player-top-bar,
+.player-page-card.is-paused .movie-player-top-bar,
+.player-page-card.is-paused .series-player-top-bar,
+.player-page-card.is-loading .movie-player-top-bar,
+.player-page-card.is-loading .series-player-top-bar {
     opacity: 1 !important;
     transform: translateY(0) !important;
     pointer-events: auto !important;
@@ -2100,14 +2156,6 @@
 
 }
 
-/* Clean pause explicitly hides everything */
-.player-page-card.tvz-clean-pause .movie-player-top-bar,
-.player-page-card.tvz-clean-pause .series-player-top-bar,
-.player-page-card.tvz-clean-pause .art-bottom,
-.player-page-card.tvz-clean-pause .tvz-obra-card {
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
 
 /* Controls Styling */
 .art-control-seek-backward,

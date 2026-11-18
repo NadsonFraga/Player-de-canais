@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261118_1032';
-import { showToast } from '../core/toast.js?v=20261118_1032';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1032';
-import { buildFeedRows } from '../core/feedRows.js?v=20261118_1032';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1032';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1032';
-import { resumeStartTime } from '../core/resume.js?v=20261118_1032';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1032';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1032';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1032';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1032';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1032';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1032';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1032';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1032';
+} from '../core/constants.js?v=20261118_1150';
+import { showToast } from '../core/toast.js?v=20261118_1150';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1150';
+import { buildFeedRows } from '../core/feedRows.js?v=20261118_1150';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1150';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1150';
+import { resumeStartTime } from '../core/resume.js?v=20261118_1150';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1150';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1150';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1150';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1150';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1150';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1150';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1150';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1150';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -2831,7 +2831,7 @@ export function updateSeriesObraCard(show, epData, context) {
         } else if (Array.isArray(show.genre_ids)) {
             genreNames = show.genre_ids.map(id => TMDB_GENRES[id]).filter(Boolean);
         }
-        genresEl.textContent = genreNames.slice(0, 3).join(', ');
+        genresEl.textContent = genreNames.slice(0, 3).join(' • ');
     }
 
     if (overviewEl) {
@@ -3373,7 +3373,7 @@ export function stopSeriesPlayer() {
     const drawer = document.getElementById("series-player-drawer");
     const playerCard = document.querySelector('#series-player-view .player-page-card');
     if (playerCard) {
-        playerCard.classList.remove('is-loading', 'is-paused', 'tvz-clean-pause');
+        playerCard.classList.remove('is-loading', 'is-paused');
     }
 
     const wasTheaterOpen = theaterView && !theaterView.classList.contains("hidden");
