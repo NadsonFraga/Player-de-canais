@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261118_1614';
-import { showToast } from '../core/toast.js?v=20261118_1614';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1614';
-import { buildFeedRows } from '../core/feedRows.js?v=20261118_1614';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1614';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1614';
-import { resumeStartTime } from '../core/resume.js?v=20261118_1614';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1614';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1614';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1614';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1614';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1614';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1614';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1614';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1614';
+} from '../core/constants.js?v=20261118_1711';
+import { showToast } from '../core/toast.js?v=20261118_1711';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1711';
+import { buildFeedRows } from '../core/feedRows.js?v=20261118_1711';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1711';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1711';
+import { resumeStartTime } from '../core/resume.js?v=20261118_1711';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1711';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1711';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1711';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1711';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1711';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1711';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1711';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1711';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -2902,6 +2902,41 @@ export function updateSeriesObraCard(show, epData, context) {
     const topShowName = document.getElementById("series-player-show-name-top");
     if (topShowName) topShowName.textContent = showTitle;
 
+    const thumbTop = document.getElementById("series-player-thumb-top");
+    if (thumbTop) {
+        const pPath = (epData && epData.still_path) || show.poster_path || show.backdrop_path;
+        if (pPath) {
+            thumbTop.src = `${TMDB_IMG_W500}${pPath}`;
+            thumbTop.alt = showTitle;
+            thumbTop.classList.remove("hidden");
+        } else {
+            thumbTop.classList.add("hidden");
+        }
+    }
+
+    const ratingBadge = document.getElementById("series-player-rating-badge");
+    if (ratingBadge) {
+        const rating = Number(show.vote_average);
+        if (!isNaN(rating) && rating > 0) {
+            ratingBadge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${rating.toFixed(1)}`;
+            ratingBadge.classList.remove("hidden");
+        } else {
+            ratingBadge.classList.add("hidden");
+        }
+    }
+
+    const yearBadge = document.getElementById("series-player-year-badge");
+    if (yearBadge) {
+        const dateStr = show.first_air_date || show.release_date || '';
+        const year = dateStr.slice(0, 4);
+        if (year) {
+            yearBadge.textContent = year;
+            yearBadge.classList.remove("hidden");
+        } else {
+            yearBadge.classList.add("hidden");
+        }
+    }
+
     const posterPath = (epData && epData.still_path) || show.poster_path || show.backdrop_path;
     if (posterImg) {
         if (posterPath) {
@@ -2974,12 +3009,21 @@ export function toggleSeriesDrawer(forceState) {
     if (!drawer) return;
     const willOpen = typeof forceState === 'boolean' ? forceState : drawer.classList.contains("hidden");
     if (willOpen) {
+        window.dispatchEvent(new CustomEvent('tvzinha:closeFlyouts'));
         drawer.classList.remove("hidden");
         populateSeriesDrawer();
     } else {
         drawer.classList.add("hidden");
     }
 }
+
+document.addEventListener('pointerdown', (e) => {
+    const drawer = document.getElementById("series-player-drawer");
+    if (!drawer || drawer.classList.contains("hidden")) return;
+    if (!drawer.contains(e.target) && !e.target.closest('.art-control-episodes-btn, #btn-toggle-drawer')) {
+        toggleSeriesDrawer(false);
+    }
+});
 
 function onToggleSeriesDrawerEvent() {
     toggleSeriesDrawer();

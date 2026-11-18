@@ -153,6 +153,9 @@ try {
   });
 
   await send("Runtime.enable");
+  await send("Page.enable");
+  await send("Page.navigate", { url: "http://127.0.0.1:8787/" });
+  await new Promise(r => setTimeout(r, 1000));
 
   // Evaluate injection test inside the browser runtime
   const testScript = `

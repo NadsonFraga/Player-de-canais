@@ -166,10 +166,10 @@
 }
 
 .btn-movie-server.native-direct.active {
-    background: #16a34a !important;
-    color: #ffffff !important;
-    border-color: var(--tvz-player-accent, #eab308) !important;
-    box-shadow: 0 0 16px rgba(34, 197, 94, 0.45) !important;
+    background: #eab308 !important;
+    color: #000000 !important;
+    border-color: #facc15 !important;
+    box-shadow: 0 0 16px rgba(234, 179, 8, 0.45) !important;
     font-weight: 700 !important;
 }
 
@@ -191,10 +191,10 @@
 
 .btn-series-server-pill[data-server="native_direct"].active,
 .btn-series-server-pill[data-server="native_anime"].active {
-    background: #16a34a !important;
-    color: #ffffff !important;
-    border-color: var(--tvz-player-accent, #eab308) !important;
-    box-shadow: 0 0 14px rgba(34, 197, 94, 0.45) !important;
+    background: #eab308 !important;
+    color: #000000 !important;
+    border-color: #facc15 !important;
+    box-shadow: 0 0 14px rgba(234, 179, 8, 0.45) !important;
     font-weight: 700 !important;
 }
 
@@ -721,9 +721,9 @@
 }
 
 .badge-server-native {
-    background: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: rgba(234, 179, 8, 0.15);
+    color: #facc15;
+    border: 1px solid rgba(234, 179, 8, 0.35);
     padding: 2px 7px;
     border-radius: 4px;
     font-size: 0.68rem;
@@ -745,18 +745,18 @@
 }
 
 .btn-server-option.native-server {
-    border-color: rgba(34, 197, 94, 0.2);
+    border-color: rgba(234, 179, 8, 0.2);
 }
 
 .btn-server-option.native-server:hover {
-    border-color: rgba(34, 197, 94, 0.4);
+    border-color: rgba(234, 179, 8, 0.4);
 }
 
 .btn-server-option.native-server.active {
-    background: #16a34a !important;
-    border-color: var(--tvz-player-accent, #eab308) !important;
-    color: #ffffff !important;
-    box-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
+    background: #eab308 !important;
+    border-color: #facc15 !important;
+    color: #000000 !important;
+    box-shadow: 0 0 14px rgba(234, 179, 8, 0.35);
 }
 
 .btn-server-option.contingency-server {
@@ -880,6 +880,25 @@
         height: 36px !important;
     }
 
+    .tvz-player-title-info {
+        gap: 8px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
+    .tvz-player-thumb-top {
+        display: none !important;
+    }
+
+    .tvz-player-main-title {
+        display: none !important;
+    }
+
+    .tvz-player-meta-badges {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
     .series-player-title-block {
         flex: 1 !important;
         min-width: 0 !important;
@@ -889,6 +908,10 @@
     .series-player-header-title {
         font-size: 13px !important;
         flex: 1 !important;
+        min-width: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 }
 
@@ -984,7 +1007,7 @@
     text-align: center !important;
 
     /* Responsive font-size in windowed mode, multiplied by user scale */
-    font-size: calc(clamp(18px, 1.9vw, 22px) * var(--tvz-sub-scale, 1)) !important;
+    font-size: calc(clamp(23px, 2.3vw, 29px) * var(--tvz-sub-scale, 1)) !important;
     color: var(--tvz-sub-color, #ffffff) !important;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -999,7 +1022,7 @@
         0 0 8px rgba(0, 0, 0, 0.6) !important;
     -webkit-text-stroke: 0.35px rgba(0, 0, 0, 0.3);
 
-    bottom: 45px !important;
+    bottom: 58px !important;
     transition: bottom 0.2s cubic-bezier(0.2, 0, 0, 1), font-size 0.15s ease;
 }
 
@@ -1040,7 +1063,7 @@
 /* Controls visible in windowed mode: lift subtitle slightly */
 .art-video-player.art-control-show .art-subtitle,
 .art-video-player.art-hover .art-subtitle {
-    bottom: 75px !important;
+    bottom: 96px !important;
 }
 
 /* Fullscreen mode on desktop / TV / Web Fullscreen:
@@ -1048,8 +1071,8 @@
 .art-video-player.art-fullscreen .art-subtitle,
 .art-video-player.art-fullscreen-web .art-subtitle,
 :fullscreen .art-video-player .art-subtitle {
-    font-size: calc(clamp(25px, 2.7vh, 34px) * var(--tvz-sub-scale, 1)) !important;
-    bottom: 60px !important;
+    font-size: calc(clamp(28px, 3.2vh, 38px) * var(--tvz-sub-scale, 1)) !important;
+    bottom: 70px !important;
 }
 
 /* When controls appear in fullscreen mode: lift subtitle above player bar */
@@ -1057,7 +1080,7 @@
 .art-video-player.art-fullscreen-web.art-control-show .art-subtitle,
 .art-video-player.art-fullscreen.art-hover .art-subtitle,
 .art-video-player.art-fullscreen-web.art-hover .art-subtitle {
-    bottom: 95px !important;
+    bottom: 112px !important;
 }
 
 /* Mobile Devices in Portrait */
@@ -1280,7 +1303,7 @@
 }
 
 .tvz-sub-custom-trigger:hover {
-    background-color: rgba(34, 197, 94, 0.14);
+    background-color: rgba(234, 179, 8, 0.14);
 }
 
 .tvz-sub-close-btn {
@@ -1384,7 +1407,7 @@
 .tvz-sub-badge {
     font-size: 10px;
     font-weight: 600;
-    background: rgba(34, 197, 94, 0.16);
+    background: rgba(234, 179, 8, 0.16);
     color: var(--tvz-player-accent, #eab308);
     padding: 1px 6px;
     border-radius: 4px;
@@ -1479,7 +1502,7 @@
 }
 
 .tvz-pill-btn.is-active {
-    background: rgba(34, 197, 94, 0.2);
+    background: rgba(234, 179, 8, 0.2);
     border-color: var(--tvz-player-accent, #eab308);
     color: var(--tvz-player-accent, #eab308);
     font-weight: 600;
@@ -1519,7 +1542,7 @@
 
 .tvz-color-swatch.is-active {
     border-color: var(--tvz-player-accent, #eab308);
-    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.4);
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.4);
 }
 
 /* Mobile Media Queries: STRICTLY KEEP ON RIGHT SIDE, NEVER full width */
@@ -1581,149 +1604,110 @@
     --tvz-player-border: rgba(255, 255, 255, 0.08);
 }
 
-/* Obra Card (Netflix/MGEB style, visible exclusively when paused) */
+/* Obra Card suppression: standardized cleanly in the top bar without obscuring the canvas */
 .tvz-obra-card {
-    position: absolute !important;
-    top: 84px !important;
-    left: 36px !important;
-    max-width: 580px !important;
+    display: none !important;
+}
+
+/* Top Bar - Standardized Media Information (Movies, Series & Animes) */
+.tvz-player-top-left {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    min-width: 0 !important;
+    pointer-events: auto !important;
+}
+
+.tvz-player-title-info {
     display: flex !important;
-    gap: 20px !important;
-    align-items: flex-start !important;
-    z-index: 135 !important;
-    pointer-events: none !important;
-    opacity: 0;
-    transform: translateY(-8px);
-    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    background: rgba(10, 14, 22, 0.78) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 16px !important;
-    padding: 18px 22px !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
-    user-select: none !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    pointer-events: auto !important;
 }
 
-/* Pause-only trigger: only when .player-page-card has .is-paused and UI is visible */
-.player-page-card.is-paused.is-ui-visible .tvz-obra-card,
-.movie-player-stage.is-paused.is-ui-visible .tvz-obra-card,
-.series-theater-stage.is-paused.is-ui-visible .tvz-obra-card {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-}
-
-.tvz-obra-poster-wrap {
-    flex-shrink: 0 !important;
-    width: 96px !important;
-    height: 142px !important;
-    border-radius: 10px !important;
-    overflow: hidden !important;
-    background: #111827 !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.tvz-obra-poster {
-    width: 100% !important;
-    height: 100% !important;
+.tvz-player-thumb-top {
+    width: 38px !important;
+    height: 54px !important;
     object-fit: cover !important;
-    display: block !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+    flex-shrink: 0 !important;
+    background: #0f172a;
 }
 
-.tvz-obra-details {
+.tvz-player-thumb-top.hidden {
+    display: none !important;
+}
+
+.tvz-player-title-meta {
     display: flex !important;
     flex-direction: column !important;
-    gap: 6px !important;
+    gap: 3px !important;
+    flex: 1 !important;
     min-width: 0 !important;
 }
 
-.tvz-obra-title {
-    font-size: clamp(20px, 2.2vw, 26px) !important;
+.tvz-player-main-title {
+    font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+    font-size: 15px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
     line-height: 1.2 !important;
-    margin: 0 !important;
-    letter-spacing: -0.02em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8) !important;
 }
 
-.tvz-obra-meta-row {
+.tvz-player-meta-badges {
     display: flex !important;
     align-items: center !important;
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-    margin-top: 2px !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+    flex: 1 !important;
+    min-width: 0 !important;
 }
 
-.tvz-obra-badge {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    padding: 3px 8px !important;
-    border-radius: 6px !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #e2e8f0 !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+.tvz-player-sub-title {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     line-height: 1.2 !important;
 }
 
-.tvz-obra-badge.rating {
+.tvz-meta-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    padding: 2px 7px !important;
+    border-radius: 5px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    line-height: 1.1 !important;
+}
+
+.tvz-meta-pill.hidden {
+    display: none !important;
+}
+
+.tvz-meta-pill.rating {
     background: rgba(234, 179, 8, 0.16) !important;
     border: 1px solid rgba(234, 179, 8, 0.4) !important;
     color: #facc15 !important;
     font-weight: 700 !important;
 }
 
-.tvz-obra-badge.cert {
+.tvz-meta-pill.cert {
     border-color: rgba(255, 255, 255, 0.25) !important;
-}
-
-.tvz-obra-badge.ep {
-    background: rgba(56, 189, 248, 0.16) !important;
-    border-color: rgba(56, 189, 248, 0.35) !important;
-    color: #7dd3fc !important;
-}
-
-.tvz-obra-genres {
-    font-size: 13px !important;
-    color: #94a3b8 !important;
-    font-weight: 500 !important;
-    margin-top: 2px !important;
-}
-
-.tvz-obra-overview {
-    font-size: 13px !important;
-    line-height: 1.5 !important;
-    color: #cbd5e1 !important;
-    margin: 4px 0 0 0 !important;
-    display: -webkit-box !important;
-    -webkit-box-orient: vertical !important;
-    -webkit-line-clamp: 3 !important;
-    overflow: hidden !important;
-}
-
-/* Mobile responsive Obra Card */
-@media (max-width: 640px) {
-    .tvz-obra-card {
-        top: 64px;
-        left: 16px;
-        right: 16px;
-        max-width: none;
-        gap: 12px;
-    }
-    .tvz-obra-poster-wrap {
-        width: 70px;
-        height: 104px;
-    }
-    .tvz-obra-title {
-        font-size: 16px;
-    }
-    .tvz-obra-overview {
-        -webkit-line-clamp: 2;
-        font-size: 12px;
-    }
 }
 
 /* Top Bar Overlay */
@@ -1875,6 +1859,8 @@
 .player-page-card.is-loading .series-player-top-bar,
 .player-page-card.has-servers-open .movie-player-top-bar,
 .player-page-card.has-servers-open .series-player-top-bar,
+.is-paused .movie-player-top-bar,
+.is-paused .series-player-top-bar,
 .tvz-player-top-hover-zone:hover ~ .movie-player-top-bar,
 .tvz-player-top-hover-zone:hover ~ .series-player-top-bar,
 .movie-player-top-bar:hover,
@@ -1973,23 +1959,30 @@
     stroke: none !important;
 }
 
-/* Modern Series Episode Drawer (Atlantic style) */
+/* Modern Series Episode Drawer (Floating Frosted Glass UI) */
 .series-player-drawer {
     position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 380px !important;
-    max-width: 88vw !important;
-    background: rgba(10, 14, 20, 0.94) !important;
+    bottom: 74px !important;
+    right: 20px !important;
+    top: auto !important;
+    width: 390px !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100% - 90px) !important;
+    height: 520px !important;
+    background: rgba(10, 14, 22, 0.95) !important;
     backdrop-filter: blur(24px) !important;
     -webkit-backdrop-filter: blur(24px) !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
     z-index: 180 !important;
     display: flex !important;
     flex-direction: column !important;
-    box-shadow: -12px 0 36px rgba(0, 0, 0, 0.75) !important;
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease !important;
+    overflow: hidden !important;
+    color: #ffffff !important;
+    user-select: none !important;
+    font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif) !important;
+    animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .series-player-drawer.hidden {
@@ -1997,60 +1990,76 @@
 }
 
 .series-drawer-header {
-    padding: 16px 20px !important;
+    padding: 12px 16px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     background: rgba(255, 255, 255, 0.02) !important;
-}
-
-.series-drawer-header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-shrink: 0 !important;
 }
 
 .series-drawer-heading {
-    font-size: 15px;
-    font-weight: 700;
-    color: #ffffff;
-    letter-spacing: -0.01em;
+    font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.01em !important;
+}
+
+.series-drawer-season-wrap {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
 }
 
 .series-drawer-season-select {
-    padding: 4px 10px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 6px;
-    color: #f1f5f9;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    outline: none;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 8px !important;
+    padding: 6px 28px 6px 12px !important;
+    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif) !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #f1f5f9 !important;
+    cursor: pointer !important;
+    outline: none !important;
+    transition: background 0.18s ease, border-color 0.18s ease !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23facc15' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 8px center !important;
 }
 
 .series-drawer-season-select:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(234, 179, 8, 0.4) !important;
+    color: #ffffff !important;
 }
 
-.btn-close-drawer {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #94a3b8;
-    cursor: pointer;
-    transition: all 0.15s ease;
+.series-drawer-season-select option {
+    background: #0f141f !important;
+    color: #ffffff !important;
+    padding: 8px !important;
 }
 
-.btn-close-drawer:hover {
-    background: rgba(255, 255, 255, 0.16);
-    color: #ffffff;
+.art-video-player.art-fullscreen .series-player-drawer,
+.art-video-player.art-fullscreen-web .series-player-drawer,
+:fullscreen .art-video-player .series-player-drawer {
+    bottom: 84px !important;
+    right: 24px !important;
+}
+
+@media (max-width: 640px) {
+    .series-player-drawer {
+        right: 8px !important;
+        left: 8px !important;
+        width: auto !important;
+        bottom: 68px !important;
+        max-height: 75% !important;
+    }
 }
 
 .series-drawer-list {
@@ -2429,7 +2438,7 @@
     width: 330px;
     max-width: calc(100vw - 32px);
     max-height: calc(100% - 90px);
-    background: rgba(10, 16, 26, 0.94);
+    background: rgba(10, 16, 26, 0.95);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2441,6 +2450,7 @@
     overflow: hidden;
     color: #ffffff;
     user-select: none;
+    font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif) !important;
     animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2467,8 +2477,9 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    font-family: var(--font-heading, 'Outfit', sans-serif);
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
     color: #f8fafc;
 }
 
@@ -2483,7 +2494,7 @@
     gap: 6px;
     background: transparent;
     border: none;
-    color: #38bdf8;
+    color: #facc15;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -2494,8 +2505,8 @@
 }
 
 .tvz-settings-back-btn:hover {
-    background: rgba(56, 189, 248, 0.12);
-    color: #7dd3fc;
+    background: rgba(234, 179, 8, 0.12);
+    color: #fef08a;
 }
 
 .tvz-settings-sub-title {
@@ -2554,7 +2565,7 @@
 
 .tvz-setting-tile:hover {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(56, 189, 248, 0.35);
+    border-color: rgba(234, 179, 8, 0.4);
 }
 
 .tvz-setting-tile-top {
@@ -2562,7 +2573,7 @@
     align-items: center;
     gap: 6px;
     width: 100%;
-    color: #38bdf8;
+    color: #facc15;
 }
 
 .tvz-setting-tile-top svg {
@@ -2575,8 +2586,8 @@
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.05em;
-    background: rgba(56, 189, 248, 0.18);
-    color: #38bdf8;
+    background: rgba(234, 179, 8, 0.18);
+    color: #facc15;
     padding: 1px 4px;
     border-radius: 4px;
     display: inline-flex;
@@ -2601,6 +2612,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.tvz-setting-tile-value.tvz-val-muted {
+    color: #94a3b8;
+    font-weight: 500;
 }
 
 .tvz-settings-divider {
@@ -2715,7 +2731,7 @@
 }
 
 .tvz-toggle-switch input:checked + .tvz-toggle-slider {
-    background-color: #38bdf8;
+    background-color: #eab308;
 }
 
 .tvz-toggle-switch input:checked + .tvz-toggle-slider:before {
@@ -2747,9 +2763,9 @@
 }
 
 .tvz-settings-option.is-active {
-    background: rgba(56, 189, 248, 0.12);
-    border-color: rgba(56, 189, 248, 0.35);
-    color: #38bdf8;
+    background: rgba(234, 179, 8, 0.14);
+    border-color: rgba(234, 179, 8, 0.4);
+    color: #fde047;
     font-weight: 600;
 }
 
@@ -2757,7 +2773,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #38bdf8;
+    color: #facc15;
     flex-shrink: 0;
 }
 
@@ -2800,9 +2816,9 @@
 }
 
 .tvz-sub-chip.is-active {
-    background: rgba(56, 189, 248, 0.18);
-    border-color: rgba(56, 189, 248, 0.4);
-    color: #38bdf8;
+    background: rgba(234, 179, 8, 0.18);
+    border-color: rgba(234, 179, 8, 0.4);
+    color: #facc15;
     font-weight: 600;
 }
 

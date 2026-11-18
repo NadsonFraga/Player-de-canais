@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261118_1614';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1614';
-import { showToast } from '../core/toast.js?v=20261118_1614';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1614';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1614';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1614';
-import { formatClock } from '../core/resume.js?v=20261118_1614';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1614';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1614';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1614';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1614';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1614';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1614';
+import { store } from '../core/state.js?v=20261118_1711';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1711';
+import { showToast } from '../core/toast.js?v=20261118_1711';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1711';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1711';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1711';
+import { formatClock } from '../core/resume.js?v=20261118_1711';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1711';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1711';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1711';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1711';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1711';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1711';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1787,7 +1787,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                 escape: false,
                 style: {
                     color: '#ffffff',
-                    fontSize: '20px',
+                    fontSize: '26px',
                     textShadow: '0 2px 4px rgba(0,0,0,0.9)',
                     fontWeight: '600'
                 },
@@ -1922,17 +1922,85 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
             createSettingsFlyout(session);
 
-            // Desktop: ensure clicking screen/video reliably toggles playback (unpauses when paused, pauses when playing)
+            // Canvas Click Handler: Clicking the video reliably toggles playback (Play/Pause)
             if (art.template && art.template.$mask) {
                 art.template.$mask.addEventListener('click', (e) => {
                     if (e.button !== 0) return;
-                    if (e.target.closest && e.target.closest('.tvz-settings-panel, .tvz-subtitles-panel, .art-controls, .art-bottom, .tvz-side-card, .art-control, .tvz-obra-card')) return;
-                    if (!art.template.$player.classList.contains('art-mobile')) {
+                    if (e.target.closest && e.target.closest(
+                        '.tvz-settings-panel, .tvz-subtitles-panel, .tvz-servers-panel, .series-player-drawer, ' +
+                        '.art-controls, .art-bottom, .art-top, .movie-player-top-bar, .series-player-top-bar, ' +
+                        '.tvz-side-card, .art-control, .art-state, button, a, select, input'
+                    )) return;
+
+                    // If any flyout/drawer is open, clicking canvas closes it
+                    if (session.settingsFlyoutPanel?.classList.contains('is-open') ||
+                        session.subtitlesFlyoutPanel?.classList.contains('is-open') ||
+                        document.getElementById('movie-servers-flyout-panel')?.classList.contains('is-open') ||
+                        document.getElementById('series-servers-flyout-panel')?.classList.contains('is-open') ||
+                        !document.getElementById('series-player-drawer')?.classList.contains('hidden')) {
+                        window.dispatchEvent(new CustomEvent('tvzinha:closeFlyouts'));
+                        return;
+                    }
+
+                    // On mouse or non-mobile devices, toggle playback directly
+                    if (window.matchMedia('(pointer: fine)').matches || !art.template.$player.classList.contains('art-mobile')) {
                         e.stopImmediatePropagation();
-                        art.toggle();
+                        if (art.video) {
+                            if (art.video.paused) {
+                                art.play();
+                            } else {
+                                art.pause();
+                            }
+                        } else {
+                            art.toggle();
+                        }
                     }
                 }, true);
             }
+
+            // Reliable auto-hide controls: hides controls on inactivity or when mouse leaves window
+            let controlsHideTimer = null;
+            const scheduleControlsHide = (delayMs = 2800) => {
+                clearTimeout(controlsHideTimer);
+                if (!art.video || art.video.paused) return;
+                if (session.settingsFlyoutPanel?.classList.contains('is-open') ||
+                    session.subtitlesFlyoutPanel?.classList.contains('is-open') ||
+                    document.getElementById('movie-servers-flyout-panel')?.classList.contains('is-open') ||
+                    document.getElementById('series-servers-flyout-panel')?.classList.contains('is-open') ||
+                    !document.getElementById('series-player-drawer')?.classList.contains('hidden')) return;
+
+                controlsHideTimer = setTimeout(() => {
+                    if (!art.video || art.video.paused) return;
+                    if (session.settingsFlyoutPanel?.classList.contains('is-open') ||
+                        session.subtitlesFlyoutPanel?.classList.contains('is-open') ||
+                        document.getElementById('movie-servers-flyout-panel')?.classList.contains('is-open') ||
+                        document.getElementById('series-servers-flyout-panel')?.classList.contains('is-open') ||
+                        !document.getElementById('series-player-drawer')?.classList.contains('hidden')) return;
+
+                    art.controls.show = false;
+                    if (art.template?.$player) {
+                        art.template.$player.classList.remove('art-hover');
+                    }
+                    if (document.activeElement && art.template.$player?.contains(document.activeElement)) {
+                        document.activeElement.blur();
+                    }
+                }, delayMs);
+            };
+
+            art.template.$player?.addEventListener('mousemove', () => scheduleControlsHide(2800));
+            art.template.$player?.addEventListener('mouseleave', () => scheduleControlsHide(600));
+            document.documentElement.addEventListener('mouseleave', () => scheduleControlsHide(300));
+            window.addEventListener('blur', () => scheduleControlsHide(300));
+
+            const onCloseAllFlyouts = () => {
+                if (session.settingsFlyoutPanel) toggleSettingsFlyout(session, false);
+                if (session.subtitlesFlyoutPanel) toggleSubtitlesFlyout(session, false);
+            };
+            window.addEventListener('tvzinha:closeFlyouts', onCloseAllFlyouts);
+            art.on('destroy', () => {
+                clearTimeout(controlsHideTimer);
+                window.removeEventListener('tvzinha:closeFlyouts', onCloseAllFlyouts);
+            });
 
             art.on('control', (visible) => {
                 const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
@@ -1976,13 +2044,23 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             renderSkipRanges(session);
         });
 
+        const syncPauseUi = (paused) => {
+            const card = (art.template && art.template.$player && art.template.$player.closest('.player-page-card')) || document.querySelector('.player-page-card');
+            if (card) {
+                card.classList.toggle('is-paused', Boolean(paused));
+            }
+            if (paused) {
+                art.controls.show = true;
+                if (art.template?.$player) {
+                    art.template.$player.classList.add('art-hover');
+                }
+            }
+        };
+
         art.on('video:canplay', markStreamSuccess);
         art.on('video:playing', markStreamSuccess);
         art.on('video:playing', () => {
-            const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
-            if (card) {
-                card.classList.remove('is-paused');
-            }
+            syncPauseUi(false);
             if (isSessionLive(session, token)) {
                 if (session.qualityRollback && session.currentIndex !== session.qualityRollback.previousSourceIndex) {
                     const targetQ = session.qualityRollback.targetQuality;
@@ -2003,13 +2081,13 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         });
 
         art.on('video:pause', () => {
-            const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
-            if (card) {
-                card.classList.add('is-paused');
-            }
+            syncPauseUi(true);
             setPlaybackActiveState(false);
             if (isSessionLive(session, token)) reportProgress(session, true);
         });
+
+        art.on('play', () => syncPauseUi(false));
+        art.on('pause', () => syncPauseUi(true));
 
         art.on('video:timeupdate', () => {
             if (!isSessionLive(session, token)) return;
@@ -4258,12 +4336,12 @@ function renderSettingsFlyout(session) {
                         <div class="tvz-setting-tile-value">${escapeHtml(getAudioDisplay(session))}</div>
                     </button>
 
-                    <button type="button" class="tvz-setting-tile" data-action="view-subtitles">
+                    <button type="button" class="tvz-setting-tile" data-action="watch-party">
                         <div class="tvz-setting-tile-top">
-                            ${NATIVE_ICONS.subtitle}
-                            <span class="tvz-setting-tile-label">LEGENDAS</span>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <span class="tvz-setting-tile-label">WATCH PARTY</span>
                         </div>
-                        <div class="tvz-setting-tile-value">${escapeHtml(getSubtitlesDisplay(session))}</div>
+                        <div class="tvz-setting-tile-value tvz-val-muted">Em breve</div>
                     </button>
 
                     <button type="button" class="tvz-setting-tile" data-action="view-speed">
@@ -4278,24 +4356,19 @@ function renderSettingsFlyout(session) {
                 <div class="tvz-settings-divider"></div>
 
                 <div class="tvz-settings-list">
-                    <div class="tvz-setting-row tvz-setting-toggle-row">
+                    <div class="tvz-setting-row tvz-setting-toggle-row" data-action="open-subtitles-panel">
                         <div class="tvz-setting-row-left">
                             ${NATIVE_ICONS.subtitle}
                             <span>Ativar Legendas</span>
                         </div>
-                        <label class="tvz-toggle-switch">
-                            <input type="checkbox" class="tvz-subtitles-toggle-input" ${isSubtitlesActive ? 'checked' : ''}>
-                            <span class="tvz-toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <button type="button" class="tvz-setting-row" data-action="view-subtitle-settings">
-                        <div class="tvz-setting-row-left">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
-                            <span>Configurações de Legenda</span>
+                        <div class="tvz-setting-row-right">
+                            <label class="tvz-toggle-switch">
+                                <input type="checkbox" class="tvz-subtitles-toggle-input" ${isSubtitlesActive ? 'checked' : ''}>
+                                <span class="tvz-toggle-slider"></span>
+                            </label>
+                            <svg class="tvz-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </div>
-                        <svg class="tvz-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </button>
+                    </div>
 
                     <button type="button" class="tvz-setting-row" data-action="view-fit">
                         <div class="tvz-setting-row-left">
@@ -4333,17 +4406,17 @@ function renderSettingsFlyout(session) {
             session.settingsView = 'audio';
             renderSettingsFlyout(session);
         });
-        panel.querySelector('[data-action="view-subtitles"]')?.addEventListener('click', () => {
-            session.settingsView = 'subtitles';
-            renderSettingsFlyout(session);
+        panel.querySelector('[data-action="watch-party"]')?.addEventListener('click', () => {
+            showToast('Watch Party em breve no Tvzinha!');
         });
         panel.querySelector('[data-action="view-speed"]')?.addEventListener('click', () => {
             session.settingsView = 'speed';
             renderSettingsFlyout(session);
         });
-        panel.querySelector('[data-action="view-subtitle-settings"]')?.addEventListener('click', () => {
-            session.settingsView = 'subtitle_settings';
-            renderSettingsFlyout(session);
+        panel.querySelector('[data-action="open-subtitles-panel"]')?.addEventListener('click', (e) => {
+            if (e.target.closest('.tvz-toggle-switch')) return;
+            toggleSettingsFlyout(session, false);
+            toggleSubtitlesFlyout(session, true);
         });
         panel.querySelector('[data-action="view-fit"]')?.addEventListener('click', () => {
             session.settingsView = 'fit';
