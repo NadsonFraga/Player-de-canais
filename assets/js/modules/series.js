@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261117_1323';
-import { showToast } from '../core/toast.js?v=20261117_1323';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261117_1323';
-import { buildFeedRows } from '../core/feedRows.js?v=20261117_1323';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261117_1323';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_1323';
-import { resumeStartTime } from '../core/resume.js?v=20261117_1323';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261117_1323';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261117_1323';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1323';
-import { fetchTmdb } from '../core/tmdb.js?v=20261117_1323';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261117_1323';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261117_1323';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261117_1323';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261117_1323';
+} from '../core/constants.js?v=20261118_1032';
+import { showToast } from '../core/toast.js?v=20261118_1032';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1032';
+import { buildFeedRows } from '../core/feedRows.js?v=20261118_1032';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1032';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1032';
+import { resumeStartTime } from '../core/resume.js?v=20261118_1032';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1032';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1032';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1032';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1032';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1032';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1032';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1032';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1032';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -1853,16 +1853,16 @@ export function setupSeriesModalHandlers() {
 
     if (btnToggleDrawer && drawer) {
         btnToggleDrawer.addEventListener("click", () => {
-            drawer.classList.toggle("hidden");
-            if (!drawer.classList.contains("hidden")) {
-                populateSeriesDrawer();
-            }
+            toggleSeriesDrawer();
         });
     }
 
     if (btnCloseDrawer && drawer) {
-        btnCloseDrawer.addEventListener("click", () => drawer.classList.add("hidden"));
+        btnCloseDrawer.addEventListener("click", () => toggleSeriesDrawer(false));
     }
+
+    window.removeEventListener('tvzinha:toggleSeriesDrawer', onToggleSeriesDrawerEvent);
+    window.addEventListener('tvzinha:toggleSeriesDrawer', onToggleSeriesDrawerEvent);
 
     const btnModeArcs = document.getElementById("btn-mode-arcs");
     const btnModeContinuous = document.getElementById("btn-mode-continuous");
@@ -2752,6 +2752,144 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber) {
     return openEpisode(showItem, { season: seasonNumber, episode: episodeNumber });
 }
 
+/** Renders or updates the Netflix/MGEB-style Obra Card shown exclusively when paused for Series/Animes. */
+export function updateSeriesObraCard(show, epData, context) {
+    if (!show) return;
+    const card = document.getElementById("series-obra-card");
+    if (!card) return;
+
+    const posterImg = document.getElementById("series-obra-poster");
+    const titleEl = document.getElementById("series-obra-title");
+    const ratingEl = document.getElementById("series-obra-rating");
+    const yearEl = document.getElementById("series-obra-year");
+    const certEl = document.getElementById("series-obra-cert");
+    const epMetaEl = document.getElementById("series-obra-ep-meta");
+    const genresEl = document.getElementById("series-obra-genres");
+    const overviewEl = document.getElementById("series-obra-overview");
+
+    const showTitle = show.name || show.title || 'Série';
+    if (titleEl) titleEl.textContent = showTitle;
+
+    const topShowName = document.getElementById("series-player-show-name-top");
+    if (topShowName) topShowName.textContent = showTitle;
+
+    const posterPath = (epData && epData.still_path) || show.poster_path || show.backdrop_path;
+    if (posterImg) {
+        if (posterPath) {
+            posterImg.src = `${TMDB_IMG_W500}${posterPath}`;
+            posterImg.alt = showTitle;
+            posterImg.style.display = '';
+        } else {
+            posterImg.removeAttribute('src');
+            posterImg.style.display = 'none';
+        }
+    }
+
+    if (ratingEl) {
+        const rating = Number(show.vote_average);
+        if (!isNaN(rating) && rating > 0) {
+            ratingEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${rating.toFixed(1)}`;
+            ratingEl.style.display = '';
+        } else {
+            ratingEl.style.display = 'none';
+        }
+    }
+
+    if (yearEl) {
+        const dateStr = show.first_air_date || show.release_date || '';
+        const year = dateStr.slice(0, 4);
+        if (year) {
+            yearEl.textContent = year;
+            yearEl.style.display = '';
+        } else {
+            yearEl.style.display = 'none';
+        }
+    }
+
+    if (certEl) {
+        const cert = show.certification || show.age_rating || '';
+        if (cert) {
+            certEl.textContent = cert;
+            certEl.style.display = '';
+        } else {
+            certEl.style.display = 'none';
+        }
+    }
+
+    if (epMetaEl) {
+        const sNum = activeSeriesPlaying.seasonNumber || (context && context.season) || 1;
+        const eNum = activeSeriesPlaying.episodeNumber || (context && context.episode) || 1;
+        const epName = epData && epData.name && !isGenericEpisodeName(epData.name) ? epData.name : '';
+        epMetaEl.textContent = `T${sNum} E${eNum}${epName ? ` • ${epName}` : ''}`;
+        epMetaEl.style.display = '';
+    }
+
+    if (genresEl) {
+        let genreNames = [];
+        if (Array.isArray(show.genres)) {
+            genreNames = show.genres.map(g => (typeof g === 'string' ? g : g.name)).filter(Boolean);
+        } else if (Array.isArray(show.genre_ids)) {
+            genreNames = show.genre_ids.map(id => TMDB_GENRES[id]).filter(Boolean);
+        }
+        genresEl.textContent = genreNames.slice(0, 3).join(', ');
+    }
+
+    if (overviewEl) {
+        overviewEl.textContent = (epData && epData.overview) || show.overview || '';
+    }
+}
+
+/** Renders quick server switching chips directly in the series loader overlay. */
+function renderSeriesLoaderServers(activeServerId, isAnime) {
+    const container = document.getElementById("series-loader-servers");
+    if (!container) return;
+    const available = SERIES_SERVER_OPTIONS.filter(s => !s.animeOnly || isAnime);
+    container.innerHTML = `
+        <span class="tvz-loader-servers-label">Trocar servidor:</span>
+        <div class="tvz-loader-chips-list">
+            ${available.map(s => {
+                const isActive = s.id === activeServerId;
+                const safeName = escapeHtml(s.name.replace(' (BETA)', ''));
+                return `<button type="button" class="tvz-loader-server-chip ${isActive ? 'active' : ''}" data-server-id="${s.id}">
+                    <span>${safeName}</span>
+                </button>`;
+            }).join('')}
+        </div>
+    `;
+
+    container.querySelectorAll('.tvz-loader-server-chip').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const sid = btn.dataset.serverId;
+            if (sid !== activeSeriesPlaying.server && activeSeriesPlaying.show) {
+                activeSeriesPlaying.server = sid;
+                activeSeriesPlaying.userSelectedServer = true;
+                openEpisode(activeSeriesPlaying.show, {
+                    season: activeSeriesPlaying.seasonNumber,
+                    episode: activeSeriesPlaying.episodeNumber
+                }, { keepPosition: true });
+            }
+        });
+    });
+}
+
+/** Toggles the Series Episode Drawer with smooth populate. */
+export function toggleSeriesDrawer(forceState) {
+    const drawer = document.getElementById("series-player-drawer");
+    if (!drawer) return;
+    const willOpen = typeof forceState === 'boolean' ? forceState : drawer.classList.contains("hidden");
+    if (willOpen) {
+        drawer.classList.remove("hidden");
+        populateSeriesDrawer();
+    } else {
+        drawer.classList.add("hidden");
+    }
+}
+
+function onToggleSeriesDrawerEvent() {
+    toggleSeriesDrawer();
+}
+
 /** Starts a resolved episode (see resolveEpisodeContext). Only openEpisode calls it. */
 function startEpisodePlayback(context, options = {}) {
     const showItem = context.show;
@@ -2778,9 +2916,23 @@ function startEpisodePlayback(context, options = {}) {
     activeSeriesPlaying.absoluteEpisodeNumber = absoluteEpNumber || (epData && epData.absoluteEpisode) || null;
     activeSeriesPlaying.episodeData = epData;
 
+    updateSeriesObraCard(showItem, activeSeriesPlaying.episodeData, context);
+
+    // If show details are thin (e.g. from resume card), fetch full metadata from TMDB
+    if (!showItem.overview || !showItem.poster_path) {
+        fetchTmdb(`tv/${showItem.id}?language=pt-BR`).then(fullShow => {
+            if (fullShow && activeSeriesPlaying.show && String(activeSeriesPlaying.show.id) === String(showItem.id)) {
+                activeSeriesPlaying.show = { ...activeSeriesPlaying.show, ...fullShow };
+                updateSeriesObraCard(activeSeriesPlaying.show, activeSeriesPlaying.episodeData, context);
+            }
+        }).catch(() => {});
+    }
+
     const theaterView = document.getElementById("series-player-view");
     const currentEpTitle = document.getElementById("series-player-current-ep");
     const btnPrev = document.getElementById("btn-series-prev-ep");
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) playerCard.classList.add('is-loading');
 
     const wasTheaterHidden = theaterView && theaterView.classList.contains("hidden");
     if (theaterView) theaterView.classList.remove("hidden");
@@ -2812,6 +2964,7 @@ function startEpisodePlayback(context, options = {}) {
                 Number(activeSeriesPlaying.episodeNumber) === Number(episodeNumber);
             if (!stillThisEpisode) return;
             activeSeriesPlaying.episodeData = { ...match, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
+            updateSeriesObraCard(showItem, activeSeriesPlaying.episodeData, context);
             saveStoredWatchProgress(showItem, seasonNumber, episodeNumber, match.name, context.isAnime ? 'anime' : 'tv', context.absolute, match.still_path);
             const currentTitleEl = document.getElementById("series-player-current-ep");
             const currentOverviewEl = document.getElementById("series-player-overview");
@@ -2883,6 +3036,8 @@ function startEpisodePlayback(context, options = {}) {
     const serverKey = activeSeriesPlaying.server;
     const serverDef = SERIES_SERVER_OPTIONS.find(s => s.id === serverKey) || SERIES_SERVER_OPTIONS[0];
 
+    renderSeriesLoaderServers(serverKey, isAnime);
+
     // Route A: Native Direct Player
     if (serverDef.isNative) {
         atomicPlayerReset();
@@ -2891,7 +3046,7 @@ function startEpisodePlayback(context, options = {}) {
             seriesArt.innerHTML = "";
             seriesArt.classList.add("hidden");
         }
-        setLoaderText(seriesLoader, "Buscando fontes...");
+        setLoaderText(seriesLoader, `Conectando ao ${serverDef.name}...`);
         if (seriesLoader) seriesLoader.classList.remove("hidden");
         const playerName = serverDef.name;
 
@@ -2902,6 +3057,7 @@ function startEpisodePlayback(context, options = {}) {
                 console.warn("[Series] Abortando montagem nativa: reprodução cancelada ou janela fechada.");
                 return;
             }
+            if (playerCard) playerCard.classList.remove('is-loading');
             if (seriesLoader) seriesLoader.classList.add("hidden");
             if (data && data.primary_source && serverKey === 'native_anime' && data.aniskip && data.aniskip.mal_id) {
                 animeMalIds.set(`${showItem.id}_${seasonNumber}`, data.aniskip.mal_id);
@@ -2923,9 +3079,11 @@ function startEpisodePlayback(context, options = {}) {
                 return;
             }
 
-            const backdropUrl = showItem.backdrop_path
-                ? `${TMDB_IMG_ORIGINAL}${showItem.backdrop_path}`
-                : '';
+            const backdropUrl = epData?.still_path
+                ? `${TMDB_IMG_W500}${epData.still_path}`
+                : showItem.backdrop_path
+                    ? `${TMDB_IMG_ORIGINAL}${showItem.backdrop_path}`
+                    : '';
 
             // Read after the previous player saved its last time (the reset above), so a switch keeps it
             const resumeAt = options.restart
@@ -2948,10 +3106,18 @@ function startEpisodePlayback(context, options = {}) {
                     title: showName
                 },
                 provider: data.provider || serverDef.source || 'mgeb',
-                servers: SERIES_SERVER_OPTIONS,
-                activeServerId: serverDef.id,
+                servers: SERIES_SERVER_OPTIONS.filter(s => !s.animeOnly || isAnime),
+                activeServerId: serverKey,
                 onSelectServer: (targetServer) => {
-                    switchSeriesServer(targetServer.id);
+                    if (targetServer.id !== activeSeriesPlaying.server && activeSeriesPlaying.show) {
+                        activeSeriesPlaying.server = targetServer.id;
+                        activeSeriesPlaying.userSelectedServer = true;
+                        openEpisode(activeSeriesPlaying.show, {
+                            season: activeSeriesPlaying.seasonNumber,
+                            episode: activeSeriesPlaying.episodeNumber
+                        }, { keepPosition: true });
+                    }
+
                 },
                 onProgress: (info) => {
                     saveEpisodePosition(context, serverKey, info);
@@ -2990,6 +3156,7 @@ function startEpisodePlayback(context, options = {}) {
                     };
                 },
                 onAllFailed: () => {
+                    if (playerCard) playerCard.classList.remove('is-loading');
                     atomicPlayerReset();
                     showToast(`Nenhuma fonte do ${playerName} respondeu. Escolha outro player ou um servidor externo abaixo.`);
                     if (seriesArt) {
@@ -3004,6 +3171,7 @@ function startEpisodePlayback(context, options = {}) {
                 }
             });
         }).catch(err => {
+            if (playerCard) playerCard.classList.remove('is-loading');
             atomicPlayerReset();
             if (seriesLoader) seriesLoader.classList.add("hidden");
             showToast(`Não foi possível conectar ao ${playerName}.`);
@@ -3036,10 +3204,12 @@ function startEpisodePlayback(context, options = {}) {
             }, 30);
 
             iframe.onload = () => {
+                if (playerCard) playerCard.classList.remove('is-loading');
                 if (seriesLoader) seriesLoader.classList.add("hidden");
                 setPlaybackActiveState(true);
             };
             setTimeout(() => {
+                if (playerCard) playerCard.classList.remove('is-loading');
                 if (seriesLoader) seriesLoader.classList.add("hidden");
             }, 3000);
         }
@@ -3059,35 +3229,89 @@ function startEpisodePlayback(context, options = {}) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function populateSeriesDrawer() {
+export async function populateSeriesDrawer(targetSeason = null) {
     const drawerList = document.getElementById("series-drawer-list");
     if (!drawerList || !activeSeriesPlaying.show) return;
 
-    drawerList.innerHTML = "";
-    const cacheKey = `${activeSeriesPlaying.show.id}_${activeSeriesPlaying.seasonNumber}`;
-    const episodes = cachedSeasonsMap[cacheKey] || [];
+    const seasonNumber = targetSeason !== null ? Number(targetSeason) : Number(activeSeriesPlaying.seasonNumber);
+    const show = activeSeriesPlaying.show;
+    const details = detailsFor(show.id);
+    const regularSeasons = details ? regularSeasonsOf(details) : [];
+
+    // Header season switcher
+    const seasonSelect = document.getElementById("series-drawer-season-select");
+    if (seasonSelect) {
+        if (regularSeasons.length > 1) {
+            seasonSelect.classList.remove("hidden");
+            seasonSelect.innerHTML = regularSeasons.map(s => {
+                const sNum = s.season_number;
+                return `<option value="${sNum}" ${sNum === seasonNumber ? 'selected' : ''}>Temporada ${sNum}</option>`;
+            }).join('');
+            seasonSelect.onchange = () => {
+                populateSeriesDrawer(Number(seasonSelect.value));
+            };
+        } else {
+            seasonSelect.classList.add("hidden");
+        }
+    }
+
+    const cacheKey = `${show.id}_${seasonNumber}`;
+    let episodes = cachedSeasonsMap[cacheKey] || [];
 
     if (episodes.length === 0) {
-        drawerList.innerHTML = `<p style="color:#71717a; padding:10px;">Episódios não carregados.</p>`;
+        drawerList.innerHTML = `<div style="display:flex;justify-content:center;padding:40px;"><div class="spinner"></div></div>`;
+        try {
+            episodes = await fetchSeasonEpisodes(show.id, seasonNumber);
+        } catch (e) {
+            drawerList.innerHTML = `<p style="color:#71717a; padding:20px; text-align:center;">Não foi possível carregar os episódios.</p>`;
+            return;
+        }
+    }
+
+    if (!episodes || episodes.length === 0) {
+        drawerList.innerHTML = `<p style="color:#71717a; padding:20px; text-align:center;">Nenhum episódio encontrado.</p>`;
         return;
     }
 
+    drawerList.innerHTML = "";
     episodes.forEach(ep => {
+        const isCurrent = Number(ep.episode_number) === Number(activeSeriesPlaying.episodeNumber) && seasonNumber === Number(activeSeriesPlaying.seasonNumber);
         const item = document.createElement("button");
         item.type = "button";
-        item.className = `drawer-item ${ep.episode_number === activeSeriesPlaying.episodeNumber ? 'active' : ''}`;
+        item.className = `tvz-drawer-ep-card ${isCurrent ? 'active' : ''}`;
         const safeEpName = escapeHtml(ep.name || 'Episódio');
         const safeEpNum = escapeHtml(ep.episode_number);
+        const stillUrl = ep.still_path
+            ? `${TMDB_IMG_W500}${ep.still_path}`
+            : (show.backdrop_path ? `${TMDB_IMG_W500}${show.backdrop_path}` : '');
+        const safeOverview = escapeHtml(ep.overview || 'Sem sinopse disponível.');
+        const durationText = ep.runtime ? `${ep.runtime}m` : '';
+
         item.innerHTML = `
-            <span>Ep. ${safeEpNum} - ${safeEpName}</span>
-            <span>▶\uFE0E</span>
+            <div class="ep-thumb-wrap">
+                ${stillUrl ? `<img src="${stillUrl}" alt="" loading="lazy" class="ep-thumb">` : `<div class="ep-thumb-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>`}
+                ${isCurrent ? '<div class="ep-playing-pill">Assistindo</div>' : ''}
+            </div>
+            <div class="ep-info-wrap">
+                <div class="ep-header-row">
+                    <span class="ep-num-title">${safeEpNum}. ${safeEpName}</span>
+                    ${durationText ? `<span class="ep-duration">${durationText}</span>` : ''}
+                </div>
+                <p class="ep-synopsis">${safeOverview}</p>
+            </div>
         `;
+
         item.addEventListener("click", () => {
-            openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: ep.episode_number });
-            const drawer = document.getElementById("series-player-drawer");
-            if (drawer) drawer.classList.add("hidden");
+            openEpisode(show, { season: seasonNumber, episode: ep.episode_number });
+            toggleSeriesDrawer(false);
         });
+
         drawerList.appendChild(item);
+        if (isCurrent) {
+            setTimeout(() => {
+                item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 60);
+        }
     });
 }
 
@@ -3147,6 +3371,10 @@ export function stopSeriesPlayer() {
     const theaterView = document.getElementById("series-player-view");
     const seriesLoader = document.getElementById("series-theater-loader");
     const drawer = document.getElementById("series-player-drawer");
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) {
+        playerCard.classList.remove('is-loading', 'is-paused', 'tvz-clean-pause');
+    }
 
     const wasTheaterOpen = theaterView && !theaterView.classList.contains("hidden");
     if (seriesLoader) seriesLoader.classList.add("hidden");

@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261117_1323';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261117_1323';
-import { showToast } from '../core/toast.js?v=20261117_1323';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261117_1323';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261117_1323';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261117_1323';
-import { formatClock } from '../core/resume.js?v=20261117_1323';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261117_1323';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261117_1323';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261117_1323';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261117_1323';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261117_1323';
-import { fetchTmdb } from '../core/tmdb.js?v=20261117_1323';
+import { store } from '../core/state.js?v=20261118_1032';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1032';
+import { showToast } from '../core/toast.js?v=20261118_1032';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1032';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1032';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1032';
+import { formatClock } from '../core/resume.js?v=20261118_1032';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1032';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1032';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1032';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1032';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1032';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1032';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1104,10 +1104,10 @@ const NATIVE_ICONS = {
     fit: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>',
     subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="3.5" style="fill:none !important;stroke:currentColor !important;"/><path style="fill:none !important;stroke:currentColor !important;" d="M9.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/><path style="fill:none !important;stroke:currentColor !important;" d="M16.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/></svg>',
     cast: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8"/><path d="M3 16a4 4 0 0 1 4 4"/><path d="M3 20h.01"/></svg>',
-    backward10: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><text x="12" y="15.5" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg>',
-    forward10: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><text x="12" y="15.5" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg>',
-    server: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>',
-    episodes: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>'
+    backward10: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path style="fill:none !important;stroke:currentColor !important;" d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path style="fill:none !important;stroke:currentColor !important;" d="M3 3v5h5"/><text x="12" y="15.5" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" style="fill:currentColor !important;stroke:none !important;">10</text></svg>',
+    forward10: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path style="fill:none !important;stroke:currentColor !important;" d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path style="fill:none !important;stroke:currentColor !important;" d="M21 3v5h-5"/><text x="12" y="15.5" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" style="fill:currentColor !important;stroke:none !important;">10</text></svg>',
+    server: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect style="fill:none !important;stroke:currentColor !important;" x="2" y="3" width="20" height="6" rx="2"/><rect style="fill:none !important;stroke:currentColor !important;" x="2" y="15" width="20" height="6" rx="2"/><line style="fill:none !important;stroke:currentColor !important;" x1="6" y1="6" x2="6.01" y2="6"/><line style="fill:none !important;stroke:currentColor !important;" x1="6" y1="18" x2="6.01" y2="18"/></svg>',
+    episodes: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect style="fill:none !important;stroke:currentColor !important;" x="3" y="3" width="7" height="7" rx="1.5"/><rect style="fill:none !important;stroke:currentColor !important;" x="14" y="3" width="7" height="7" rx="1.5"/><rect style="fill:none !important;stroke:currentColor !important;" x="14" y="14" width="7" height="7" rx="1.5"/><rect style="fill:none !important;stroke:currentColor !important;" x="3" y="14" width="7" height="7" rx="1.5"/></svg>'
 };
 
 const NATIVE_I18N = {
@@ -1765,8 +1765,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                     index: 10,
                     html: `<i class="art-icon art-control-episodes-btn" role="button" aria-label="Lista de Episódios" title="Episódios">${NATIVE_ICONS.episodes}</i>`,
                     click: () => {
-                        const drawer = document.getElementById("series-player-drawer");
-                        if (drawer) drawer.classList.toggle("hidden");
+                        window.dispatchEvent(new CustomEvent('tvzinha:toggleSeriesDrawer'));
                     }
                 }] : []),
                 {
@@ -2403,7 +2402,8 @@ function setSourceStatus(session, text) {
 
 /** Sets the text of a page loader overlay (the <span> next to its spinner). */
 export function setLoaderText(loader, text) {
-    const label = loader && loader.querySelector('span');
+    if (!loader) return;
+    const label = loader.querySelector('.tvz-loader-text') || loader.querySelector('span');
     if (label) label.textContent = text;
 }
 
