@@ -88,6 +88,8 @@ if (typeof window !== 'undefined') {
 }
 
 function getOrCreateSeriesIframe() {
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) playerCard.classList.add('is-iframe');
     let iframe = document.getElementById("series-modal-iframe");
     if (!iframe) {
         const stage = document.querySelector(".series-theater-stage");
@@ -113,6 +115,8 @@ function getOrCreateSeriesIframe() {
 }
 
 function removeSeriesIframe() {
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) playerCard.classList.remove('is-iframe');
     const iframe = document.getElementById("series-modal-iframe");
     if (iframe) {
         iframe.src = "";
@@ -1737,13 +1741,131 @@ const SERIES_SERVER_OPTIONS = [
     { id: 'native_anime',   name: 'Anime Player (Áudio Original)', isNative: true, animeOnly: true, source: 'anime_native' },
     { id: 'native_direct',  name: 'Mgeb Player (BETA)',            isNative: true, source: 'mgeb' },
     { id: 'native_fenix',   name: 'Fenix Player (BETA)',           isNative: true, source: 'fenixflix' },
-    { id: 'native_movy',    name: 'Movy Player (BETA)',            isNative: true, source: 'movy' },
     { id: 'mgeb',          name: 'Servidor 1 (MGEB)' },
     { id: 'superflix',     name: 'Servidor 2 (SuperFlix)' },
     { id: 'myembed',       name: 'Servidor 3 (MyEmbed)' },
     { id: 'warezcdn',      name: 'Servidor 4 (WarezCDN)' },
     { id: 'vsembed',       name: 'Servidor 5 (VsEmbed)' }
 ];
+
+export function selectSeriesServer(server) {
+    if (!server) return;
+    document.querySelectorAll("#series-servers-grid .btn-movie-server").forEach(b => {
+        b.classList.toggle("active", b.dataset.server === server.id);
+    });
+    activeSeriesPlaying.server = server.id;
+    activeSeriesPlaying.userSelectedServer = true;
+
+    const activeLabel = document.getElementById("series-player-active-server-name");
+    if (activeLabel) {
+        activeLabel.textContent = (server.name || 'Servidores').replace(' (BETA)', '').replace(' (BETA - Legendados)', '');
+    }
+
+    // Immediate teardown of current playback in 0ms
+    atomicPlayerReset();
+    removeSeriesIframe();
+    const seriesArt = document.getElementById("series-artplayer-container");
+    const seriesLoader = document.getElementById("series-theater-loader");
+    if (seriesArt) {
+        seriesArt.innerHTML = "";
+        seriesArt.classList.add("hidden");
+    }
+    const playerName = server.name || 'Servidor';
+    setLoaderText(seriesLoader, `Conectando ao ${playerName}...`);
+    if (seriesLoader) seriesLoader.classList.remove("hidden");
+
+    if (activeSeriesPlaying.show) {
+        openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: activeSeriesPlaying.episodeNumber }, { keepPosition: true });
+    }
+}
+
+/** Renders the top bar server switcher flyout panel for series/animes. */
+export function renderSeriesTopServersFlyout() {
+    const panel = document.getElementById("series-servers-flyout-panel");
+    if (!panel) return;
+    const showItem = activeSeriesPlaying.show;
+    const isAnime = showItem ? isAnimeShow(showItem) : false;
+    const availableServers = SERIES_SERVER_OPTIONS.filter(s => !s.animeOnly || isAnime);
+    const activeServerId = activeSeriesPlaying.server || (availableServers[0]?.id || 'native_mgeb');
+    const nativeServers = availableServers.filter(s => s.isNative);
+    const iframeServers = availableServers.filter(s => !s.isNative);
+
+    let html = `
+        <div class="tvz-servers-header">
+            <div class="tvz-servers-header-left">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                <span>Trocar Servidor</span>
+            </div>
+            <button type="button" class="tvz-servers-close-btn" id="btn-close-series-servers-flyout" title="Fechar" aria-label="Fechar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="tvz-servers-body">
+    `;
+
+    if (nativeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Players Principais (Direto)</div>`;
+        nativeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'HD'}</span>
+                </div>
+            `;
+        });
+    }
+
+    if (iframeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Servidores Externos (Iframe)</div>`;
+        iframeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'Reproduzir'}</span>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div>`;
+    panel.innerHTML = html;
+
+    const closeBtn = document.getElementById("btn-close-series-servers-flyout");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => toggleSeriesServersFlyout(false));
+    }
+
+    panel.querySelectorAll('.tvz-server-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const serverId = item.getAttribute('data-server-id');
+            const targetServer = availableServers.find(s => s.id === serverId);
+            if (targetServer) {
+                toggleSeriesServersFlyout(false);
+                selectSeriesServer(targetServer);
+            }
+        });
+    });
+}
+
+export function toggleSeriesServersFlyout(forceState) {
+    const panel = document.getElementById("series-servers-flyout-panel");
+    const backdrop = document.getElementById("series-servers-backdrop");
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (!panel) return;
+    const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
+    if (willOpen) {
+        renderSeriesTopServersFlyout();
+        panel.classList.add('is-open');
+        if (backdrop) backdrop.classList.add('is-open');
+        if (playerCard) playerCard.classList.add('has-servers-open');
+    } else {
+        panel.classList.remove('is-open');
+        if (backdrop) backdrop.classList.remove('is-open');
+        if (playerCard) playerCard.classList.remove('has-servers-open');
+    }
+}
 
 function renderSeriesServerButtons(showItem) {
     const serversGrid = document.getElementById("series-servers-grid");
@@ -1765,27 +1887,7 @@ function renderSeriesServerButtons(showItem) {
             : `<span>${safeServerName}</span><span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.85;">Reproduzir</span>`;
 
         btn.addEventListener("click", () => {
-            document.querySelectorAll("#series-servers-grid .btn-movie-server").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            activeSeriesPlaying.server = server.id;
-            activeSeriesPlaying.userSelectedServer = true;
-
-            // Immediate teardown of current playback in 0ms
-            atomicPlayerReset();
-            removeSeriesIframe();
-            const seriesArt = document.getElementById("series-artplayer-container");
-            const seriesLoader = document.getElementById("series-theater-loader");
-            if (seriesArt) {
-                seriesArt.innerHTML = "";
-                seriesArt.classList.add("hidden");
-            }
-            const playerName = server.name || 'Servidor';
-            setLoaderText(seriesLoader, `Conectando ao ${playerName}...`);
-            if (seriesLoader) seriesLoader.classList.remove("hidden");
-
-            if (activeSeriesPlaying.show) {
-                openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: activeSeriesPlaying.episodeNumber }, { keepPosition: true });
-            }
+            selectSeriesServer(server);
         });
 
         return btn;
@@ -1798,6 +1900,8 @@ export function setupSeriesModalHandlers() {
 
     const btnReload = document.getElementById("btn-reload-series-player");
     const btnClosePlayer = document.getElementById("btn-close-series-player");
+    const btnServersToggle = document.getElementById("btn-series-servers-toggle");
+    const backdrop = document.getElementById("series-servers-backdrop");
 
     if (btnReload) {
         btnReload.addEventListener("click", () => {
@@ -1806,6 +1910,31 @@ export function setupSeriesModalHandlers() {
             }
         });
     }
+
+    if (btnServersToggle) {
+        btnServersToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleSeriesServersFlyout();
+        });
+    }
+
+    if (backdrop) {
+        ['pointerdown', 'touchstart', 'click'].forEach(evt => {
+            backdrop.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleSeriesServersFlyout(false);
+            }, { passive: false });
+        });
+    }
+
+    document.addEventListener('pointerdown', (e) => {
+        const panel = document.getElementById("series-servers-flyout-panel");
+        if (!panel || !panel.classList.contains('is-open')) return;
+        if (!panel.contains(e.target) && !e.target.closest('#btn-series-servers-toggle')) {
+            toggleSeriesServersFlyout(false);
+        }
+    });
 
     if (btnClosePlayer) {
         btnClosePlayer.addEventListener("click", stopSeriesPlayer);
@@ -3036,6 +3165,11 @@ function startEpisodePlayback(context, options = {}) {
     const serverKey = activeSeriesPlaying.server;
     const serverDef = SERIES_SERVER_OPTIONS.find(s => s.id === serverKey) || SERIES_SERVER_OPTIONS[0];
 
+    const activeLabel = document.getElementById("series-player-active-server-name");
+    if (activeLabel) {
+        activeLabel.textContent = (serverDef.name || 'Servidores').replace(' (BETA)', '').replace(' (BETA - Legendados)', '');
+    }
+
     renderSeriesLoaderServers(serverKey, isAnime);
 
     // Route A: Native Direct Player
@@ -3358,6 +3492,7 @@ export function isSeriesPlayerOpen() {
 export function stopSeriesPlayer() {
     seriesPlaybackSessionId++;
     leaveStageFullscreen();
+    toggleSeriesServersFlyout(false);
     if (pendingSeriesIframeTimer) {
         clearTimeout(pendingSeriesIframeTimer);
         pendingSeriesIframeTimer = null;
@@ -3373,7 +3508,7 @@ export function stopSeriesPlayer() {
     const drawer = document.getElementById("series-player-drawer");
     const playerCard = document.querySelector('#series-player-view .player-page-card');
     if (playerCard) {
-        playerCard.classList.remove('is-loading', 'is-paused');
+        playerCard.classList.remove('is-loading', 'is-paused', 'has-servers-open');
     }
 
     const wasTheaterOpen = theaterView && !theaterView.classList.contains("hidden");

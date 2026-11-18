@@ -7,6 +7,7 @@ import json
 import base64
 import urllib.request
 import urllib.parse
+import concurrent.futures
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
 
@@ -19,9 +20,10 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
     if media_id:
         candidates.append(str(media_id) if str(media_id).startswith("tmdb:") else f"tmdb:{media_id}")
 
-    data = None
     raw_streams = []
-    for q_id in candidates:
+    data_title = ""
+
+    def query_candidate(q_id):
         url = f"https://fenixflix.fenixhub.online/stream/series/{q_id}:{season}:{episode}.json" if is_series else f"https://fenixflix.fenixhub.online/stream/movie/{q_id}.json"
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
         try:
@@ -29,11 +31,27 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
                 if res.status == 200:
                     j = json.loads(res.read().decode("utf-8"))
                     if isinstance(j.get("streams"), list) and j["streams"]:
-                        data = j
-                        raw_streams = j["streams"]
-                        break
+                        return j.get("title", ""), j["streams"]
         except Exception:
-            continue
+            pass
+        return "", []
+
+    if candidates:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(candidates)) as executor:
+            futures = [executor.submit(query_candidate, q) for q in candidates]
+            seen_urls = set()
+            for fut in concurrent.futures.as_completed(futures):
+                try:
+                    title, streams = fut.result()
+                    if title and not data_title:
+                        data_title = title
+                    for s in streams:
+                        u = s.get("url")
+                        if u and u not in seen_urls:
+                            seen_urls.add(u)
+                            raw_streams.append(s)
+                except Exception:
+                    pass
 
     if not raw_streams:
         return None
@@ -109,56 +127,7 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
                 filtered = dubbed
 
         filtered.sort(key=lambda s: (s["providerTier"], s["quality"], 1 if s["type"] == "hls" else 0), reverse=True)
-        return {"title": data.get("title", ""), "sources": filtered}
-    except Exception:
-        return None
-
-
-
-
-# 4. MOVY
-def fetch_movy(tmdb_id, media_type, season=1, episode=1, imdb_id=""):
-    import subprocess
-    import os
-    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "extractors", "movy", "extract.mjs")
-    try:
-        res = subprocess.run(
-            ["node", script_path, str(tmdb_id), media_type, str(season), str(episode)],
-            capture_output=True,
-            text=True,
-            timeout=8
-        )
-        if res.returncode != 0:
-            return None
-        lines = [l for l in res.stdout.splitlines() if not l.startswith("[movy-extract]")]
-        data = json.loads("\n".join(lines))
-        sources = data.get("sources", [])
-        if not sources and not data.get("playlist"):
-            return None
-        mapped = []
-        for s in sources:
-            q = s.get("quality", "")
-            is_4k = "2160" in q or "4k" in q.lower()
-            is_1080 = "1080" in q
-            is_720 = "720" in q
-            quality_num = 2160 if is_4k else (1080 if is_1080 else (720 if is_720 else 480))
-            mapped.append({
-                "label": f"Movy [{q or (str(quality_num) + 'p')}]",
-                "file": s.get("url") or s.get("file"),
-                "quality": quality_num,
-                "type": "hls",
-                "referer": "https://www.movy.sx/"
-            })
-        if not mapped and data.get("playlist"):
-            mapped.append({
-                "label": "Movy [Auto FHD]",
-                "file": data["playlist"],
-                "quality": 1080,
-                "type": "hls",
-                "referer": "https://www.movy.sx/"
-            })
-        mapped.sort(key=lambda x: x["quality"], reverse=True)
-        return {"title": "", "sources": mapped}
+        return {"title": data_title or "", "sources": filtered}
     except Exception:
         return None
 

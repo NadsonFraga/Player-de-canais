@@ -818,7 +818,7 @@ def probe_source(src):
         has_pt_audio = True
     return {
         **src,
-        "quality": qualities[0] if qualities else None,
+        "quality": qualities[0] if qualities else (src.get("quality") or 1080),
         "qualities": qualities,
         "kind": kind,
         "alive": alive,
@@ -2212,7 +2212,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 for s in fenix_data["sources"]:
                     raw_file = s["file"].strip()
                     raw_lower = raw_file.lower()
-                    if "zunderflix" in raw_lower or "zunder" in raw_lower:
+                    if "fenixhub" in raw_lower or "fenixflix" in raw_lower:
+                        referer = "https://fenixflix.fenixhub.online/"
+                        origin = "https://fenixflix.fenixhub.online"
+                    elif "zunderflix" in raw_lower or "zunder" in raw_lower:
                         referer = "https://zunderflix.lat/"
                         origin = "https://zunderflix.lat"
                     elif "hollymovies" in raw_lower:
@@ -2238,9 +2241,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         "direct_url": raw_file if (not is_mp4 and is_hls and raw_file.startswith("https://")) else None,
                         "raw_url": clean_url,
                         "headers": {"Referer": referer, "Origin": origin},
-                        "quality": s.get("quality", 1080)
+                        "quality": s.get("quality", 1080),
+                        "providerTier": s.get("providerTier", 3)
                     })
-                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: 90, media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
+                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: (s.get("providerTier", 0) * 100), media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
                 result = {
                     "success": True,
                     "title": fenix_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
@@ -2255,30 +2259,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
 
 
-        # Route 5: Movy (Wecollege CDN)
-        if not result and requested_source == "movy" and media_id:
-            movy_data = timed("movy", local_providers.fetch_movy, media_id, media_type, season, episode, imdb_id)
-            if movy_data and movy_data.get("sources"):
-                parsed = [{
-                    "label": s["label"],
-                    "type": "hls",
-                    "stream_url": proxied_stream_url(proxy_base, stream_key, s["file"], s["referer"]),
-                    "direct_url": s["file"],
-                    "raw_url": s["file"],
-                    "headers": {"Referer": s["referer"]},
-                    "quality": s.get("quality", 1080)
-                } for s in movy_data["sources"]]
-                result = {
-                    "success": True,
-                    "title": title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
-                    "category": media_type,
-                    "audio": "original",
-                    "provider": "movy",
-                    "primary_source": parsed[0],
-                    "fallback_sources": parsed[1:],
-                    "subtitles": [],
-                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
-                }
+
 
         # Route 6: MGEB (Player Principal Atual)
         mgeb_episode_mismatch = [False]
@@ -2479,8 +2460,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 referer = "https://www.blogger.com/"
             elif "peliculaplay.com" in target_url or "mgeb.lat" in target_url or "mgeb.top" in target_url or "mgeb.space" in target_url:
                 referer = "https://mgeb.lat/"
-            elif "goldenkite.top" in target_url or "lightcobra.top" in target_url or "movy.sx" in target_url or "wecollege.net" in target_url:
-                referer, origin = "https://www.movy.sx/", "https://www.movy.sx"
+            elif "fenixhub.online" in target_url or "fenixflix" in target_url:
+                referer, origin = "https://fenixflix.fenixhub.online/", "https://fenixflix.fenixhub.online"
             else:
                 referer = "https://tvzinhaonline.pages.dev/"
         # The anime host checks Origin together with its Referer (the resolver's probe sends both)
