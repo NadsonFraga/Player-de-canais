@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261118_1150';
-import { showToast } from '../core/toast.js?v=20261118_1150';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1150';
-import { buildFeedRows } from '../core/feedRows.js?v=20261118_1150';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1150';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1150';
-import { getUiSvg } from '../core/icons.js?v=20261118_1150';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1150';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1150';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1150';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1150';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1150';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261118_1150';
-import { resumeStartTime } from '../core/resume.js?v=20261118_1150';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1150';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1150';
+} from '../core/constants.js?v=20261118_1520';
+import { showToast } from '../core/toast.js?v=20261118_1520';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1520';
+import { buildFeedRows } from '../core/feedRows.js?v=20261118_1520';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1520';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1520';
+import { getUiSvg } from '../core/icons.js?v=20261118_1520';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1520';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1520';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1520';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1520';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1520';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261118_1520';
+import { resumeStartTime } from '../core/resume.js?v=20261118_1520';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1520';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1520';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -51,6 +51,8 @@ if (typeof window !== 'undefined') {
 }
 
 function getOrCreateMovieIframe() {
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (playerCard) playerCard.classList.add('is-iframe');
     let iframe = document.getElementById("movie-modal-iframe");
     if (!iframe) {
         const stage = document.querySelector(".movie-player-stage");
@@ -76,6 +78,8 @@ function getOrCreateMovieIframe() {
 }
 
 function removeMovieIframe() {
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (playerCard) playerCard.classList.remove('is-iframe');
     const iframe = document.getElementById("movie-modal-iframe");
     if (iframe) {
         iframe.src = "";
@@ -1156,6 +1160,8 @@ export function setupMoviePlayer() {
     const btnReload = document.getElementById("btn-reload-movie-player");
     const btnClosePlayer = document.getElementById("btn-close-movie-player");
     const btnExitPlayer = document.getElementById("btn-exit-movie-player");
+    const btnServersToggle = document.getElementById("btn-movie-servers-toggle");
+    const backdrop = document.getElementById("movie-servers-backdrop");
 
     if (btnReload) {
         btnReload.addEventListener("click", () => {
@@ -1164,6 +1170,31 @@ export function setupMoviePlayer() {
             }
         });
     }
+
+    if (btnServersToggle) {
+        btnServersToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleMovieServersFlyout();
+        });
+    }
+
+    if (backdrop) {
+        ['pointerdown', 'touchstart', 'click'].forEach(evt => {
+            backdrop.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleMovieServersFlyout(false);
+            }, { passive: false });
+        });
+    }
+
+    document.addEventListener('pointerdown', (e) => {
+        const panel = document.getElementById("movie-servers-flyout-panel");
+        if (!panel || !panel.classList.contains('is-open')) return;
+        if (!panel.contains(e.target) && !e.target.closest('#btn-movie-servers-toggle')) {
+            toggleMovieServersFlyout(false);
+        }
+    });
 
     // Back: to the movie's title page
     if (btnClosePlayer) btnClosePlayer.addEventListener("click", () => stopMoviePlayer());
@@ -1280,6 +1311,92 @@ function renderMovieLoaderServers(activeServerId) {
     });
 }
 
+/** Renders the top bar server switcher flyout panel. */
+export function renderMovieTopServersFlyout() {
+    const panel = document.getElementById("movie-servers-flyout-panel");
+    if (!panel) return;
+    const activeServerId = activeMovieServer?.id || 'native_mgeb';
+    const nativeServers = MOVIE_SERVERS.filter(s => s.isNative);
+    const iframeServers = MOVIE_SERVERS.filter(s => !s.isNative);
+
+    let html = `
+        <div class="tvz-servers-header">
+            <div class="tvz-servers-header-left">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                <span>Trocar Servidor</span>
+            </div>
+            <button type="button" class="tvz-servers-close-btn" id="btn-close-movie-servers-flyout" title="Fechar" aria-label="Fechar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="tvz-servers-body">
+    `;
+
+    if (nativeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Players Principais (Direto)</div>`;
+        nativeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'HD'}</span>
+                </div>
+            `;
+        });
+    }
+
+    if (iframeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Servidores Externos (Iframe)</div>`;
+        iframeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'Reproduzir'}</span>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div>`;
+    panel.innerHTML = html;
+
+    const closeBtn = document.getElementById("btn-close-movie-servers-flyout");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => toggleMovieServersFlyout(false));
+    }
+
+    panel.querySelectorAll('.tvz-server-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const serverId = item.getAttribute('data-server-id');
+            const targetServer = MOVIE_SERVERS.find(s => s.id === serverId);
+            if (targetServer) {
+                toggleMovieServersFlyout(false);
+                const domBtn = document.querySelector(`#movie-servers-grid .btn-movie-server[data-server="${targetServer.id}"]`);
+                selectMovieServer(targetServer, domBtn);
+            }
+        });
+    });
+}
+
+export function toggleMovieServersFlyout(forceState) {
+    const panel = document.getElementById("movie-servers-flyout-panel");
+    const backdrop = document.getElementById("movie-servers-backdrop");
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (!panel) return;
+    const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
+    if (willOpen) {
+        renderMovieTopServersFlyout();
+        panel.classList.add('is-open');
+        if (backdrop) backdrop.classList.add('is-open');
+        if (playerCard) playerCard.classList.add('has-servers-open');
+    } else {
+        panel.classList.remove('is-open');
+        if (backdrop) backdrop.classList.remove('is-open');
+        if (playerCard) playerCard.classList.remove('has-servers-open');
+    }
+}
+
 /** Opens the movie player page over the title page and starts the Player Principal. */
 export function playMovie(movie, options = {}) {
     if (!movie || movie.id == null) return;
@@ -1331,6 +1448,7 @@ export function playMovie(movie, options = {}) {
 export function stopMoviePlayer() {
     moviePlaybackSessionId++;
     leaveStageFullscreen();
+    toggleMovieServersFlyout(false);
     if (pendingMovieIframeTimer) {
         clearTimeout(pendingMovieIframeTimer);
         pendingMovieIframeTimer = null;
@@ -1347,7 +1465,7 @@ export function stopMoviePlayer() {
     if (movieLoader) movieLoader.classList.add("hidden");
     const playerCard = document.querySelector('#movie-player-view .player-page-card');
     if (playerCard) {
-        playerCard.classList.remove('is-loading', 'is-paused');
+        playerCard.classList.remove('is-loading', 'is-paused', 'has-servers-open');
     }
     document.querySelectorAll("#movie-servers-grid .btn-movie-server").forEach(btn => btn.classList.remove("active"));
     activeMovieServer = null;
@@ -1376,6 +1494,11 @@ export function selectMovieServer(server, buttonElement = null) {
     document.querySelectorAll(".btn-movie-server").forEach(b => b.classList.remove("active"));
     if (buttonElement) {
         buttonElement.classList.add("active");
+    }
+
+    const activeLabel = document.getElementById("movie-player-active-server-name");
+    if (activeLabel) {
+        activeLabel.textContent = (server.name || 'Servidores').replace(' (BETA)', '');
     }
 
     const serverTitle = document.getElementById("movie-player-server-title");

@@ -861,6 +861,21 @@
         height: 36px !important;
     }
 
+    .btn-player-pill.btn-player-servers {
+        height: 32px !important;
+        padding: 0 8px !important;
+        font-size: 11px !important;
+        gap: 4px !important;
+    }
+
+    .tvz-servers-panel-top {
+        top: 56px !important;
+        right: 8px !important;
+        left: 8px !important;
+        width: auto !important;
+        max-width: none !important;
+    }
+
     .series-player-actions {
         height: 36px !important;
     }
@@ -1851,13 +1866,19 @@
     transform: scale(1.15) !important;
 }
 
-/* Shown when UI is visible, paused, or loading */
+/* Shown when UI is visible, paused, loading, hovering hover zone, or when servers flyout is open */
 .player-page-card.is-ui-visible .movie-player-top-bar,
 .player-page-card.is-ui-visible .series-player-top-bar,
 .player-page-card.is-paused .movie-player-top-bar,
 .player-page-card.is-paused .series-player-top-bar,
 .player-page-card.is-loading .movie-player-top-bar,
-.player-page-card.is-loading .series-player-top-bar {
+.player-page-card.is-loading .series-player-top-bar,
+.player-page-card.has-servers-open .movie-player-top-bar,
+.player-page-card.has-servers-open .series-player-top-bar,
+.tvz-player-top-hover-zone:hover ~ .movie-player-top-bar,
+.tvz-player-top-hover-zone:hover ~ .series-player-top-bar,
+.movie-player-top-bar:hover,
+.series-player-top-bar:hover {
     opacity: 1 !important;
     transform: translateY(0) !important;
     pointer-events: auto !important;
@@ -2321,4 +2342,57 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Top Hover Trigger Zone (covers the top 64px over video / iframe) */
+.tvz-player-top-hover-zone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    z-index: 139;
+    pointer-events: auto;
+    background: transparent;
+}
+
+/* Server Selector Pill in Top Bar */
+.btn-player-pill.btn-player-servers {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 9999px;
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.btn-player-pill.btn-player-servers:hover,
+.btn-player-pill.btn-player-servers:focus-visible {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(234, 179, 8, 0.5);
+    color: #fef08a;
+    transform: translateY(-1px);
+}
+
+.btn-player-pill.btn-player-servers svg {
+    flex-shrink: 0;
+    stroke: currentColor;
+}
+
+/* Top-anchored Server Flyout Panel */
+.tvz-servers-panel-top {
+    top: 72px !important;
+    bottom: auto !important;
+    right: 32px !important;
+    z-index: 170 !important;
+    max-height: calc(100vh - 100px) !important;
 }

@@ -121,8 +121,14 @@ process.on("exit", cleanup);
 process.on("SIGINT", () => { cleanup(); process.exit(1); });
 
 try {
-  await new Promise(r => setTimeout(r, 1200));
-  const targetsRes = await fetch(`http://127.0.0.1:${DEBUG_PORT}/json`);
+  let targetsRes = null;
+  for (let i = 0; i < 30; i++) {
+    try {
+      targetsRes = await fetch(`http://127.0.0.1:${DEBUG_PORT}/json`);
+      if (targetsRes && targetsRes.ok) break;
+    } catch {}
+    await new Promise(r => setTimeout(r, 200));
+  }
   const targets = await targetsRes.json();
   const pageTarget = targets.find(t => t.type === "page") || targets[0];
 
@@ -210,6 +216,10 @@ try {
     awaitPromise: true,
     returnByValue: true
   });
+
+  if (evalResult.exceptionDetails) {
+    console.error("CDP Exception:", evalResult.exceptionDetails);
+  }
 
   const res = evalResult.result.value;
   assert(res.xssExecuted === false, "Zero XSS execution in Chromium DOM");
