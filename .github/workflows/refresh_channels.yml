@@ -2,8 +2,8 @@ name: Refresh Live Channel Tokens
 
 on:
   schedule:
-    # Runs every 6 hours (00:00, 06:00, 12:00, 18:00 UTC) to ensure tokens never expire
-    - cron: '0 */6 * * *'
+    # Runs every 2 hours to keep tokens perpetually warm and synchronized
+    - cron: '0 */2 * * *'
   workflow_dispatch: # Allows manual on-demand trigger from the GitHub Actions tab
 
 jobs:
