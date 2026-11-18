@@ -846,7 +846,7 @@ async function probeSource(src) {
   if (isBrazilianCdn(rawUrl)) {
     hasPtAudio = true;
   }
-  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, audio_mismatch: audioMismatch, has_pt_audio: hasPtAudio, probed: true };
+  return { ...src, quality: qualities[0] || src.quality || 1080, qualities, kind, alive, synthetic, duration, duration_mismatch: false, audio_mismatch: audioMismatch, has_pt_audio: hasPtAudio, probed: true };
 }
 
 // Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
@@ -1467,7 +1467,7 @@ export async function onRequestGet(context) {
     }
   };
 
-  // Determine requested provider (mgeb, fenixflix, anime_native)
+  // Determine requested provider (mgeb, fenixflix, movy, anime_native)
   const requestedSource = urlObj.searchParams.get("source") || (type === "anime" && lang === "sub" ? "anime_native" : "mgeb");
   const imdbId = urlObj.searchParams.get("imdb_id");
 
@@ -1546,10 +1546,18 @@ export async function onRequestGet(context) {
   // ROTA 2: FenixFlix (PT-BR Dublado)
   if (!result && requestedSource === "fenixflix" && (id || imdbId)) {
     let activeImdbId = imdbId;
+    let imdbPromise = null;
     if (!activeImdbId && id && tmdbApiKey) {
-      activeImdbId = await timed("imdb", fetchImdbId(id, type === "movie" ? "movie" : "serie"));
+      imdbPromise = timed("imdb", fetchImdbId(id, type === "movie" ? "movie" : "serie"));
     }
-    const fenixData = await timed("fenixflix", resolveFenixFlix({ id, imdbId: activeImdbId, type, season, episode, audio: "dubbed" }));
+    const fenixData = await timed("fenixflix", resolveFenixFlix({
+      id,
+      imdbId: activeImdbId || imdbPromise,
+      type,
+      season,
+      episode,
+      audio: "dubbed"
+    }));
     providerDebug = fenixData?.debug || null;
     if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
       const parsedSources = await Promise.all(fenixData.sources.map(async (s, idx) => {
@@ -1565,7 +1573,10 @@ export async function onRequestGet(context) {
         const rawLower = rawFile.toLowerCase();
         let referer = s.referer;
         let origin = "";
-        if (rawLower.includes("zunderflix") || rawLower.includes("zunder")) {
+        if (rawLower.includes("fenixhub") || rawLower.includes("fenixflix")) {
+          referer = "https://fenixflix.fenixhub.online/";
+          origin = "https://fenixflix.fenixhub.online";
+        } else if (rawLower.includes("zunderflix") || rawLower.includes("zunder")) {
           referer = "https://zunderflix.lat/";
           origin = "https://zunderflix.lat";
         } else if (rawLower.includes("hollymovies")) {
@@ -1585,10 +1596,17 @@ export async function onRequestGet(context) {
           direct_url: directUrl,
           raw_url: directCleanUrl,
           headers: { "Referer": referer, ...(origin ? { "Origin": origin } : {}) },
-          quality: s.quality || 1080
+          quality: s.quality || 1080,
+          providerTier: s.providerTier || 3
         };
       }));
-      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, () => 90, type === "serie", lang !== "sub", qualityMode));
+      const rankedSources = await timed("probe", rankSourcesByQuality(
+        parsedSources,
+        (s) => (s.providerTier || 0) * 100,
+        type === "serie",
+        lang !== "sub",
+        qualityMode
+      ));
       result = {
         success: true,
         title: fenixData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),

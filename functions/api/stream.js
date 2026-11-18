@@ -209,6 +209,9 @@ export async function onRequestGet(context) {
       customReferer = "https://www.blogger.com/";
     } else if (targetUrl.includes("peliculaplay.com") || targetUrl.includes("mgeb.lat") || targetUrl.includes("mgeb.top") || targetUrl.includes("mgeb.space")) {
       customReferer = "https://mgeb.lat/";
+    } else if (targetUrl.includes("fenixhub.online") || targetUrl.includes("fenixflix")) {
+      customReferer = "https://fenixflix.fenixhub.online/";
+      customOrigin = "https://fenixflix.fenixhub.online";
     } else {
       customReferer = "https://tvzinhaonline.pages.dev/";
     }

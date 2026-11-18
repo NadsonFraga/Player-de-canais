@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261118_1010';
-import { showToast } from '../core/toast.js?v=20261118_1010';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1010';
-import { buildFeedRows } from '../core/feedRows.js?v=20261118_1010';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1010';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1010';
-import { getUiSvg } from '../core/icons.js?v=20261118_1010';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1010';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1010';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1010';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1010';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1010';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261118_1010';
-import { resumeStartTime } from '../core/resume.js?v=20261118_1010';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1010';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1010';
+} from '../core/constants.js?v=20261118_1115';
+import { showToast } from '../core/toast.js?v=20261118_1115';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1115';
+import { buildFeedRows } from '../core/feedRows.js?v=20261118_1115';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1115';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1115';
+import { getUiSvg } from '../core/icons.js?v=20261118_1115';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1115';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1115';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1115';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_1115';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1115';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261118_1115';
+import { resumeStartTime } from '../core/resume.js?v=20261118_1115';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1115';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1115';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1174,6 +1174,113 @@ export function setupMoviePlayer() {
 
 let currentMoviePlayOptions = {};
 
+/** Renders or updates the Netflix/MGEB-style Obra Card shown exclusively when paused. */
+export function updateMovieObraCard(movie) {
+    if (!movie) return;
+    const card = document.getElementById("movie-obra-card");
+    if (!card) return;
+
+    const posterImg = document.getElementById("movie-obra-poster");
+    const titleEl = document.getElementById("movie-obra-title");
+    const ratingEl = document.getElementById("movie-obra-rating");
+    const yearEl = document.getElementById("movie-obra-year");
+    const certEl = document.getElementById("movie-obra-cert");
+    const genresEl = document.getElementById("movie-obra-genres");
+    const overviewEl = document.getElementById("movie-obra-overview");
+
+    const movieTitle = movie.title || movie.name || 'Filme';
+    if (titleEl) titleEl.textContent = movieTitle;
+
+    const posterPath = movie.poster_path || movie.backdrop_path;
+    if (posterImg) {
+        if (posterPath) {
+            posterImg.src = `${TMDB_IMG_W500}${posterPath}`;
+            posterImg.alt = movieTitle;
+            posterImg.style.display = '';
+        } else {
+            posterImg.removeAttribute('src');
+            posterImg.style.display = 'none';
+        }
+    }
+
+    if (ratingEl) {
+        const rating = Number(movie.vote_average);
+        if (!isNaN(rating) && rating > 0) {
+            ratingEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${rating.toFixed(1)}`;
+            ratingEl.style.display = '';
+        } else {
+            ratingEl.style.display = 'none';
+        }
+    }
+
+    if (yearEl) {
+        const dateStr = movie.release_date || movie.first_air_date || '';
+        const year = dateStr.slice(0, 4);
+        if (year) {
+            yearEl.textContent = year;
+            yearEl.style.display = '';
+        } else {
+            yearEl.style.display = 'none';
+        }
+    }
+
+    if (certEl) {
+        const cert = movie.certification || movie.age_rating || '';
+        if (cert) {
+            certEl.textContent = cert;
+            certEl.style.display = '';
+        } else {
+            certEl.style.display = 'none';
+        }
+    }
+
+    if (genresEl) {
+        let genreNames = [];
+        if (Array.isArray(movie.genres)) {
+            genreNames = movie.genres.map(g => (typeof g === 'string' ? g : g.name)).filter(Boolean);
+        } else if (Array.isArray(movie.genre_names)) {
+            genreNames = movie.genre_names.filter(Boolean);
+        } else if (Array.isArray(movie.genre_ids)) {
+            genreNames = movie.genre_ids.map(id => TMDB_GENRES[id]).filter(Boolean);
+        }
+        genresEl.textContent = genreNames.slice(0, 3).join(' • ');
+    }
+
+    if (overviewEl) {
+        overviewEl.textContent = movie.overview || '';
+    }
+}
+
+/** Renders quick server switching chips directly in the loader overlay. */
+function renderMovieLoaderServers(activeServerId) {
+    const container = document.getElementById("movie-loader-servers");
+    if (!container) return;
+    container.innerHTML = `
+        <span class="tvz-loader-servers-label">Trocar servidor:</span>
+        <div class="tvz-loader-chips-list">
+            ${MOVIE_SERVERS.map(s => {
+                const isActive = s.id === activeServerId;
+                const safeName = escapeHtml(s.name.replace(' (BETA)', ''));
+                return `<button type="button" class="tvz-loader-server-chip ${isActive ? 'active' : ''}" data-server-id="${s.id}">
+                    <span>${safeName}</span>
+                </button>`;
+            }).join('')}
+        </div>
+    `;
+
+    container.querySelectorAll('.tvz-loader-server-chip').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const sid = btn.dataset.serverId;
+            const target = MOVIE_SERVERS.find(s => s.id === sid);
+            if (target && target.id !== activeMovieServer?.id) {
+                const domBtn = document.querySelector(`#movie-servers-grid .btn-movie-server[data-server="${target.id}"]`);
+                selectMovieServer(target, domBtn);
+            }
+        });
+    });
+}
+
 /** Opens the movie player page over the title page and starts the Player Principal. */
 export function playMovie(movie, options = {}) {
     if (!movie || movie.id == null) return;
@@ -1183,6 +1290,21 @@ export function playMovie(movie, options = {}) {
     if (!view) return;
     currentSelectedMovie = movie;
     activeMovieServer = null;
+
+    updateMovieObraCard(movie);
+
+    // If movie details are thin (e.g. from resume card), fetch full metadata from TMDB
+    if (!movie.overview || !movie.poster_path) {
+        fetchTmdb(`movie/${movie.id}?language=pt-BR`).then(fullMovie => {
+            if (fullMovie && currentSelectedMovie && String(currentSelectedMovie.id) === String(movie.id)) {
+                currentSelectedMovie = { ...currentSelectedMovie, ...fullMovie };
+                updateMovieObraCard(currentSelectedMovie);
+            }
+        }).catch(() => {});
+    }
+
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (playerCard) playerCard.classList.add('is-loading');
 
     let firstButton = null;
     const serversGrid = document.getElementById("movie-servers-grid");
@@ -1227,6 +1349,10 @@ export function stopMoviePlayer() {
     }
     const movieLoader = document.getElementById("movie-player-loader");
     if (movieLoader) movieLoader.classList.add("hidden");
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (playerCard) {
+        playerCard.classList.remove('is-loading', 'is-paused');
+    }
     document.querySelectorAll("#movie-servers-grid .btn-movie-server").forEach(btn => btn.classList.remove("active"));
     activeMovieServer = null;
     const view = moviePlayerView();

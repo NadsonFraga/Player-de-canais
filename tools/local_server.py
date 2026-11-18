@@ -818,7 +818,7 @@ def probe_source(src):
         has_pt_audio = True
     return {
         **src,
-        "quality": qualities[0] if qualities else None,
+        "quality": qualities[0] if qualities else (src.get("quality") or 1080),
         "qualities": qualities,
         "kind": kind,
         "alive": alive,
@@ -2212,7 +2212,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 for s in fenix_data["sources"]:
                     raw_file = s["file"].strip()
                     raw_lower = raw_file.lower()
-                    if "zunderflix" in raw_lower or "zunder" in raw_lower:
+                    if "fenixhub" in raw_lower or "fenixflix" in raw_lower:
+                        referer = "https://fenixflix.fenixhub.online/"
+                        origin = "https://fenixflix.fenixhub.online"
+                    elif "zunderflix" in raw_lower or "zunder" in raw_lower:
                         referer = "https://zunderflix.lat/"
                         origin = "https://zunderflix.lat"
                     elif "hollymovies" in raw_lower:
@@ -2238,9 +2241,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         "direct_url": raw_file if (not is_mp4 and is_hls and raw_file.startswith("https://")) else None,
                         "raw_url": clean_url,
                         "headers": {"Referer": referer, "Origin": origin},
-                        "quality": s.get("quality", 1080)
+                        "quality": s.get("quality", 1080),
+                        "providerTier": s.get("providerTier", 3)
                     })
-                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: 90, media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
+                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: (s.get("providerTier", 0) * 100), media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
                 result = {
                     "success": True,
                     "title": fenix_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
@@ -2252,6 +2256,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     "subtitles": [],
                     "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
                 }
+
+
 
 
 
@@ -2454,6 +2460,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 referer = "https://www.blogger.com/"
             elif "peliculaplay.com" in target_url or "mgeb.lat" in target_url or "mgeb.top" in target_url or "mgeb.space" in target_url:
                 referer = "https://mgeb.lat/"
+            elif "fenixhub.online" in target_url or "fenixflix" in target_url:
+                referer, origin = "https://fenixflix.fenixhub.online/", "https://fenixflix.fenixhub.online"
             else:
                 referer = "https://tvzinhaonline.pages.dev/"
         # The anime host checks Origin together with its Referer (the resolver's probe sends both)

@@ -12,15 +12,15 @@
  * Guests never sync. Errors wait longer each time (30 s up to 10 min); the server's limits are respected (one request a
  * second per account, and its "wait N seconds").
  */
-import { STREAM_ENGINE_API_BASE, LIBRARY_KEY, WATCH_PROGRESS_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY } from './constants.js?v=20261118_1010';
-import { activeProfileId, notifyProfileData, removeProfileData, readPersonalTimes, writePersonalTimes, PROFILE_EVENT } from './profileStore.js?v=20261118_1010';
-import { getAccount, signOut, refreshAccount, deleteAccount, ACCOUNT_EVENT } from './account.js?v=20261118_1010';
-import { sanitizeRecord, mergeRecord, stableStringify } from './syncMerge.js?v=20261118_1010';
-import { LIBRARY_EVENT } from './library.js?v=20261118_1010';
-import { PROGRESS_EVENT } from './watchProgress.js?v=20261118_1010';
-import { PREFS_EVENT, PLAYER_PREF_DEFAULTS } from './playerPrefs.js?v=20261118_1010';
-import { store } from './state.js?v=20261118_1010';
-import { confirmDialog } from './confirmDialog.js?v=20261118_1010';
+import { STREAM_ENGINE_API_BASE, LIBRARY_KEY, WATCH_PROGRESS_KEY, FAVORITES_STORAGE_KEY, FAVORITE_TEAM_KEY, PLAYER_PREFS_KEY } from './constants.js?v=20261118_1115';
+import { activeProfileId, notifyProfileData, removeProfileData, readPersonalTimes, writePersonalTimes, PROFILE_EVENT } from './profileStore.js?v=20261118_1115';
+import { getAccount, signOut, refreshAccount, deleteAccount, ACCOUNT_EVENT } from './account.js?v=20261118_1115';
+import { sanitizeRecord, mergeRecord, stableStringify } from './syncMerge.js?v=20261118_1115';
+import { LIBRARY_EVENT } from './library.js?v=20261118_1115';
+import { PROGRESS_EVENT } from './watchProgress.js?v=20261118_1115';
+import { PREFS_EVENT, PLAYER_PREF_DEFAULTS } from './playerPrefs.js?v=20261118_1115';
+import { store } from './state.js?v=20261118_1115';
+import { confirmDialog } from './confirmDialog.js?v=20261118_1115';
 
 export const SYNC_EVENT = 'tvzinha:sync';
 const SYNC_STATE_KEY = 'tvzinha_sync_v1';

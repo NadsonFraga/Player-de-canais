@@ -7,6 +7,7 @@ import json
 import base64
 import urllib.request
 import urllib.parse
+import concurrent.futures
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
 
@@ -19,9 +20,10 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
     if media_id:
         candidates.append(str(media_id) if str(media_id).startswith("tmdb:") else f"tmdb:{media_id}")
 
-    data = None
     raw_streams = []
-    for q_id in candidates:
+    data_title = ""
+
+    def query_candidate(q_id):
         url = f"https://fenixflix.fenixhub.online/stream/series/{q_id}:{season}:{episode}.json" if is_series else f"https://fenixflix.fenixhub.online/stream/movie/{q_id}.json"
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
         try:
@@ -29,11 +31,27 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
                 if res.status == 200:
                     j = json.loads(res.read().decode("utf-8"))
                     if isinstance(j.get("streams"), list) and j["streams"]:
-                        data = j
-                        raw_streams = j["streams"]
-                        break
+                        return j.get("title", ""), j["streams"]
         except Exception:
-            continue
+            pass
+        return "", []
+
+    if candidates:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(candidates)) as executor:
+            futures = [executor.submit(query_candidate, q) for q in candidates]
+            seen_urls = set()
+            for fut in concurrent.futures.as_completed(futures):
+                try:
+                    title, streams = fut.result()
+                    if title and not data_title:
+                        data_title = title
+                    for s in streams:
+                        u = s.get("url")
+                        if u and u not in seen_urls:
+                            seen_urls.add(u)
+                            raw_streams.append(s)
+                except Exception:
+                    pass
 
     if not raw_streams:
         return None
@@ -109,8 +127,7 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
                 filtered = dubbed
 
         filtered.sort(key=lambda s: (s["providerTier"], s["quality"], 1 if s["type"] == "hls" else 0), reverse=True)
-        return {"title": data.get("title", ""), "sources": filtered}
+        return {"title": data_title or "", "sources": filtered}
     except Exception:
         return None
-
 
