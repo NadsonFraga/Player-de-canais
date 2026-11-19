@@ -2204,7 +2204,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
         # Route 2: FenixFlix (PT-BR Dublado)
         if not result and requested_source == "fenixflix" and (media_id or imdb_id):
             active_imdb_id = imdb_id
-            if not active_imdb_id and media_id and tmdb_api_key:
+            if not active_imdb_id and media_id and TMDB_API_KEY:
                 active_imdb_id = timed("imdb", fetch_imdb_id, media_id, "movie" if media_type == "movie" else "serie")
             fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, active_imdb_id, media_type, season, episode, "dubbed")
             if fenix_data and fenix_data.get("sources"):
