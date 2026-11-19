@@ -1197,8 +1197,14 @@
     overflow: hidden !important;
 }
 
-.player-page .movie-modal-body {
+.player-page .movie-modal-body:not(.tvz-mobile-player-body) {
     display: none !important;
+}
+
+@media (min-width: 769px), (orientation: landscape) {
+    .player-page .movie-modal-body {
+        display: none !important;
+    }
 }
 
 /* --- Tablets and phones --- */

@@ -12,22 +12,23 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261119_1138';
-import { showToast } from '../core/toast.js?v=20261119_1138';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_1138';
-import { buildFeedRows } from '../core/feedRows.js?v=20261119_1138';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_1138';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1138';
-import { getUiSvg } from '../core/icons.js?v=20261119_1138';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_1138';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_1138';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1138';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_1138';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261119_1138';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261119_1138';
-import { resumeStartTime } from '../core/resume.js?v=20261119_1138';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_1138';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_1138';
+} from '../core/constants.js?v=20261119_1356';
+import { showToast } from '../core/toast.js?v=20261119_1356';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_1356';
+import { buildFeedRows } from '../core/feedRows.js?v=20261119_1356';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_1356';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1356';
+import { getUiSvg } from '../core/icons.js?v=20261119_1356';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_1356';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_1356';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1356';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_1356';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261119_1356';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261119_1356';
+import { resumeStartTime } from '../core/resume.js?v=20261119_1356';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_1356';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_1356';
+import { getLibraryState, setWatchlist } from '../core/library.js?v=20261119_1356';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1332,6 +1333,103 @@ export function updateMovieObraCard(movie) {
 
     if (overviewEl) {
         overviewEl.textContent = movie.overview || '';
+    }
+
+    // --- Mobile Vertical Hub Section Population ---
+    const mobTitle = document.getElementById("movie-mobile-title");
+    if (mobTitle) mobTitle.textContent = title;
+
+    const mobRating = document.getElementById("movie-mobile-rating");
+    if (mobRating) {
+        const rating = Number(movie.vote_average);
+        if (!isNaN(rating) && rating > 0) {
+            mobRating.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${rating.toFixed(1)}`;
+            mobRating.classList.remove("hidden");
+        } else {
+            mobRating.classList.add("hidden");
+        }
+    }
+
+    const mobYear = document.getElementById("movie-mobile-year");
+    if (mobYear) {
+        const dateStr = movie.release_date || movie.first_air_date || '';
+        const year = dateStr.slice(0, 4);
+        if (year) {
+            mobYear.textContent = year;
+            mobYear.classList.remove("hidden");
+        } else {
+            mobYear.classList.add("hidden");
+        }
+    }
+
+    const mobCert = document.getElementById("movie-mobile-cert");
+    if (mobCert) {
+        const cert = movie.certification || movie.age_rating || '';
+        if (cert) {
+            mobCert.textContent = cert;
+            mobCert.classList.remove("hidden");
+        } else {
+            mobCert.classList.add("hidden");
+        }
+    }
+
+    const mobGenres = document.getElementById("movie-mobile-genres");
+    if (mobGenres && genresEl) {
+        mobGenres.textContent = genresEl.textContent || '';
+    }
+
+    const mobOverview = document.getElementById("movie-mobile-overview");
+    if (mobOverview) {
+        mobOverview.textContent = movie.overview || 'Sem sinopse disponível.';
+        if (!mobOverview._hasToggle) {
+            mobOverview._hasToggle = true;
+            mobOverview.addEventListener("click", () => mobOverview.classList.toggle("is-expanded"));
+        }
+    }
+
+    setupMobileMovieActions(movie);
+}
+
+function setupMobileMovieActions(movie) {
+    if (!movie) return;
+    const watchlistBtn = document.getElementById("btn-movie-mobile-watchlist");
+    if (watchlistBtn) {
+        const state = getLibraryState("movies", movie.id);
+        watchlistBtn.classList.toggle("is-on", Boolean(state.watchlist));
+        watchlistBtn.onclick = () => {
+            const curState = getLibraryState("movies", movie.id);
+            setWatchlist("movies", movie, !curState.watchlist);
+            watchlistBtn.classList.toggle("is-on", !curState.watchlist);
+            showToast(!curState.watchlist ? "Adicionado a Minha Lista" : "Removido de Minha Lista");
+        };
+    }
+
+    const shareBtn = document.getElementById("btn-movie-mobile-share");
+    if (shareBtn) {
+        shareBtn.onclick = async () => {
+            const shareData = {
+                title: movie.title || "TVzinha",
+                text: `Assista ${movie.title || "este filme"} no TVzinha Online!`,
+                url: window.location.href
+            };
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                } catch (e) {}
+            } else if (navigator.clipboard) {
+                try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    showToast("Link copiado para a área de transferência!");
+                } catch (e) {}
+            }
+        };
+    }
+
+    const partyBtn = document.getElementById("btn-movie-mobile-watchparty");
+    if (partyBtn) {
+        partyBtn.onclick = () => {
+            showToast("Watch Party em breve! Prepare-se para assistir com seus amigos.");
+        };
     }
 }
 
