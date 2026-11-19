@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261119_1054';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_1054';
-import { showToast } from '../core/toast.js?v=20261119_1054';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1054';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261119_1054';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261119_1054';
-import { formatClock } from '../core/resume.js?v=20261119_1054';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261119_1054';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261119_1054';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261119_1054';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261119_1054';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1054';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_1054';
+import { store } from '../core/state.js?v=20261119_1138';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_1138';
+import { showToast } from '../core/toast.js?v=20261119_1138';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1138';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261119_1138';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261119_1138';
+import { formatClock } from '../core/resume.js?v=20261119_1138';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261119_1138';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261119_1138';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261119_1138';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261119_1138';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1138';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_1138';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -168,12 +168,36 @@ function mountWhenPlayerLibsReady(kind, mount, { onSlow, onFailed }) {
  */
 export function setupMobileOrientationLock(art) {
     if (!art) return;
+
+    const isMobileDevice = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+    if (!isMobileDevice) return;
+
+    // Direct user-gesture hook on fullscreen control to ensure browser allows orientation lock
+    const bindFsBtn = () => {
+        const fsBtn = art.template?.$controls?.querySelector('.art-control-fullscreen');
+        if (fsBtn && !fsBtn._hasOrientLock) {
+            fsBtn._hasOrientLock = true;
+            fsBtn.addEventListener('pointerdown', () => {
+                if (!art.fullscreen && typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
+                    try {
+                        const p = screen.orientation.lock('landscape');
+                        if (p && typeof p.catch === 'function') p.catch(() => {});
+                    } catch (e) {}
+                }
+            });
+        }
+    };
+    bindFsBtn();
+    art.on('ready', bindFsBtn);
+    art.on('resize', bindFsBtn);
+
     art.on('fullscreen', (isFullscreen) => {
         if (isFullscreen) {
             if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock('landscape').catch(() => {
-                    // Gracefully ignored on platforms without orientation lock support (e.g. iOS WebKit)
-                });
+                try {
+                    const p = screen.orientation.lock('landscape');
+                    if (p && typeof p.catch === 'function') p.catch(() => {});
+                } catch (e) {}
             }
         } else {
             if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.unlock) {
@@ -185,12 +209,20 @@ export function setupMobileOrientationLock(art) {
     });
 }
 
-// Fallback document listener to guarantee orientation unlocks upon back gesture or system exit
+// Fallback document listener to guarantee orientation locks/unlocks upon system fullscreenchange
 if (typeof document !== 'undefined') {
     document.addEventListener('fullscreenchange', () => {
+        const isMobileDevice = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+        if (!isMobileDevice) return;
+
         if (!document.fullscreenElement && typeof screen !== 'undefined' && screen.orientation && screen.orientation.unlock) {
             try {
                 screen.orientation.unlock();
+            } catch (e) {}
+        } else if (document.fullscreenElement && typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
+            try {
+                const p = screen.orientation.lock('landscape');
+                if (p && typeof p.catch === 'function') p.catch(() => {});
             } catch (e) {}
         }
     });

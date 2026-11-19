@@ -76,25 +76,34 @@
 }
 
 .art-video-player .art-control-progress .art-control-progress-inner {
-    height: 5px !important;
+    height: 3.5px !important;
     transition: height 0.15s ease !important;
 }
 
 .art-video-player .art-control-progress:hover .art-control-progress-inner {
-    height: 8px !important;
+    height: 5.5px !important;
 }
 
-/* Warm Refined Gold Progress Bar & Scrubber Thumb */
+/* Warm Deep Gold Progress Bar & Scrubber Thumb */
 .art-video-player .art-progress-played {
-    background: #e2b755 !important;
-    background-color: #e2b755 !important;
+    background: #c09328 !important;
+    background-color: #c09328 !important;
 }
 
 .art-video-player .art-progress-indicator {
-    background: #e2b755 !important;
-    background-color: #e2b755 !important;
-    border-color: #e2b755 !important;
-    box-shadow: 0 0 10px rgba(226, 183, 85, 0.6) !important;
+    width: 12px !important;
+    height: 12px !important;
+    background: #c09328 !important;
+    background-color: #c09328 !important;
+    border: 1.5px solid #ffffff !important;
+    border-radius: 50% !important;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.6) !important;
+    transition: width 0.15s ease, height 0.15s ease !important;
+}
+
+.art-video-player .art-control-progress:hover .art-progress-indicator {
+    width: 14px !important;
+    height: 14px !important;
 }
 
 .art-video-player .art-progress-highlight {
@@ -2192,16 +2201,6 @@
     right: 24px !important;
 }
 
-@media (max-width: 640px) {
-    .series-player-drawer {
-        right: 8px !important;
-        left: 8px !important;
-        width: auto !important;
-        bottom: 68px !important;
-        max-height: 75% !important;
-    }
-}
-
 .series-drawer-list {
     flex: 1 !important;
     overflow-y: auto !important;
@@ -3042,20 +3041,26 @@
     }
 
     .btn-player-pill.btn-player-servers {
-        height: 32px !important;
-        padding: 0 8px !important;
-        font-size: 11px !important;
-        gap: 4px !important;
-        border-radius: 9999px !important;
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        min-height: 34px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        justify-content: center !important;
+        gap: 0 !important;
         flex-shrink: 0 !important;
     }
 
     #movie-player-active-server-name,
-    #series-player-active-server-name {
-        max-width: 85px !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
+    #series-player-active-server-name,
+    .btn-player-servers svg:last-child {
+        display: none !important;
+    }
+
+    .btn-player-servers svg:first-child {
+        width: 17px !important;
+        height: 17px !important;
     }
 
     .btn-player-icon {
@@ -3080,35 +3085,59 @@
         height: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
-    .art-video-player .art-control-tvz-volume {
+    .art-video-player .art-control-tvz-volume,
+    .art-video-player .art-control-pip {
         display: none !important;
     }
 
     .art-video-player .art-control-time {
-        font-size: 11.5px !important;
+        font-size: 11px !important;
         padding: 0 4px !important;
         flex-shrink: 0 !important;
     }
 
     .art-video-player .art-controls .art-icon,
     .art-video-player .art-controls button {
-        padding: 0 3px !important;
-        width: 34px !important;
+        padding: 0 !important;
+        width: 32px !important;
     }
 
-    /* Episode Quick Drawer (Bottom Sheet) */
+    .art-video-player .art-control-fullscreen {
+        display: flex !important;
+        visibility: visible !important;
+    }
+
+    /* Mobile Timeline & Scrubber Thumb Proportions */
+    .art-video-player .art-control-progress .art-control-progress-inner {
+        height: 3px !important;
+    }
+
+    .art-video-player .art-control-progress:hover .art-control-progress-inner {
+        height: 4.5px !important;
+    }
+
+    .art-video-player .art-progress-indicator {
+        width: 10px !important;
+        height: 10px !important;
+    }
+
+    .art-video-player .art-control-progress:hover .art-progress-indicator {
+        width: 12px !important;
+        height: 12px !important;
+    }
+
+    /* Episode Quick Drawer (Floating cleanly above bottom controls, matching Settings & Subtitles) */
     .series-player-drawer {
         position: absolute !important;
-        inset: auto 0 0 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        height: 72% !important;
-        max-height: 72% !important;
-        border-radius: 20px 20px 0 0 !important;
-        border-bottom: none !important;
-        border-left: none !important;
-        border-right: none !important;
-        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+        inset: auto 10px 72px 10px !important;
+        width: auto !important;
+        max-width: none !important;
+        height: 70% !important;
+        max-height: calc(100% - 130px) !important;
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        padding-bottom: 0 !important;
         z-index: 180 !important;
     }
 
@@ -3162,14 +3191,14 @@
 
     .series-player-drawer {
         position: absolute !important;
-        top: 8px !important;
-        right: max(12px, env(safe-area-inset-right, 0px)) !important;
-        bottom: 8px !important;
+        bottom: 58px !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        top: auto !important;
         left: auto !important;
-        width: 360px !important;
+        width: 340px !important;
         max-width: calc(100vw - 32px) !important;
         height: auto !important;
-        max-height: calc(100% - 16px) !important;
+        max-height: calc(100% - 110px) !important;
         border-radius: 14px !important;
         z-index: 180 !important;
     }
