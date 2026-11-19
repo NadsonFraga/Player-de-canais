@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_2352';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_2352';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_0035';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_0035';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -95,6 +95,23 @@ function getStreamHeaders(rawUrl) {
   }
 }
 
+export const STREMIO_FENIX_ENDPOINTS = [
+  'https://fenixflix.fenixhub.online'
+];
+
+function cleanEmojis(text) {
+  return String(text || '')
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractClusterName(title) {
+  const clean = cleanEmojis(title);
+  const m = clean.match(/\b(Zeus|Badger|Hypex|Figgs|Hydra|Apollo|Ares|Thor|Odin|Zunder|Hollymovies)\b/i);
+  return m ? m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase() : '';
+}
+
 /* ============================================================
  * 1. FENIXFLIX (PT-BR Dublado Native Stream Aggregator)
  * ============================================================ */
@@ -135,10 +152,10 @@ export async function resolveFenixFlixClient(options = {}) {
     const timer = setTimeout(() => controller.abort(), 4500);
 
     try {
-      const fetchCandidate = async (qId) => {
+      const fetchCandidate = async (baseUrl, qId) => {
         const endpoint = isSeries
-          ? `https://fenixflix.fenixhub.online/stream/series/${qId}:${season}:${episode}.json`
-          : `https://fenixflix.fenixhub.online/stream/movie/${qId}.json`;
+          ? `${baseUrl}/stream/series/${qId}:${season}:${episode}.json`
+          : `${baseUrl}/stream/movie/${qId}.json`;
         try {
           const res = await fetch(endpoint, {
             headers: { 'Accept': 'application/json' },
@@ -154,15 +171,27 @@ export async function resolveFenixFlixClient(options = {}) {
         return null;
       };
 
-      const results = await Promise.all(queryCandidates.map(fetchCandidate));
+      const tasks = [];
+      for (const base of STREMIO_FENIX_ENDPOINTS) {
+        for (const q of queryCandidates) {
+          tasks.push(fetchCandidate(base, q));
+        }
+      }
+
+      const results = await Promise.allSettled(tasks);
       clearTimeout(timer);
 
-      // Prioritize the result from the preferred candidate (IMDb tt... first, then TMDB)
+      const seenUrls = new Set();
       for (const r of results) {
-        if (r && Array.isArray(r.streams) && r.streams.length > 0) {
-          data = r;
-          rawStreams = r.streams;
-          break;
+        if (r.status === 'fulfilled' && r.value) {
+          const j = r.value;
+          if (!data) data = j;
+          for (const s of (j.streams || [])) {
+            if (s && s.url && !seenUrls.has(s.url)) {
+              seenUrls.add(s.url);
+              rawStreams.push(s);
+            }
+          }
         }
       }
     } catch (e) {
@@ -178,7 +207,9 @@ export async function resolveFenixFlixClient(options = {}) {
     const parsed = rawStreams
       .filter(s => s && s.url && typeof s.url === 'string')
       .map(s => {
-        const text = `${s.name || ''} ${s.title || ''}`.toLowerCase();
+        const rawTitle = s.title || '';
+        const rawName = s.name || '';
+        const text = `${rawName} ${rawTitle}`.toLowerCase();
         let quality = 1080;
         if (text.includes('4k') || text.includes('2160p')) quality = 2160;
         else if (text.includes('1440p') || text.includes('2k')) quality = 1440;
@@ -196,9 +227,8 @@ export async function resolveFenixFlixClient(options = {}) {
                          text.includes('tri audio') ||
                          text.includes('pt-br') ||
                          text.includes('ptbr') ||
-                         (text.includes('🇧🇷') && !isSubbed);
+                         (rawTitle.includes('🇧🇷') && !isSubbed);
         const isHls = s.url.includes('.m3u8') || s.url.includes('hls-proxy') || s.url.includes('/hls') || (s.type === 'hls');
-        const cleanName = s.name || `FenixFlix ${quality}p`;
 
         // Provider trust, audio compatibility & speed tiers:
         // 4: Dedicated high-speed official web VOD masters (fenixhub.online / Zeus / Badger) -> guaranteed AAC web audio, 0ms startup
@@ -218,10 +248,16 @@ export async function resolveFenixFlixClient(options = {}) {
           providerTier = 1;
         }
 
+        const cluster = extractClusterName(rawTitle);
         const tag = isDubbed ? (text.includes('dual') ? 'Dual Áudio' : 'Dublado') : (isSubbed ? 'Legendado' : 'Original');
+        const labelParts = [`Fenix ${quality}p`];
+        if (cluster) labelParts.push(`· ${cluster}`);
+        labelParts.push(`[${tag}]`);
+        const cleanLabel = labelParts.join(' ');
 
         return {
-          label: `${cleanName} [${tag}]`,
+          label: cleanLabel,
+          cluster,
           file: s.url,
           quality,
           providerTier,
@@ -231,29 +267,32 @@ export async function resolveFenixFlixClient(options = {}) {
         };
       });
 
-    let filtered = parsed;
-    if (audio === 'dubbed') {
-      const dubbed = parsed.filter(s => s.isDubbed);
-      if (dubbed.length > 0) filtered = dubbed;
-    }
-
-    filtered.sort((a, b) => {
-      // 1. Official library master vs untrusted scraper (FenixHub > Zunder > Hollymovies)
+    // Sort order:
+    // 1. Audio preference: Dubbed first (if audio === 'dubbed'), else Subbed first
+    // 2. Official library master vs untrusted scraper (FenixHub > Zunder > Hollymovies)
+    // 3. Resolution (2160p > 1080p > 720p > 480p)
+    // 4. Prefer adaptive HLS within identical tier & resolution
+    parsed.sort((a, b) => {
+      if (audio === 'dubbed') {
+        if (a.isDubbed && !b.isDubbed) return -1;
+        if (!a.isDubbed && b.isDubbed) return 1;
+      } else if (audio === 'subtitled') {
+        if (a.isSubbed && !b.isSubbed) return -1;
+        if (!a.isSubbed && b.isSubbed) return 1;
+      }
       if (b.providerTier !== a.providerTier) return b.providerTier - a.providerTier;
-      // 2. Declared/detected resolution
       if (b.quality !== a.quality) return b.quality - a.quality;
-      // 3. Prefer adaptive HLS within identical tier & resolution
       if (a.type === 'hls' && b.type !== 'hls') return -1;
       if (b.type === 'hls' && a.type !== 'hls') return 1;
       return 0;
     });
 
-    if (!filtered.length) {
+    if (!parsed.length) {
       return { success: false, error: 'FenixFlix sem fontes correspondentes ao áudio selecionado', provider: 'fenixflix', reason: 'no_sources' };
     }
 
     // Sign proxy URLs for streams needing referer
-    const itemsToSign = filtered.map(s => {
+    const itemsToSign = parsed.map(s => {
       const rawFile = (s.file || '').trim();
       // FenixHub and Fenixbot streams redirect to upstream CDNs with self-signed SSL certs (e.g. dbonline.tech-cdn.top).
       // They MUST be proxied via /api/stream to guarantee valid HTTPS, HTTP 206 Range, and open CORS without browser ERR_CERT_AUTHORITY_INVALID.

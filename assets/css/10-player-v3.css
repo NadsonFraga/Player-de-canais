@@ -1654,8 +1654,8 @@
    ============================================================ */
 
 :root {
-    --tvz-player-accent: #eab308;
-    --tvz-player-bg: rgba(14, 18, 25, 0.92);
+    --tvz-player-accent: #e2b755;
+    --tvz-player-bg: rgba(14, 15, 19, 0.92);
     --tvz-player-border: rgba(255, 255, 255, 0.08);
 }
 
@@ -1691,7 +1691,7 @@
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
     flex-shrink: 0 !important;
-    background: #0f172a;
+    background: #121318;
 }
 
 .tvz-player-thumb-top.hidden {
@@ -2184,8 +2184,8 @@
 }
 
 .tvz-drawer-ep-card.active {
-    background: rgba(234, 179, 8, 0.12);
-    border-color: rgba(234, 179, 8, 0.5);
+    background: rgba(226, 183, 85, 0.12);
+    border-color: rgba(226, 183, 85, 0.45);
     color: #ffffff;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
@@ -2197,7 +2197,7 @@
     flex-shrink: 0;
     border-radius: 6px;
     overflow: hidden;
-    background: #0f172a;
+    background: #121318;
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -2223,8 +2223,8 @@
     left: 4px;
     right: 4px;
     padding: 2px 4px;
-    background: rgba(234, 179, 8, 0.9);
-    color: #000000;
+    background: #e2b755;
+    color: #0a0a0c;
     font-size: 9px;
     font-weight: 700;
     text-align: center;
@@ -2431,8 +2431,8 @@
 }
 
 .tvz-server-item.is-active .tvz-server-badge {
-    background: rgba(234, 179, 8, 0.25);
-    color: #fef08a;
+    background: rgba(226, 183, 85, 0.22);
+    color: #e2b755;
 }
 
 @keyframes tvzPanelFadeIn {
@@ -2469,8 +2469,8 @@
 .btn-player-pill.btn-player-servers:hover,
 .btn-player-pill.btn-player-servers:focus-visible {
     background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(234, 179, 8, 0.5);
-    color: #fef08a;
+    border-color: rgba(226, 183, 85, 0.45);
+    color: #ffffff;
     transform: translateY(-1px);
 }
 
@@ -2520,19 +2520,19 @@
     width: 330px;
     max-width: calc(100vw - 32px);
     max-height: calc(100% - 90px);
-    background: rgba(10, 16, 26, 0.95);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: rgba(14, 15, 19, 0.92);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     z-index: 160;
     display: none;
     flex-direction: column;
     overflow: hidden;
     color: #ffffff;
     user-select: none;
-    font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif) !important;
+    font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif) !important;
     animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2550,9 +2550,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
+    padding: 13px 16px;
     min-height: 52px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     flex-shrink: 0;
 }
 
@@ -2563,52 +2563,14 @@
     font-family: var(--font-heading, 'Outfit', sans-serif);
     font-size: 15px;
     font-weight: 700;
-    color: #f8fafc;
-}
-
-.tvz-settings-back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: transparent;
-    border: none;
-    color: #facc15;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 4px 6px;
-    margin-left: -6px;
-    border-radius: 6px;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-
-.tvz-settings-back-btn:hover {
-    background: rgba(234, 179, 8, 0.12);
-    color: #fef08a;
-}
-
-.tvz-settings-sub-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #f8fafc;
-}
-
-.tvz-settings-close-btn {
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    cursor: pointer;
-    padding: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    transition: color 0.15s ease, background 0.15s ease;
-}
-
-.tvz-settings-close-btn:hover {
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
+}
+
+.tvz-settings-sub-title,
+.tvz-settings-title-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
 }
 
 .tvz-settings-body {
@@ -2632,8 +2594,8 @@
     align-items: flex-start;
     justify-content: center;
     padding: 12px 14px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 12px;
     cursor: pointer;
     transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
@@ -2642,8 +2604,8 @@
 }
 
 .tvz-setting-tile:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(234, 179, 8, 0.4);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
 }
 
 .tvz-setting-tile-top {
@@ -2651,7 +2613,7 @@
     align-items: center;
     gap: 6px;
     width: 100%;
-    color: #facc15;
+    color: rgba(226, 183, 85, 0.85);
 }
 
 .tvz-setting-tile-top svg {
@@ -2664,8 +2626,9 @@
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.05em;
-    background: rgba(234, 179, 8, 0.18);
-    color: #facc15;
+    background: rgba(226, 183, 85, 0.12);
+    color: #e2b755;
+    border: 1px solid rgba(226, 183, 85, 0.22);
     padding: 1px 4px;
     border-radius: 4px;
     display: inline-flex;
@@ -2678,14 +2641,14 @@
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #94a3b8;
+    color: #a1a1aa;
 }
 
 .tvz-setting-tile-value {
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
-    margin-top: 6px;
+    color: #f4f4f5;
+    margin-top: 5px;
     width: 100%;
     white-space: nowrap;
     overflow: hidden;
@@ -2693,13 +2656,13 @@
 }
 
 .tvz-setting-tile-value.tvz-val-muted {
-    color: #94a3b8;
+    color: #71717a;
     font-weight: 500;
 }
 
 .tvz-settings-divider {
     height: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
     margin: 2px 0;
 }
 
@@ -2716,19 +2679,20 @@
     justify-content: space-between;
     width: 100%;
     padding: 10px 12px;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    color: #f1f5f9;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 9px;
+    color: #e4e4e7;
     font-size: 13.5px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     text-align: left;
 }
 
 .tvz-setting-row:hover {
     background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
     color: #ffffff;
 }
 
@@ -2751,12 +2715,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    color: #94a3b8;
+    color: #a1a1aa;
     font-size: 12.5px;
 }
 
 .tvz-chevron {
-    color: #64748b;
+    color: #71717a;
     flex-shrink: 0;
 }
 
@@ -2764,13 +2728,13 @@
     color: #cbd5e1;
 }
 
-/* Toggle Switch (iOS / Modern style) */
+/* Toggle Switch (Modern Obsidian style) */
 .tvz-setting-toggle-row {
     cursor: default;
 }
 
 .tvz-setting-toggle-row:hover {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .tvz-toggle-switch {
@@ -2790,7 +2754,7 @@
 .tvz-toggle-slider {
     position: absolute;
     inset: 0;
-    background-color: rgba(255, 255, 255, 0.16);
+    background-color: rgba(255, 255, 255, 0.14);
     border-radius: 24px;
     transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -2809,7 +2773,7 @@
 }
 
 .tvz-toggle-switch input:checked + .tvz-toggle-slider {
-    background-color: #eab308;
+    background-color: #d4af37;
 }
 
 .tvz-toggle-switch input:checked + .tvz-toggle-slider:before {
@@ -2823,10 +2787,10 @@
     justify-content: space-between;
     width: 100%;
     padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid transparent;
-    border-radius: 8px;
-    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 9px;
+    color: #e4e4e7;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -2835,15 +2799,15 @@
 }
 
 .tvz-settings-option:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
     color: #ffffff;
 }
 
 .tvz-settings-option.is-active {
-    background: rgba(234, 179, 8, 0.14);
-    border-color: rgba(234, 179, 8, 0.4);
-    color: #fde047;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(226, 183, 85, 0.35);
+    color: #ffffff;
     font-weight: 600;
 }
 
@@ -2851,7 +2815,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #facc15;
+    color: #e2b755;
     flex-shrink: 0;
 }
 
@@ -2867,7 +2831,7 @@
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #94a3b8;
+    color: #a1a1aa;
     padding: 0 4px;
 }
 
@@ -2880,7 +2844,7 @@
 .tvz-sub-chip {
     padding: 6px 12px;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     color: #cbd5e1;
     font-size: 12px;
@@ -2889,14 +2853,15 @@
 }
 
 .tvz-sub-chip:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
     color: #ffffff;
 }
 
 .tvz-sub-chip.is-active {
-    background: rgba(234, 179, 8, 0.18);
-    border-color: rgba(234, 179, 8, 0.4);
-    color: #facc15;
+    background: rgba(226, 183, 85, 0.14);
+    border-color: rgba(226, 183, 85, 0.35);
+    color: #e2b755;
     font-weight: 600;
 }
 

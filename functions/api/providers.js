@@ -1,12 +1,29 @@
 /**
  * Tvzinha Online - Multi-Provider Native Stream Extractors for /api/resolve
- * Implements FenixFlix resolvers.
+ * Implements FenixFlix multi-cluster stream aggregator for Stremio HTTP backends.
  */
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 
+export const STREMIO_FENIX_ENDPOINTS = [
+  "https://fenixflix.fenixhub.online"
+];
+
+function cleanEmojis(text) {
+  return String(text || "")
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractClusterName(title) {
+  const clean = cleanEmojis(title);
+  const m = clean.match(/\b(Zeus|Badger|Hypex|Figgs|Hydra|Apollo|Ares|Thor|Odin|Zunder|Hollymovies)\b/i);
+  return m ? m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase() : "";
+}
+
 /* ============================================================
- * 1. FENIXFLIX (PT-BR Dublado Native Stream Aggregator)
+ * 1. FENIXFLIX (PT-BR Dublado & Subtitled Multi-Cluster Aggregator)
  * ============================================================ */
 export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode = 1, audio = "dubbed" }) {
   const isSeries = type === "series" || type === "serie" || type === "tv" || type === "anime";
@@ -24,10 +41,10 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
   let rawStreams = [];
   let dataTitle = "";
 
-  const fetchCandidate = async (qId) => {
+  const fetchCandidateFromBase = async (baseUrl, qId) => {
     const endpoint = isSeries
-      ? `https://fenixflix.fenixhub.online/stream/series/${qId}:${season}:${episode}.json`
-      : `https://fenixflix.fenixhub.online/stream/movie/${qId}.json`;
+      ? `${baseUrl}/stream/series/${qId}:${season}:${episode}.json`
+      : `${baseUrl}/stream/movie/${qId}.json`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 6000);
     try {
@@ -49,12 +66,19 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
     }
   };
 
-  const results = await Promise.allSettled(queryCandidates.map(fetchCandidate));
+  const tasks = [];
+  for (const base of STREMIO_FENIX_ENDPOINTS) {
+    for (const qId of queryCandidates) {
+      tasks.push(fetchCandidateFromBase(base, qId));
+    }
+  }
+
+  const results = await Promise.allSettled(tasks);
   const seenUrls = new Set();
   for (const r of results) {
     if (r.status === "fulfilled" && r.value) {
       const val = r.value;
-      if (!debug.endpoint) {
+      if (!debug.endpoint && val.endpoint) {
         debug.endpoint = val.endpoint;
         debug.status = val.status;
       }
@@ -75,7 +99,9 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
     const parsed = rawStreams
       .filter(s => s && s.url && typeof s.url === "string")
       .map(s => {
-        const text = `${s.name || ''} ${s.title || ''}`.toLowerCase();
+        const rawTitle = s.title || "";
+        const rawName = s.name || "";
+        const text = `${rawName} ${rawTitle}`.toLowerCase();
         let quality = 1080;
         if (text.includes("4k") || text.includes("2160p")) quality = 2160;
         else if (text.includes("1440p") || text.includes("2k")) quality = 1440;
@@ -93,7 +119,7 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
                          text.includes("tri audio") ||
                          text.includes("pt-br") ||
                          text.includes("ptbr") ||
-                         (text.includes("🇧🇷") && !isSubbed);
+                         (rawTitle.includes("🇧🇷") && !isSubbed);
         const isHls = s.url.includes(".m3u8") || s.url.includes("hls-proxy") || s.url.includes("/hls") || (s.type === "hls");
 
         // Provider trust, audio compatibility & speed tiers:
@@ -114,10 +140,16 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
           providerTier = 1;
         }
 
+        const cluster = extractClusterName(rawTitle);
         const tag = isDubbed ? (text.includes("dual") ? "Dual Áudio" : "Dublado") : (isSubbed ? "Legendado" : "Original");
-        const cleanName = s.name || `FenixFlix ${quality}p`;
+        const labelParts = [`Fenix ${quality}p`];
+        if (cluster) labelParts.push(`· ${cluster}`);
+        labelParts.push(`[${tag}]`);
+        const cleanLabel = labelParts.join(" ");
+
         return {
-          label: `${cleanName} [${tag}]`,
+          label: cleanLabel,
+          cluster,
           file: s.url,
           quality,
           providerTier,
@@ -127,15 +159,19 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
         };
       });
 
-    // Prefer dubbed if available
-    let filtered = parsed;
-    if (audio === "dubbed") {
-      const dubbed = parsed.filter(s => s.isDubbed);
-      if (dubbed.length > 0) filtered = dubbed;
-    }
-
-    // Sort: Provider tier > Quality > HLS tie-breaker within identical tier & resolution
-    filtered.sort((a, b) => {
+    // Sort order:
+    // 1. Audio preference: Dubbed first (if audio === "dubbed"), else Subbed first
+    // 2. Provider tier: official masters (4) > mirrors (3) > third-party (2) > bot (1)
+    // 3. Resolution: 2160p > 1080p > 720p > 480p
+    // 4. HLS preference within identical tier & resolution
+    parsed.sort((a, b) => {
+      if (audio === "dubbed") {
+        if (a.isDubbed && !b.isDubbed) return -1;
+        if (!a.isDubbed && b.isDubbed) return 1;
+      } else if (audio === "subtitled") {
+        if (a.isSubbed && !b.isSubbed) return -1;
+        if (!a.isSubbed && b.isSubbed) return 1;
+      }
       if (b.providerTier !== a.providerTier) return b.providerTier - a.providerTier;
       if (b.quality !== a.quality) return b.quality - a.quality;
       if (a.type === "hls" && b.type !== "hls") return -1;
@@ -145,7 +181,7 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
 
     return {
       title: dataTitle || "",
-      sources: filtered,
+      sources: parsed,
       debug
     };
   } catch (err) {
