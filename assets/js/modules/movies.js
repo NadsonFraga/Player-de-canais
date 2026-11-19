@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261119_0102';
-import { showToast } from '../core/toast.js?v=20261119_0102';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_0102';
-import { buildFeedRows } from '../core/feedRows.js?v=20261119_0102';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_0102';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0102';
-import { getUiSvg } from '../core/icons.js?v=20261119_0102';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_0102';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_0102';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0102';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0102';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261119_0102';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261119_0102';
-import { resumeStartTime } from '../core/resume.js?v=20261119_0102';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_0102';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_0102';
+} from '../core/constants.js?v=20261119_0117';
+import { showToast } from '../core/toast.js?v=20261119_0117';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_0117';
+import { buildFeedRows } from '../core/feedRows.js?v=20261119_0117';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_0117';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0117';
+import { getUiSvg } from '../core/icons.js?v=20261119_0117';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_0117';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_0117';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0117';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_0117';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261119_0117';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261119_0117';
+import { resumeStartTime } from '../core/resume.js?v=20261119_0117';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_0117';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_0117';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1559,7 +1559,7 @@ export function selectMovieServer(server, buttonElement = null) {
                 if (movieArt) {
                     movieArt.innerHTML = `
                         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);border-radius:12px;">
-                            <svg width="44" height="44" fill="none" stroke="#eab308" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
+                            <svg width="44" height="44" fill="none" stroke="rgba(255, 255, 255, 0.7)" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
                             <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${escapeHtml(sName)} sem fontes</div>
                             <div style="font-size:13px;max-width:380px;line-height:1.5;">O ${escapeHtml(sName)} não encontrou fontes para este filme no momento. Escolha outro player ou um servidor externo abaixo.</div>
                         </div>`;
