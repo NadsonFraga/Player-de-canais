@@ -75,6 +75,7 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
         return None
 
     try:
+        seen_clusters = set()
         parsed = []
         for s in raw_streams:
             u = s.get("url")
@@ -124,6 +125,11 @@ def fetch_fenixflix(media_id, imdb_id, media_type, season=1, episode=1, audio="d
                 provider_tier = 1
 
             cluster = extract_cluster_name(raw_title)
+            dedup_key = (quality, cluster, "dub" if is_dubbed else "sub")
+            if dedup_key in seen_clusters:
+                continue
+            seen_clusters.add(dedup_key)
+
             tag = "Dual Áudio" if "dual" in text else ("Dublado" if is_dubbed else ("Legendado" if is_subbed else "Original"))
             label_parts = [f"Fenix {quality}p"]
             if cluster:

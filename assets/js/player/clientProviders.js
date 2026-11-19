@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_0035';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0035';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_0038';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_0038';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -204,68 +204,74 @@ export async function resolveFenixFlixClient(options = {}) {
       return { success: false, error: 'FenixFlix sem fontes para este título', provider: 'fenixflix', reason: 'no_sources' };
     }
 
-    const parsed = rawStreams
-      .filter(s => s && s.url && typeof s.url === 'string')
-      .map(s => {
-        const rawTitle = s.title || '';
-        const rawName = s.name || '';
-        const text = `${rawName} ${rawTitle}`.toLowerCase();
-        let quality = 1080;
-        if (text.includes('4k') || text.includes('2160p')) quality = 2160;
-        else if (text.includes('1440p') || text.includes('2k')) quality = 1440;
-        else if (text.includes('1080p') || text.includes('fhd') || text.includes('full hd') || text.includes('fullhd')) quality = 1080;
-        else if (text.includes('720p') || text.includes('hd')) quality = 720;
-        else if (text.includes('480p') || text.includes('sd')) quality = 480;
-        else if (text.includes('360p')) quality = 360;
+    const seenClusters = new Set();
+    const parsed = [];
+    for (const s of rawStreams) {
+      if (!s || !s.url || typeof s.url !== 'string') continue;
 
-        const isSubbed = text.includes('legendado') || text.includes('subbed');
-        const isDubbed = text.includes('dublado') ||
-                         text.includes('nacional') ||
-                         text.includes('dual') ||
-                         text.includes('multi') ||
-                         text.includes('tri áudio') ||
-                         text.includes('tri audio') ||
-                         text.includes('pt-br') ||
-                         text.includes('ptbr') ||
-                         (rawTitle.includes('🇧🇷') && !isSubbed);
-        const isHls = s.url.includes('.m3u8') || s.url.includes('hls-proxy') || s.url.includes('/hls') || (s.type === 'hls');
+      const rawTitle = s.title || '';
+      const rawName = s.name || '';
+      const text = `${rawName} ${rawTitle}`.toLowerCase();
+      let quality = 1080;
+      if (text.includes('4k') || text.includes('2160p')) quality = 2160;
+      else if (text.includes('1440p') || text.includes('2k')) quality = 1440;
+      else if (text.includes('1080p') || text.includes('fhd') || text.includes('full hd') || text.includes('fullhd')) quality = 1080;
+      else if (text.includes('720p') || text.includes('hd')) quality = 720;
+      else if (text.includes('480p') || text.includes('sd')) quality = 480;
+      else if (text.includes('360p')) quality = 360;
 
-        // Provider trust, audio compatibility & speed tiers:
-        // 4: Dedicated high-speed official web VOD masters (fenixhub.online / Zeus / Badger) -> guaranteed AAC web audio, 0ms startup
-        // 3: Verified mirrors & direct CDNs (zunder, zunderflix)
-        // 2: Third-party web scrapers & adaptive HLS (hollymovies / embedplayer2) -> AAC web audio
-        // 1: Un-transcoded bot torrent streams (squareweb.app, koyeb.app, fenixbot, /stream/) -> raw MKVs with E-AC-3 audio (unsupported by HTML5 video / silent in browsers), sleep-prone containers
-        const rawUrl = (s.url || '').toLowerCase();
-        let providerTier = 3;
-        const isBotStream = rawUrl.includes('/stream/') || rawUrl.includes('squareweb.app') || rawUrl.includes('fenixbot') || rawUrl.includes('koyeb.app');
-        if (rawUrl.includes('fenixhub.online')) {
-          providerTier = 4;
-        } else if (text.includes('zunder') || rawUrl.includes('zunderflix')) {
-          providerTier = 3;
-        } else if (text.includes('hollymovies') || rawUrl.includes('embedplayer2')) {
-          providerTier = 2;
-        } else if (isBotStream) {
-          providerTier = 1;
-        }
+      const isSubbed = text.includes('legendado') || text.includes('subbed');
+      const isDubbed = text.includes('dublado') ||
+                       text.includes('nacional') ||
+                       text.includes('dual') ||
+                       text.includes('multi') ||
+                       text.includes('tri áudio') ||
+                       text.includes('tri audio') ||
+                       text.includes('pt-br') ||
+                       text.includes('ptbr') ||
+                       (rawTitle.includes('🇧🇷') && !isSubbed);
+      const isHls = s.url.includes('.m3u8') || s.url.includes('hls-proxy') || s.url.includes('/hls') || (s.type === 'hls');
 
-        const cluster = extractClusterName(rawTitle);
-        const tag = isDubbed ? (text.includes('dual') ? 'Dual Áudio' : 'Dublado') : (isSubbed ? 'Legendado' : 'Original');
-        const labelParts = [`Fenix ${quality}p`];
-        if (cluster) labelParts.push(`· ${cluster}`);
-        labelParts.push(`[${tag}]`);
-        const cleanLabel = labelParts.join(' ');
+      // Provider trust, audio compatibility & speed tiers:
+      // 4: Dedicated high-speed official web VOD masters (fenixhub.online / Zeus / Badger) -> guaranteed AAC web audio, 0ms startup
+      // 3: Verified mirrors & direct CDNs (zunder, zunderflix)
+      // 2: Third-party web scrapers & adaptive HLS (hollymovies / embedplayer2) -> AAC web audio
+      // 1: Un-transcoded bot torrent streams (squareweb.app, koyeb.app, fenixbot, /stream/) -> raw MKVs with E-AC-3 audio (unsupported by HTML5 video / silent in browsers), sleep-prone containers
+      const rawUrl = (s.url || '').toLowerCase();
+      let providerTier = 3;
+      const isBotStream = rawUrl.includes('/stream/') || rawUrl.includes('squareweb.app') || rawUrl.includes('fenixbot') || rawUrl.includes('koyeb.app');
+      if (rawUrl.includes('fenixhub.online')) {
+        providerTier = 4;
+      } else if (text.includes('zunder') || rawUrl.includes('zunderflix')) {
+        providerTier = 3;
+      } else if (text.includes('hollymovies') || rawUrl.includes('embedplayer2')) {
+        providerTier = 2;
+      } else if (isBotStream) {
+        providerTier = 1;
+      }
 
-        return {
-          label: cleanLabel,
-          cluster,
-          file: s.url,
-          quality,
-          providerTier,
-          type: isHls ? 'hls' : 'mp4',
-          isDubbed,
-          isSubbed
-        };
+      const cluster = extractClusterName(rawTitle);
+      const dedupKey = `${quality}_${cluster}_${isDubbed ? 'dub' : 'sub'}`;
+      if (seenClusters.has(dedupKey)) continue;
+      seenClusters.add(dedupKey);
+
+      const tag = isDubbed ? (text.includes('dual') ? 'Dual Áudio' : 'Dublado') : (isSubbed ? 'Legendado' : 'Original');
+      const labelParts = [`Fenix ${quality}p`];
+      if (cluster) labelParts.push(`· ${cluster}`);
+      labelParts.push(`[${tag}]`);
+      const cleanLabel = labelParts.join(' ');
+
+      parsed.push({
+        label: cleanLabel,
+        cluster,
+        file: s.url,
+        quality,
+        providerTier,
+        type: isHls ? 'hls' : 'mp4',
+        isDubbed,
+        isSubbed
       });
+    }
 
     // Sort order:
     // 1. Audio preference: Dubbed first (if audio === 'dubbed'), else Subbed first
