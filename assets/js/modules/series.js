@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261119_0216';
-import { showToast } from '../core/toast.js?v=20261119_0216';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_0216';
-import { buildFeedRows } from '../core/feedRows.js?v=20261119_0216';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_0216';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0216';
-import { resumeStartTime } from '../core/resume.js?v=20261119_0216';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_0216';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_0216';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0216';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0216';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261119_0216';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261119_0216';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_0216';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_0216';
+} from '../core/constants.js?v=20261119_1045';
+import { showToast } from '../core/toast.js?v=20261119_1045';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_1045';
+import { buildFeedRows } from '../core/feedRows.js?v=20261119_1045';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_1045';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1045';
+import { resumeStartTime } from '../core/resume.js?v=20261119_1045';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_1045';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_1045';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1045';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_1045';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261119_1045';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261119_1045';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_1045';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_1045';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -70,13 +70,19 @@ let activeSeriesPlaying = {
     seasonNumber: 1,
     episodeNumber: 1,
     episodeData: null,
-    server: 'native_direct'
+    server: 'native_direct',
+    audioPreference: null
 };
 
 let seriesPlaybackSessionId = 0;
 let pendingSeriesIframeTimer = null;
 
 if (typeof window !== 'undefined') {
+    window.addEventListener('tvzinha:audioChanged', (e) => {
+        if (e.detail && e.detail.audioMode) {
+            activeSeriesPlaying.audioPreference = e.detail.audioMode;
+        }
+    });
     window.addEventListener('tvzinha:teardownMedia', () => {
         seriesPlaybackSessionId++;
         if (pendingSeriesIframeTimer) {
@@ -1739,8 +1745,8 @@ async function executeFilteredAnimesSearch(page = 1) {
 
 const SERIES_SERVER_OPTIONS = [
     { id: 'native_anime',   name: 'Anime Player (Áudio Original)', isNative: true, animeOnly: true, source: 'anime_native' },
-    { id: 'native_direct',  name: 'Mgeb Player (BETA)',            isNative: true, source: 'mgeb' },
-    { id: 'native_fenix',   name: 'Fenix Player (BETA)',           isNative: true, source: 'fenixflix' },
+    { id: 'native_direct',  name: 'Mgeb Player (PTBR)',            isNative: true, source: 'mgeb' },
+    { id: 'native_fenix',   name: 'Fenix Player (Dual Áudio)',     isNative: true, source: 'fenixflix' },
     { id: 'mgeb',          name: 'Servidor 1 (MGEB)' },
     { id: 'superflix',     name: 'Servidor 2 (SuperFlix)' },
     { id: 'myembed',       name: 'Servidor 3 (MyEmbed)' },
@@ -1755,8 +1761,18 @@ export function selectSeriesServer(server) {
     document.querySelectorAll("#series-servers-grid .btn-movie-server").forEach(b => {
         b.classList.toggle("active", b.dataset.server === server.id);
     });
+    const previousServer = activeSeriesPlaying.server;
     activeSeriesPlaying.server = server.id;
     activeSeriesPlaying.userSelectedServer = true;
+
+    // Preserve logical audio context when switching between players:
+    if (server.id === 'native_fenix') {
+        if (previousServer === 'native_anime') {
+            activeSeriesPlaying.audioPreference = 'subtitled';
+        } else if (previousServer === 'native_direct') {
+            activeSeriesPlaying.audioPreference = 'dubbed';
+        }
+    }
 
     const activeLabel = document.getElementById("series-player-active-server-name");
     if (activeLabel) {
@@ -2575,13 +2591,17 @@ function fetchSeasonEpisodes(showId, seasonNumber) {
     return request;
 }
 
-/** Title of the player header: show, season/episode, show-wide number (several seasons only), episode name. */
+/** Title of the player header: season/episode, show-wide number (several seasons only), episode name. */
 function episodeHeaderText(showItem, seasonNumber, episodeNumber, episodeName, absoluteEpisode) {
-    const showName = showItem.name || showItem.title || 'Série';
+    const isAnime = activeSeriesPlaying?.mediaContext?.isAnime;
+    if (isAnime) {
+        const epNum = absoluteEpisode || episodeNumber;
+        return `Ep. ${epNum}${episodeName ? ` – ${episodeName}` : ''}`;
+    }
     const details = detailsFor(showItem.id);
     const several = regularSeasonsOf(details).length > 1;
     const absolute = several ? (absoluteEpisode || absoluteEpisodeOf(details, seasonNumber, episodeNumber)) : 0;
-    return `${showName} • T${seasonNumber}:E${episodeNumber}${absolute ? ` • Ep. geral ${absolute}` : ''}${episodeName ? ` – ${episodeName}` : ''}`;
+    return `T${seasonNumber}:E${episodeNumber}${absolute ? ` • Ep. geral ${absolute}` : ''}${episodeName ? ` – ${episodeName}` : ''}`;
 }
 
 // MyAnimeList id the server picked per show+season, so the next episodes skip the title search
@@ -2855,6 +2875,21 @@ function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNum
         resolveEpisode = tmdbEpisode;
     }
 
+    let effectiveLang = "dub";
+    if (isAnimeMode) {
+        effectiveLang = "sub";
+    } else if (source === 'mgeb') {
+        effectiveLang = "dub";
+    } else if (source === 'fenixflix') {
+        if (activeSeriesPlaying.audioPreference === 'subtitled') {
+            effectiveLang = "sub";
+        } else if (activeSeriesPlaying.audioPreference === 'dubbed') {
+            effectiveLang = "dub";
+        } else {
+            effectiveLang = isAnimeShow(showItem) ? "sub" : "dub";
+        }
+    }
+
     return {
         id: showItem.id,
         type: isAnimeMode ? "anime" : "serie",
@@ -2867,7 +2902,8 @@ function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNum
         absolute_episode: isAnimeMode ? (absoluteEpisode || absoluteEpisodeOf(details, seasonNumber, episodeNumber) || '') : '',
         total_episodes: isAnimeMode ? (totalEpisodesOf(details) || '') : '',
         mal_id: isAnimeMode ? (animeMalIds.get(`${showItem.id}_${seasonNumber}`) || '') : '',
-        lang: isAnimeMode ? "sub" : "dub",
+        lang: effectiveLang,
+        audio: effectiveLang === "sub" ? "subtitled" : "dubbed",
         title: showItem.name || showItem.title || 'Série',
         original_title: isAnimeMode ? originalTitle : '',
         year: airDate ? airDate.substring(0, 4) : '',
@@ -3089,6 +3125,7 @@ function startEpisodePlayback(context, options = {}) {
     const showChanged = !activeSeriesPlaying.show || String(activeSeriesPlaying.show.id) !== String(showItem.id);
     if (showChanged) {
         activeSeriesPlaying.userSelectedServer = false;
+        activeSeriesPlaying.audioPreference = null;
     }
 
     activeSeriesPlaying.show = showItem;

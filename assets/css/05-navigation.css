@@ -379,7 +379,11 @@
 }
 
 :fullscreen .floating-nav-capsule,
-:-webkit-full-screen .floating-nav-capsule {
+:-webkit-full-screen .floating-nav-capsule,
+body:has(#movie-player-view:not(.hidden)) .floating-nav-capsule,
+body:has(#series-player-view:not(.hidden)) .floating-nav-capsule,
+body:has(.player-page:not(.hidden)) .floating-nav-capsule,
+body.player-open .floating-nav-capsule {
     display: none !important;
 }
 

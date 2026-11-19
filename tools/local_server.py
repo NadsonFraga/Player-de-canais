@@ -2201,12 +2201,13 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     },
                 }
 
-        # Route 2: FenixFlix (PT-BR Dublado)
+        # Route 2: FenixFlix (PT-BR Dublado & Subtitled Multi-Cluster)
         if not result and requested_source == "fenixflix" and (media_id or imdb_id):
             active_imdb_id = imdb_id
             if not active_imdb_id and media_id and TMDB_API_KEY:
                 active_imdb_id = timed("imdb", fetch_imdb_id, media_id, "movie" if media_type == "movie" else "serie")
-            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, active_imdb_id, media_type, season, episode, "dubbed")
+            requested_audio = params.get("audio", ["subtitled" if lang == "sub" else "dubbed"])[0]
+            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, active_imdb_id, media_type, season, episode, requested_audio)
             if fenix_data and fenix_data.get("sources"):
                 parsed = []
                 for s in fenix_data["sources"]:
@@ -2252,7 +2253,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     "success": True,
                     "title": fenix_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
                     "category": media_type,
-                    "audio": "dubbed",
+                    "audio": requested_audio,
                     "provider": "fenixflix",
                     "primary_source": ranked[0],
                     "fallback_sources": ranked[1:],

@@ -839,98 +839,26 @@
 /* Phones: one row (back, title, reload, exit). The title may use two lines, so the bar grows a little and
    the media area becomes a column so the video stage takes the height the bar leaves. */
 @media (max-width: 640px) {
-    .movie-modal-card.is-playing .movie-modal-media-area {
+    .movie-modal-card.is-playing .movie-modal-media-area,
+    .series-modal-media-area {
         position: absolute !important;
         inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
+        max-height: none !important;
+        min-height: 0 !important;
         background: #000000 !important;
     }
 
-    .movie-modal-card.is-playing .movie-player-stage {
+    .movie-modal-card.is-playing .movie-player-stage,
+    .series-theater-stage {
         position: absolute !important;
         inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
+        max-height: none !important;
+        min-height: 0 !important;
         background: #000000 !important;
-    }
-
-    .movie-player-top-bar,
-    .series-player-top-bar {
-        padding: 0 10px !important;
-        gap: 8px !important;
-        height: 52px !important;
-    }
-
-    .btn-player-back {
-        min-width: 36px !important;
-        min-height: 36px !important;
-        width: 36px !important;
-        height: 36px !important;
-        padding: 0 !important;
-        justify-content: center !important;
-    }
-
-    .btn-player-back-text {
-        display: none !important;
-    }
-
-    .btn-player-icon {
-        width: 36px !important;
-        height: 36px !important;
-    }
-
-    .btn-player-pill.btn-player-servers {
-        height: 32px !important;
-        padding: 0 8px !important;
-        font-size: 11px !important;
-        gap: 4px !important;
-    }
-
-    .tvz-servers-panel-top {
-        top: 56px !important;
-        right: 8px !important;
-        left: 8px !important;
-        width: auto !important;
-        max-width: none !important;
-    }
-
-    .series-player-actions {
-        height: 36px !important;
-    }
-
-    .tvz-player-title-info {
-        gap: 8px !important;
-        flex: 1 !important;
-        min-width: 0 !important;
-    }
-
-    .tvz-player-thumb-top {
-        display: none !important;
-    }
-
-    .tvz-player-main-title {
-        display: none !important;
-    }
-
-    .tvz-player-meta-badges {
-        flex: 1 !important;
-        min-width: 0 !important;
-    }
-
-    .series-player-title-block {
-        flex: 1 !important;
-        min-width: 0 !important;
-    }
-
-    .movie-player-server-title,
-    .series-player-header-title {
-        font-size: 13px !important;
-        flex: 1 !important;
-        min-width: 0 !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
     }
 }
 
@@ -2999,12 +2927,287 @@
     right: 24px;
 }
 
-@media (max-width: 640px) {
+/* ============================================================
+   TVZINHA MOBILE PLAYER RESPONSIVE DESIGN (PHONES & TABLETS)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* Safe Area & Top Bar Height */
+    .movie-player-top-bar,
+    .series-player-top-bar {
+        height: 56px !important;
+        padding: max(8px, env(safe-area-inset-top, 0px)) 12px 6px 12px !important;
+        gap: 8px !important;
+    }
+
+    /* Back Button: Compact Circular Icon */
+    .btn-player-back {
+        min-width: 38px !important;
+        min-height: 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        border-radius: 9999px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .btn-player-back-text {
+        display: none !important;
+    }
+
+    .btn-player-back svg {
+        width: 20px !important;
+        height: 20px !important;
+        stroke-width: 2.2 !important;
+    }
+
+    /* Thumb: Hidden on small screens to prioritize title readability */
+    .tvz-player-thumb-top {
+        display: none !important;
+    }
+
+    /* Title Info: Vertical flex column with truncation */
+    .tvz-player-title-info {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        gap: 2px !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-player-title-meta {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-player-main-title {
+        display: block !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        line-height: 1.25 !important;
+    }
+
+    .tvz-player-meta-badges {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden !important;
+        min-width: 0 !important;
+    }
+
+    .tvz-meta-pill {
+        font-size: 10px !important;
+        padding: 1px 5px !important;
+        height: 18px !important;
+        line-height: 16px !important;
+        flex-shrink: 0 !important;
+        border-radius: 4px !important;
+    }
+
+    .movie-player-server-title,
+    .series-player-header-title,
+    .tvz-player-sub-title {
+        font-size: 11px !important;
+        color: #94a3b8 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Top Bar Actions: Compact Pill & Icon Buttons */
+    .movie-player-actions,
+    .series-player-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-shrink: 0 !important;
+        height: 36px !important;
+    }
+
+    .btn-player-pill.btn-player-servers {
+        height: 32px !important;
+        padding: 0 8px !important;
+        font-size: 11px !important;
+        gap: 4px !important;
+        border-radius: 9999px !important;
+        flex-shrink: 0 !important;
+    }
+
+    #movie-player-active-server-name,
+    #series-player-active-server-name {
+        max-width: 85px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    .btn-player-icon {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        padding: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .btn-player-icon svg {
+        width: 17px !important;
+        height: 17px !important;
+    }
+
+    /* Artplayer Bottom Controls on Mobile */
+    .art-video-player .art-bottom {
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)) !important;
+        padding-left: max(8px, env(safe-area-inset-left, 0px)) !important;
+        padding-right: max(8px, env(safe-area-inset-right, 0px)) !important;
+        height: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    .art-video-player .art-control-tvz-volume {
+        display: none !important;
+    }
+
+    .art-video-player .art-control-time {
+        font-size: 11.5px !important;
+        padding: 0 4px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .art-video-player .art-controls .art-icon,
+    .art-video-player .art-controls button {
+        padding: 0 3px !important;
+        width: 34px !important;
+    }
+
+    /* Episode Quick Drawer (Bottom Sheet) */
+    .series-player-drawer {
+        position: absolute !important;
+        inset: auto 0 0 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 72% !important;
+        max-height: 72% !important;
+        border-radius: 20px 20px 0 0 !important;
+        border-bottom: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+        z-index: 180 !important;
+    }
+
+    /* Flyout Panels on Mobile Portrait */
+    .tvz-servers-panel-top {
+        position: absolute !important;
+        top: 60px !important;
+        left: 10px !important;
+        right: 10px !important;
+        bottom: auto !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100vh - 120px) !important;
+        border-radius: 16px !important;
+        z-index: 170 !important;
+    }
+
     .tvz-settings-panel {
-        right: 8px;
-        left: 8px;
-        width: auto;
-        bottom: 68px;
+        position: absolute !important;
+        inset: auto 10px 72px 10px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100% - 130px) !important;
+        border-radius: 16px !important;
+        z-index: 165 !important;
+    }
+
+    .tvz-subtitles-panel {
+        position: absolute !important;
+        inset: auto 10px 72px 10px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100% - 130px) !important;
+        border-radius: 16px !important;
+        z-index: 165 !important;
+    }
+}
+
+/* Mobile Devices in Landscape (e.g. 844x390, 896x414) */
+@media (max-height: 520px) and (orientation: landscape) {
+    .movie-player-top-bar,
+    .series-player-top-bar {
+        height: 48px !important;
+        padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)) !important;
+    }
+
+    .art-video-player .art-bottom {
+        height: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+        padding: 0 max(16px, env(safe-area-inset-right, 0px)) max(4px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)) !important;
+    }
+
+    .series-player-drawer {
+        position: absolute !important;
+        top: 8px !important;
+        right: max(12px, env(safe-area-inset-right, 0px)) !important;
+        bottom: 8px !important;
+        left: auto !important;
+        width: 360px !important;
+        max-width: calc(100vw - 32px) !important;
+        height: auto !important;
+        max-height: calc(100% - 16px) !important;
+        border-radius: 14px !important;
+        z-index: 180 !important;
+    }
+
+    .tvz-servers-panel-top {
+        position: absolute !important;
+        top: 48px !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        left: auto !important;
+        bottom: auto !important;
+        width: 320px !important;
+        max-width: calc(100vw - 32px) !important;
+        max-height: calc(100vh - 60px) !important;
+        border-radius: 14px !important;
+        z-index: 170 !important;
+    }
+
+    .tvz-settings-panel {
+        position: absolute !important;
+        bottom: 58px !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        top: auto !important;
+        left: auto !important;
+        width: 300px !important;
+        max-width: calc(100vw - 32px) !important;
+        max-height: calc(100% - 68px) !important;
+        border-radius: 14px !important;
+        z-index: 165 !important;
+    }
+
+    .tvz-subtitles-panel {
+        position: absolute !important;
+        bottom: 58px !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        top: auto !important;
+        left: auto !important;
+        width: 300px !important;
+        max-width: calc(100vw - 32px) !important;
+        max-height: calc(100% - 68px) !important;
+        border-radius: 14px !important;
+        z-index: 165 !important;
     }
 }
 

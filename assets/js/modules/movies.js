@@ -12,27 +12,28 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261119_0216';
-import { showToast } from '../core/toast.js?v=20261119_0216';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_0216';
-import { buildFeedRows } from '../core/feedRows.js?v=20261119_0216';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_0216';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0216';
-import { getUiSvg } from '../core/icons.js?v=20261119_0216';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_0216';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_0216';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0216';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0216';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261119_0216';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261119_0216';
-import { resumeStartTime } from '../core/resume.js?v=20261119_0216';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_0216';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_0216';
+} from '../core/constants.js?v=20261119_1045';
+import { showToast } from '../core/toast.js?v=20261119_1045';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_1045';
+import { buildFeedRows } from '../core/feedRows.js?v=20261119_1045';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_1045';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1045';
+import { getUiSvg } from '../core/icons.js?v=20261119_1045';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_1045';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_1045';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1045';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_1045';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261119_1045';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261119_1045';
+import { resumeStartTime } from '../core/resume.js?v=20261119_1045';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_1045';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_1045';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
 let currentSelectedMovie = null;
 let activeMovieServer = null;
+let activeMovieAudioPreference = null;
 let movieSearchDebounceTimer = null;
 
 let moviePlaybackSessionId = 0;
@@ -40,6 +41,11 @@ let pendingMovieIframeTimer = null;
 let isMoviePlayerSetup = false;
 
 if (typeof window !== 'undefined') {
+    window.addEventListener('tvzinha:audioChanged', (e) => {
+        if (e.detail && e.detail.audioMode) {
+            activeMovieAudioPreference = e.detail.audioMode;
+        }
+    });
     window.addEventListener('tvzinha:teardownMedia', () => {
         moviePlaybackSessionId++;
         if (pendingMovieIframeTimer) {
@@ -1423,6 +1429,7 @@ export function playMovie(movie, options = {}) {
     if (!view) return;
     currentSelectedMovie = movie;
     activeMovieServer = null;
+    activeMovieAudioPreference = null;
 
     updateMovieObraCard(movie);
 
@@ -1486,6 +1493,7 @@ export function stopMoviePlayer() {
     }
     document.querySelectorAll("#movie-servers-grid .btn-movie-server").forEach(btn => btn.classList.remove("active"));
     activeMovieServer = null;
+    activeMovieAudioPreference = null;
     const view = moviePlayerView();
     const wasOpen = Boolean(view) && !view.classList.contains("hidden");
     if (view) view.classList.add("hidden");
@@ -1546,7 +1554,11 @@ export function selectMovieServer(server, buttonElement = null) {
         clearTimeout(pendingMovieIframeTimer);
         pendingMovieIframeTimer = null;
     }
+    const previousServer = activeMovieServer;
     activeMovieServer = server;
+    if (server.id === 'native_fenix' && previousServer?.id === 'native_direct') {
+        activeMovieAudioPreference = 'dubbed';
+    }
     // Opened with any server: it enters "Continuar assistindo" (only the Player Principal can tell the time)
     const movie = currentSelectedMovie;
     recordMovieOpened(movie);
@@ -1587,12 +1599,15 @@ export function selectMovieServer(server, buttonElement = null) {
 
     if (server.isNative) {
 
+        const reqLang = (server.source === 'fenixflix' && activeMovieAudioPreference === 'subtitled') ? 'sub' : 'dub';
         resolveDirectStream({
             id: currentSelectedMovie.id,
             type: "movie",
             title: currentSelectedMovie.title,
             imdb_id: currentSelectedMovie.imdb_id || null,
-            source: server.source || 'mgeb'
+            source: server.source || 'mgeb',
+            lang: reqLang,
+            audio: reqLang === 'sub' ? 'subtitled' : 'dubbed'
         }).then(data => {
             if (currentSessionId !== moviePlaybackSessionId || !isMoviePlayerOpen()) {
                 console.warn("[Movies] Abortando montagem nativa: reprodução cancelada ou player fechado.");

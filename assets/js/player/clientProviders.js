@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_0216';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0216';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_1045';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_1045';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -117,7 +117,8 @@ function extractClusterName(title) {
  * ============================================================ */
 
 export async function resolveFenixFlixClient(options = {}) {
-  const { id, type = 'movie', season = 1, episode = 1, audio = 'dubbed', title = '' } = options;
+  const { id, type = 'movie', season = 1, episode = 1, title = '' } = options;
+  const audio = options.audio || (options.lang === 'sub' ? 'subtitled' : 'dubbed');
   let imdbId = options.imdbId || options.imdb_id;
   const isSeries = type === 'series' || type === 'serie' || type === 'tv' || type === 'anime';
 
@@ -344,7 +345,7 @@ export async function resolveFenixFlixClient(options = {}) {
       success: true,
       title: data.title || title || (type === 'movie' ? 'Filme' : `Série T${season}E${episode}`),
       category: type,
-      audio: 'dubbed',
+      audio: audio === 'subtitled' ? 'subtitled' : 'dubbed',
       provider: 'fenixflix',
       primary_source: sources[0],
       fallback_sources: sources.slice(1),

@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261119_0216';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_0216';
-import { showToast } from '../core/toast.js?v=20261119_0216';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0216';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261119_0216';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261119_0216';
-import { formatClock } from '../core/resume.js?v=20261119_0216';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261119_0216';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261119_0216';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261119_0216';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261119_0216';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0216';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0216';
+import { store } from '../core/state.js?v=20261119_1045';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_1045';
+import { showToast } from '../core/toast.js?v=20261119_1045';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1045';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261119_1045';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261119_1045';
+import { formatClock } from '../core/resume.js?v=20261119_1045';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261119_1045';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261119_1045';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261119_1045';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261119_1045';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1045';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_1045';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1212,6 +1212,7 @@ function normalizeNativeSources({ sources, streamUrl }) {
                 kind: obj.kind || 'unknown',
                 label: obj.label || '',
                 quality: qualities[0] || null,
+                originalQuality: obj.originalQuality || obj.quality || qualities[0] || null,
                 qualities,
                 alive: obj.alive !== false,
                 isDubbed,
@@ -1602,10 +1603,18 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             clearTimeout(session.qualityRollbackTimer);
             session.qualityRollbackTimer = null;
         }
-        session.qualityRollback = null;
+        if (session.qualityRollback) {
+            if (session.qualityRollback.targetQuality) {
+                session.lockedQuality = session.qualityRollback.targetQuality;
+                session.autoMode = false;
+                setPlayerPref('quality', session.lockedQuality);
+            }
+            session.qualityRollback = null;
+        }
         session.statusNote = '';
         setSourceStatus(session, '');
         setPlaybackActiveState(true);
+        refreshQualityMenu(session);
     }
 
     /**
@@ -2683,8 +2692,12 @@ function refreshQualityMenu(session) {
     const currentUnmeasured = current && current.alive !== false && !current.quality;
     if (!session.autoMode && session.lockedQuality && !currentUnmeasured) {
         if (!entries.has(session.lockedQuality)) {
-            session.autoMode = true;
-            session.lockedQuality = null;
+            if (current && (current.originalQuality === session.lockedQuality || current.quality === session.lockedQuality)) {
+                entries.set(session.lockedQuality, { sourceIndex: session.currentIndex, levelIndex: -1 });
+            } else {
+                session.autoMode = true;
+                session.lockedQuality = null;
+            }
         }
     }
 
@@ -2988,10 +3001,10 @@ function selectNativeQuality(session, value) {
     session.qualityRollbackTimer = setTimeout(() => {
         session.qualityRollbackTimer = null;
         if (isSessionLive(session) && session.qualityRollback && session.currentIndex === entry.sourceIndex) {
-            console.warn(`[PlayerEngine] Fonte de qualidade ${qualityText(quality)} demorou mais de 4s para iniciar. Executando rollback.`);
+            console.warn(`[PlayerEngine] Fonte de qualidade ${qualityText(quality)} demorou mais de 9s para iniciar. Executando rollback.`);
             failoverNativeSource(session, 'quality-timeout');
         }
-    }, 4000);
+    }, 9000);
 
     remountFromMenu(session, entry.sourceIndex);
     return qualityText(quality);
@@ -3165,6 +3178,10 @@ function refreshAudioMenu(session) {
                         const targetIdx = (sameQ || candidates[0]).idx;
                         if (targetIdx !== session.currentIndex) {
                             session.qualityEntries = null;
+                            setPlayerPref('audio_mode', targetMode);
+                            window.dispatchEvent(new CustomEvent('tvzinha:audioChanged', {
+                                detail: { audioMode: targetMode }
+                            }));
                             remountFromMenu(session, targetIdx);
                         }
                     }
@@ -4741,6 +4758,10 @@ function renderSettingsFlyout(session) {
                     if (targetIdx >= 0 && targetIdx !== session.currentIndex) {
                         session.userSelectedAudio = true;
                         session.qualityEntries = null;
+                        setPlayerPref('audio_mode', audioMode);
+                        window.dispatchEvent(new CustomEvent('tvzinha:audioChanged', {
+                            detail: { audioMode }
+                        }));
                         remountFromMenu(session, targetIdx);
                         renderSettingsFlyout(session);
                     }
