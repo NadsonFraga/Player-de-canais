@@ -10,21 +10,21 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261119_0133';
-import { showToast } from '../core/toast.js?v=20261119_0133';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_0133';
-import { buildFeedRows } from '../core/feedRows.js?v=20261119_0133';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_0133';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0133';
-import { resumeStartTime } from '../core/resume.js?v=20261119_0133';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_0133';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_0133';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0133';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0133';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261119_0133';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261119_0133';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_0133';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_0133';
+} from '../core/constants.js?v=20261119_0216';
+import { showToast } from '../core/toast.js?v=20261119_0216';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_0216';
+import { buildFeedRows } from '../core/feedRows.js?v=20261119_0216';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_0216';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0216';
+import { resumeStartTime } from '../core/resume.js?v=20261119_0216';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_0216';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_0216';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0216';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_0216';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261119_0216';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261119_0216';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_0216';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_0216';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -1750,6 +1750,8 @@ const SERIES_SERVER_OPTIONS = [
 
 export function selectSeriesServer(server) {
     if (!server) return;
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) playerCard.classList.remove('is-error');
     document.querySelectorAll("#series-servers-grid .btn-movie-server").forEach(b => {
         b.classList.toggle("active", b.dataset.server === server.id);
     });
@@ -1930,7 +1932,7 @@ export function setupSeriesModalHandlers() {
     document.addEventListener('pointerdown', (e) => {
         const panel = document.getElementById("series-servers-flyout-panel");
         if (!panel || !panel.classList.contains('is-open')) return;
-        if (!panel.contains(e.target) && !e.target.closest('#btn-series-servers-toggle')) {
+        if (!panel.contains(e.target) && !e.target.closest('#btn-series-servers-toggle') && !e.target.closest('.btn-error-server-switch') && !e.target.closest('.tvz-btn-error-primary')) {
             toggleSeriesServersFlyout(false);
         }
     });
@@ -3015,6 +3017,60 @@ function onToggleSeriesDrawerEvent() {
     toggleSeriesDrawer();
 }
 
+function renderSeriesError(title, desc, { isMissing = false } = {}) {
+    const seriesArt = document.getElementById("series-artplayer-container");
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) {
+        playerCard.classList.remove('is-loading');
+        playerCard.classList.add('is-error', 'is-ui-visible');
+    }
+    if (!seriesArt) return;
+    seriesArt.innerHTML = `
+        <div class="tvz-player-error-wrap">
+            <div class="tvz-error-icon-circle">
+                <svg width="30" height="30" fill="none" stroke="${isMissing ? 'rgba(255, 255, 255, 0.75)' : '#ef4444'}" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/>
+                </svg>
+            </div>
+            <div class="tvz-error-title">${escapeHtml(title)}</div>
+            <div class="tvz-error-desc">${escapeHtml(desc)}</div>
+            <div class="tvz-error-actions">
+                <button type="button" class="tvz-btn-error-primary btn-error-server-switch">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                    Trocar Servidor
+                </button>
+                <button type="button" class="tvz-btn-error-secondary btn-error-reload">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    Tentar Novamente
+                </button>
+                <button type="button" class="tvz-btn-error-secondary btn-error-episodes">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    Episódios
+                </button>
+            </div>
+        </div>
+    `;
+    seriesArt.classList.remove("hidden");
+
+    seriesArt.querySelector('.btn-error-server-switch')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSeriesServersFlyout(true);
+    });
+    seriesArt.querySelector('.btn-error-reload')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (activeSeriesPlaying.show) {
+            openEpisode(activeSeriesPlaying.show, {
+                season: activeSeriesPlaying.seasonNumber,
+                episode: activeSeriesPlaying.episodeNumber
+            }, { keepPosition: true });
+        }
+    });
+    seriesArt.querySelector('.btn-error-episodes')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent('tvzinha:toggleSeriesDrawer'));
+    });
+}
+
 /** Starts a resolved episode (see resolveEpisodeContext). Only openEpisode calls it. */
 function startEpisodePlayback(context, options = {}) {
     const showItem = context.show;
@@ -3057,7 +3113,10 @@ function startEpisodePlayback(context, options = {}) {
     const currentEpTitle = document.getElementById("series-player-current-ep");
     const btnPrev = document.getElementById("btn-series-prev-ep");
     const playerCard = document.querySelector('#series-player-view .player-page-card');
-    if (playerCard) playerCard.classList.add('is-loading');
+    if (playerCard) {
+        playerCard.classList.remove('is-error');
+        playerCard.classList.add('is-loading');
+    }
 
     const wasTheaterHidden = theaterView && theaterView.classList.contains("hidden");
     if (theaterView) theaterView.classList.remove("hidden");
@@ -3193,17 +3252,15 @@ function startEpisodePlayback(context, options = {}) {
             if (!data || !data.primary_source) {
                 const animeMissing = serverKey === 'native_anime';
                 showToast(animeMissing
-                    ? "Anime não encontrado no Anime Player. Tente o Mgeb Player ou outro servidor abaixo."
-                    : `O ${playerName} não encontrou fontes para este episódio. Escolha outro player ou um servidor externo abaixo.`);
-                if (seriesArt) {
-                    seriesArt.innerHTML = `
-                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);">
-                            <svg width="44" height="44" fill="none" stroke="rgba(255, 255, 255, 0.7)" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
-                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${animeMissing ? 'Anime não encontrado no Anime Player' : `${escapeHtml(playerName)} sem fontes`}</div>
-                            <div style="font-size:13px;max-width:380px;line-height:1.5;">${animeMissing ? 'Não encontramos este episódio no Anime Player. Escolha o Mgeb Player ou outro servidor abaixo.' : `O ${escapeHtml(playerName)} não encontrou fontes para este episódio no momento. Escolha outro player ou um servidor externo abaixo.`}</div>
-                        </div>`;
-                    seriesArt.classList.remove("hidden");
-                }
+                    ? "Anime não encontrado no Anime Player. Tente o Mgeb Player ou outro servidor."
+                    : `O ${playerName} não encontrou fontes para este episódio. Escolha outro servidor.`);
+                renderSeriesError(
+                    animeMissing ? 'Anime não encontrado no Anime Player' : `${playerName} sem fontes`,
+                    animeMissing
+                        ? 'Não encontramos este episódio no Anime Player. Escolha o Mgeb Player ou outro servidor para assistir.'
+                        : `O ${playerName} não encontrou fontes funcionais para este episódio no momento. Escolha outro servidor para assistir.`,
+                    { isMissing: true }
+                );
                 return;
             }
 
@@ -3218,6 +3275,7 @@ function startEpisodePlayback(context, options = {}) {
                 ? 0
                 : resumeStartTime(getSavedPosition(context.tmdbId, context.season, context.episode),
                     { keep: Boolean(options.keepPosition), server: serverKey });
+            if (playerCard) playerCard.classList.remove('is-error');
             mountNativePlayer({
                 containerId: "series-artplayer-container",
                 startTime: resumeAt,
@@ -3284,25 +3342,25 @@ function startEpisodePlayback(context, options = {}) {
                     };
                 },
                 onAllFailed: () => {
-                    if (playerCard) playerCard.classList.remove('is-loading');
                     atomicPlayerReset();
-                    showToast(`Nenhuma fonte do ${playerName} respondeu. Escolha outro player ou um servidor externo abaixo.`);
-                    if (seriesArt) {
-                        seriesArt.innerHTML = `
-                            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);">
-                                <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${escapeHtml(playerName)} sem resposta</div>
-                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Nenhuma fonte do ${escapeHtml(playerName)} respondeu para este episódio. Escolha outro player ou um servidor externo abaixo para continuar assistindo.</div>
-                            </div>`;
-                        seriesArt.classList.remove("hidden");
-                    }
+                    showToast(`Nenhuma fonte do ${playerName} respondeu. Escolha outro player ou um servidor.`);
+                    renderSeriesError(
+                        `${playerName} sem resposta`,
+                        `Nenhuma fonte do ${playerName} respondeu para este episódio. Escolha outro player ou servidor para continuar assistindo.`,
+                        { isMissing: false }
+                    );
                 }
             });
         }).catch(err => {
-            if (playerCard) playerCard.classList.remove('is-loading');
+            if (currentSessionId !== seriesPlaybackSessionId || !theaterView || theaterView.classList.contains("hidden")) return;
             atomicPlayerReset();
             if (seriesLoader) seriesLoader.classList.add("hidden");
-            showToast(`Não foi possível conectar ao ${playerName}.`);
+            showToast(`Não foi possível conectar ao ${playerName}. Escolha outro servidor.`);
+            renderSeriesError(
+                `Falha ao conectar ao ${playerName}`,
+                `Ocorreu um erro ao carregar o episódio através do ${playerName}. Escolha outro servidor para continuar assistindo.`,
+                { isMissing: false }
+            );
         });
     } else {
         // Route B: Iframe Alternative Servers
@@ -3502,7 +3560,7 @@ export function stopSeriesPlayer() {
     const drawer = document.getElementById("series-player-drawer");
     const playerCard = document.querySelector('#series-player-view .player-page-card');
     if (playerCard) {
-        playerCard.classList.remove('is-loading', 'is-paused', 'has-servers-open');
+        playerCard.classList.remove('is-loading', 'is-paused', 'has-servers-open', 'is-error');
     }
 
     const wasTheaterOpen = theaterView && !theaterView.classList.contains("hidden");

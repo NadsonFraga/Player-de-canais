@@ -12,22 +12,22 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261119_0133';
-import { showToast } from '../core/toast.js?v=20261119_0133';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_0133';
-import { buildFeedRows } from '../core/feedRows.js?v=20261119_0133';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_0133';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0133';
-import { getUiSvg } from '../core/icons.js?v=20261119_0133';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_0133';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_0133';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0133';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0133';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261119_0133';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261119_0133';
-import { resumeStartTime } from '../core/resume.js?v=20261119_0133';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_0133';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_0133';
+} from '../core/constants.js?v=20261119_0216';
+import { showToast } from '../core/toast.js?v=20261119_0216';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_0216';
+import { buildFeedRows } from '../core/feedRows.js?v=20261119_0216';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_0216';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0216';
+import { getUiSvg } from '../core/icons.js?v=20261119_0216';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_0216';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_0216';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0216';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_0216';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261119_0216';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261119_0216';
+import { resumeStartTime } from '../core/resume.js?v=20261119_0216';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_0216';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_0216';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1191,7 +1191,7 @@ export function setupMoviePlayer() {
     document.addEventListener('pointerdown', (e) => {
         const panel = document.getElementById("movie-servers-flyout-panel");
         if (!panel || !panel.classList.contains('is-open')) return;
-        if (!panel.contains(e.target) && !e.target.closest('#btn-movie-servers-toggle')) {
+        if (!panel.contains(e.target) && !e.target.closest('#btn-movie-servers-toggle') && !e.target.closest('.btn-error-server-switch') && !e.target.closest('.tvz-btn-error-primary')) {
             toggleMovieServersFlyout(false);
         }
     });
@@ -1482,7 +1482,7 @@ export function stopMoviePlayer() {
     if (movieLoader) movieLoader.classList.add("hidden");
     const playerCard = document.querySelector('#movie-player-view .player-page-card');
     if (playerCard) {
-        playerCard.classList.remove('is-loading', 'is-paused', 'has-servers-open');
+        playerCard.classList.remove('is-loading', 'is-paused', 'has-servers-open', 'is-error');
     }
     document.querySelectorAll("#movie-servers-grid .btn-movie-server").forEach(btn => btn.classList.remove("active"));
     activeMovieServer = null;
@@ -1494,6 +1494,49 @@ export function stopMoviePlayer() {
         popNavLayer();
         window.dispatchEvent(new CustomEvent('tvzinha:playerClosed'));
     }
+}
+
+function renderMovieError(title, desc, { isMissing = false } = {}) {
+    const movieArt = document.getElementById("movie-artplayer-container");
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (playerCard) {
+        playerCard.classList.remove('is-loading');
+        playerCard.classList.add('is-error', 'is-ui-visible');
+    }
+    if (!movieArt) return;
+    movieArt.innerHTML = `
+        <div class="tvz-player-error-wrap">
+            <div class="tvz-error-icon-circle">
+                <svg width="30" height="30" fill="none" stroke="${isMissing ? 'rgba(255, 255, 255, 0.75)' : '#ef4444'}" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/>
+                </svg>
+            </div>
+            <div class="tvz-error-title">${escapeHtml(title)}</div>
+            <div class="tvz-error-desc">${escapeHtml(desc)}</div>
+            <div class="tvz-error-actions">
+                <button type="button" class="tvz-btn-error-primary btn-error-server-switch">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                    Trocar Servidor
+                </button>
+                <button type="button" class="tvz-btn-error-secondary btn-error-reload">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    Tentar Novamente
+                </button>
+            </div>
+        </div>
+    `;
+    movieArt.classList.remove("hidden");
+
+    movieArt.querySelector('.btn-error-server-switch')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMovieServersFlyout(true);
+    });
+    movieArt.querySelector('.btn-error-reload')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (activeMovieServer && currentSelectedMovie) {
+            selectMovieServer(activeMovieServer);
+        }
+    });
 }
 
 export function selectMovieServer(server, buttonElement = null) {
@@ -1522,7 +1565,10 @@ export function selectMovieServer(server, buttonElement = null) {
     const movieArt = document.getElementById("movie-artplayer-container");
     const movieLoader = document.getElementById("movie-player-loader");
     const playerCard = document.querySelector('#movie-player-view .player-page-card');
-    if (playerCard) playerCard.classList.add('is-loading');
+    if (playerCard) {
+        playerCard.classList.remove('is-error');
+        playerCard.classList.add('is-loading');
+    }
 
     if (serverTitle) {
         serverTitle.textContent = currentSelectedMovie.title || server.name;
@@ -1555,16 +1601,12 @@ export function selectMovieServer(server, buttonElement = null) {
             if (playerCard) playerCard.classList.remove('is-loading');
             if (movieLoader) movieLoader.classList.add("hidden");
             if (!data || !data.primary_source) {
-                showToast(`O ${sName} não encontrou fontes para este filme. Escolha outro player ou um servidor externo abaixo.`);
-                if (movieArt) {
-                    movieArt.innerHTML = `
-                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);border-radius:12px;">
-                            <svg width="44" height="44" fill="none" stroke="rgba(255, 255, 255, 0.7)" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
-                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${escapeHtml(sName)} sem fontes</div>
-                            <div style="font-size:13px;max-width:380px;line-height:1.5;">O ${escapeHtml(sName)} não encontrou fontes para este filme no momento. Escolha outro player ou um servidor externo abaixo.</div>
-                        </div>`;
-                    movieArt.classList.remove("hidden");
-                }
+                showToast(`O ${sName} não encontrou fontes para este filme. Escolha outro servidor.`);
+                renderMovieError(
+                    `${sName} sem fontes`,
+                    `O ${sName} não encontrou fontes funcionais para este filme no momento. Escolha outro player ou servidor para assistir.`,
+                    { isMissing: true }
+                );
                 return;
             }
 
@@ -1575,6 +1617,7 @@ export function selectMovieServer(server, buttonElement = null) {
             const resumeAt = currentMoviePlayOptions.restart
                 ? 0
                 : resumeStartTime(getMovieProgress(movie.id), { server: server.id });
+            if (playerCard) playerCard.classList.remove('is-error');
             mountNativePlayer({
                 containerId: "movie-artplayer-container",
                 // From where it stopped, with "Continuando de 12:34 / Começar do início" (same rules as episodes)
@@ -1604,25 +1647,25 @@ export function selectMovieServer(server, buttonElement = null) {
                 audio: data.audio || 'dubbed',
                 subtitles: data.subtitles || [],
                 onAllFailed: () => {
-                    if (playerCard) playerCard.classList.remove('is-loading');
                     atomicPlayerReset();
-                    showToast(`Nenhuma fonte do ${sName} respondeu. Escolha outro player ou um servidor externo abaixo.`);
-                    if (movieArt) {
-                        movieArt.innerHTML = `
-                            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);border-radius:12px;">
-                                <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${escapeHtml(sName)} sem resposta</div>
-                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Nenhuma fonte do ${escapeHtml(sName)} respondeu para este filme. Escolha outro player ou um servidor externo abaixo para continuar assistindo.</div>
-                            </div>`;
-                        movieArt.classList.remove("hidden");
-                    }
+                    showToast(`Nenhuma fonte do ${sName} respondeu. Escolha outro player ou servidor.`);
+                    renderMovieError(
+                        `${sName} sem resposta`,
+                        `Nenhuma fonte do ${sName} respondeu para este filme. Escolha outro player ou servidor para continuar assistindo.`,
+                        { isMissing: false }
+                    );
                 }
             });
         }).catch(err => {
-            if (playerCard) playerCard.classList.remove('is-loading');
+            if (currentSessionId !== moviePlaybackSessionId || !isMoviePlayerOpen()) return;
             atomicPlayerReset();
             if (movieLoader) movieLoader.classList.add("hidden");
-            showToast(`Não foi possível conectar ao ${sName}.`);
+            showToast(`Não foi possível conectar ao ${sName}. Escolha outro servidor.`);
+            renderMovieError(
+                `Falha ao conectar ao ${sName}`,
+                `Ocorreu um erro ao conectar ao ${sName}. Escolha outro player ou servidor para continuar assistindo.`,
+                { isMissing: false }
+            );
         });
         return;
     }
