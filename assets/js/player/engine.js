@@ -3661,15 +3661,9 @@ function renderSubtitlesFlyout(session) {
         <div class="tvz-sub-header tvz-sub-header-customize">
             <div class="tvz-sub-header-left">
                 <button type="button" class="tvz-panel-back-btn tvz-sub-back-to-list" title="Voltar" aria-label="Voltar">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                    <span>Voltar</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
                 <span class="tvz-sub-title">Customizar Legendas</span>
-            </div>
-            <div class="tvz-sub-header-right">
-                <button type="button" class="tvz-panel-close-btn tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
             </div>
         </div>
         <div class="tvz-sub-custom-body">
@@ -3795,37 +3789,23 @@ function renderSubtitlesFlyout(session) {
         html += `
         <div class="tvz-sub-header tvz-sub-header-drilldown">
             <div class="tvz-sub-header-left">
-                <button type="button" class="tvz-panel-back-btn tvz-sub-back-btn" title="Voltar para todos os idiomas" aria-label="Voltar">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                    <span>Voltar</span>
+                <button type="button" class="tvz-panel-back-btn tvz-sub-back-btn" title="Voltar" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
                 <span class="tvz-sub-title">${escapeHtml(session.activeLangDrilldownLabel || 'Voltar')}</span>
-            </div>
-            <div class="tvz-sub-header-right">
-                <button type="button" class="tvz-panel-close-btn tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
             </div>
         </div>`;
     } else {
         html += `
         <div class="tvz-sub-header tvz-sub-header-main">
             <div class="tvz-sub-header-left">
-                ${session.openedFromSettings ? `
-                <button type="button" class="tvz-panel-back-btn tvz-sub-back-to-settings" title="Voltar às Configurações" aria-label="Voltar às Configurações">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                    <span>Voltar</span>
-                </button>` : `
-                <div class="tvz-sub-header-icon">
-                    ${NATIVE_ICONS.subtitle}
-                </div>`}
+                <button type="button" class="tvz-panel-back-btn tvz-sub-close-btn" title="Voltar" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
                 <span class="tvz-sub-title">Legendas</span>
             </div>
             <div class="tvz-sub-header-right">
                 <button type="button" class="tvz-panel-action-btn tvz-sub-custom-trigger" title="Personalizar sincronia e aparência">Customizar</button>
-                <button type="button" class="tvz-panel-close-btn tvz-sub-close-btn" title="Fechar" aria-label="Fechar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
             </div>
         </div>`;
     }
@@ -4040,8 +4020,14 @@ function renderSubtitlesFlyout(session) {
     panel.querySelectorAll('.tvz-sub-close-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            session.openedFromSettings = false;
-            toggleSubtitlesFlyout(session, false);
+            if (session.openedFromSettings) {
+                session.openedFromSettings = false;
+                toggleSubtitlesFlyout(session, false);
+                toggleSettingsFlyout(session, true);
+            } else {
+                session.openedFromSettings = false;
+                toggleSubtitlesFlyout(session, false);
+            }
         });
     });
 
@@ -4319,12 +4305,11 @@ function renderSettingsFlyout(session) {
         panel.innerHTML = `
             <div class="tvz-settings-header">
                 <div class="tvz-settings-header-left">
-                    ${NATIVE_ICONS.setting}
-                    <span>Configurações</span>
+                    <button type="button" class="tvz-panel-back-btn tvz-settings-close-btn" title="Voltar" aria-label="Voltar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <span class="tvz-settings-title-text">Configurações</span>
                 </div>
-                <button type="button" class="tvz-settings-close-btn" title="Fechar" aria-label="Fechar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
             </div>
             <div class="tvz-settings-body">
                 <div class="tvz-settings-grid">
@@ -4620,15 +4605,11 @@ function renderSettingsFlyout(session) {
     panel.innerHTML = `
         <div class="tvz-settings-sub-header">
             <div class="tvz-settings-header-left">
-                <button type="button" class="tvz-settings-back-btn" title="Voltar" aria-label="Voltar">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                    <span>Voltar</span>
+                <button type="button" class="tvz-panel-back-btn tvz-settings-back-btn" title="Voltar" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
                 <span class="tvz-settings-sub-title">${subTitle}</span>
             </div>
-            <button type="button" class="tvz-panel-close-btn tvz-settings-sub-close-btn" title="Fechar" aria-label="Fechar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
         </div>
         <div class="tvz-settings-body">
             ${bodyHtml}
@@ -4638,10 +4619,6 @@ function renderSettingsFlyout(session) {
     panel.querySelector('.tvz-settings-back-btn')?.addEventListener('click', () => {
         session.settingsView = 'main';
         renderSettingsFlyout(session);
-    });
-
-    panel.querySelector('.tvz-settings-sub-close-btn')?.addEventListener('click', () => {
-        toggleSettingsFlyout(session, false);
     });
 
     if (currentView === 'quality') {

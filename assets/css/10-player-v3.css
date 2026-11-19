@@ -1205,14 +1205,14 @@
     width: 330px;
     max-width: calc(100vw - 32px);
     max-height: calc(100% - 90px);
-    background: rgba(10, 16, 26, 0.95) !important;
-    backdrop-filter: blur(24px) !important;
-    -webkit-backdrop-filter: blur(24px) !important;
+    background: rgba(14, 15, 19, 0.92) !important;
+    backdrop-filter: blur(28px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 16px !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
-    font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif) !important;
+    font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif) !important;
     font-size: 13.5px;
     display: flex;
     flex-direction: column;
@@ -1236,11 +1236,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
+    padding: 13px 16px;
     min-height: 52px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    font-weight: 600;
-    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-weight: 700;
+    font-size: 15px;
     color: #ffffff;
     user-select: none;
     flex-shrink: 0;
@@ -1267,41 +1267,57 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #facc15;
+    color: rgba(226, 183, 85, 0.85);
 }
 
 .tvz-sub-title {
     font-family: var(--font-heading, 'Outfit', sans-serif);
     font-size: 15px;
     font-weight: 700;
-    color: #f8fafc;
+    color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Universal Panel Buttons */
+/* Universal Panel Back Button (setinha antes do título) */
 .tvz-panel-back-btn,
 .tvz-settings-back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: transparent;
-    border: none;
-    color: #facc15;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 4px 6px;
-    margin-left: -6px;
-    border-radius: 6px;
-    transition: background 0.15s ease, color 0.15s ease;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #e4e4e7 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .tvz-panel-back-btn:hover,
 .tvz-settings-back-btn:hover {
-    background: rgba(234, 179, 8, 0.12);
-    color: #fef08a;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+}
+
+.tvz-panel-back-btn:active,
+.tvz-settings-back-btn:active {
+    transform: scale(0.94) !important;
+}
+
+.tvz-panel-back-btn svg,
+.tvz-settings-back-btn svg {
+    width: 17px !important;
+    height: 17px !important;
+    stroke: currentColor !important;
+    stroke-width: 2.2 !important;
+    fill: none !important;
 }
 
 .tvz-panel-close-btn,
@@ -1311,14 +1327,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    background: transparent;
-    border: none;
-    color: #94a3b8;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #e4e4e7;
     cursor: pointer;
-    transition: color 0.15s ease, background 0.15s ease;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     padding: 0;
 }
 
@@ -1327,30 +1343,31 @@
 .tvz-sub-close-btn:hover,
 .tvz-servers-close-btn:hover {
     color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.18);
 }
 
 .tvz-panel-action-btn,
 .tvz-sub-custom-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(234, 179, 8, 0.12) !important;
-    border: 1px solid rgba(234, 179, 8, 0.3) !important;
-    color: #facc15 !important;
-    border-radius: 6px !important;
-    padding: 4px 10px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(226, 183, 85, 0.10) !important;
+    border: 1px solid rgba(226, 183, 85, 0.25) !important;
+    color: #e2b755 !important;
+    padding: 5px 12px !important;
+    border-radius: 8px !important;
     font-size: 12px !important;
     font-weight: 600 !important;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
 }
 
 .tvz-panel-action-btn:hover,
 .tvz-sub-custom-trigger:hover {
-    background: rgba(234, 179, 8, 0.22) !important;
-    border-color: rgba(234, 179, 8, 0.5) !important;
-    color: #fef08a !important;
+    background: rgba(226, 183, 85, 0.18) !important;
+    border-color: rgba(226, 183, 85, 0.45) !important;
+    color: #f5d77f !important;
 }
 
 /* Subtitle Items List */
@@ -1393,10 +1410,10 @@
     justify-content: space-between;
     width: 100%;
     padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid transparent;
-    border-radius: 8px;
-    color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 9px;
+    color: #e4e4e7;
     font-size: 13.5px;
     font-weight: 500;
     cursor: pointer;
@@ -1407,14 +1424,15 @@
 }
 
 .tvz-sub-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
     color: #ffffff;
 }
 
 .tvz-sub-item.is-selected {
-    background: rgba(234, 179, 8, 0.14) !important;
-    border-color: rgba(234, 179, 8, 0.4) !important;
-    color: #fde047 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(226, 183, 85, 0.35) !important;
+    color: #ffffff !important;
     font-weight: 600 !important;
 }
 
@@ -2024,19 +2042,19 @@
     max-width: calc(100vw - 32px) !important;
     max-height: calc(100% - 90px) !important;
     height: 520px !important;
-    background: rgba(10, 16, 26, 0.95) !important;
-    backdrop-filter: blur(24px) !important;
-    -webkit-backdrop-filter: blur(24px) !important;
+    background: rgba(14, 15, 19, 0.92) !important;
+    backdrop-filter: blur(28px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 16px !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     z-index: 180 !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
     color: #ffffff !important;
     user-select: none !important;
-    font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif) !important;
+    font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif) !important;
     animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
@@ -2045,11 +2063,11 @@
 }
 
 .series-drawer-header {
-    padding: 14px 18px !important;
+    padding: 13px 16px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
     background: transparent !important;
     flex-shrink: 0 !important;
     min-height: 52px !important;
@@ -2062,12 +2080,7 @@
     font-family: var(--font-heading, 'Outfit', sans-serif) !important;
     font-size: 15px !important;
     font-weight: 700 !important;
-    color: #f8fafc !important;
-}
-
-.series-drawer-header-left svg {
-    color: #facc15 !important;
-    flex-shrink: 0 !important;
+    color: #ffffff !important;
 }
 
 .series-drawer-header-right {
@@ -2094,30 +2107,30 @@
     appearance: none !important;
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
-    background: rgba(255, 255, 255, 0.06) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
     border-radius: 8px !important;
     padding: 6px 28px 6px 12px !important;
-    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif) !important;
+    font-family: var(--font-heading, 'Outfit', sans-serif) !important;
     font-size: 12.5px !important;
     font-weight: 600 !important;
     color: #f1f5f9 !important;
     cursor: pointer !important;
     outline: none !important;
     transition: background 0.18s ease, border-color 0.18s ease !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23facc15' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23e2b755' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
     background-repeat: no-repeat !important;
     background-position: right 8px center !important;
 }
 
 .series-drawer-season-select:hover {
-    background-color: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(234, 179, 8, 0.4) !important;
+    background-color: rgba(255, 255, 255, 0.10) !important;
+    border-color: rgba(226, 183, 85, 0.35) !important;
     color: #ffffff !important;
 }
 
 .series-drawer-season-select option {
-    background: #0f141f !important;
+    background: #111216 !important;
     color: #ffffff !important;
     padding: 8px !important;
 }
@@ -2306,19 +2319,19 @@
     width: 320px;
     max-width: calc(100vw - 32px);
     max-height: calc(100% - 100px);
-    background: rgba(10, 16, 26, 0.95);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: rgba(14, 15, 19, 0.92);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     z-index: 160;
     display: none;
     flex-direction: column;
     overflow: hidden;
     color: #ffffff;
     user-select: none;
-    font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif);
+    font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif);
     animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2330,9 +2343,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
+    padding: 13px 16px;
     min-height: 52px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .tvz-servers-header-left {
@@ -2342,7 +2355,7 @@
     font-family: var(--font-heading, 'Outfit', sans-serif);
     font-size: 15px;
     font-weight: 700;
-    color: #f8fafc;
+    color: #ffffff;
 }
 
 .tvz-servers-close-btn {
@@ -2385,22 +2398,22 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid transparent;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .tvz-server-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.09);
 }
 
 .tvz-server-item.is-active {
-    background: rgba(234, 179, 8, 0.12);
-    border-color: rgba(234, 179, 8, 0.35);
-    color: #fde047;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(226, 183, 85, 0.35);
+    color: #ffffff;
 }
 
 .tvz-server-name {

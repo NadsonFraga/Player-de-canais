@@ -1793,12 +1793,11 @@ export function renderSeriesTopServersFlyout() {
     let html = `
         <div class="tvz-servers-header">
             <div class="tvz-servers-header-left">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-                <span>Trocar Servidor</span>
+                <button type="button" class="tvz-panel-back-btn" id="btn-close-series-servers-flyout" title="Voltar" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <span class="tvz-servers-title">Trocar Servidor</span>
             </div>
-            <button type="button" class="tvz-servers-close-btn" id="btn-close-series-servers-flyout" title="Fechar" aria-label="Fechar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
         </div>
         <div class="tvz-servers-body">
     `;
@@ -2916,25 +2915,12 @@ export function updateSeriesObraCard(show, epData, context) {
 
     const ratingBadge = document.getElementById("series-player-rating-badge");
     if (ratingBadge) {
-        const rating = Number(show.vote_average);
-        if (!isNaN(rating) && rating > 0) {
-            ratingBadge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${rating.toFixed(1)}`;
-            ratingBadge.classList.remove("hidden");
-        } else {
-            ratingBadge.classList.add("hidden");
-        }
+        ratingBadge.classList.add("hidden");
     }
 
     const yearBadge = document.getElementById("series-player-year-badge");
     if (yearBadge) {
-        const dateStr = show.first_air_date || show.release_date || '';
-        const year = dateStr.slice(0, 4);
-        if (year) {
-            yearBadge.textContent = year;
-            yearBadge.classList.remove("hidden");
-        } else {
-            yearBadge.classList.add("hidden");
-        }
+        yearBadge.classList.add("hidden");
     }
 
     const posterPath = (epData && epData.still_path) || show.poster_path || show.backdrop_path;

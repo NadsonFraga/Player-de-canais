@@ -1340,12 +1340,11 @@ export function renderMovieTopServersFlyout() {
     let html = `
         <div class="tvz-servers-header">
             <div class="tvz-servers-header-left">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-                <span>Trocar Servidor</span>
+                <button type="button" class="tvz-panel-back-btn" id="btn-close-movie-servers-flyout" title="Voltar" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <span class="tvz-servers-title">Trocar Servidor</span>
             </div>
-            <button type="button" class="tvz-servers-close-btn" id="btn-close-movie-servers-flyout" title="Fechar" aria-label="Fechar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
         </div>
         <div class="tvz-servers-body">
     `;
