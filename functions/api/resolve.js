@@ -1597,7 +1597,10 @@ export async function onRequestGet(context) {
           raw_url: directCleanUrl,
           headers: { "Referer": referer, ...(origin ? { "Origin": origin } : {}) },
           quality: s.quality || 1080,
-          providerTier: s.providerTier || 3
+          providerTier: s.providerTier || 3,
+          isDubbed: Boolean(s.isDubbed),
+          isSubbed: Boolean(s.isSubbed),
+          audio: s.isDubbed ? "dubbed" : (s.isSubbed ? "subtitled" : "original")
         };
       }));
       const rankedSources = await timed("probe", rankSourcesByQuality(

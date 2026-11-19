@@ -2242,7 +2242,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         "raw_url": clean_url,
                         "headers": {"Referer": referer, "Origin": origin},
                         "quality": s.get("quality", 1080),
-                        "providerTier": s.get("providerTier", 3)
+                        "providerTier": s.get("providerTier", 3),
+                        "isDubbed": bool(s.get("isDubbed", False)),
+                        "isSubbed": bool(s.get("isSubbed", False)),
+                        "audio": "dubbed" if s.get("isDubbed") else ("subtitled" if s.get("isSubbed") else "original")
                     })
                 ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: (s.get("providerTier", 0) * 100), media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
                 result = {

@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_0117';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0117';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_0133';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_0133';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -333,7 +333,10 @@ export async function resolveFenixFlixClient(options = {}) {
         direct_url: isDirectHls ? s.file : null,
         raw_url: s.file,
         headers: { 'Referer': item.referer, 'Origin': item.origin },
-        quality: s.quality || 1080
+        quality: s.quality || 1080,
+        isDubbed: Boolean(s.isDubbed),
+        isSubbed: Boolean(s.isSubbed),
+        audio: s.isDubbed ? 'dubbed' : (s.isSubbed ? 'subtitled' : 'original')
       };
     });
 

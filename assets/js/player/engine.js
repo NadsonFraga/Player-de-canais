@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261119_0117';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_0117';
-import { showToast } from '../core/toast.js?v=20261119_0117';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0117';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261119_0117';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261119_0117';
-import { formatClock } from '../core/resume.js?v=20261119_0117';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261119_0117';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261119_0117';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261119_0117';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261119_0117';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0117';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_0117';
+import { store } from '../core/state.js?v=20261119_0133';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_0133';
+import { showToast } from '../core/toast.js?v=20261119_0133';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_0133';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261119_0133';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261119_0133';
+import { formatClock } from '../core/resume.js?v=20261119_0133';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261119_0133';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261119_0133';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261119_0133';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261119_0133';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_0133';
+import { fetchTmdb } from '../core/tmdb.js?v=20261119_0133';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1201,6 +1201,8 @@ function normalizeNativeSources({ sources, streamUrl }) {
             const qualities = Array.isArray(obj.qualities) && obj.qualities.length
                 ? [...obj.qualities].sort((a, b) => b - a)
                 : (obj.quality ? [obj.quality] : []);
+            const isDubbed = Boolean(obj.isDubbed || (obj.label && /dublado|dual|nacional|pt-?br/i.test(obj.label)));
+            const isSubbed = Boolean(obj.isSubbed || (obj.label && /legendado|original|subbed/i.test(obj.label)));
             return {
                 url,
                 directUrl: obj.direct_url || '',
@@ -1211,7 +1213,10 @@ function normalizeNativeSources({ sources, streamUrl }) {
                 label: obj.label || '',
                 quality: qualities[0] || null,
                 qualities,
-                alive: obj.alive !== false
+                alive: obj.alive !== false,
+                isDubbed,
+                isSubbed,
+                audio: obj.audio || (isDubbed ? 'dubbed' : (isSubbed ? 'subtitled' : ''))
             };
         })
         .filter(src => src.url);
@@ -3101,6 +3106,9 @@ function autoSelectPortugueseAudio(session) {
     if (!hls || !Array.isArray(hls.audioTracks) || hls.audioTracks.length <= 1) return;
     if (session.userSelectedAudio) return;
 
+    const currentSrc = session.sources && session.sources[session.currentIndex];
+    if (currentSrc && currentSrc.isSubbed) return;
+
     const isDubbed = session.audio !== 'subtitled';
     if (!isDubbed) return;
 
@@ -3126,6 +3134,46 @@ function refreshAudioMenu(session) {
     const hls = session.hls;
     if (!session.art) return;
     if (!hls || !hls.audioTracks || hls.audioTracks.length <= 1) {
+        const hasDub = session.sources && session.sources.some(s => s.isDubbed && s.alive !== false);
+        const hasSub = session.sources && session.sources.some(s => s.isSubbed && s.alive !== false);
+        const currentSrc = session.sources && session.sources[session.currentIndex];
+        if (hasDub && hasSub && currentSrc) {
+            const isDub = Boolean(currentSrc.isDubbed);
+            const selector = [
+                { default: isDub, html: 'Dublado (Português)', audioMode: 'dubbed' },
+                { default: !isDub, html: 'Áudio Original', audioMode: 'subtitled' }
+            ];
+            upsertSetting(session.art, {
+                name: 'audio',
+                html: 'Áudio',
+                icon: NATIVE_ICONS.audio,
+                width: NATIVE_SETTING_WIDTH,
+                tooltip: isDub ? 'Dublado' : 'Original',
+                selector,
+                onSelect: (item) => {
+                    session.userSelectedAudio = true;
+                    const targetMode = item.audioMode;
+                    const curQuality = currentSrc.quality || 1080;
+                    const candidates = session.sources
+                        .map((s, idx) => ({ s, idx }))
+                        .filter(({ s, idx }) => {
+                            if (s.alive === false || (session.failed && session.failed.has(idx))) return false;
+                            return targetMode === 'dubbed' ? s.isDubbed : s.isSubbed;
+                        });
+                    if (candidates.length) {
+                        const sameQ = candidates.find(c => c.s.quality === curQuality);
+                        const targetIdx = (sameQ || candidates[0]).idx;
+                        if (targetIdx !== session.currentIndex) {
+                            session.qualityEntries = null;
+                            remountFromMenu(session, targetIdx);
+                        }
+                    }
+                    return item.html;
+                }
+            });
+            return;
+        }
+
         // One audio track (or an MP4): the row still tells what is playing. It carries a one-entry list because
         // Artplayer swaps the icon of a row without a selector for its own (hidden) check mark.
         upsertSetting(session.art, {
@@ -4207,6 +4255,13 @@ function getAudioDisplay(session) {
         const trk = hls.audioTracks[hls.audioTrack];
         return trk ? (trk.name || trk.lang || `Áudio ${hls.audioTrack + 1}`) : 'Padrão';
     }
+    const currentSrc = session.sources && session.sources[session.currentIndex];
+    const hasDub = session.sources && session.sources.some(s => s.isDubbed && s.alive !== false);
+    const hasSub = session.sources && session.sources.some(s => s.isSubbed && s.alive !== false);
+    if (hasDub && hasSub && currentSrc) {
+        if (currentSrc.isDubbed) return 'Dublado';
+        if (currentSrc.isSubbed) return 'Original';
+    }
     return 'Padrão';
 }
 
@@ -4495,14 +4550,11 @@ function renderSettingsFlyout(session) {
     } else if (currentView === 'audio') {
         subTitle = 'Áudio';
         const hls = session.hls;
-        if (!hls || !Array.isArray(hls.audioTracks) || hls.audioTracks.length <= 1) {
-            bodyHtml += `
-                <button type="button" class="tvz-settings-option is-active" data-val="default">
-                    <span>Padrão / Original</span>
-                    <span class="tvz-option-check">${NATIVE_ICONS.check}</span>
-                </button>
-            `;
-        } else {
+        const currentSrc = session.sources && session.sources[session.currentIndex];
+        const hasDub = session.sources && session.sources.some(s => s.isDubbed && s.alive !== false);
+        const hasSub = session.sources && session.sources.some(s => s.isSubbed && s.alive !== false);
+
+        if (hls && Array.isArray(hls.audioTracks) && hls.audioTracks.length > 1) {
             hls.audioTracks.forEach((trk, idx) => {
                 const isActive = idx === hls.audioTrack;
                 bodyHtml += `
@@ -4512,6 +4564,26 @@ function renderSettingsFlyout(session) {
                     </button>
                 `;
             });
+        } else if (hasDub && hasSub && currentSrc) {
+            const isDubActive = Boolean(currentSrc.isDubbed);
+            const isSubActive = Boolean(currentSrc.isSubbed);
+            bodyHtml += `
+                <button type="button" class="tvz-settings-option ${isDubActive ? 'is-active' : ''}" data-audio-mode="dubbed">
+                    <span>Dublado (Português)</span>
+                    ${isDubActive ? `<span class="tvz-option-check">${NATIVE_ICONS.check}</span>` : ''}
+                </button>
+                <button type="button" class="tvz-settings-option ${isSubActive ? 'is-active' : ''}" data-audio-mode="subtitled">
+                    <span>Áudio Original</span>
+                    ${isSubActive ? `<span class="tvz-option-check">${NATIVE_ICONS.check}</span>` : ''}
+                </button>
+            `;
+        } else {
+            bodyHtml += `
+                <button type="button" class="tvz-settings-option is-active" data-val="default">
+                    <span>Padrão / Original</span>
+                    <span class="tvz-option-check">${NATIVE_ICONS.check}</span>
+                </button>
+            `;
         }
     } else if (currentView === 'subtitles') {
         subTitle = 'Legendas';
@@ -4643,6 +4715,35 @@ function renderSettingsFlyout(session) {
                     session.userSelectedAudio = true;
                     session.hls.audioTrack = Number(idxStr);
                     renderSettingsFlyout(session);
+                    return;
+                }
+                const audioMode = btn.getAttribute('data-audio-mode');
+                if (audioMode && Array.isArray(session.sources)) {
+                    const currentSrc = session.sources[session.currentIndex];
+                    const isAlreadyActive = (audioMode === 'dubbed' && currentSrc?.isDubbed) ||
+                                            (audioMode === 'subtitled' && currentSrc?.isSubbed);
+                    if (isAlreadyActive) return;
+
+                    const curQuality = currentSrc?.quality || 1080;
+                    let targetIdx = -1;
+                    const candidates = session.sources
+                        .map((s, idx) => ({ s, idx }))
+                        .filter(({ s, idx }) => {
+                            if (s.alive === false || (session.failed && session.failed.has(idx))) return false;
+                            return audioMode === 'dubbed' ? s.isDubbed : s.isSubbed;
+                        });
+
+                    if (candidates.length) {
+                        const sameQ = candidates.find(c => c.s.quality === curQuality);
+                        targetIdx = (sameQ || candidates[0]).idx;
+                    }
+
+                    if (targetIdx >= 0 && targetIdx !== session.currentIndex) {
+                        session.userSelectedAudio = true;
+                        session.qualityEntries = null;
+                        remountFromMenu(session, targetIdx);
+                        renderSettingsFlyout(session);
+                    }
                 }
             });
         });

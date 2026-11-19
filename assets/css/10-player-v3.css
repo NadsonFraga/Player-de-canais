@@ -1232,21 +1232,15 @@
     color: #ffffff !important;
     font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif) !important;
     font-size: 13.5px;
-    display: flex;
+    display: none;
     flex-direction: column;
     overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(8px);
-    transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: none;
-    animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .tvz-subtitles-panel.is-open {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
+    display: flex;
+    animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Subtitle Panel Header */
