@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261118_1757';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_1757';
-import { showToast } from '../core/toast.js?v=20261118_1757';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1757';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_1757';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_1757';
-import { formatClock } from '../core/resume.js?v=20261118_1757';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_1757';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_1757';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_1757';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_1757';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1757';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1757';
+import { store } from '../core/state.js?v=20261118_2352';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261118_2352';
+import { showToast } from '../core/toast.js?v=20261118_2352';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_2352';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261118_2352';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261118_2352';
+import { formatClock } from '../core/resume.js?v=20261118_2352';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261118_2352';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261118_2352';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261118_2352';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261118_2352';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_2352';
+import { fetchTmdb } from '../core/tmdb.js?v=20261118_2352';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1995,29 +1995,6 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             art.template.$player?.addEventListener('mouseleave', () => scheduleControlsHide(400));
             document.documentElement.addEventListener('mouseleave', () => scheduleControlsHide(200));
             window.addEventListener('blur', () => scheduleControlsHide(200));
-
-                controlsHideTimer = setTimeout(() => {
-                    if (!art.video || art.video.paused) return;
-                    if (session.settingsFlyoutPanel?.classList.contains('is-open') ||
-                        session.subtitlesFlyoutPanel?.classList.contains('is-open') ||
-                        document.getElementById('movie-servers-flyout-panel')?.classList.contains('is-open') ||
-                        document.getElementById('series-servers-flyout-panel')?.classList.contains('is-open') ||
-                        !document.getElementById('series-player-drawer')?.classList.contains('hidden')) return;
-
-                    art.controls.show = false;
-                    if (art.template?.$player) {
-                        art.template.$player.classList.remove('art-hover');
-                    }
-                    if (document.activeElement && art.template.$player?.contains(document.activeElement)) {
-                        document.activeElement.blur();
-                    }
-                }, delayMs);
-            };
-
-            art.template.$player?.addEventListener('mousemove', () => scheduleControlsHide(2800));
-            art.template.$player?.addEventListener('mouseleave', () => scheduleControlsHide(600));
-            document.documentElement.addEventListener('mouseleave', () => scheduleControlsHide(300));
-            window.addEventListener('blur', () => scheduleControlsHide(300));
 
             const onCloseAllFlyouts = () => {
                 if (session.settingsFlyoutPanel) toggleSettingsFlyout(session, false);
