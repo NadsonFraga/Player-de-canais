@@ -1701,9 +1701,6 @@
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-}
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
     line-height: 1.2 !important;
 }
 
@@ -2972,6 +2969,7 @@
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
+        align-items: flex-start !important;
         gap: 2px !important;
         flex: 1 1 auto !important;
         min-width: 0 !important;
@@ -2981,8 +2979,11 @@
     .tvz-player-title-meta {
         display: flex !important;
         flex-direction: column !important;
+        align-items: flex-start !important;
         gap: 2px !important;
         min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
         overflow: hidden !important;
     }
 
@@ -3005,6 +3006,8 @@
         flex-wrap: nowrap !important;
         overflow: hidden !important;
         min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     .tvz-meta-pill {
@@ -3192,7 +3195,8 @@
         left: auto !important;
         width: 300px !important;
         max-width: calc(100vw - 32px) !important;
-        max-height: calc(100% - 68px) !important;
+        max-height: calc(100% - 110px) !important;
+        overflow-y: auto !important;
         border-radius: 14px !important;
         z-index: 165 !important;
     }
@@ -3205,7 +3209,8 @@
         left: auto !important;
         width: 300px !important;
         max-width: calc(100vw - 32px) !important;
-        max-height: calc(100% - 68px) !important;
+        max-height: calc(100% - 110px) !important;
+        overflow-y: auto !important;
         border-radius: 14px !important;
         z-index: 165 !important;
     }
