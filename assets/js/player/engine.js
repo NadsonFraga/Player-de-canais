@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261120_1339';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261120_1339';
-import { showToast } from '../core/toast.js?v=20261120_1339';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1339';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261120_1339';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261120_1339';
-import { formatClock } from '../core/resume.js?v=20261120_1339';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261120_1339';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261120_1339';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261120_1339';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261120_1339';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261120_1339';
-import { fetchTmdb } from '../core/tmdb.js?v=20261120_1339';
+import { store } from '../core/state.js?v=20261120_1409';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261120_1409';
+import { showToast } from '../core/toast.js?v=20261120_1409';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1409';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261120_1409';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261120_1409';
+import { formatClock } from '../core/resume.js?v=20261120_1409';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261120_1409';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261120_1409';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261120_1409';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261120_1409';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261120_1409';
+import { fetchTmdb } from '../core/tmdb.js?v=20261120_1409';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1461,38 +1461,156 @@ if (typeof document !== 'undefined') {
             updatePlayerEndTime(activeNativeSession);
         }
     });
+    window.addEventListener('resize', () => {
+        if (activeNativeSession) {
+            updatePlayerEndTime(activeNativeSession);
+        }
+    });
+}
+
+/** Formats seconds into "00:00" or "01:00:00" string matching Artplayer format. */
+export function formatPlayerTime(seconds) {
+    const total = Math.max(0, Math.floor(Number(seconds) || 0));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = Math.floor(total % 60);
+    const pad = (n) => String(n).padStart(2, '0');
+    return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+}
+
+/** Toggles mobile time display between total duration and projected finish time ("Termina às HH:mm"). */
+export function togglePlayerTimeDisplay(session) {
+    if (!session || !session.art) return;
+    const art = session.art;
+    const timeEl = (art.controls && art.controls.time) || art.template?.$player?.querySelector('.art-control-time') || document.querySelector('.art-control-time');
+
+    const currentMode = session.timeDisplayMode || (typeof localStorage !== 'undefined' && localStorage.getItem('tvz-mobile-time-mode')) || 'duration';
+    const nextMode = currentMode === 'end_time' ? 'duration' : 'end_time';
+    session.timeDisplayMode = nextMode;
+    try {
+        localStorage.setItem('tvz-mobile-time-mode', nextMode);
+    } catch (_) {}
+
+    const targetEl = timeEl?.querySelector('.tvz-time-target') || timeEl;
+    if (targetEl) {
+        targetEl.classList.add('tvz-time-fade');
+        setTimeout(() => {
+            updatePlayerEndTime(session);
+            targetEl.classList.remove('tvz-time-fade');
+        }, 120);
+    } else {
+        updatePlayerEndTime(session);
+    }
+}
+
+/** Installs the interactive TVZ time control on Artplayer, replacing the default un-tappable control. */
+export function installTvzTimeControl(session) {
+    if (!session || !session.art) return;
+    const art = session.art;
+    try {
+        if (art.controls && art.controls.time) {
+            art.controls.remove('time');
+        }
+        art.controls.add({
+            name: 'time',
+            position: 'left',
+            index: 30,
+            html: '<div class="tvz-control-time-inner"></div>',
+            mounted: () => {
+                updatePlayerEndTime(session);
+            },
+            click: (e) => {
+                if (e) {
+                    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+                    if (typeof e.preventDefault === 'function') e.preventDefault();
+                }
+                togglePlayerTimeDisplay(session);
+            }
+        });
+        updatePlayerEndTime(session);
+    } catch (err) {
+        console.warn('[PlayerEngine] Erro ao instalar controle customizado de tempo:', err);
+    }
 }
 
 /** Updates the projected finish time ("Termina às HH:mm") beside current / total duration. */
 export function updatePlayerEndTime(session) {
     if (!session || !session.art) return;
     const art = session.art;
-    const timeEl = art.template?.$time || art.element?.querySelector('.art-control-time');
+    const timeEl = (art.controls && art.controls.time) || art.template?.$player?.querySelector('.art-control-time') || document.querySelector('.art-control-time');
     if (!timeEl) return;
-    const prefs = getPlayerPrefs();
-    let endEl = timeEl.querySelector('.tvz-time-end');
-    if (prefs.show_end_time === false) {
-        if (endEl) endEl.remove();
-        return;
+
+    let inner = timeEl.querySelector('.tvz-control-time-inner');
+    if (!inner) {
+        timeEl.innerHTML = '<div class="tvz-control-time-inner"></div>';
+        inner = timeEl.querySelector('.tvz-control-time-inner');
     }
+
     const duration = art.duration;
     const current = art.currentTime;
-    if (!Number.isFinite(duration) || duration <= 0) {
-        if (endEl) endEl.textContent = '';
-        return;
+    const curStr = formatPlayerTime(current);
+    const durStr = Number.isFinite(duration) && duration > 0 ? formatPlayerTime(duration) : '--:--';
+
+    let endTimeStr = '';
+    if (Number.isFinite(duration) && duration > 0) {
+        const remainingS = Math.max(0, duration - current);
+        const endDate = new Date(Date.now() + remainingS * 1000);
+        const hours = String(endDate.getHours()).padStart(2, '0');
+        const mins = String(endDate.getMinutes()).padStart(2, '0');
+        endTimeStr = `Termina às ${hours}:${mins}`;
     }
-    const remainingS = Math.max(0, duration - current);
-    const endDate = new Date(Date.now() + remainingS * 1000);
-    const hours = String(endDate.getHours()).padStart(2, '0');
-    const mins = String(endDate.getMinutes()).padStart(2, '0');
-    const label = ` • Termina às ${hours}:${mins}`;
-    if (!endEl) {
-        endEl = document.createElement('span');
-        endEl.className = 'tvz-time-end';
-        timeEl.appendChild(endEl);
-    }
-    if (endEl.textContent !== label) {
-        endEl.textContent = label;
+
+    const prefs = getPlayerPrefs();
+    const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches;
+    const activeMode = session.timeDisplayMode || (typeof localStorage !== 'undefined' && localStorage.getItem('tvz-mobile-time-mode')) || 'duration';
+
+    let curEl = inner.querySelector('.tvz-time-current');
+    let sepEl = inner.querySelector('.tvz-time-sep');
+    let targetEl = inner.querySelector('.tvz-time-target');
+    let endEl = inner.querySelector('.tvz-time-end');
+
+    if (isMobilePortrait) {
+        // Mobile portrait: toggle between total duration and projected finish time
+        if (endEl) {
+            endEl.remove();
+            endEl = null;
+        }
+        if (!curEl || !sepEl || !targetEl) {
+            inner.innerHTML = '<span class="tvz-time-current"></span><span class="tvz-time-sep"></span><span class="tvz-time-target"></span>';
+            curEl = inner.querySelector('.tvz-time-current');
+            sepEl = inner.querySelector('.tvz-time-sep');
+            targetEl = inner.querySelector('.tvz-time-target');
+        }
+        const sepStr = activeMode === 'end_time' && endTimeStr ? ' • ' : ' / ';
+        const targetStr = activeMode === 'end_time' && endTimeStr ? endTimeStr : durStr;
+
+        if (curEl.textContent !== curStr) curEl.textContent = curStr;
+        if (sepEl.textContent !== sepStr) sepEl.textContent = sepStr;
+        if (targetEl.textContent !== targetStr) targetEl.textContent = targetStr;
+    } else {
+        // Desktop / Landscape: duration + optional finish time
+        if (!curEl || !sepEl || !targetEl) {
+            inner.innerHTML = '<span class="tvz-time-current"></span><span class="tvz-time-sep"> / </span><span class="tvz-time-target"></span>';
+            curEl = inner.querySelector('.tvz-time-current');
+            sepEl = inner.querySelector('.tvz-time-sep');
+            targetEl = inner.querySelector('.tvz-time-target');
+        }
+        if (curEl.textContent !== curStr) curEl.textContent = curStr;
+        if (sepEl.textContent !== ' / ') sepEl.textContent = ' / ';
+        if (targetEl.textContent !== durStr) targetEl.textContent = durStr;
+
+        const showEndTime = prefs.show_end_time !== false;
+        if (showEndTime && endTimeStr) {
+            const endLabel = ` • ${endTimeStr}`;
+            if (!endEl) {
+                endEl = document.createElement('span');
+                endEl.className = 'tvz-time-end';
+                inner.appendChild(endEl);
+            }
+            if (endEl.textContent !== endLabel) endEl.textContent = endLabel;
+        } else if (endEl) {
+            endEl.remove();
+        }
     }
 }
 
@@ -1983,6 +2101,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         installHorizontalVolume(art);
         installDoubleTapSeek(art);
         installNoSwipeSeek(art);
+        installTvzTimeControl(session);
         refreshSubtitleMenu(session);
         updateSubtitlesControlActiveState(session);
         const total = session.sources.length;
@@ -2004,6 +2123,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             installFitSetting(art);
             installCastSetting(session);
             installSubtitleControl(session);
+            installTvzTimeControl(session);
             routeFullscreenToStage(art);
             applyPlaybackPrefs(art);
             // The controls area changes height (window, fullscreen, phone): keep the side cards right above it
@@ -2198,6 +2318,14 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             requestSkipSegments(session);
             handleEndApproach(session);
             updateSkipButton(session);
+        });
+
+        art.on('video:loadedmetadata', () => {
+            if (isSessionLive(session, token)) updatePlayerEndTime(session);
+        });
+
+        art.on('video:durationchange', () => {
+            if (isSessionLive(session, token)) updatePlayerEndTime(session);
         });
 
         art.on('video:ended', () => {

@@ -111,16 +111,58 @@
     background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
-/* Projected finish time next to duration */
+/* Interactive responsive time control */
+.art-video-player .art-control-time {
+    cursor: pointer !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0 6px !important;
+    border-radius: 4px !important;
+    transition: opacity 0.15s ease, background 0.15s ease, transform 0.12s ease !important;
+}
+
+.art-video-player .art-control-time:active {
+    opacity: 0.75 !important;
+    transform: scale(0.97) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.art-video-player .tvz-control-time-inner {
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+}
+
+.art-video-player .tvz-time-current,
+.art-video-player .tvz-time-total,
+.art-video-player .tvz-time-sep {
+    font-variant-numeric: tabular-nums;
+}
+
+.art-video-player .tvz-time-target {
+    display: inline-block;
+    transition: opacity 0.12s cubic-bezier(0.4, 0, 0.2, 1), transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+    font-variant-numeric: tabular-nums;
+}
+
+.art-video-player .tvz-time-target.tvz-time-fade {
+    opacity: 0 !important;
+    transform: translateY(2px) !important;
+}
+
+/* Projected finish time suffix on desktop */
 .art-video-player .tvz-time-end {
     color: #ffffff !important;
     font-size: 12px !important;
     font-weight: 500 !important;
     margin-left: 2px !important;
     letter-spacing: -0.01em !important;
+    font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 640px) and (orientation: portrait) {
+@media (max-width: 768px) and (orientation: portrait) {
     .art-video-player .tvz-time-end {
         display: none !important;
     }
@@ -3456,6 +3498,13 @@
         max-height: min(380px, 55vh) !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Hide end time toggle row in mobile settings modal: mobile uses direct tap toggle on the timestamp */
+    .player-page-card .tvz-setting-row[data-action="toggle-end-time"],
+    .tvz-settings-panel .tvz-setting-row[data-action="toggle-end-time"],
+    .tvz-settings-panel .tvz-setting-row:has(.tvz-end-time-toggle-input) {
+        display: none !important;
     }
 
     /* Compact Play State Button in center of 16:9 player on Mobile Portrait */

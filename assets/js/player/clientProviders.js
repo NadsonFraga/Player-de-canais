@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261120_1339';
-import { fetchTmdb } from '../core/tmdb.js?v=20261120_1339';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261120_1409';
+import { fetchTmdb } from '../core/tmdb.js?v=20261120_1409';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
