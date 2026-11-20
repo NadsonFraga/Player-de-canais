@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261119_1356';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261119_1356';
-import { showToast } from '../core/toast.js?v=20261119_1356';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1356';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261119_1356';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261119_1356';
-import { formatClock } from '../core/resume.js?v=20261119_1356';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261119_1356';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261119_1356';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261119_1356';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261119_1356';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1356';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_1356';
+import { store } from '../core/state.js?v=20261120_1206';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261120_1206';
+import { showToast } from '../core/toast.js?v=20261120_1206';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1206';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261120_1206';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261120_1206';
+import { formatClock } from '../core/resume.js?v=20261120_1206';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261120_1206';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261120_1206';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261120_1206';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261120_1206';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261120_1206';
+import { fetchTmdb } from '../core/tmdb.js?v=20261120_1206';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1134,6 +1134,7 @@ const NATIVE_ICONS = {
     quality: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.2" fill="#000"/><circle cx="15" cy="12" r="2.2" fill="#000"/><circle cx="7" cy="17" r="2.2" fill="#000"/></svg>',
     audio: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
     fit: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" style="fill:none !important;stroke:currentColor !important;"/><polyline points="12 6 12 12 16 14" style="fill:none !important;stroke:currentColor !important;"/></svg>',
     subtitle: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="3.5" style="fill:none !important;stroke:currentColor !important;"/><path style="fill:none !important;stroke:currentColor !important;" d="M9.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/><path style="fill:none !important;stroke:currentColor !important;" d="M16.5 9.2a2.4 2.4 0 0 0-2.2 2.4v.8a2.4 2.4 0 0 0 2.2 2.4"/></svg>',
     cast: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8"/><path d="M3 16a4 4 0 0 1 4 4"/><path d="M3 20h.01"/></svg>',
     backward10: '<svg viewBox="0 0 24 24" width="22" height="22" style="fill:none !important;stroke:currentColor !important;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path style="fill:none !important;stroke:currentColor !important;" d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path style="fill:none !important;stroke:currentColor !important;" d="M3 3v5h5"/><text x="12" y="15.5" font-family="system-ui, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" style="fill:currentColor !important;stroke:none !important;">10</text></svg>',
@@ -1455,6 +1456,44 @@ if (typeof document !== 'undefined') {
     const flush = () => reportProgress(activeNativeSession, true);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
     window.addEventListener('pagehide', flush);
+    window.addEventListener('tvzinha:prefs', () => {
+        if (activeNativeSession) {
+            updatePlayerEndTime(activeNativeSession);
+        }
+    });
+}
+
+/** Updates the projected finish time ("Termina às HH:mm") beside current / total duration. */
+export function updatePlayerEndTime(session) {
+    if (!session || !session.art) return;
+    const art = session.art;
+    const timeEl = art.template?.$time || art.element?.querySelector('.art-control-time');
+    if (!timeEl) return;
+    const prefs = getPlayerPrefs();
+    let endEl = timeEl.querySelector('.tvz-time-end');
+    if (prefs.show_end_time === false) {
+        if (endEl) endEl.remove();
+        return;
+    }
+    const duration = art.duration;
+    const current = art.currentTime;
+    if (!Number.isFinite(duration) || duration <= 0) {
+        if (endEl) endEl.textContent = '';
+        return;
+    }
+    const remainingS = Math.max(0, duration - current);
+    const endDate = new Date(Date.now() + remainingS * 1000);
+    const hours = String(endDate.getHours()).padStart(2, '0');
+    const mins = String(endDate.getMinutes()).padStart(2, '0');
+    const label = ` • Termina às ${hours}:${mins}`;
+    if (!endEl) {
+        endEl = document.createElement('span');
+        endEl.className = 'tvz-time-end';
+        timeEl.appendChild(endEl);
+    }
+    if (endEl.textContent !== label) {
+        endEl.textContent = label;
+    }
 }
 
 /** "Continuando de 12:34" with "Começar do início"; says nothing about the episode itself. */
@@ -1783,6 +1822,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             flip: false,
             playbackRate: true,
             aspectRatio: false,
+            playsInline: true,
             hotkey: true,
             airplay: true,
             controls: [
@@ -1950,6 +1990,10 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
         art.on('ready', () => {
             if (!isSessionLive(session, token)) return;
+            if (art.video) {
+                art.video.setAttribute('playsinline', 'true');
+                art.video.setAttribute('webkit-playsinline', 'true');
+            }
             if (startTime > 0) {
                 art.currentTime = startTime;
             }
@@ -2142,6 +2186,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         art.on('video:timeupdate', () => {
             if (!isSessionLive(session, token)) return;
             reportProgress(session);
+            updatePlayerEndTime(session);
             // Some streams only report their length after a while: the lookup waits for it
             requestSkipSegments(session);
             handleEndApproach(session);
@@ -4406,6 +4451,7 @@ function renderSettingsFlyout(session) {
 
     if (currentView === 'main') {
         const isSubtitlesActive = Boolean(art.subtitle && art.subtitle.show && session.activeSubtitleUrl);
+        const isEndTimeActive = getPlayerPrefs().show_end_time !== false;
         panel.innerHTML = `
             <div class="tvz-settings-header">
                 <div class="tvz-settings-header-left">
@@ -4478,6 +4524,19 @@ function renderSettingsFlyout(session) {
                         </div>
                     </button>
 
+                    <div class="tvz-setting-row tvz-setting-toggle-row" data-action="toggle-end-time">
+                        <div class="tvz-setting-row-left">
+                            ${NATIVE_ICONS.clock}
+                            <span>Exibir horário de término</span>
+                        </div>
+                        <div class="tvz-setting-row-right">
+                            <label class="tvz-toggle-switch">
+                                <input type="checkbox" class="tvz-end-time-toggle-input" ${isEndTimeActive ? 'checked' : ''}>
+                                <span class="tvz-toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
                     ${canCastToApp() ? `
                     <button type="button" class="tvz-setting-row" data-action="trigger-cast">
                         <div class="tvz-setting-row-left">
@@ -4526,6 +4585,11 @@ function renderSettingsFlyout(session) {
                 art.pause();
                 window.location.href = castIntentUrl(source.url, session.title, isHlsSource(source));
             }
+        });
+
+        panel.querySelector('.tvz-end-time-toggle-input')?.addEventListener('change', (e) => {
+            setPlayerPref('show_end_time', e.target.checked);
+            updatePlayerEndTime(session);
         });
 
         const toggleInput = panel.querySelector('.tvz-subtitles-toggle-input');

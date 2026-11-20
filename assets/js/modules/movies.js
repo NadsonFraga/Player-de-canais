@@ -12,23 +12,23 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261119_1356';
-import { showToast } from '../core/toast.js?v=20261119_1356';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_1356';
-import { buildFeedRows } from '../core/feedRows.js?v=20261119_1356';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_1356';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1356';
-import { getUiSvg } from '../core/icons.js?v=20261119_1356';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_1356';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_1356';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1356';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_1356';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261119_1356';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261119_1356';
-import { resumeStartTime } from '../core/resume.js?v=20261119_1356';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_1356';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_1356';
-import { getLibraryState, setWatchlist } from '../core/library.js?v=20261119_1356';
+} from '../core/constants.js?v=20261120_1206';
+import { showToast } from '../core/toast.js?v=20261120_1206';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261120_1206';
+import { buildFeedRows } from '../core/feedRows.js?v=20261120_1206';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261120_1206';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1206';
+import { getUiSvg } from '../core/icons.js?v=20261120_1206';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261120_1206';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261120_1206';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261120_1206';
+import { fetchTmdb } from '../core/tmdb.js?v=20261120_1206';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261120_1206';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261120_1206';
+import { resumeStartTime } from '../core/resume.js?v=20261120_1206';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261120_1206';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261120_1206';
+import { getLibraryState, setWatchlist } from '../core/library.js?v=20261120_1206';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
@@ -1337,7 +1337,30 @@ export function updateMovieObraCard(movie) {
 
     // --- Mobile Vertical Hub Section Population ---
     const mobTitle = document.getElementById("movie-mobile-title");
+    const mobLogo = document.getElementById("movie-mobile-logo");
     if (mobTitle) mobTitle.textContent = title;
+
+    const titlePageLogo = document.getElementById("title-logo");
+    const logoUrl = movie.logo_url || (titlePageLogo && !titlePageLogo.classList.contains("hidden") && titlePageLogo.getAttribute("src"));
+    if (mobLogo) {
+        if (logoUrl) {
+            mobLogo.src = logoUrl;
+            mobLogo.alt = title;
+            mobLogo.onload = () => {
+                mobLogo.classList.remove("hidden");
+                if (mobTitle) mobTitle.classList.add("sr-only");
+            };
+            mobLogo.onerror = () => {
+                mobLogo.classList.add("hidden");
+                if (mobTitle) mobTitle.classList.remove("sr-only");
+            };
+            mobLogo.classList.remove("hidden");
+            if (mobTitle) mobTitle.classList.add("sr-only");
+        } else {
+            mobLogo.classList.add("hidden");
+            if (mobTitle) mobTitle.classList.remove("sr-only");
+        }
+    }
 
     const mobRating = document.getElementById("movie-mobile-rating");
     if (mobRating) {

@@ -111,6 +111,21 @@
     background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
+/* Projected finish time next to duration */
+.art-video-player .tvz-time-end {
+    color: #94a3b8 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    margin-left: 2px !important;
+    letter-spacing: -0.01em !important;
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+    .art-video-player .tvz-time-end {
+        display: none !important;
+    }
+}
+
 /* Volume: the built-in vertical panel opens over the progress bar; a horizontal control replaces it */
 .art-video-player .art-control-volume {
     display: none !important;
@@ -1751,10 +1766,11 @@
     right: 0 !important;
     height: 80px !important;
     z-index: 140 !important;
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns: minmax(80px, 1fr) auto minmax(130px, 1fr) !important;
     align-items: center !important;
-    justify-content: space-between !important;
     padding: 0 32px !important;
+    gap: 16px !important;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.25) 60%, transparent 100%) !important;
     border: none !important;
     border-bottom: none !important;
@@ -1763,6 +1779,22 @@
     opacity: 0;
     transform: translateY(-8px);
     transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.movie-player-top-bar .btn-player-back,
+.series-player-top-bar .btn-player-back {
+    justify-self: start !important;
+}
+
+.movie-player-top-bar .tvz-player-title-info,
+.series-player-top-bar .tvz-player-title-info {
+    justify-self: center !important;
+    max-width: 100% !important;
+}
+
+.movie-player-top-bar .movie-player-actions,
+.series-player-top-bar .movie-player-actions {
+    justify-self: end !important;
 }
 
 .movie-player-top-bar button,
@@ -2497,36 +2529,41 @@
 }
 
 
-/* Server Selector Pill in Top Bar */
-.btn-player-pill.btn-player-servers {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 36px;
-    padding: 0 14px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 9999px;
-    color: #e2e8f0;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+/* Server Selector Button in Top Bar: Clean icon button matching reload and close */
+.btn-player-pill.btn-player-servers,
+.btn-player-servers {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #94a3b8 !important;
+    cursor: pointer !important;
+    transition: color 0.18s ease, transform 0.18s ease !important;
 }
 
 .btn-player-pill.btn-player-servers:hover,
-.btn-player-pill.btn-player-servers:focus-visible {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.35);
-    color: #ffffff;
-    transform: translateY(-1px);
+.btn-player-pill.btn-player-servers:focus-visible,
+.btn-player-servers:hover,
+.btn-player-servers:focus-visible {
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    transform: scale(1.15) !important;
 }
 
-.btn-player-pill.btn-player-servers svg {
-    flex-shrink: 0;
-    stroke: currentColor;
+.btn-player-servers svg {
+    flex-shrink: 0 !important;
+    stroke: currentColor !important;
 }
 
 /* Top-anchored Server Flyout Panel */
@@ -3278,6 +3315,7 @@
         background: #0b0c10 !important;
         border: none !important;
         border-radius: 0 !important;
+        padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
     }
 
     /* Fixed 16:9 Video Player at Top */
@@ -3315,6 +3353,8 @@
 
     .player-page-card .movie-player-top-bar,
     .player-page-card .series-player-top-bar {
+        display: flex !important;
+        justify-content: space-between !important;
         height: 46px !important;
         padding: 6px 10px !important;
     }
@@ -3331,13 +3371,14 @@
 
     .player-page-card .tvz-servers-panel-top {
         position: fixed !important;
-        top: auto !important;
-        bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
-        left: 12px !important;
-        right: 12px !important;
-        width: auto !important;
-        max-width: none !important;
-        max-height: 70vh !important;
+        top: 50% !important;
+        left: 50% !important;
+        bottom: auto !important;
+        right: auto !important;
+        transform: translate(-50%, -50%) !important;
+        width: min(340px, calc(100vw - 32px)) !important;
+        max-width: 340px !important;
+        max-height: min(480px, 75vh) !important;
         border-radius: 16px !important;
         z-index: 2610 !important;
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
@@ -3363,6 +3404,20 @@
         display: flex !important;
         flex-direction: column !important;
         gap: 4px !important;
+    }
+
+    .tvz-mobile-title-logo {
+        max-height: 44px !important;
+        max-width: 220px !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important;
+        object-position: left center !important;
+        margin-bottom: 2px !important;
+    }
+
+    .tvz-mobile-title-logo.hidden {
+        display: none !important;
     }
 
     .tvz-mobile-title {

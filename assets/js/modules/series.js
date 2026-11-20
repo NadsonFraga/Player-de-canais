@@ -10,22 +10,22 @@ import {
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261119_1356';
-import { showToast } from '../core/toast.js?v=20261119_1356';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261119_1356';
-import { buildFeedRows } from '../core/feedRows.js?v=20261119_1356';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261119_1356';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261119_1356';
-import { resumeStartTime } from '../core/resume.js?v=20261119_1356';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261119_1356';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261119_1356';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261119_1356';
-import { fetchTmdb } from '../core/tmdb.js?v=20261119_1356';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261119_1356';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261119_1356';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261119_1356';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261119_1356';
-import { getLibraryState, setWatchlist } from '../core/library.js?v=20261119_1356';
+} from '../core/constants.js?v=20261120_1206';
+import { showToast } from '../core/toast.js?v=20261120_1206';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261120_1206';
+import { buildFeedRows } from '../core/feedRows.js?v=20261120_1206';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261120_1206';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1206';
+import { resumeStartTime } from '../core/resume.js?v=20261120_1206';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261120_1206';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261120_1206';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261120_1206';
+import { fetchTmdb } from '../core/tmdb.js?v=20261120_1206';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261120_1206';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261120_1206';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261120_1206';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261120_1206';
+import { getLibraryState, setWatchlist } from '../core/library.js?v=20261120_1206';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -2605,6 +2605,34 @@ function episodeHeaderText(showItem, seasonNumber, episodeNumber, episodeName, a
     return `T${seasonNumber}:E${episodeNumber}${absolute ? ` • Ep. geral ${absolute}` : ''}${episodeName ? ` – ${episodeName}` : ''}`;
 }
 
+/** Standardized player top bar: Top line = Show Name • T1:E1 (Ep. geral X), Bottom line = Episode Name only */
+function updateSeriesPlayerTopBar(showItem, seasonNumber, episodeNumber, episodeName, absoluteEpisode) {
+    if (!showItem) return;
+    const showName = showItem.name || showItem.title || 'Série';
+    const isAnime = activeSeriesPlaying?.mediaContext?.isAnime;
+    let epBadge = '';
+    if (isAnime) {
+        const epNum = absoluteEpisode || episodeNumber;
+        epBadge = `Ep. ${epNum}`;
+    } else {
+        const details = detailsFor(showItem.id);
+        const several = regularSeasonsOf(details).length > 1;
+        const absolute = several ? (absoluteEpisode || absoluteEpisodeOf(details, seasonNumber, episodeNumber)) : 0;
+        epBadge = `T${seasonNumber}:E${episodeNumber}${absolute ? ` (Ep. geral ${absolute})` : ''}`;
+    }
+    const topText = epBadge ? `${showName} • ${epBadge}` : showName;
+    const subText = episodeName && !isGenericEpisodeName(episodeName) ? episodeName : '';
+
+    const topShowName = document.getElementById("series-player-show-name-top");
+    if (topShowName) topShowName.textContent = topText;
+
+    const currentTitleEl = document.getElementById("series-player-current-ep");
+    if (currentTitleEl) {
+        currentTitleEl.textContent = subText || '';
+        currentTitleEl.style.display = subText ? '' : 'none';
+    }
+}
+
 // MyAnimeList id the server picked per show+season, so the next episodes skip the title search
 const animeMalIds = new Map();
 
@@ -2937,8 +2965,11 @@ export function updateSeriesObraCard(show, epData, context) {
     const showTitle = show.name || show.title || 'Série';
     if (titleEl) titleEl.textContent = showTitle;
 
-    const topShowName = document.getElementById("series-player-show-name-top");
-    if (topShowName) topShowName.textContent = showTitle;
+    const sNum = activeSeriesPlaying.seasonNumber || (context && context.season) || 1;
+    const eNum = activeSeriesPlaying.episodeNumber || (context && context.episode) || 1;
+    const epName = (epData && !isGenericEpisodeName(epData.name)) ? epData.name : '';
+    const absNum = activeSeriesPlaying.absoluteEpisodeNumber || (epData && epData.absoluteEpisode) || (context && context.absolute) || 0;
+    updateSeriesPlayerTopBar(show, sNum, eNum, epName, absNum);
 
     const thumbTop = document.getElementById("series-player-thumb-top");
     if (thumbTop) {
@@ -3029,7 +3060,30 @@ export function updateSeriesObraCard(show, epData, context) {
 
     // --- Mobile Vertical Hub Section Population ---
     const mobTitle = document.getElementById("series-mobile-title");
+    const mobLogo = document.getElementById("series-mobile-logo");
     if (mobTitle) mobTitle.textContent = showTitle;
+
+    const titlePageLogo = document.getElementById("title-logo");
+    const logoUrl = show.logo_url || (titlePageLogo && !titlePageLogo.classList.contains("hidden") && titlePageLogo.getAttribute("src"));
+    if (mobLogo) {
+        if (logoUrl) {
+            mobLogo.src = logoUrl;
+            mobLogo.alt = showTitle;
+            mobLogo.onload = () => {
+                mobLogo.classList.remove("hidden");
+                if (mobTitle) mobTitle.classList.add("sr-only");
+            };
+            mobLogo.onerror = () => {
+                mobLogo.classList.add("hidden");
+                if (mobTitle) mobTitle.classList.remove("sr-only");
+            };
+            mobLogo.classList.remove("hidden");
+            if (mobTitle) mobTitle.classList.add("sr-only");
+        } else {
+            mobLogo.classList.add("hidden");
+            if (mobTitle) mobTitle.classList.remove("sr-only");
+        }
+    }
 
     const mobEpTitle = document.getElementById("series-mobile-ep-title");
     if (mobEpTitle) {
@@ -3358,11 +3412,8 @@ function startEpisodePlayback(context, options = {}) {
             activeSeriesPlaying.episodeData = { ...match, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
             updateSeriesObraCard(showItem, activeSeriesPlaying.episodeData, context);
             saveStoredWatchProgress(showItem, seasonNumber, episodeNumber, match.name, context.isAnime ? 'anime' : 'tv', context.absolute, match.still_path);
-            const currentTitleEl = document.getElementById("series-player-current-ep");
+            updateSeriesPlayerTopBar(showItem, seasonNumber, episodeNumber, match.name, activeSeriesPlaying.absoluteEpisodeNumber);
             const currentOverviewEl = document.getElementById("series-player-overview");
-            if (currentTitleEl) {
-                currentTitleEl.textContent = episodeHeaderText(showItem, seasonNumber, episodeNumber, match.name, activeSeriesPlaying.absoluteEpisodeNumber);
-            }
             if (currentOverviewEl && match.overview) {
                 currentOverviewEl.textContent = match.overview;
             }
@@ -3371,9 +3422,7 @@ function startEpisodePlayback(context, options = {}) {
         });
     }
 
-    if (currentEpTitle) {
-        currentEpTitle.textContent = episodeHeaderText(showItem, seasonNumber, episodeNumber, epName, activeSeriesPlaying.absoluteEpisodeNumber);
-    }
+    updateSeriesPlayerTopBar(showItem, seasonNumber, episodeNumber, epName, activeSeriesPlaying.absoluteEpisodeNumber);
 
     const isAnime = context.isAnime;
 
