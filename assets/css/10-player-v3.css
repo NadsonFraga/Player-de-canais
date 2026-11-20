@@ -1879,7 +1879,19 @@
     text-overflow: ellipsis;
 }
 
+.sr-only,
+.tvz-mobile-title.sr-only,
+.tvz-mobile-title.hidden,
 .movie-player-server-title.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
     display: none !important;
 }
 
@@ -3342,8 +3354,46 @@
     .player-page-card .art-video-player {
         position: absolute !important;
         inset: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
         width: 100% !important;
         height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .player-page-card .art-video-player .art-video,
+    .player-page-card .art-video-player .art-video-inner {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+    }
+
+    .player-page-card .art-video-player .art-bottom {
+        position: absolute !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 48px !important;
+        padding: 0 10px 4px 10px !important;
+        z-index: 150 !important;
+        overflow: visible !important;
+    }
+
+    .player-page-card .art-video-player .art-controls {
+        height: 36px !important;
+        overflow: visible !important;
+    }
+
+    .player-page-card .art-video-player .art-control-progress .art-control-progress-inner {
+        height: 3px !important;
     }
 
     /* Minimal Top Bar over 16:9 Video: Hide title on video to keep it clean */

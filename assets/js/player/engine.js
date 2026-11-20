@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261120_1206';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261120_1206';
-import { showToast } from '../core/toast.js?v=20261120_1206';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1206';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261120_1206';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261120_1206';
-import { formatClock } from '../core/resume.js?v=20261120_1206';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261120_1206';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261120_1206';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261120_1206';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261120_1206';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261120_1206';
-import { fetchTmdb } from '../core/tmdb.js?v=20261120_1206';
+import { store } from '../core/state.js?v=20261120_1314';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261120_1314';
+import { showToast } from '../core/toast.js?v=20261120_1314';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1314';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261120_1314';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261120_1314';
+import { formatClock } from '../core/resume.js?v=20261120_1314';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261120_1314';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261120_1314';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261120_1314';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261120_1314';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261120_1314';
+import { fetchTmdb } from '../core/tmdb.js?v=20261120_1314';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -2030,6 +2030,13 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                         document.getElementById('series-servers-flyout-panel')?.classList.contains('is-open') ||
                         !document.getElementById('series-player-drawer')?.classList.contains('hidden')) {
                         window.dispatchEvent(new CustomEvent('tvzinha:closeFlyouts'));
+                        return;
+                    }
+
+                    // Mobile portrait/touch tap toggles controls visibility smoothly
+                    if (art.template.$player.classList.contains('art-mobile')) {
+                        art.controls.show = !art.controls.show;
+                        if (art.controls.show) scheduleControlsHide(3500);
                         return;
                     }
 
