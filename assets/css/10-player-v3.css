@@ -113,7 +113,7 @@
 
 /* Projected finish time next to duration */
 .art-video-player .tvz-time-end {
-    color: #94a3b8 !important;
+    color: #ffffff !important;
     font-size: 12px !important;
     font-weight: 500 !important;
     margin-left: 2px !important;
@@ -1708,7 +1708,7 @@
 .tvz-player-sub-title {
     font-size: 12.5px !important;
     font-weight: 500 !important;
-    color: #94a3b8 !important;
+    color: #ffffff !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -1827,7 +1827,7 @@
     box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    color: #f1f5f9 !important;
+    color: #ffffff !important;
     font-size: 15px !important;
     font-weight: 600 !important;
     letter-spacing: -0.01em !important;
@@ -1907,7 +1907,7 @@
     box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    color: #94a3b8 !important;
+    color: #ffffff !important;
     cursor: pointer !important;
     transition: color 0.18s ease, transform 0.18s ease !important;
 }
@@ -1917,6 +1917,10 @@
     border: none !important;
     color: #ffffff !important;
     transform: scale(1.15) !important;
+}
+
+.btn-player-icon.danger {
+    color: #ffffff !important;
 }
 
 .btn-player-icon.danger:hover {
@@ -2217,7 +2221,7 @@
     font-family: var(--font-heading, 'Outfit', sans-serif) !important;
     font-size: 12.5px !important;
     font-weight: 600 !important;
-    color: #f1f5f9 !important;
+    color: #ffffff !important;
     cursor: pointer !important;
     outline: none !important;
     transition: background 0.18s ease, border-color 0.18s ease !important;
@@ -2558,7 +2562,7 @@
     box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    color: #94a3b8 !important;
+    color: #ffffff !important;
     cursor: pointer !important;
     transition: color 0.18s ease, transform 0.18s ease !important;
 }
@@ -3071,7 +3075,7 @@
     .series-player-header-title,
     .tvz-player-sub-title {
         font-size: 11px !important;
-        color: #94a3b8 !important;
+        color: #ffffff !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
@@ -3135,7 +3139,13 @@
     }
 
     .art-video-player .art-control-tvz-volume,
-    .art-video-player .art-control-pip {
+    .art-video-player .art-control-pip,
+    .art-video-player .art-control-tvz-seek-backward,
+    .art-video-player .art-control-tvz-seek-forward,
+    .art-video-player .art-control-seek-backward,
+    .art-video-player .art-control-seek-forward,
+    .art-video-player [data-name="tvz-seek-backward"],
+    .art-video-player [data-name="tvz-seek-forward"] {
         display: none !important;
     }
 
@@ -3409,17 +3419,22 @@
         padding: 6px 10px !important;
     }
 
-    /* Server Flyout Panel as clean modal on mobile portrait */
-    .player-page-card .tvz-servers-backdrop {
+    /* Modals & Flyouts as clean floating modals on mobile portrait (Servers, Settings, Subtitles, Drawer) */
+    .player-page-card .tvz-servers-backdrop,
+    .player-page-card .tvz-settings-backdrop,
+    .player-page-card .tvz-subtitles-backdrop {
         position: fixed !important;
         inset: 0 !important;
-        background: rgba(0, 0, 0, 0.72) !important;
-        backdrop-filter: blur(4px) !important;
-        -webkit-backdrop-filter: blur(4px) !important;
+        background: rgba(0, 0, 0, 0.75) !important;
+        backdrop-filter: blur(6px) !important;
+        -webkit-backdrop-filter: blur(6px) !important;
         z-index: 2600 !important;
     }
 
-    .player-page-card .tvz-servers-panel-top {
+    .player-page-card .tvz-servers-panel-top,
+    .player-page-card .tvz-settings-panel,
+    .player-page-card .tvz-subtitles-panel,
+    .player-page-card .series-player-drawer {
         position: fixed !important;
         top: 50% !important;
         left: 50% !important;
@@ -3428,10 +3443,68 @@
         transform: translate(-50%, -50%) !important;
         width: min(340px, calc(100vw - 32px)) !important;
         max-width: 340px !important;
-        max-height: min(480px, 75vh) !important;
+        max-height: min(490px, 75vh) !important;
         border-radius: 16px !important;
         z-index: 2610 !important;
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+        background: rgba(14, 15, 19, 0.96) !important;
+    }
+
+    .player-page-card .tvz-settings-list,
+    .player-page-card .tvz-sub-list,
+    .player-page-card .series-drawer-list {
+        max-height: min(380px, 55vh) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Compact Play State Button in center of 16:9 player on Mobile Portrait */
+    .player-page-card .art-video-player .art-state {
+        --art-state-size: 46px !important;
+        width: 46px !important;
+        height: 46px !important;
+    }
+
+    .player-page-card .art-video-player .art-state .art-icon-state {
+        width: 46px !important;
+        height: 46px !important;
+    }
+
+    .player-page-card .art-video-player .art-state .art-icon-state svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    /* Compact Resume / Skip notice banner on mobile portrait */
+    .player-page-card .art-video-player .tvz-side-card {
+        bottom: 54px !important;
+        left: 10px !important;
+        max-width: calc(100% - 20px) !important;
+    }
+
+    .player-page-card .art-video-player .tvz-skip {
+        border-radius: 6px !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+        background: rgba(20, 20, 22, 0.95) !important;
+    }
+
+    .player-page-card .art-video-player .tvz-resume-text {
+        padding: 4px 6px 4px 10px !important;
+        font-size: 11px !important;
+    }
+
+    .player-page-card .art-video-player .tvz-resume-restart {
+        padding: 4px 10px !important;
+        font-size: 11px !important;
+    }
+
+    .player-page-card .art-video-player .tvz-skip-go {
+        padding: 4px 10px !important;
+        font-size: 11px !important;
+    }
+
+    .player-page-card .art-video-player .tvz-skip-close {
+        padding: 0 8px !important;
     }
 
     /* Scrollable Hub Below Video */
@@ -3483,7 +3556,7 @@
     .tvz-mobile-subtitle {
         font-size: 13.5px !important;
         font-weight: 600 !important;
-        color: #94a3b8 !important;
+        color: #ffffff !important;
         line-height: 1.3 !important;
     }
 
@@ -3505,7 +3578,7 @@
     .tvz-mobile-overview {
         font-size: 13px !important;
         line-height: 1.55 !important;
-        color: #94a3b8 !important;
+        color: #ffffff !important;
         margin: 8px 0 0 0 !important;
         display: -webkit-box !important;
         -webkit-box-orient: vertical !important;

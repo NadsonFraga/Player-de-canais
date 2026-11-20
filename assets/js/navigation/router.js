@@ -3,11 +3,11 @@
  * Handles view switching, active navigation state, mobile drawer, and player lifecycle/audio teardown
  */
 
-import { store } from '../core/state.js?v=20261120_1314';
-import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261120_1314';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1314';
-import { showToast } from '../core/toast.js?v=20261120_1314';
-import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome, whenNavSettled } from './historyManager.js?v=20261120_1314';
+import { store } from '../core/state.js?v=20261120_1339';
+import { atomicTvPlayerReset, atomicPlayerReset } from '../player/engine.js?v=20261120_1339';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1339';
+import { showToast } from '../core/toast.js?v=20261120_1339';
+import { pushNavLayer, replaceNavLayer, popNavLayer, resetNavToHome, whenNavSettled } from './historyManager.js?v=20261120_1339';
 
 let viewHooks = {
     onTvLeave: null,
