@@ -72,7 +72,7 @@ export const FAMOUS_STUDIOS = [
 export const MOVIE_SERVERS = [
     { id: 'native_direct',  name: 'Mgeb Player (PTBR)',       isNative: true, source: 'mgeb' },
     { id: 'native_fenix',   name: 'Fenix Player (Dual Áudio)',      isNative: true, source: 'fenixflix' },
-    { id: 'mgeb',           name: 'Servidor 1 (MGEB)', buildUrl: (id) => `https://mgeb.lat/embed/${id}` },
+    { id: 'mgeb',           name: 'Servidor 1 (MGEB)', buildUrl: (id) => `https://mgeb.space/embed/${id}` },
     { id: 'superflix',      name: 'Servidor 2 (SuperFlix)', buildUrl: (id) => `https://superflixapi.boats/filme/${id}` },
     { id: 'myembed',        name: 'Servidor 3 (MyEmbed)', buildUrl: (id) => `https://myembed.biz/filme/${id}` },
     { id: 'vsembed',        name: 'Servidor 4 (VSEmbed, multiáudio)', buildUrl: (id) => `https://vsembed.ru/embed/movie/${id}?ds_lang=pob,pt,en` },
@@ -84,7 +84,7 @@ export const MOVIE_SERVERS = [
 export const SERIES_SERVERS = {
     mgeb: {
         name: "MGEB",
-        buildUrl: (id, s, e) => `https://mgeb.lat/embed/serie/${id}/${s}/${e}`
+        buildUrl: (id, s, e) => `https://mgeb.space/embed/serie/${id}/${s}/${e}`
     },
     superflix: {
         name: "Superflix",

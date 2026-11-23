@@ -208,7 +208,10 @@ export async function onRequestGet(context) {
     } else if (targetUrl.includes("googlevideo.com") || targetUrl.includes("blogger.com")) {
       customReferer = "https://www.blogger.com/";
     } else if (targetUrl.includes("peliculaplay.com") || targetUrl.includes("mgeb.lat") || targetUrl.includes("mgeb.top") || targetUrl.includes("mgeb.space")) {
-      customReferer = "https://mgeb.lat/";
+      customReferer = "https://mgeb.space/";
+    } else if (targetUrl.includes("duckdns.org") || targetUrl.includes("megafonte") || targetUrl.includes("koyeb.app")) {
+      customReferer = "https://tvzinhaonline.pages.dev/";
+      customOrigin = "";
     } else if (targetUrl.includes("fenixhub.online") || targetUrl.includes("fenixflix")) {
       customReferer = "https://fenixflix.fenixhub.online/";
       customOrigin = "https://fenixflix.fenixhub.online";
