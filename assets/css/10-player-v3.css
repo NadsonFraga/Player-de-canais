@@ -116,17 +116,33 @@
     cursor: pointer !important;
     user-select: none !important;
     -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    outline: none !important;
     display: inline-flex !important;
     align-items: center !important;
-    padding: 0 6px !important;
-    border-radius: 4px !important;
-    transition: opacity 0.15s ease, background 0.15s ease, transform 0.12s ease !important;
+    padding: 0 4px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transition: opacity 0.12s ease, transform 0.12s cubic-bezier(0.2, 0, 0.2, 1) !important;
+}
+
+.art-video-player .art-control-time:hover,
+.art-video-player .art-control-time:focus,
+.art-video-player .art-control-time:focus-visible {
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border: none !important;
 }
 
 .art-video-player .art-control-time:active {
-    opacity: 0.75 !important;
-    transform: scale(0.97) !important;
-    background: rgba(255, 255, 255, 0.08) !important;
+    opacity: 0.8 !important;
+    transform: scale(0.92) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border: none !important;
 }
 
 .art-video-player .tvz-control-time-inner {
@@ -139,6 +155,16 @@
 .art-video-player .tvz-time-total,
 .art-video-player .tvz-time-sep {
     font-variant-numeric: tabular-nums;
+}
+
+.art-video-player .tvz-time-current {
+    display: inline-block;
+    transition: opacity 0.12s cubic-bezier(0.4, 0, 0.2, 1), transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.art-video-player .tvz-time-current.tvz-time-fade {
+    opacity: 0 !important;
+    transform: translateY(2px) !important;
 }
 
 .art-video-player .tvz-time-target {
@@ -507,16 +533,44 @@
 }
 
 /* The stage (not Artplayer's element) goes fullscreen, so the next episode mounts inside it and stays fullscreen */
-.movie-player-stage:fullscreen {
+.movie-player-stage:fullscreen,
+.movie-player-stage:-webkit-full-screen,
+.series-theater-stage:fullscreen,
+.series-theater-stage:-webkit-full-screen {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100vw !important;
+    width: 100% !important;
     height: 100vh !important;
-    background: #000;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #000000 !important;
+    z-index: 999999 !important;
 }
 
-.movie-player-stage:-webkit-full-screen {
-    width: 100vw !important;
-    height: 100vh !important;
-    background: #000;
+.movie-player-stage:fullscreen .movie-artplayer-stage,
+.movie-player-stage:fullscreen .series-artplayer-stage,
+.movie-player-stage:fullscreen .art-video-player,
+.movie-player-stage:-webkit-full-screen .movie-artplayer-stage,
+.movie-player-stage:-webkit-full-screen .series-artplayer-stage,
+.movie-player-stage:-webkit-full-screen .art-video-player,
+.series-theater-stage:fullscreen .movie-artplayer-stage,
+.series-theater-stage:fullscreen .series-artplayer-stage,
+.series-theater-stage:fullscreen .art-video-player,
+.series-theater-stage:-webkit-full-screen .movie-artplayer-stage,
+.series-theater-stage:-webkit-full-screen .series-artplayer-stage,
+.series-theater-stage:-webkit-full-screen .art-video-player {
+    position: absolute !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* "Tela: Preencher": the picture covers the whole box, cropping the edges */
@@ -632,7 +686,11 @@
 .art-video-player .tvz-side-card {
     /* measured by the engine (placeSideCards): just above the progress bar in every layout */
     bottom: var(--tvz-side-card-bottom, 84px) !important;
-    transition: opacity 0.25s ease;
+    transition: bottom 0.25s cubic-bezier(0.2, 0, 0, 1), opacity 0.25s ease;
+}
+
+.art-video-player:not(.art-control-show) .tvz-side-card {
+    bottom: 24px !important;
 }
 
 /* "Continuando de 12:34" notice, bottom left, same card look */
@@ -1016,11 +1074,12 @@
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     font-weight: 700 !important;
     letter-spacing: 0.02em !important;
-    line-height: 1.35 !important;
+    line-height: 1.15 !important;
     text-align: center !important;
+    gap: 2px !important;
 
     /* Responsive font-size in windowed mode, multiplied by user scale */
-    font-size: calc(clamp(26px, 2.8vw, 36px) * var(--tvz-sub-scale, 1)) !important;
+    font-size: calc(clamp(24px, 2.6vw, 32px) * var(--tvz-sub-scale, 1)) !important;
     color: var(--tvz-sub-color, #ffffff) !important;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -1044,11 +1103,14 @@
     display: flex !important;
 }
 
-/* Individual subtitle lines rendered by Artplayer: centered with safety margin */
-.art-video-player .art-subtitle .art-subtitle-line {
+/* Individual subtitle lines rendered by Artplayer: tight line spacing (Netflix style) */
+.art-video-player .art-subtitle .art-subtitle-line,
+.art-video-player .art-subtitle p {
     display: inline-block !important;
     max-width: 85% !important;
-    margin: 2px auto !important;
+    margin: 0 auto !important;
+    padding: 1px 0 !important;
+    line-height: 1.08 !important;
     text-align: center !important;
     word-break: break-word !important;
 }
@@ -1098,14 +1160,20 @@
 /* Mobile Devices in Portrait */
 @media (max-width: 768px) and (orientation: portrait) {
     .art-video-player .art-subtitle {
-        font-size: calc(clamp(18px, 4.2vw, 22px) * var(--tvz-sub-scale, 1)) !important;
-        bottom: 42px !important;
+        font-size: calc(clamp(13px, 3.2vw, 15px) * var(--tvz-sub-scale, 1)) !important;
+        line-height: 1.15 !important;
+        gap: 2px !important;
+        bottom: 38px !important;
     }
-    .art-video-player .art-subtitle .art-subtitle-line {
+    .art-video-player .art-subtitle .art-subtitle-line,
+    .art-video-player .art-subtitle p {
         max-width: 92% !important;
+        line-height: 1.15 !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
     }
     .art-video-player.art-control-show .art-subtitle {
-        bottom: 72px !important;
+        bottom: 58px !important;
     }
 }
 
@@ -1113,13 +1181,19 @@
 @media (max-height: 520px) and (orientation: landscape) {
     .art-video-player.art-fullscreen .art-subtitle,
     .art-video-player.art-fullscreen-web .art-subtitle {
-        font-size: calc(clamp(20px, 4.8vh, 26px) * var(--tvz-sub-scale, 1)) !important;
+        font-size: calc(clamp(17px, 4.2vh, 22px) * var(--tvz-sub-scale, 1)) !important;
+        line-height: 1.15 !important;
+        gap: 2px !important;
         bottom: 36px !important;
     }
     .art-video-player .art-subtitle .art-subtitle-line,
+    .art-video-player .art-subtitle p,
     .art-video-player.art-fullscreen .art-subtitle .art-subtitle-line,
     .art-video-player.art-fullscreen-web .art-subtitle .art-subtitle-line {
         max-width: 90% !important;
+        line-height: 1.15 !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
     }
     .art-video-player.art-fullscreen.art-control-show .art-subtitle,
     .art-video-player.art-fullscreen-web.art-control-show .art-subtitle {
@@ -1977,10 +2051,6 @@
 .player-page-card.is-ui-visible .series-player-top-bar,
 .player-page-card:has(.art-video-player.art-control-show) .movie-player-top-bar,
 .player-page-card:has(.art-video-player.art-control-show) .series-player-top-bar,
-.player-page-card:has(.art-video-player.art-hover) .movie-player-top-bar,
-.player-page-card:has(.art-video-player.art-hover) .series-player-top-bar,
-.player-page-card.is-paused .movie-player-top-bar,
-.player-page-card.is-paused .series-player-top-bar,
 .player-page-card.is-loading .movie-player-top-bar,
 .player-page-card.is-loading .series-player-top-bar,
 .player-page-card.has-servers-open .movie-player-top-bar,
@@ -1989,13 +2059,66 @@
 .player-page-card.is-error .series-player-top-bar,
 .player-page-card:not(:has(.art-video-player)):not(.is-iframe) .movie-player-top-bar,
 .player-page-card:not(:has(.art-video-player)):not(.is-iframe) .series-player-top-bar,
-.player-page-card .movie-player-top-bar:hover,
-.player-page-card .series-player-top-bar:hover,
 .player-page-card .movie-player-top-bar:focus-within,
 .player-page-card .series-player-top-bar:focus-within {
     opacity: 1 !important;
     transform: translateY(0) !important;
     pointer-events: auto !important;
+}
+
+.player-page-card.is-ui-visible .movie-player-top-bar *,
+.player-page-card.is-ui-visible .series-player-top-bar *,
+.player-page-card:has(.art-video-player.art-control-show) .movie-player-top-bar *,
+.player-page-card:has(.art-video-player.art-control-show) .series-player-top-bar *,
+.player-page-card.is-loading .movie-player-top-bar *,
+.player-page-card.is-loading .series-player-top-bar *,
+.player-page-card.has-servers-open .movie-player-top-bar *,
+.player-page-card.has-servers-open .series-player-top-bar *,
+.player-page-card.is-error .movie-player-top-bar *,
+.player-page-card.is-error .series-player-top-bar * {
+    pointer-events: auto !important;
+}
+
+/* Force Top Bar to hide when controls are hidden or in clean screenshot pause mode */
+.player-page-card:has(.art-video-player.art-clean-pause) .movie-player-top-bar,
+.player-page-card:has(.art-video-player.art-clean-pause) .series-player-top-bar,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar {
+    opacity: 0 !important;
+    transform: translateY(-8px) !important;
+    pointer-events: none !important;
+}
+
+/* Complete lockdown on all controls, buttons, and top/bottom elements when controls are hidden or in clean pause */
+.art-video-player:not(.art-control-show) .art-bottom,
+.art-video-player:not(.art-control-show) .art-controls,
+.art-video-player:not(.art-control-show) .art-top,
+.art-video-player:not(.art-control-show) .art-state,
+.art-video-player:not(.art-control-show) .art-bottom *,
+.art-video-player:not(.art-control-show) .art-controls *,
+.art-video-player:not(.art-control-show) .art-top *,
+.art-video-player:not(.art-control-show) .art-state *,
+.art-video-player.art-clean-pause .art-bottom,
+.art-video-player.art-clean-pause .art-controls,
+.art-video-player.art-clean-pause .art-top,
+.art-video-player.art-clean-pause .art-state,
+.art-video-player.art-clean-pause .art-bottom *,
+.art-video-player.art-clean-pause .art-controls *,
+.art-video-player.art-clean-pause .art-top *,
+.art-video-player.art-clean-pause .art-state *,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar *,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar *,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar *,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar *,
+.player-page-card:has(.art-video-player.art-clean-pause) .movie-player-top-bar *,
+.player-page-card:has(.art-video-player.art-clean-pause) .series-player-top-bar * {
+    pointer-events: none !important;
 }
 
 /* Player Error State Overlay & Interactive Action Buttons */
@@ -3191,10 +3314,41 @@
         display: none !important;
     }
 
+    .art-video-player .art-controls {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        gap: 4px !important;
+    }
+
+    .art-video-player .art-controls-left {
+        display: flex !important;
+        align-items: center !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        overflow: hidden !important;
+        gap: 2px !important;
+    }
+
+    .art-video-player .art-controls-right {
+        display: flex !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        margin-left: auto !important;
+        gap: 2px !important;
+        z-index: 2 !important;
+    }
+
     .art-video-player .art-control-time {
         font-size: 11px !important;
         padding: 0 4px !important;
-        flex-shrink: 0 !important;
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 
     .art-video-player .art-controls .art-icon,
@@ -3363,23 +3517,93 @@
         inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
         overflow: hidden !important;
         background: #0b0c10 !important;
         z-index: 2500 !important;
     }
 
+    /* Floating Nav Capsule stays visible and interactive above player in mobile portrait */
+    .floating-nav-capsule {
+        z-index: 2600 !important;
+        position: fixed !important;
+        top: max(8px, env(safe-area-inset-top, 0px)) !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+
+    .movie-modal-backdrop.player-page .movie-modal-card,
     .player-page-card {
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
+        max-width: 100% !important;
         height: 100% !important;
         height: 100dvh !important;
         max-height: 100dvh !important;
+        margin: 0 !important;
         overflow: hidden !important;
         background: #0b0c10 !important;
         border: none !important;
         border-radius: 0 !important;
-        padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
+        padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 46px) !important;
+    }
+
+    /* When player is fullscreen (native API or Artplayer class), clear portrait padding and stretch to 100% */
+    :fullscreen .player-page-card,
+    :-webkit-full-screen .player-page-card,
+    .player-page-card:has(:fullscreen),
+    .player-page-card:has(:-webkit-full-screen),
+    .player-page-card:has(.art-fullscreen),
+    .player-page-card:has(.art-fullscreen-web),
+    .player-page-card.art-fullscreen-active {
+        padding-top: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: none !important;
+    }
+
+    :fullscreen .movie-modal-media-area,
+    :-webkit-full-screen .movie-modal-media-area,
+    .player-page-card:has(:fullscreen) .movie-modal-media-area,
+    .player-page-card:has(:-webkit-full-screen) .movie-modal-media-area,
+    .player-page-card:has(.art-fullscreen) .movie-modal-media-area,
+    .player-page-card:has(.art-fullscreen-web) .movie-modal-media-area,
+    .player-page-card.art-fullscreen-active .movie-modal-media-area {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: none !important;
+        aspect-ratio: auto !important;
+        z-index: 200 !important;
+    }
+
+    /* Hide floating nav capsule when any fullscreen is active */
+    :fullscreen .floating-nav-capsule,
+    :-webkit-full-screen .floating-nav-capsule,
+    body:has(:fullscreen) .floating-nav-capsule,
+    body:has(:-webkit-full-screen) .floating-nav-capsule,
+    body:has(.art-fullscreen) .floating-nav-capsule,
+    body:has(.art-fullscreen-web) .floating-nav-capsule,
+    body.tvz-has-fullscreen .floating-nav-capsule {
+        display: none !important;
+    }
+
+    /* Loading State: Hide all controls and center state icon completely while buffering/loading */
+    .player-page-card.is-loading .art-state,
+    .player-page-card.is-loading .art-controls,
+    .player-page-card.is-loading .art-bottom,
+    .player-page-card.is-loading .movie-player-top-bar,
+    .player-page-card.is-loading .series-player-top-bar,
+    .art-video-player.art-loading-show .art-state,
+    .art-video-player.art-loading-show .art-controls,
+    .art-video-player.art-loading-show .art-bottom {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
     }
 
     /* Fixed 16:9 Video Player at Top */
@@ -3433,19 +3657,77 @@
         left: 0 !important;
         right: 0 !important;
         width: 100% !important;
-        height: 48px !important;
+        height: auto !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+        gap: 0 !important;
         padding: 0 10px 4px 10px !important;
         z-index: 150 !important;
         overflow: visible !important;
     }
 
-    .player-page-card .art-video-player .art-controls {
-        height: 36px !important;
-        overflow: visible !important;
+    .player-page-card .art-video-player .art-progress {
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+        height: auto !important;
+    }
+
+    .player-page-card .art-video-player .art-control-progress {
+        height: 18px !important;
+        margin: 0 0 1px 0 !important;
     }
 
     .player-page-card .art-video-player .art-control-progress .art-control-progress-inner {
         height: 3px !important;
+    }
+
+    .player-page-card .art-video-player .art-controls {
+        height: 36px !important;
+        overflow: hidden !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .player-page-card .art-video-player .art-controls-left {
+        display: flex !important;
+        align-items: center !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        overflow: hidden !important;
+        gap: 2px !important;
+    }
+
+    .player-page-card .art-video-player .art-controls-right {
+        display: flex !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        margin-left: auto !important;
+        gap: 2px !important;
+        z-index: 2 !important;
+    }
+
+    .player-page-card .art-video-player .art-control-time {
+        font-size: 11px !important;
+        padding: 0 4px !important;
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* Hide 10s seek buttons on mobile portrait (unneeded due to double tap skip gesture) */
+    .player-page-card .art-video-player .art-control-tvz-seek-backward,
+    .player-page-card .art-video-player .art-control-tvz-seek-forward,
+    .player-page-card .art-video-player .art-control-seek-backward,
+    .player-page-card .art-video-player .art-control-seek-forward,
+    .player-page-card .art-video-player [data-name="tvz-seek-backward"],
+    .player-page-card .art-video-player [data-name="tvz-seek-forward"] {
+        display: none !important;
     }
 
     /* Minimal Top Bar over 16:9 Video: Hide title on video to keep it clean */
@@ -3507,53 +3789,132 @@
         display: none !important;
     }
 
-    /* Compact Play State Button in center of 16:9 player on Mobile Portrait */
+    /* Central Play Button strictly centered in 16:9 player on Mobile Portrait */
     .player-page-card .art-video-player .art-state {
-        --art-state-size: 46px !important;
-        width: 46px !important;
-        height: 46px !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: 64px !important;
+        height: 64px !important;
+        display: none !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        cursor: pointer !important;
+        z-index: 100 !important;
+        transition: transform 0.15s ease, opacity 0.15s ease !important;
+    }
+
+    .player-page-card .art-video-player.art-control-show:not(.art-clean-pause) .art-state,
+    .player-page-card .art-video-player.art-hover:not(.art-clean-pause) .art-state,
+    .player-page-card .art-video-player.art-is-paused:not(.art-clean-pause) .art-state {
+        display: flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    .player-page-card .art-video-player .art-state:active {
+        transform: translate(-50%, -50%) scale(0.9) !important;
     }
 
     .player-page-card .art-video-player .art-state .art-icon-state {
-        width: 46px !important;
-        height: 46px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 64px !important;
+        height: 64px !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
     }
 
     .player-page-card .art-video-player .art-state .art-icon-state svg {
-        width: 24px !important;
-        height: 24px !important;
+        width: 48px !important;
+        height: 48px !important;
+        fill: #ffffff !important;
+        stroke: none !important;
+        filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.85)) !important;
     }
 
     /* Compact Resume / Skip notice banner on mobile portrait */
     .player-page-card .art-video-player .tvz-side-card {
-        bottom: 54px !important;
-        left: 10px !important;
-        max-width: calc(100% - 20px) !important;
+        bottom: 12px !important;
+        top: auto !important;
+        width: auto !important;
+        max-width: calc(100% - 24px) !important;
+        height: auto !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        z-index: 160 !important;
+        pointer-events: auto !important;
+        transition: bottom 0.25s cubic-bezier(0.2, 0, 0, 1), opacity 0.25s ease !important;
+    }
+
+    .player-page-card .art-video-player:not(.art-control-show) .tvz-side-card {
+        bottom: 12px !important;
+    }
+
+    .player-page-card .art-video-player.art-control-show .tvz-side-card {
+        bottom: 64px !important;
+    }
+
+    .player-page-card .art-video-player .art-layer-tvz-resume {
+        left: 12px !important;
+        right: auto !important;
+    }
+
+    .player-page-card .art-video-player .art-layer-tvz-skip {
+        right: 12px !important;
+        left: auto !important;
     }
 
     .player-page-card .art-video-player .tvz-skip {
-        border-radius: 6px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        width: auto !important;
+        height: 32px !important;
+        border-radius: 8px !important;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
         background: rgba(20, 20, 22, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        overflow: hidden !important;
     }
 
     .player-page-card .art-video-player .tvz-resume-text {
-        padding: 4px 6px 4px 10px !important;
+        padding: 0 8px 0 10px !important;
         font-size: 11px !important;
+        white-space: nowrap !important;
     }
 
     .player-page-card .art-video-player .tvz-resume-restart {
-        padding: 4px 10px !important;
+        padding: 0 10px !important;
         font-size: 11px !important;
+        height: 100% !important;
+        white-space: nowrap !important;
     }
 
     .player-page-card .art-video-player .tvz-skip-go {
-        padding: 4px 10px !important;
+        padding: 0 10px !important;
         font-size: 11px !important;
+        height: 100% !important;
+        white-space: nowrap !important;
     }
 
     .player-page-card .art-video-player .tvz-skip-close {
         padding: 0 8px !important;
+        height: 100% !important;
     }
 
     /* Scrollable Hub Below Video */
@@ -3566,7 +3927,7 @@
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         padding: 16px 16px 40px 16px !important;
-        gap: 14px !important;
+        gap: 12px !important;
         background: #0b0c10 !important;
         color: #ffffff !important;
     }
@@ -3609,26 +3970,144 @@
         line-height: 1.3 !important;
     }
 
-    .tvz-mobile-meta-row {
+    /* Genres with middle dots (matching Title Page) */
+    .tvz-mobile-genres {
         display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
         flex-wrap: wrap !important;
-        margin-top: 4px !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #e4e4e7 !important;
+        margin-top: 2px !important;
     }
 
-    .tvz-mobile-genres-text {
-        font-size: 12px !important;
-        color: #64748b !important;
-        font-weight: 500 !important;
-        margin-left: 2px !important;
+    .tvz-mobile-genres:empty {
+        display: none !important;
+    }
+
+    .tvz-mobile-genres span + span::before {
+        content: "•" !important;
+        margin: 0 8px !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+    }
+
+    /* Clean Round Mobile Actions Row (Matching Title Page standard) */
+    .tvz-mobile-actions-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin: 4px 0 2px 0 !important;
+    }
+
+    .tvz-mobile-actions-row .title-action {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        border-radius: 50% !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        background: rgba(14, 14, 18, 0.6) !important;
+        color: #ffffff !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        position: relative !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .tvz-mobile-actions-row .title-action:active {
+        transform: scale(0.92) !important;
+    }
+
+    /* Watched / Active / Copied button: solid white background with dark icon (matches Title Page) */
+    .tvz-mobile-actions-row .title-action.is-on,
+    .tvz-mobile-actions-row .title-action.is-copied {
+        background: #ffffff !important;
+        border-color: #ffffff !important;
+        color: #09090b !important;
+    }
+
+    .tvz-mobile-actions-row .title-action.is-on svg,
+    .tvz-mobile-actions-row .title-action.is-copied svg {
+        stroke: #09090b !important;
+    }
+
+    .tvz-mobile-actions-row .title-action.is-on .icon-off {
+        display: none !important;
+    }
+
+    .tvz-mobile-actions-row .title-action:not(.is-on) .icon-on {
+        display: none !important;
+    }
+
+    /* Rating Button: expands into oval pill when rated (matches Title Page) */
+    .tvz-mobile-actions-row .title-action-rate.is-on {
+        width: auto !important;
+        min-width: 58px !important;
+        padding: 0 14px !important;
+        border-radius: 9999px !important;
+        background: rgba(14, 14, 18, 0.7) !important;
+        border-color: rgba(251, 191, 36, 0.55) !important;
+        color: #ffffff !important;
+        gap: 6px !important;
+    }
+
+    .tvz-mobile-actions-row .title-action-rate.is-on svg {
+        fill: #fbbf24 !important;
+        stroke: #fbbf24 !important;
+        width: 17px !important;
+        height: 17px !important;
+    }
+
+    .tvz-mobile-actions-row .title-action-rate .title-rate-value {
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+    }
+
+    /* Clean Meta Section matching Title Page (year, duration, age rating badge, score) */
+    .tvz-mobile-meta-section {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        margin-top: 2px !important;
+    }
+
+    .tvz-mobile-meta {
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 6px 14px !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #f4f4f5 !important;
+    }
+
+    .tvz-mobile-meta:empty {
+        display: none !important;
+    }
+
+    .tvz-mobile-crew {
+        margin: 0 !important;
+        font-size: 12.5px !important;
+        color: #94a3b8 !important;
+        line-height: 1.4 !important;
+    }
+
+    .tvz-mobile-crew strong {
+        color: #e2e8f0 !important;
+        font-weight: 600 !important;
     }
 
     .tvz-mobile-overview {
         font-size: 13px !important;
         line-height: 1.55 !important;
-        color: #ffffff !important;
-        margin: 8px 0 0 0 !important;
+        color: #d4d4d8 !important;
+        margin: 2px 0 0 0 !important;
         display: -webkit-box !important;
         -webkit-box-orient: vertical !important;
         -webkit-line-clamp: 3 !important;
@@ -3642,131 +4121,287 @@
         display: block !important;
     }
 
-    /* Actions Row */
-    .tvz-mobile-actions-row {
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        margin-top: 4px !important;
+    .tvz-mobile-actions-row .title-rate-wrap {
+        position: relative !important;
     }
 
-    .tvz-btn-mobile-action {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 6px !important;
-        flex: 1 !important;
-        padding: 9px 12px !important;
-        background: rgba(255, 255, 255, 0.04) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 9px !important;
-        color: #cbd5e1 !important;
-        font-size: 12.5px !important;
-        font-weight: 500 !important;
-        cursor: pointer !important;
-        transition: all 0.15s ease !important;
+    .tvz-mobile-actions-row .title-rate-panel {
+        position: absolute !important;
+        top: calc(100% + 10px) !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        z-index: 50 !important;
+        min-width: 236px !important;
+        max-width: calc(100vw - 32px) !important;
+        padding: 14px 16px 12px !important;
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        background: #141417 !important;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65) !important;
     }
 
-    .tvz-btn-mobile-action:hover,
-    .tvz-btn-mobile-action:active {
-        background: rgba(255, 255, 255, 0.09) !important;
-        border-color: rgba(255, 255, 255, 0.18) !important;
-        color: #ffffff !important;
-    }
-
-    .tvz-btn-mobile-action.is-on {
-        background: rgba(255, 255, 255, 0.12) !important;
-        border-color: rgba(255, 255, 255, 0.35) !important;
-        color: #ffffff !important;
-    }
-
-    /* Watch Party Button */
-    .tvz-btn-watchparty {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 8px !important;
-        width: 100% !important;
-        padding: 11px 16px !important;
-        margin-top: 2px !important;
-        background: rgba(255, 255, 255, 0.06) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-radius: 10px !important;
-        color: #ffffff !important;
-        font-size: 13px !important;
-        font-weight: 600 !important;
-        cursor: pointer !important;
-        transition: all 0.18s ease !important;
-        backdrop-filter: blur(8px) !important;
-    }
-
-    .tvz-btn-watchparty:hover,
-    .tvz-btn-watchparty:active {
-        background: rgba(255, 255, 255, 0.12) !important;
-        border-color: rgba(255, 255, 255, 0.25) !important;
-        transform: translateY(-1px) !important;
-    }
-
-    /* Episodes Section */
+    /* Accordion for Mobile Episodes */
     .tvz-mobile-episodes-section {
         margin-top: 10px !important;
         display: flex !important;
         flex-direction: column !important;
-        gap: 12px !important;
+        gap: 8px !important;
     }
 
-    .tvz-mobile-episodes-header {
+    .tvz-mobile-episodes-accordion-btn {
+        width: 100% !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
+        padding: 12px 14px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .tvz-mobile-episodes-accordion-btn:active {
+        background: rgba(255, 255, 255, 0.09) !important;
+        transform: scale(0.98) !important;
+    }
+
+    .tvz-mobile-episodes-header-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
     }
 
     .tvz-mobile-episodes-heading {
         font-family: var(--font-heading, 'Outfit', sans-serif) !important;
-        font-size: 15px !important;
+        font-size: 14.5px !important;
         font-weight: 700 !important;
         color: #ffffff !important;
         letter-spacing: -0.01em !important;
     }
 
-    /* Spacedom-style Numeric Episodes Grid */
-    .tvz-mobile-episodes-grid {
-        display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)) !important;
-        gap: 8px !important;
-        padding-bottom: 24px !important;
-    }
-
-    .tvz-mobile-ep-btn {
-        aspect-ratio: 1 / 1 !important;
-        min-height: 48px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background: rgba(255, 255, 255, 0.04) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 9px !important;
-        color: #cbd5e1 !important;
-        font-family: var(--font-heading, 'Outfit', sans-serif) !important;
-        font-size: 14px !important;
+    .tvz-mobile-season-badge {
+        font-size: 11px !important;
         font-weight: 600 !important;
-        cursor: pointer !important;
-        transition: all 0.15s ease !important;
+        padding: 2px 8px !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 999px !important;
+        color: #e2b755 !important;
     }
 
-    .tvz-mobile-ep-btn:hover,
-    .tvz-mobile-ep-btn:active {
-        background: rgba(255, 255, 255, 0.09) !important;
-        border-color: rgba(255, 255, 255, 0.18) !important;
+    .tvz-mobile-episodes-chevron {
+        color: #94a3b8 !important;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .tvz-mobile-episodes-accordion-btn.is-open .tvz-mobile-episodes-chevron {
+        transform: rotate(180deg) !important;
         color: #ffffff !important;
     }
 
-    .tvz-mobile-ep-btn.is-active {
-        background: #ffffff !important;
-        border-color: #ffffff !important;
-        color: #080808 !important;
-        font-weight: 700 !important;
-        box-shadow: 0 4px 14px rgba(255, 255, 255, 0.25) !important;
+    .tvz-mobile-episodes-collapse.hidden {
+        display: none !important;
     }
+
+    .tvz-mobile-episodes-collapse {
+        animation: nav-menu-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Mobile Player Hub Episodes Grid - Rich Cards (2 columns on mobile, 3 on larger) */
+    .tvz-mobile-episodes-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        padding-bottom: 24px !important;
+    }
+
+    @media (min-width: 600px) {
+        .tvz-mobile-episodes-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 12px !important;
+        }
+    }
+
+    .tvz-mobile-episodes-grid .series-ep-card {
+        margin: 0 !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 10px !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        cursor: pointer !important;
+        transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease !important;
+    }
+
+    .tvz-mobile-episodes-grid .series-ep-card:hover,
+    .tvz-mobile-episodes-grid .series-ep-card:active {
+        background: rgba(255, 255, 255, 0.06) !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+    }
+
+    .tvz-mobile-episodes-grid .series-ep-card.is-active-playing {
+        border-color: rgba(255, 255, 255, 0.6) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 0 14px rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-thumbnail-box {
+        width: 100% !important;
+        aspect-ratio: 16 / 9 !important;
+        position: relative !important;
+        background: #111113 !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-thumbnail-img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-info-box {
+        padding: 8px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        flex: 1 1 auto !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-title {
+        font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        line-height: 1.25 !important;
+        margin: 0 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-meta-row {
+        font-size: 0.68rem !important;
+        color: #a1a1aa !important;
+        display: flex !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+        margin: 0 !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-overview {
+        font-size: 0.7rem !important;
+        color: #71717a !important;
+        line-height: 1.3 !important;
+        margin-top: 2px !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-overview.is-expanded {
+        display: block !important;
+        -webkit-line-clamp: unset !important;
+        color: #d4d4d8 !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-overview-more {
+        font-size: 0.68rem !important;
+        margin-top: 2px !important;
+    }
+
+    /* Legacy fallback class */
+    .tvz-mobile-ep-btn {
+        display: none !important;
+    }
+}
+
+/* Central Play Button: Global styling for True Fullscreen, Desktop & Landscape */
+.art-video-player .art-state {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 64px !important;
+    height: 64px !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    z-index: 100 !important;
+    transition: transform 0.15s ease, opacity 0.2s ease !important;
+}
+
+.art-video-player.art-control-show:not(.art-clean-pause) .art-state,
+.art-video-player.art-hover:not(.art-clean-pause) .art-state,
+.art-video-player.art-is-paused:not(.art-clean-pause) .art-state {
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.art-video-player .art-state:active {
+    transform: translate(-50%, -50%) scale(0.9) !important;
+}
+
+.art-video-player .art-state .art-icon-state {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 64px !important;
+    height: 64px !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.art-video-player .art-state .art-icon-state svg {
+    width: 48px !important;
+    height: 48px !important;
+    fill: #ffffff !important;
+    stroke: none !important;
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.85)) !important;
+}
+
+/* Hide .art-state unconditionally whenever controls are hidden or in clean screenshot mode */
+.art-video-player:not(.art-control-show):not(.art-hover) .art-state,
+.art-video-player.art-clean-pause .art-state {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* Clean screenshot frame when tapping video in paused mobile mode */
+.art-video-player.art-clean-pause .art-state,
+.art-video-player.art-clean-pause .art-controls,
+.art-video-player.art-clean-pause .art-top,
+.art-video-player.art-clean-pause .art-bottom,
+.art-video-player.art-clean-pause .tvz-resume-banner,
+.art-video-player.art-clean-pause .tvz-side-card,
+.art-video-player.art-clean-pause .art-mask-show {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transition: opacity 0.2s ease !important;
 }
 

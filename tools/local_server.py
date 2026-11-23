@@ -1393,16 +1393,17 @@ def clean_vtt(text):
     text = fix_mojibake(text)
     # Convert ASS line break notation to newline
     text = re.sub(r'\\N', '\n', text)
-    """Subtitle cues keep italics, bold and underline only. All SSA/ASS override tags ({...}) are stripped.
-    Any other complete tag is dropped and stray brackets escaped."""
+    """Subtitle cues strip all SSA/ASS override tags ({...}) and any HTML/XML tags so raw tags never leak."""
     lines = []
     for line in text.split("\n"):
         if "-->" not in line:
             # Strip all SSA/ASS override tags and MicroDVD tags: {...}
             line = re.sub(r'\{[^}]*\}', '', line)
-            line = re.sub(r"</?[a-zA-Z][^<>]*>", lambda m: m.group(0).lower() if re.fullmatch(r"</?[ibu]>", m.group(0), re.I) else "", line)
-            line = re.sub(r"<(?!/?[ibu]>)", "&lt;", line)
-            line = re.sub(r"(?<!<[ibu])(?<!</[ibu])>", "&gt;", line)
+            # Strip all HTML/XML tags completely so raw tags never display as literal text on screen
+            line = re.sub(r'</?[a-zA-Z][^<>]*>', '', line)
+            line = re.sub(r'&lt;/?(?:[a-zA-Z][^&>]*|i|b|u)&gt;', '', line, flags=re.I)
+            line = re.sub(r'&[a-zA-Z0-9#]+;', ' ', line)
+            line = re.sub(r'[<>]', '', line)
         lines.append(line)
     return "\n".join(lines)
 

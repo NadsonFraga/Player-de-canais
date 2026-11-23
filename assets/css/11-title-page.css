@@ -149,6 +149,18 @@
     margin: 4px 0 2px;
 }
 
+.title-play-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.title-actions-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .title-play {
     display: inline-flex;
     align-items: center;
@@ -200,14 +212,44 @@
     outline: none;
 }
 
+.title-play,
+.title-action,
+.title-action-restart,
+.title-page-back,
+.rate-stars button,
+.title-rate-remove {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.title-play:focus,
+.title-play:focus-visible,
+.title-action:focus,
+.title-action:focus-visible,
+.title-action:active,
+.title-action-restart:focus,
+.title-action-restart:focus-visible {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    box-shadow: none !important;
+}
+
 .title-action .icon-on {
     display: none;
 }
 
-.title-action.is-on {
+.title-action.is-on,
+.title-action.is-copied {
     background: #ffffff;
     border-color: #ffffff;
     color: #09090b;
+}
+
+.title-action.is-on svg,
+.title-action.is-copied svg {
+    stroke: #09090b;
 }
 
 .title-action.is-on .icon-on {
@@ -313,6 +355,9 @@
     display: flex;
     justify-content: center;
     gap: 4px;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .rate-star {
@@ -357,6 +402,8 @@
     background: transparent;
     cursor: pointer;
     z-index: 1;
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
 }
 
 .rate-star-half.left {
@@ -368,9 +415,7 @@
 }
 
 .rate-star-half:focus-visible {
-    outline: 2px solid #ffffff;
-    outline-offset: -2px;
-    border-radius: 4px;
+    outline: none !important;
 }
 
 .title-rate-footer {
@@ -1224,8 +1269,8 @@
 @media (max-width: 768px) {
     /* On the top-left corner of the picture, under the pill */
     .title-page-back {
-        top: 76px;
-        left: 12px;
+        top: 78px;
+        left: max(16px, env(safe-area-inset-left, 0px));
         width: 42px;
         height: 42px;
     }
@@ -1258,19 +1303,45 @@
     }
 
     .title-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .title-play-group {
+        display: flex;
+        align-items: center;
         gap: 10px;
+        width: 100%;
     }
 
     .title-play {
-        flex: 1 1 100%;
+        flex: 1 1 auto;
         justify-content: center;
         min-height: 50px;
     }
 
+    .title-action-restart {
+        flex: 0 0 auto;
+        min-height: 50px;
+    }
+
+    .title-actions-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        width: 100%;
+        flex-wrap: nowrap;
+    }
+
     .title-rate-panel {
-        left: auto;
-        right: -8px;
-        transform: none;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        max-width: calc(100vw - 32px);
     }
 
     .title-overview {

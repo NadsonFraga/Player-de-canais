@@ -6,10 +6,10 @@
  * The card lives in the player stage (the element that goes fullscreen), outside Artplayer's box, so it shows in
  * fullscreen and keeps its own colors. Asked once per title per visit, and never for a title already rated.
  */
-import { escapeHtml } from '../core/sanitize.js?v=20261120_1409';
-import { showToast } from '../core/toast.js?v=20261120_1409';
-import { getLibraryState, setRating, setWatched } from '../core/library.js?v=20261120_1409';
-import { createRateStars, formatStars } from '../core/rateStars.js?v=20261120_1409';
+import { escapeHtml } from '../core/sanitize.js?v=20261123_1001';
+import { showToast } from '../core/toast.js?v=20261123_1001';
+import { getLibraryState, setRating, setWatched } from '../core/library.js?v=20261123_1001';
+import { createRateStars, formatStars } from '../core/rateStars.js?v=20261123_1001';
 
 const asked = new Set();
 
@@ -49,7 +49,21 @@ function showPrompt(kind, item, stage) {
     const stars = createRateStars({
         onPick: (value) => {
             setRating(kind, item, value);
-            card.remove();
+            card.classList.add('is-submitted');
+            card.innerHTML = `
+                <div class="rate-prompt-success">
+                    <div class="rate-prompt-success-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <p class="rate-prompt-title">Avaliação salva!</p>
+                    <p class="rate-prompt-hint">Você avaliou com <strong>${formatStars(value)} de 5 estrelas</strong></p>
+                </div>`;
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.95)';
+                setTimeout(() => card.remove(), 250);
+            }, 1500);
             showToast(`Nota salva: ${formatStars(value)} de 5 estrelas`);
         },
         onPreview: (value) => {

@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261120_1409';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261120_1409';
-import { showToast } from '../core/toast.js?v=20261120_1409';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261120_1409';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261120_1409';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261120_1409';
-import { formatClock } from '../core/resume.js?v=20261120_1409';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261120_1409';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261120_1409';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261120_1409';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261120_1409';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261120_1409';
-import { fetchTmdb } from '../core/tmdb.js?v=20261120_1409';
+import { store } from '../core/state.js?v=20261123_1001';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261123_1001';
+import { showToast } from '../core/toast.js?v=20261123_1001';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261123_1001';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261123_1001';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261123_1001';
+import { formatClock } from '../core/resume.js?v=20261123_1001';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261123_1001';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261123_1001';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261123_1001';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261123_1001';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261123_1001';
+import { fetchTmdb } from '../core/tmdb.js?v=20261123_1001';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -192,6 +192,11 @@ export function setupMobileOrientationLock(art) {
     art.on('resize', bindFsBtn);
 
     art.on('fullscreen', (isFullscreen) => {
+        const card = getActivePlayerCard(art);
+        if (card) {
+            card.classList.toggle('art-fullscreen-active', Boolean(isFullscreen));
+        }
+        document.body.classList.toggle('tvz-has-fullscreen', Boolean(isFullscreen));
         if (isFullscreen) {
             if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
                 try {
@@ -205,6 +210,13 @@ export function setupMobileOrientationLock(art) {
                     screen.orientation.unlock();
                 } catch (e) {}
             }
+        }
+    });
+
+    art.on('fullscreenWeb', (isFsWeb) => {
+        const card = getActivePlayerCard(art);
+        if (card) {
+            card.classList.toggle('art-fullscreen-active', Boolean(isFsWeb));
         }
     });
 }
@@ -254,8 +266,8 @@ function releaseVideoElement(video) {
 
 // Arrow keys and the mobile double tap skip this many seconds in movies, series and anime
 const NATIVE_SEEK_STEP_S = 10;
-// A double tap in the outer 40% on each side skips; the middle keeps play/pause
-const DOUBLE_TAP_SIDE_ZONE = 0.4;
+// A double tap in the outer 33% on each side skips; the middle keeps play/pause
+const DOUBLE_TAP_SIDE_ZONE = 0.33;
 const CHEVRON_ATTRS = 'width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
 const SEEK_FLASH_ICONS = {
     left: `<svg ${CHEVRON_ATTRS}><polyline points="15 18 9 12 15 6"></polyline></svg>`,
@@ -325,7 +337,6 @@ export function installDoubleTapSeek(art) {
     player.appendChild(flash);
     let hideTimer = null;
     const showFlash = (side, text) => {
-        // Static markup only (an icon and a number), never data from outside
         flash.innerHTML = side === 'left'
             ? `${SEEK_FLASH_ICONS.left}<span>${text}</span>`
             : `<span>${text}</span>${SEEK_FLASH_ICONS.right}`;
@@ -335,26 +346,68 @@ export function installDoubleTapSeek(art) {
         hideTimer = setTimeout(() => flash.classList.remove('is-visible'), 650);
     };
 
-    art.on('dblclick', (event) => {
-        if (!player.classList.contains('art-mobile') || !(art.duration > 0)) return;
-        // Taps on the control bar, menus and overlays are not skips
-        if (event && event.target && event.target.closest && event.target.closest('.art-bottom, .art-settings, .art-contextmenus, .art-info, .tvz-upnext')) return;
+    let lastTapTime = 0;
+    let lastTapX = 0;
+    let lastTapY = 0;
+    let singleTapTimer = null;
+
+    art._tvzCancelPendingTap = () => {
+        if (singleTapTimer) {
+            clearTimeout(singleTapTimer);
+            singleTapTimer = null;
+        }
+    };
+
+    const handleTap = (clientX, clientY, target) => {
+        if (!art.duration || art.duration <= 0) return;
+        if (target && target.closest && target.closest(
+            '.tvz-settings-panel, .tvz-subtitles-panel, .tvz-servers-panel, .series-player-drawer, ' +
+            '.tvz-settings-backdrop, .tvz-subtitles-backdrop, .tvz-servers-backdrop, ' +
+            '.art-controls, .art-bottom, .art-top, .movie-player-top-bar, .series-player-top-bar, ' +
+            '.tvz-side-card, .art-control, button, a, select, input'
+        )) {
+            return;
+        }
 
         const box = player.getBoundingClientRect();
-        const point = event && event.changedTouches ? event.changedTouches[0] : event;
-        const x = (point && Number.isFinite(point.clientX) ? point.clientX : box.left + box.width / 2) - box.left;
+        if (!box.width || !box.height) return;
+        const x = clientX - box.left;
+        const y = clientY - box.top;
         const zone = x / box.width;
+        const now = Date.now();
+        const timeDiff = now - lastTapTime;
+        const dist = Math.hypot(x - lastTapX, y - lastTapY);
 
-        if (zone <= DOUBLE_TAP_SIDE_ZONE) {
-            art.seek = Math.max(0, art.currentTime - NATIVE_SEEK_STEP_S);
-            showFlash('left', `- ${NATIVE_SEEK_STEP_S} s`);
-        } else if (zone >= 1 - DOUBLE_TAP_SIDE_ZONE) {
-            art.seek = Math.min(art.duration - 0.5, art.currentTime + NATIVE_SEEK_STEP_S);
-            showFlash('right', `+ ${NATIVE_SEEK_STEP_S} s`);
-        } else {
-            art.toggle();
+        if (timeDiff < 320 && dist < 70) {
+            // Consecutive tap inside double-tap threshold
+            if (zone <= DOUBLE_TAP_SIDE_ZONE) {
+                art._tvzCancelPendingTap();
+                art.seek = Math.max(0, art.currentTime - NATIVE_SEEK_STEP_S);
+                showFlash('left', `- ${NATIVE_SEEK_STEP_S} s`);
+                lastTapTime = 0;
+                return true;
+            } else if (zone >= 1 - DOUBLE_TAP_SIDE_ZONE) {
+                art._tvzCancelPendingTap();
+                art.seek = Math.min(art.duration - 0.5, art.currentTime + NATIVE_SEEK_STEP_S);
+                showFlash('right', `+ ${NATIVE_SEEK_STEP_S} s`);
+                lastTapTime = 0;
+                return true;
+            } else {
+                // Middle double tap: toggles play/pause
+                art._tvzCancelPendingTap();
+                art.toggle();
+                lastTapTime = 0;
+                return true;
+            }
         }
-    });
+
+        lastTapTime = now;
+        lastTapX = x;
+        lastTapY = y;
+        return false;
+    };
+
+    art._tvzHandleTapSeek = handleTap;
 }
 
 /**
@@ -1478,28 +1531,50 @@ export function formatPlayerTime(seconds) {
     return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
 }
 
-/** Toggles mobile time display between total duration and projected finish time ("Termina às HH:mm"). */
+/** Toggles time display mode: on mobile portrait, between total duration and projected finish time; on PC/landscape, between elapsed and remaining (YouTube countdown mode). */
 export function togglePlayerTimeDisplay(session) {
     if (!session || !session.art) return;
     const art = session.art;
     const timeEl = (art.controls && art.controls.time) || art.template?.$player?.querySelector('.art-control-time') || document.querySelector('.art-control-time');
+    const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches;
 
-    const currentMode = session.timeDisplayMode || (typeof localStorage !== 'undefined' && localStorage.getItem('tvz-mobile-time-mode')) || 'duration';
-    const nextMode = currentMode === 'end_time' ? 'duration' : 'end_time';
-    session.timeDisplayMode = nextMode;
-    try {
-        localStorage.setItem('tvz-mobile-time-mode', nextMode);
-    } catch (_) {}
+    if (isMobilePortrait) {
+        const showEndTime = getPlayerPrefs().show_end_time !== false;
+        const currentMode = session.timeDisplayMode || (typeof localStorage !== 'undefined' && localStorage.getItem('tvz-mobile-time-mode')) || (showEndTime ? 'end_time' : 'duration');
+        const nextMode = currentMode === 'end_time' ? 'duration' : 'end_time';
+        session.timeDisplayMode = nextMode;
+        try {
+            localStorage.setItem('tvz-mobile-time-mode', nextMode);
+        } catch (_) {}
 
-    const targetEl = timeEl?.querySelector('.tvz-time-target') || timeEl;
-    if (targetEl) {
-        targetEl.classList.add('tvz-time-fade');
-        setTimeout(() => {
+        const targetEl = timeEl?.querySelector('.tvz-time-target') || timeEl;
+        if (targetEl) {
+            targetEl.classList.add('tvz-time-fade');
+            setTimeout(() => {
+                updatePlayerEndTime(session);
+                targetEl.classList.remove('tvz-time-fade');
+            }, 120);
+        } else {
             updatePlayerEndTime(session);
-            targetEl.classList.remove('tvz-time-fade');
-        }, 120);
+        }
     } else {
-        updatePlayerEndTime(session);
+        const currentPcMode = session.pcTimeMode || (typeof localStorage !== 'undefined' && localStorage.getItem('tvz-pc-time-mode')) || 'elapsed';
+        const nextPcMode = currentPcMode === 'remaining' ? 'elapsed' : 'remaining';
+        session.pcTimeMode = nextPcMode;
+        try {
+            localStorage.setItem('tvz-pc-time-mode', nextPcMode);
+        } catch (_) {}
+
+        const curEl = timeEl?.querySelector('.tvz-time-current') || timeEl;
+        if (curEl) {
+            curEl.classList.add('tvz-time-fade');
+            setTimeout(() => {
+                updatePlayerEndTime(session);
+                curEl.classList.remove('tvz-time-fade');
+            }, 120);
+        } else {
+            updatePlayerEndTime(session);
+        }
     }
 }
 
@@ -1562,7 +1637,8 @@ export function updatePlayerEndTime(session) {
 
     const prefs = getPlayerPrefs();
     const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches;
-    const activeMode = session.timeDisplayMode || (typeof localStorage !== 'undefined' && localStorage.getItem('tvz-mobile-time-mode')) || 'duration';
+    const showEndTime = prefs.show_end_time !== false;
+    const activeMode = session.timeDisplayMode || (showEndTime ? 'end_time' : 'duration');
 
     let curEl = inner.querySelector('.tvz-time-current');
     let sepEl = inner.querySelector('.tvz-time-sep');
@@ -1570,7 +1646,7 @@ export function updatePlayerEndTime(session) {
     let endEl = inner.querySelector('.tvz-time-end');
 
     if (isMobilePortrait) {
-        // Mobile portrait: toggle between total duration and projected finish time
+        // Mobile portrait: toggle between total duration and projected finish time (defaults to finish time)
         if (endEl) {
             endEl.remove();
             endEl = null;
@@ -1581,25 +1657,32 @@ export function updatePlayerEndTime(session) {
             sepEl = inner.querySelector('.tvz-time-sep');
             targetEl = inner.querySelector('.tvz-time-target');
         }
-        const sepStr = activeMode === 'end_time' && endTimeStr ? ' • ' : ' / ';
-        const targetStr = activeMode === 'end_time' && endTimeStr ? endTimeStr : durStr;
+        const useEndTime = showEndTime && activeMode !== 'duration' && Boolean(endTimeStr);
+        const sepStr = useEndTime ? ' • ' : ' / ';
+        const targetStr = useEndTime ? endTimeStr : durStr;
 
         if (curEl.textContent !== curStr) curEl.textContent = curStr;
         if (sepEl.textContent !== sepStr) sepEl.textContent = sepStr;
         if (targetEl.textContent !== targetStr) targetEl.textContent = targetStr;
     } else {
-        // Desktop / Landscape: duration + optional finish time
+        // Desktop / Landscape: duration + optional finish time, with toggleable elapsed / remaining countdown mode
         if (!curEl || !sepEl || !targetEl) {
             inner.innerHTML = '<span class="tvz-time-current"></span><span class="tvz-time-sep"> / </span><span class="tvz-time-target"></span>';
             curEl = inner.querySelector('.tvz-time-current');
             sepEl = inner.querySelector('.tvz-time-sep');
             targetEl = inner.querySelector('.tvz-time-target');
         }
-        if (curEl.textContent !== curStr) curEl.textContent = curStr;
+        const pcMode = session.pcTimeMode || (typeof localStorage !== 'undefined' && localStorage.getItem('tvz-pc-time-mode')) || 'elapsed';
+        let displayCurStr = curStr;
+        if (pcMode === 'remaining' && Number.isFinite(duration) && duration > 0) {
+            const remSeconds = Math.max(0, duration - current);
+            displayCurStr = `-${formatPlayerTime(remSeconds)}`;
+        }
+
+        if (curEl.textContent !== displayCurStr) curEl.textContent = displayCurStr;
         if (sepEl.textContent !== ' / ') sepEl.textContent = ' / ';
         if (targetEl.textContent !== durStr) targetEl.textContent = durStr;
 
-        const showEndTime = prefs.show_end_time !== false;
         if (showEndTime && endTimeStr) {
             const endLabel = ` • ${endTimeStr}`;
             if (!endEl) {
@@ -1734,6 +1817,43 @@ function failoverNativeSource(session, reason) {
         session.slowStartIndex = null;
     }
     mountNativeSource(session, nextIdx, { startTime: resumeAt });
+}
+
+const STATE_PLAY_SVG = '<svg width="56" height="56" viewBox="0 0 24 24" fill="#ffffff" style="filter: drop-shadow(0 2px 10px rgba(0,0,0,0.85));"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+const STATE_PAUSE_SVG = '<svg width="56" height="56" viewBox="0 0 24 24" fill="#ffffff" style="filter: drop-shadow(0 2px 10px rgba(0,0,0,0.85));"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>';
+
+export function getActivePlayerCard(art) {
+    if (art && art.template && art.template.$player) {
+        const direct = art.template.$player.closest('.player-page-card');
+        if (direct) return direct;
+    }
+    const seriesView = document.getElementById('series-player-view');
+    if (seriesView && !seriesView.classList.contains('hidden')) {
+        const card = seriesView.querySelector('.player-page-card');
+        if (card) return card;
+    }
+    const movieView = document.getElementById('movie-player-view');
+    if (movieView && !movieView.classList.contains('hidden')) {
+        const card = movieView.querySelector('.player-page-card');
+        if (card) return card;
+    }
+    return document.querySelector('.player-page-card');
+}
+
+export function updateCenterStateIcon(art) {
+    if (!art || !art.template || !art.template.$player) return;
+    const stateEl = art.template.$player.querySelector('.art-state');
+    if (!stateEl) return;
+    const card = getActivePlayerCard(art);
+    if (card && card.classList.contains('is-loading')) {
+        stateEl.style.setProperty('display', 'none', 'important');
+        return;
+    }
+    const iconWrap = stateEl.querySelector('.art-icon-state') || stateEl;
+    const isPaused = Boolean(art.video && art.video.paused);
+    iconWrap.innerHTML = isPaused ? STATE_PLAY_SVG : STATE_PAUSE_SVG;
+    stateEl.setAttribute('aria-label', isPaused ? 'Reproduzir' : 'Pausar');
+    stateEl.setAttribute('title', isPaused ? 'Reproduzir' : 'Pausar');
 }
 
 /**
@@ -2123,6 +2243,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             installFitSetting(art);
             installCastSetting(session);
             installSubtitleControl(session);
+            installSubtitleSanitizer(art);
             installTvzTimeControl(session);
             routeFullscreenToStage(art);
             applyPlaybackPrefs(art);
@@ -2132,55 +2253,9 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
 
             createSettingsFlyout(session);
 
-            // Canvas Click Handler: Clicking the video reliably toggles playback (Play/Pause)
-            if (art.template && art.template.$player) {
-                const handleCanvasClick = (e) => {
-                    if (e.button !== 0) return;
-                    const isStateIcon = Boolean(e.target && e.target.closest && e.target.closest('.art-state'));
-                    if (!isStateIcon && e.target && e.target.closest && e.target.closest(
-                        '.tvz-settings-panel, .tvz-subtitles-panel, .tvz-servers-panel, .series-player-drawer, ' +
-                        '.art-controls, .art-bottom, .art-top, .movie-player-top-bar, .series-player-top-bar, ' +
-                        '.tvz-side-card, .art-control, button, a, select, input'
-                    )) return;
-
-                    // If any flyout/drawer is open, clicking canvas closes it
-                    if (session.settingsFlyoutPanel?.classList.contains('is-open') ||
-                        session.subtitlesFlyoutPanel?.classList.contains('is-open') ||
-                        document.getElementById('movie-servers-flyout-panel')?.classList.contains('is-open') ||
-                        document.getElementById('series-servers-flyout-panel')?.classList.contains('is-open') ||
-                        !document.getElementById('series-player-drawer')?.classList.contains('hidden')) {
-                        window.dispatchEvent(new CustomEvent('tvzinha:closeFlyouts'));
-                        return;
-                    }
-
-                    // Mobile portrait/touch tap toggles controls visibility smoothly
-                    if (art.template.$player.classList.contains('art-mobile')) {
-                        art.controls.show = !art.controls.show;
-                        if (art.controls.show) scheduleControlsHide(3500);
-                        return;
-                    }
-
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    if (art.video) {
-                        if (art.video.paused) {
-                            art.play();
-                        } else {
-                            art.pause();
-                        }
-                    } else {
-                        art.toggle();
-                    }
-                };
-
-                art.template.$mask?.addEventListener('click', handleCanvasClick, true);
-                art.template.$player.querySelector('.art-state')?.addEventListener('click', handleCanvasClick, true);
-            }
-
             // Reliable auto-hide controls: hides controls on inactivity or when mouse leaves window
             let controlsHideTimer = null;
-            const scheduleControlsHide = (delayMs = 2800) => {
+            const scheduleControlsHide = (delayMs = 4000) => {
                 clearTimeout(controlsHideTimer);
                 if (!art.video || art.video.paused) return;
                 if (session.settingsFlyoutPanel?.classList.contains('is-open') ||
@@ -2208,10 +2283,196 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                 }, delayMs);
             };
 
-            art.template.$player?.addEventListener('mousemove', () => scheduleControlsHide(2800));
-            art.template.$player?.addEventListener('mouseleave', () => scheduleControlsHide(400));
-            document.documentElement.addEventListener('mouseleave', () => scheduleControlsHide(200));
-            window.addEventListener('blur', () => scheduleControlsHide(200));
+            // Canvas Click Handler: YouTube mobile style play/pause & HUD toggle
+            if (art.template && art.template.$player) {
+                const player = art.template.$player;
+
+                const showMobileControls = () => {
+                    player.classList.remove('art-clean-pause');
+                    player.classList.add('art-control-show', 'art-hover');
+                    const card = getActivePlayerCard(art);
+                    if (card) card.classList.add('is-ui-visible');
+                    art.controls.show = true;
+                    updateCenterStateIcon(art);
+                    if (!art.video || !art.video.paused) {
+                        scheduleControlsHide(4000);
+                    }
+                };
+
+                const hideMobileControls = (cleanPause = false) => {
+                    art.controls.show = false;
+                    player.classList.remove('art-hover', 'art-control-show');
+                    const card = getActivePlayerCard(art);
+                    if (card) card.classList.remove('is-ui-visible');
+                    if (cleanPause) {
+                        player.classList.add('art-clean-pause');
+                    } else {
+                        player.classList.remove('art-clean-pause');
+                    }
+                    updateCenterStateIcon(art);
+                };
+
+                const handleCanvasClick = (e) => {
+                    if (e.button !== 0) return;
+
+                    // A) Interactive player buttons, flyouts, drawers, or top/bottom bars:
+                    // NEVER intercept their clicks!
+                    if (e.target && e.target.closest && e.target.closest(
+                        '.tvz-settings-panel, .tvz-subtitles-panel, .tvz-servers-panel, .series-player-drawer, ' +
+                        '.tvz-settings-backdrop, .tvz-subtitles-backdrop, .tvz-servers-backdrop, ' +
+                        '.art-controls, .art-bottom, .art-top, .movie-player-top-bar, .series-player-top-bar, ' +
+                        '.tvz-side-card, .art-control, button, a, select, input'
+                    )) {
+                        return;
+                    }
+
+                    // B) If any flyout/drawer is open, clicking empty canvas closes it
+                    if (session.settingsFlyoutPanel?.classList.contains('is-open') ||
+                        session.subtitlesFlyoutPanel?.classList.contains('is-open') ||
+                        document.getElementById('movie-servers-flyout-panel')?.classList.contains('is-open') ||
+                        document.getElementById('series-servers-flyout-panel')?.classList.contains('is-open') ||
+                        !document.getElementById('series-player-drawer')?.classList.contains('hidden')) {
+                        window.dispatchEvent(new CustomEvent('tvzinha:closeFlyouts'));
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        return;
+                    }
+
+                    // Intercept and stop propagation so Artplayer's internal bubble proxy on $video does not conflict
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+
+                    const isPaused = Boolean(art.video && art.video.paused);
+                    const isMobile = player.classList.contains('art-mobile') || window.innerWidth <= 768;
+
+                    // PC / Desktop: clicking the video canvas or center toggles play/pause (standard desktop player behavior)
+                    if (!isMobile) {
+                        if (isPaused) {
+                            art.play();
+                            scheduleControlsHide(3000);
+                        } else {
+                            clearTimeout(controlsHideTimer);
+                            controlsHideTimer = null;
+                            art.pause();
+                        }
+                        updateCenterStateIcon(art);
+                        return;
+                    }
+
+                    // Mobile YouTube-style interaction:
+                    const box = player.getBoundingClientRect();
+                    const clickX = Number.isFinite(e.clientX) ? e.clientX : (box.left + box.width / 2);
+                    const clickY = Number.isFinite(e.clientY) ? e.clientY : (box.top + box.height / 2);
+                    const x = clickX - box.left;
+                    const y = clickY - box.top;
+                    const zoneX = x / (box.width || 1);
+                    const zoneY = y / (box.height || 1);
+                    const isCenterArea = (zoneX >= 0.30 && zoneX <= 0.70 && zoneY >= 0.18 && zoneY <= 0.82);
+                    const isStateIcon = Boolean(e.target && e.target.closest && e.target.closest('.art-state'));
+                    const isSideZone = (zoneX <= DOUBLE_TAP_SIDE_ZONE || zoneX >= 1 - DOUBLE_TAP_SIDE_ZONE);
+
+                    // 1. Lateral double tap to seek check (+/- 10s)
+                    if (typeof art._tvzHandleTapSeek === 'function' && clickX && clickY) {
+                        const isDoubleSeek = art._tvzHandleTapSeek(clickX, clickY, e.target);
+                        if (isDoubleSeek) {
+                            return;
+                        }
+                    }
+
+                    const controlsShowing = Boolean(art.controls && art.controls.show && player.classList.contains('art-control-show'));
+                    const isCleanPause = player.classList.contains('art-clean-pause');
+
+                    // 2. Video is PAUSED:
+                    if (isPaused) {
+                        if (typeof art._tvzCancelPendingTap === 'function') art._tvzCancelPendingTap();
+                        if (isStateIcon || isCenterArea) {
+                            // Tap in middle: UNPAUSE & PLAY
+                            art.play();
+                            showMobileControls();
+                            scheduleControlsHide(3500);
+                        } else if (!isCleanPause && controlsShowing) {
+                            // Tap outside middle while controls showing: HIDE all controls for clean screenshot
+                            hideMobileControls(true);
+                        } else {
+                            // Tap outside middle while clean-paused: RESTORE controls
+                            showMobileControls();
+                            clearTimeout(controlsHideTimer);
+                            controlsHideTimer = null;
+                        }
+                        return;
+                    }
+
+                    // 3. Video is PLAYING and controls ARE showing:
+                    if (controlsShowing) {
+                        if (typeof art._tvzCancelPendingTap === 'function') art._tvzCancelPendingTap();
+                        if (isStateIcon || isCenterArea) {
+                            // Tap center pause button: PAUSE video
+                            clearTimeout(controlsHideTimer);
+                            controlsHideTimer = null;
+                            art.pause();
+                        } else {
+                            // Tap outside center: HIDE controls immediately
+                            hideMobileControls(false);
+                        }
+                        return;
+                    }
+
+                    // 4. Video is PLAYING and controls are HIDDEN:
+                    // Single tap shows controls (does NOT pause on the first tap!)
+                    if (isSideZone) {
+                        if (typeof art._tvzCancelPendingTap === 'function') art._tvzCancelPendingTap();
+                        const timer = setTimeout(() => {
+                            showMobileControls();
+                        }, 220);
+                        art._tvzCancelPendingTap = () => clearTimeout(timer);
+                    } else {
+                        showMobileControls();
+                    }
+                };
+
+                player.addEventListener('click', handleCanvasClick, { capture: true });
+
+                art.on('destroy', () => {
+                    player.removeEventListener('click', handleCanvasClick, { capture: true });
+                });
+
+                art.on('play', () => {
+                    art.template?.$player?.classList.remove('art-clean-pause', 'art-is-paused');
+                    updateCenterStateIcon(art);
+                });
+                art.on('video:play', () => {
+                    art.template?.$player?.classList.remove('art-clean-pause', 'art-is-paused');
+                    updateCenterStateIcon(art);
+                });
+                art.on('control', (visible) => {
+                    const card = getActivePlayerCard(art);
+                    if (card) {
+                        card.classList.toggle('is-ui-visible', Boolean(visible));
+                    }
+                    if (art.template && art.template.$player) {
+                        art.template.$player.classList.toggle('art-control-show', Boolean(visible));
+                        if (!visible) {
+                            art.template.$player.classList.remove('art-hover');
+                        }
+                    }
+                    updateCenterStateIcon(art);
+                });
+            }
+
+            art.template.$player?.addEventListener('mousemove', () => {
+                if (!art.template?.$player?.classList.contains('art-mobile')) scheduleControlsHide(2800);
+            });
+            art.template.$player?.addEventListener('mouseleave', () => {
+                if (!art.template?.$player?.classList.contains('art-mobile')) scheduleControlsHide(1000);
+            });
+            document.documentElement.addEventListener('mouseleave', () => {
+                if (!art.template?.$player?.classList.contains('art-mobile')) scheduleControlsHide(400);
+            });
+            window.addEventListener('blur', () => {
+                if (!art.template?.$player?.classList.contains('art-mobile')) scheduleControlsHide(400);
+            });
 
             const onCloseAllFlyouts = () => {
                 if (session.settingsFlyoutPanel) toggleSettingsFlyout(session, false);
@@ -2223,12 +2484,11 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                 window.removeEventListener('tvzinha:closeFlyouts', onCloseAllFlyouts);
             });
 
-            art.on('control', (visible) => {
-                const card = document.querySelector('.player-page-card.is-playing') || (art.template && art.template.$player && art.template.$player.closest('.player-page-card'));
-                if (card) {
-                    card.classList.toggle('is-ui-visible', Boolean(visible));
-                }
-            });
+            const initialCard = getActivePlayerCard(art);
+            if (initialCard) {
+                initialCard.classList.add('is-ui-visible');
+            }
+            updateCenterStateIcon(art);
 
             const playPromise = art.play();
             if (playPromise && typeof playPromise.catch === 'function') {
@@ -2266,16 +2526,28 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
         });
 
         const syncPauseUi = (paused) => {
-            const card = (art.template && art.template.$player && art.template.$player.closest('.player-page-card')) || document.querySelector('.player-page-card');
+            const card = getActivePlayerCard(art);
             if (card) {
                 card.classList.toggle('is-paused', Boolean(paused));
             }
-            if (paused) {
-                art.controls.show = true;
-                if (art.template?.$player) {
-                    art.template.$player.classList.add('art-hover');
+            if (art.template && art.template.$player) {
+                art.template.$player.classList.toggle('art-is-paused', Boolean(paused));
+                if (!paused) {
+                    art.template.$player.classList.remove('art-clean-pause', 'art-hover');
                 }
             }
+            if (paused) {
+                clearTimeout(controlsHideTimer);
+                controlsHideTimer = null;
+                art.controls.show = true;
+                if (art.template?.$player) {
+                    art.template.$player.classList.add('art-control-show');
+                }
+                if (card) {
+                    card.classList.add('is-ui-visible');
+                }
+            }
+            updateCenterStateIcon(art);
         };
 
         art.on('video:canplay', markStreamSuccess);
@@ -4392,28 +4664,43 @@ export function disableEmbeddedTextTracks(art) {
     } catch (e) {}
 }
 
+function cleanSubStr(str) {
+    if (!str) return '';
+    return str
+        .replace(/\\N/g, '<br>')
+        .replace(/\{[^}]*\}/g, '')
+        .replace(/&lt;(?!\/?(br)\b)[^&>]*&gt;/gi, '')
+        .replace(/<(?!\/?(br)\b)[^>]+>/gi, '')
+        .replace(/&lt;\/?(?:[a-zA-Z][^&>]*|i|b|u)&gt;/gi, '')
+        .replace(/<\/?[a-zA-Z][^>]*>/gi, '')
+        .trim();
+}
+
 function installSubtitleSanitizer(art) {
     patchArtplayerSubtitleEngine(art);
     if (!art || !art.template || !art.template.$subtitle || art._tvzSubSanitizer) return;
     art._tvzSubSanitizer = true;
 
+    let isSanitizing = false;
     function sanitizeSubtitleDom(el) {
-        if (!el) return;
-        const lines = el.querySelectorAll('.art-subtitle-line');
-        if (lines && lines.length > 0) {
-            lines.forEach(line => {
-                if (line.innerHTML && (line.innerHTML.includes('{') || line.innerHTML.includes('\\N'))) {
-                    line.innerHTML = line.innerHTML
-                        .replace(/\\N/g, '<br>')
-                        .replace(/\{[^}]*\}/g, '')
-                        .trim();
-                }
-            });
-        } else if (el.innerHTML && (el.innerHTML.includes('{') || el.innerHTML.includes('\\N'))) {
-            el.innerHTML = el.innerHTML
-                .replace(/\\N/g, '<br>')
-                .replace(/\{[^}]*\}/g, '')
-                .trim();
+        if (!el || isSanitizing) return;
+        isSanitizing = true;
+        try {
+            const nodes = el.querySelectorAll('p, span, .art-subtitle-line');
+            if (nodes && nodes.length > 0) {
+                nodes.forEach(node => {
+                    const text = node.innerHTML || '';
+                    if (text && (text.includes('{') || text.includes('\\N') || text.includes('<') || text.includes('&lt;'))) {
+                        const cleaned = cleanSubStr(text);
+                        if (cleaned !== text) node.innerHTML = cleaned;
+                    }
+                });
+            } else if (el.innerHTML && (el.innerHTML.includes('{') || el.innerHTML.includes('\\N') || el.innerHTML.includes('<') || el.innerHTML.includes('&lt;'))) {
+                const cleaned = cleanSubStr(el.innerHTML);
+                if (cleaned !== el.innerHTML) el.innerHTML = cleaned;
+            }
+        } finally {
+            isSanitizing = false;
         }
     }
 
@@ -4723,7 +5010,14 @@ function renderSettingsFlyout(session) {
         });
 
         panel.querySelector('.tvz-end-time-toggle-input')?.addEventListener('change', (e) => {
-            setPlayerPref('show_end_time', e.target.checked);
+            const enabled = e.target.checked;
+            setPlayerPref('show_end_time', enabled);
+            if (session) {
+                session.timeDisplayMode = enabled ? 'end_time' : 'duration';
+            }
+            try {
+                localStorage.setItem('tvz-mobile-time-mode', enabled ? 'end_time' : 'duration');
+            } catch (_) {}
             updatePlayerEndTime(session);
         });
 
