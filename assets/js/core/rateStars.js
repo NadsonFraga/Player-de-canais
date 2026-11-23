@@ -45,7 +45,49 @@ export function createRateStars({ value = 0, onPick = null, onPreview = null } =
     };
     const halfOf = (e) => e.target.closest && e.target.closest('.rate-star-half');
 
+    let isTouching = false;
+    let previewVal = current;
+    let lastTouchTime = 0;
+
+    const valFromTouch = (touch) => {
+        const rect = element.getBoundingClientRect();
+        if (!rect.width) return current;
+        const relX = touch.clientX - rect.left;
+        const pct = Math.max(0, Math.min(1, relX / rect.width));
+        return Math.max(1, Math.min(10, Math.ceil(pct * 10)));
+    };
+
+    element.addEventListener('touchstart', (e) => {
+        if (!e.touches || !e.touches[0]) return;
+        isTouching = true;
+        previewVal = valFromTouch(e.touches[0]);
+        paint(previewVal);
+    }, { passive: true });
+
+    element.addEventListener('touchmove', (e) => {
+        if (!isTouching || !e.touches || !e.touches[0]) return;
+        if (e.cancelable) e.preventDefault();
+        previewVal = valFromTouch(e.touches[0]);
+        paint(previewVal);
+    }, { passive: false });
+
+    element.addEventListener('touchend', (e) => {
+        if (!isTouching) return;
+        isTouching = false;
+        lastTouchTime = Date.now();
+        current = previewVal;
+        paint(current);
+        if (typeof onPick === 'function') onPick(current);
+    });
+
+    element.addEventListener('touchcancel', () => {
+        if (!isTouching) return;
+        isTouching = false;
+        paint(current);
+    });
+
     element.addEventListener('click', (e) => {
+        if (Date.now() - lastTouchTime < 400) return;
         const half = halfOf(e);
         if (!half) return;
         e.stopPropagation();
@@ -54,6 +96,7 @@ export function createRateStars({ value = 0, onPick = null, onPreview = null } =
         if (typeof onPick === 'function') onPick(current);
     });
     element.addEventListener('mouseover', (e) => {
+        if (isTouching) return;
         const half = halfOf(e);
         if (half) paint(Number(half.dataset.value));
     });
@@ -61,9 +104,11 @@ export function createRateStars({ value = 0, onPick = null, onPreview = null } =
         const half = halfOf(e);
         if (half) paint(Number(half.dataset.value));
     });
-    element.addEventListener('mouseleave', () => paint(current));
+    element.addEventListener('mouseleave', () => {
+        if (!isTouching) paint(current);
+    });
     element.addEventListener('focusout', (e) => {
-        if (!element.contains(e.relatedTarget)) paint(current);
+        if (!element.contains(e.relatedTarget) && !isTouching) paint(current);
     });
     paint(current);
 

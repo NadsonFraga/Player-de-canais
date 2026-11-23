@@ -12,27 +12,30 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261118_1124';
-import { showToast } from '../core/toast.js?v=20261118_1124';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1124';
-import { buildFeedRows } from '../core/feedRows.js?v=20261118_1124';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1124';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1124';
-import { getUiSvg } from '../core/icons.js?v=20261118_1124';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1124';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1124';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1124';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1124';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1124';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261118_1124';
-import { resumeStartTime } from '../core/resume.js?v=20261118_1124';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1124';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1124';
+} from '../core/constants.js?v=20261123_1005';
+import { showToast } from '../core/toast.js?v=20261123_1005';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261123_1005';
+import { buildFeedRows } from '../core/feedRows.js?v=20261123_1005';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261123_1005';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261123_1005';
+import { getUiSvg } from '../core/icons.js?v=20261123_1005';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261123_1005';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261123_1005';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261123_1005';
+import { fetchTmdb } from '../core/tmdb.js?v=20261123_1005';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261123_1005';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261123_1005';
+import { resumeStartTime } from '../core/resume.js?v=20261123_1005';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261123_1005';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261123_1005';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261123_1005';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261123_1005';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;
 let currentSelectedMovie = null;
 let activeMovieServer = null;
+let activeMovieAudioPreference = null;
 let movieSearchDebounceTimer = null;
 
 let moviePlaybackSessionId = 0;
@@ -40,6 +43,11 @@ let pendingMovieIframeTimer = null;
 let isMoviePlayerSetup = false;
 
 if (typeof window !== 'undefined') {
+    window.addEventListener('tvzinha:audioChanged', (e) => {
+        if (e.detail && e.detail.audioMode) {
+            activeMovieAudioPreference = e.detail.audioMode;
+        }
+    });
     window.addEventListener('tvzinha:teardownMedia', () => {
         moviePlaybackSessionId++;
         if (pendingMovieIframeTimer) {
@@ -51,6 +59,8 @@ if (typeof window !== 'undefined') {
 }
 
 function getOrCreateMovieIframe() {
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (playerCard) playerCard.classList.add('is-iframe');
     let iframe = document.getElementById("movie-modal-iframe");
     if (!iframe) {
         const stage = document.querySelector(".movie-player-stage");
@@ -76,6 +86,8 @@ function getOrCreateMovieIframe() {
 }
 
 function removeMovieIframe() {
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (playerCard) playerCard.classList.remove('is-iframe');
     const iframe = document.getElementById("movie-modal-iframe");
     if (iframe) {
         iframe.src = "";
@@ -1156,6 +1168,8 @@ export function setupMoviePlayer() {
     const btnReload = document.getElementById("btn-reload-movie-player");
     const btnClosePlayer = document.getElementById("btn-close-movie-player");
     const btnExitPlayer = document.getElementById("btn-exit-movie-player");
+    const btnServersToggle = document.getElementById("btn-movie-servers-toggle");
+    const backdrop = document.getElementById("movie-servers-backdrop");
 
     if (btnReload) {
         btnReload.addEventListener("click", () => {
@@ -1164,6 +1178,36 @@ export function setupMoviePlayer() {
             }
         });
     }
+
+    if (btnServersToggle) {
+        btnServersToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleMovieServersFlyout();
+        });
+    }
+
+    if (backdrop) {
+        ['pointerdown', 'touchstart', 'click'].forEach(evt => {
+            backdrop.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleMovieServersFlyout(false);
+            }, { passive: false });
+        });
+    }
+
+    document.addEventListener('pointerdown', (e) => {
+        const panel = document.getElementById("movie-servers-flyout-panel");
+        if (panel && panel.classList.contains('is-open')) {
+            if (!panel.contains(e.target) && !e.target.closest('#btn-movie-servers-toggle') && !e.target.closest('.btn-error-server-switch') && !e.target.closest('.tvz-btn-error-primary')) {
+                toggleMovieServersFlyout(false);
+            }
+        }
+        const ratePanel = document.getElementById("movie-mobile-rate-panel");
+        if (ratePanel && !ratePanel.classList.contains('hidden') && !e.target.closest(".title-rate-wrap")) {
+            closeMovieRatePanel();
+        }
+    });
 
     // Back: to the movie's title page
     if (btnClosePlayer) btnClosePlayer.addEventListener("click", () => stopMoviePlayer());
@@ -1188,14 +1232,61 @@ export function updateMovieObraCard(movie) {
     const genresEl = document.getElementById("movie-obra-genres");
     const overviewEl = document.getElementById("movie-obra-overview");
 
-    const movieTitle = movie.title || movie.name || 'Filme';
-    if (titleEl) titleEl.textContent = movieTitle;
+    const title = movie.title || movie.name || '';
+    if (titleEl) titleEl.textContent = title;
 
-    const posterPath = movie.poster_path || movie.backdrop_path;
+    const titleTop = document.getElementById("movie-player-title-top");
+    if (titleTop) titleTop.textContent = title;
+
+    const thumbTop = document.getElementById("movie-player-thumb-top");
+    if (thumbTop) {
+        if (movie.poster_path) {
+            thumbTop.src = `${TMDB_IMG_W500}${movie.poster_path}`;
+            thumbTop.alt = title;
+            thumbTop.classList.remove("hidden");
+        } else {
+            thumbTop.classList.add("hidden");
+        }
+    }
+
+    const ratingBadge = document.getElementById("movie-player-rating-badge");
+    if (ratingBadge) {
+        const rating = Number(movie.vote_average);
+        if (!isNaN(rating) && rating > 0) {
+            ratingBadge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${rating.toFixed(1)}`;
+            ratingBadge.classList.remove("hidden");
+        } else {
+            ratingBadge.classList.add("hidden");
+        }
+    }
+
+    const yearBadge = document.getElementById("movie-player-year-badge");
+    if (yearBadge) {
+        const dateStr = movie.release_date || movie.first_air_date || '';
+        const year = dateStr.slice(0, 4);
+        if (year) {
+            yearBadge.textContent = year;
+            yearBadge.classList.remove("hidden");
+        } else {
+            yearBadge.classList.add("hidden");
+        }
+    }
+
+    const certBadge = document.getElementById("movie-player-cert-badge");
+    if (certBadge) {
+        const cert = movie.certification || movie.age_rating || '';
+        if (cert) {
+            certBadge.textContent = cert;
+            certBadge.classList.remove("hidden");
+        } else {
+            certBadge.classList.add("hidden");
+        }
+    }
+
     if (posterImg) {
-        if (posterPath) {
-            posterImg.src = `${TMDB_IMG_W500}${posterPath}`;
-            posterImg.alt = movieTitle;
+        if (movie.poster_path) {
+            posterImg.src = `${TMDB_IMG_W500}${movie.poster_path}`;
+            posterImg.alt = title;
             posterImg.style.display = '';
         } else {
             posterImg.removeAttribute('src');
@@ -1243,42 +1334,389 @@ export function updateMovieObraCard(movie) {
         } else if (Array.isArray(movie.genre_ids)) {
             genreNames = movie.genre_ids.map(id => TMDB_GENRES[id]).filter(Boolean);
         }
-        genresEl.textContent = genreNames.slice(0, 3).join(' • ');
+        genresEl.textContent = genreNames.slice(0, 3).join(', ');
     }
 
     if (overviewEl) {
         overviewEl.textContent = movie.overview || '';
     }
+
+    // --- Mobile Vertical Hub Section Population ---
+    const mobTitle = document.getElementById("movie-mobile-title");
+    const mobLogo = document.getElementById("movie-mobile-logo");
+    if (mobTitle) mobTitle.textContent = title;
+
+    const titlePageLogo = document.getElementById("title-logo");
+    const logoUrl = movie.logo_url || (titlePageLogo && !titlePageLogo.classList.contains("hidden") && titlePageLogo.getAttribute("src"));
+    if (mobLogo) {
+        if (logoUrl) {
+            mobLogo.src = logoUrl;
+            mobLogo.alt = title;
+            mobLogo.onload = () => {
+                mobLogo.classList.remove("hidden");
+                if (mobTitle) mobTitle.classList.add("sr-only");
+            };
+            mobLogo.onerror = () => {
+                mobLogo.classList.add("hidden");
+                if (mobTitle) mobTitle.classList.remove("sr-only");
+            };
+            mobLogo.classList.remove("hidden");
+            if (mobTitle) mobTitle.classList.add("sr-only");
+        } else {
+            mobLogo.classList.add("hidden");
+            if (mobTitle) mobTitle.classList.remove("sr-only");
+        }
+    }
+
+    // Render genres with middle dots (matching title-genres)
+    const mobGenres = document.getElementById("movie-mobile-genres");
+    if (mobGenres) {
+        let genreNames = [];
+        if (Array.isArray(movie.genres) && movie.genres.length > 0) {
+            genreNames = movie.genres.slice(0, 3).map(g => typeof g === 'object' ? (g.name || '') : String(g)).filter(Boolean);
+        } else if (movie.genre_ids) {
+            genreNames = (movie.genre_ids || []).slice(0, 3).map(id => TMDB_GENRES[id] || '').filter(Boolean);
+        } else if (movie.genre) {
+            genreNames = String(movie.genre).split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
+        }
+        mobGenres.innerHTML = genreNames.map(g => `<span>${escapeHtml(g)}</span>`).join('');
+    }
+
+    const renderMobMetaRow = (m) => {
+        const mobMetaRow = document.getElementById("movie-mobile-meta-row");
+        if (!mobMetaRow) return;
+        const parts = [];
+        const dateStr = m.release_date || m.first_air_date || '';
+        const year = dateStr.slice(0, 4);
+        if (year) parts.push(`<span>${escapeHtml(year)}</span>`);
+
+        const total = Number(m.runtime) || 0;
+        if (total > 0) {
+            const h = Math.floor(total / 60);
+            const min = total % 60;
+            parts.push(`<span>${h > 0 ? `${h}h ${String(min).padStart(2, '0')}m` : `${min}m`}</span>`);
+        }
+
+        const br = ((m.release_dates && m.release_dates.results) || []).find(r => r.iso_3166_1 === 'BR');
+        const found = br && (br.release_dates || []).find(d => d.certification);
+        const cert = (found && found.certification) || m.certification || m.age_rating || '';
+        if (cert) {
+            const cls = cert === 'L' ? 'is-free' : `is-${escapeAttr(cert)}`;
+            parts.push(`<span class="title-age ${cls}" title="Classificação indicativa">${escapeHtml(cert)}</span>`);
+        }
+
+        const rating = Number(m.vote_average);
+        if (!isNaN(rating) && rating > 0) {
+            parts.push(`<span class="title-score">${starSvg(true)}${escapeHtml(rating.toFixed(1))}</span>`);
+        }
+        mobMetaRow.innerHTML = parts.join('');
+    };
+    renderMobMetaRow(movie);
+
+    const mobCrew = document.getElementById("movie-mobile-crew");
+    if (mobCrew) {
+        const crewList = (movie.credits && movie.credits.crew) || [];
+        const director = movie.director || (crewList.find(c => c.job === 'Director')?.name);
+        if (director) {
+            mobCrew.innerHTML = `<span class="title-credit-label">Direção:</span> <strong>${escapeHtml(director)}</strong>`;
+            mobCrew.classList.remove("hidden");
+        } else {
+            mobCrew.innerHTML = '';
+            mobCrew.classList.add("hidden");
+        }
+    }
+
+    // If runtime, credits, or release dates are missing, fetch in the background
+    if ((!movie.runtime || !movie.credits || !movie.release_dates) && movie.id) {
+        fetchTmdb(`movie/${movie.id}?language=pt-BR&append_to_response=credits,release_dates`).then(details => {
+            if (details && currentSelectedMovie && currentSelectedMovie.id === movie.id) {
+                currentSelectedMovie = { ...currentSelectedMovie, ...details };
+                renderMobMetaRow(currentSelectedMovie);
+                if (mobCrew && details.credits && details.credits.crew) {
+                    const dir = details.credits.crew.find(c => c.job === 'Director')?.name;
+                    if (dir) {
+                        mobCrew.innerHTML = `<span class="title-credit-label">Direção:</span> <strong>${escapeHtml(dir)}</strong>`;
+                        mobCrew.classList.remove("hidden");
+                    }
+                }
+            }
+        }).catch(() => {});
+    }
+
+    const mobOverview = document.getElementById("movie-mobile-overview");
+    if (mobOverview) {
+        mobOverview.textContent = movie.overview || 'Sem sinopse disponível.';
+        if (!mobOverview._hasToggle) {
+            mobOverview._hasToggle = true;
+            mobOverview.addEventListener("click", () => mobOverview.classList.toggle("is-expanded"));
+        }
+    }
+
+    setupMobileMovieActions(movie);
 }
 
-/** Renders quick server switching chips directly in the loader overlay. */
-function renderMovieLoaderServers(activeServerId) {
-    const container = document.getElementById("movie-loader-servers");
-    if (!container) return;
-    container.innerHTML = `
-        <span class="tvz-loader-servers-label">Trocar servidor:</span>
-        <div class="tvz-loader-chips-list">
-            ${MOVIE_SERVERS.map(s => {
-                const isActive = s.id === activeServerId;
-                const safeName = escapeHtml(s.name.replace(' (BETA)', ''));
-                return `<button type="button" class="tvz-loader-server-chip ${isActive ? 'active' : ''}" data-server-id="${s.id}">
-                    <span>${safeName}</span>
-                </button>`;
-            }).join('')}
+let movieRateStars = null;
+
+function ensureMovieRateStars(movie) {
+    if (!movieRateStars) {
+        const box = document.getElementById("movie-mobile-rate-stars");
+        if (!box) return null;
+        movieRateStars = createRateStars({
+            onPick: (val) => {
+                const target = currentSelectedMovie || movie;
+                setRating("movies", target, val);
+                updateMobileMovieRateButton(target);
+                closeMovieRatePanel();
+                showToast(val ? `Nota salva: ${formatStars(val)} de 5 estrelas` : "Nota removida");
+            },
+            onPreview: (val) => {
+                const hint = document.getElementById("movie-mobile-rate-hint");
+                if (hint) hint.textContent = val ? `${formatStars(val)} de 5 estrelas` : "Faça sua avaliação";
+            }
+        });
+        box.appendChild(movieRateStars.element);
+    }
+    return movieRateStars;
+}
+
+function closeMovieRatePanel() {
+    const panel = document.getElementById("movie-mobile-rate-panel");
+    const btn = document.getElementById("btn-movie-mobile-rate");
+    if (panel) panel.classList.add("hidden");
+    if (btn) btn.setAttribute("aria-expanded", "false");
+}
+
+function updateMobileMovieRateButton(movie) {
+    if (!movie) return;
+    const state = getLibraryState("movies", movie.id);
+    const rateBtn = document.getElementById("btn-movie-mobile-rate");
+    const rateVal = document.getElementById("movie-mobile-rate-value");
+    if (rateBtn) {
+        rateBtn.classList.toggle("is-on", Boolean(state.rating));
+        rateBtn.setAttribute("title", state.rating ? `Sua nota: ${formatStars(state.rating)} estrelas` : "Avaliar");
+        rateBtn.setAttribute("aria-label", rateBtn.title);
+    }
+    if (rateVal) {
+        rateVal.textContent = state.rating ? formatStars(state.rating) : "";
+    }
+}
+
+function setupMobileMovieActions(movie) {
+    if (!movie) return;
+    const watchlistBtn = document.getElementById("btn-movie-mobile-watchlist");
+    if (watchlistBtn) {
+        const state = getLibraryState("movies", movie.id);
+        watchlistBtn.classList.toggle("is-on", Boolean(state.watchlist));
+        watchlistBtn.setAttribute("aria-pressed", String(Boolean(state.watchlist)));
+        watchlistBtn.title = state.watchlist ? "Remover de Quero assistir" : "Quero assistir";
+        watchlistBtn.setAttribute("aria-label", watchlistBtn.title);
+        watchlistBtn.onclick = () => {
+            const curState = getLibraryState("movies", movie.id);
+            const next = !curState.watchlist;
+            setWatchlist("movies", movie, next);
+            watchlistBtn.classList.toggle("is-on", next);
+            watchlistBtn.setAttribute("aria-pressed", String(next));
+            watchlistBtn.title = next ? "Remover de Quero assistir" : "Quero assistir";
+            watchlistBtn.setAttribute("aria-label", watchlistBtn.title);
+            showToast(next ? "Adicionado a Quero assistir" : "Removido de Quero assistir");
+        };
+    }
+
+    const watchedBtn = document.getElementById("btn-movie-mobile-watched");
+    if (watchedBtn) {
+        const state = getLibraryState("movies", movie.id);
+        watchedBtn.classList.toggle("is-on", Boolean(state.watched));
+        watchedBtn.setAttribute("aria-pressed", String(Boolean(state.watched)));
+        watchedBtn.title = state.watched ? "Desmarcar como assistido" : "Marcar como assistido";
+        watchedBtn.setAttribute("aria-label", watchedBtn.title);
+        watchedBtn.onclick = () => {
+            const curState = getLibraryState("movies", movie.id);
+            const next = !curState.watched;
+            setWatched("movies", movie, next);
+            watchedBtn.classList.toggle("is-on", next);
+            watchedBtn.setAttribute("aria-pressed", String(next));
+            watchedBtn.title = next ? "Desmarcar como assistido" : "Marcar como assistido";
+            watchedBtn.setAttribute("aria-label", watchedBtn.title);
+            showToast(next ? "Marcado como assistido" : "Desmarcado como assistido");
+        };
+    }
+
+    updateMobileMovieRateButton(movie);
+
+    const rateBtn = document.getElementById("btn-movie-mobile-rate");
+    const ratePanel = document.getElementById("movie-mobile-rate-panel");
+    const rateClearBtn = document.getElementById("btn-movie-mobile-rate-clear");
+
+    if (rateBtn && ratePanel) {
+        rateBtn.onclick = (e) => {
+            e.stopPropagation();
+            const isOpen = !ratePanel.classList.contains("hidden");
+            if (isOpen) {
+                closeMovieRatePanel();
+            } else {
+                const stars = ensureMovieRateStars(movie);
+                const curState = getLibraryState("movies", movie.id);
+                if (stars) stars.setValue(curState.rating || 0);
+                const hint = document.getElementById("movie-mobile-rate-hint");
+                if (hint) hint.textContent = curState.rating ? `${formatStars(curState.rating)} de 5 estrelas` : 'Faça sua avaliação';
+                if (rateClearBtn) rateClearBtn.classList.toggle("hidden", !curState.rating);
+                ratePanel.classList.remove("hidden");
+                rateBtn.setAttribute("aria-expanded", "true");
+            }
+        };
+    }
+
+    if (rateClearBtn) {
+        rateClearBtn.onclick = (e) => {
+            e.stopPropagation();
+            setRating("movies", movie, null);
+            updateMobileMovieRateButton(movie);
+            closeMovieRatePanel();
+            showToast("Nota removida");
+        };
+    }
+
+    const shareBtn = document.getElementById("btn-movie-mobile-share");
+    if (shareBtn) {
+        shareBtn.onclick = async () => {
+            const shareTitle = movie.title || "TVzinha";
+            const shareText = `Assista ${movie.title || "este filme"} no TVzinha Online!`;
+            const shareUrl = `${window.location.origin}${window.location.pathname}?filme=${encodeURIComponent(movie.id)}`;
+
+            const triggerFeedback = () => {
+                if (shareBtn._shareTimer) clearTimeout(shareBtn._shareTimer);
+                const originalHtml = shareBtn.innerHTML;
+                shareBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                shareBtn.classList.add("is-copied");
+                shareBtn._shareTimer = setTimeout(() => {
+                    shareBtn.innerHTML = originalHtml;
+                    shareBtn.classList.remove("is-copied");
+                    shareBtn._shareTimer = null;
+                }, 1500);
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+                    triggerFeedback();
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                }
+            }
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    triggerFeedback();
+                    showToast("Link copiado para a área de transferência!");
+                    return;
+                } catch (_) {}
+            }
+            try {
+                const ta = document.createElement("textarea");
+                ta.value = shareUrl;
+                ta.style.position = "fixed";
+                ta.style.opacity = "0";
+                ta.style.left = "-9999px";
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                const ok = document.execCommand("copy");
+                document.body.removeChild(ta);
+                if (ok) {
+                    triggerFeedback();
+                    showToast("Link copiado para a área de transferência!");
+                    return;
+                }
+            } catch (_) {}
+            showToast("Não foi possível copiar o link.");
+        };
+    }
+}
+
+/** Renders the top bar server switcher flyout panel. */
+export function renderMovieTopServersFlyout() {
+    const panel = document.getElementById("movie-servers-flyout-panel");
+    if (!panel) return;
+    const activeServerId = activeMovieServer?.id || 'native_mgeb';
+    const nativeServers = MOVIE_SERVERS.filter(s => s.isNative);
+    const iframeServers = MOVIE_SERVERS.filter(s => !s.isNative);
+
+    let html = `
+        <div class="tvz-servers-header">
+            <div class="tvz-servers-header-left">
+                <button type="button" class="tvz-panel-back-btn" id="btn-close-movie-servers-flyout" title="Voltar" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <span class="tvz-servers-title">Trocar Servidor</span>
+            </div>
         </div>
+        <div class="tvz-servers-body">
     `;
 
-    container.querySelectorAll('.tvz-loader-server-chip').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const sid = btn.dataset.serverId;
-            const target = MOVIE_SERVERS.find(s => s.id === sid);
-            if (target && target.id !== activeMovieServer?.id) {
-                const domBtn = document.querySelector(`#movie-servers-grid .btn-movie-server[data-server="${target.id}"]`);
-                selectMovieServer(target, domBtn);
+    if (nativeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Players Principais (Direto)</div>`;
+        nativeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'HD'}</span>
+                </div>
+            `;
+        });
+    }
+
+    if (iframeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Servidores Externos (Iframe)</div>`;
+        iframeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'Reproduzir'}</span>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div>`;
+    panel.innerHTML = html;
+
+    const closeBtn = document.getElementById("btn-close-movie-servers-flyout");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => toggleMovieServersFlyout(false));
+    }
+
+    panel.querySelectorAll('.tvz-server-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const serverId = item.getAttribute('data-server-id');
+            const targetServer = MOVIE_SERVERS.find(s => s.id === serverId);
+            if (targetServer) {
+                toggleMovieServersFlyout(false);
+                const domBtn = document.querySelector(`#movie-servers-grid .btn-movie-server[data-server="${targetServer.id}"]`);
+                selectMovieServer(targetServer, domBtn);
             }
         });
     });
+}
+
+export function toggleMovieServersFlyout(forceState) {
+    const panel = document.getElementById("movie-servers-flyout-panel");
+    const backdrop = document.getElementById("movie-servers-backdrop");
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (!panel) return;
+    const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
+    if (willOpen) {
+        renderMovieTopServersFlyout();
+        panel.classList.add('is-open');
+        if (backdrop) backdrop.classList.add('is-open');
+        if (playerCard) playerCard.classList.add('has-servers-open');
+    } else {
+        panel.classList.remove('is-open');
+        if (backdrop) backdrop.classList.remove('is-open');
+        if (playerCard) playerCard.classList.remove('has-servers-open');
+    }
 }
 
 /** Opens the movie player page over the title page and starts the Player Principal. */
@@ -1290,21 +1728,19 @@ export function playMovie(movie, options = {}) {
     if (!view) return;
     currentSelectedMovie = movie;
     activeMovieServer = null;
+    activeMovieAudioPreference = null;
 
     updateMovieObraCard(movie);
 
-    // If movie details are thin (e.g. from resume card), fetch full metadata from TMDB
+    // If movie details are thin (e.g. opened via direct URL ?filme=ID), fetch full metadata from TMDB
     if (!movie.overview || !movie.poster_path) {
-        fetchTmdb(`movie/${movie.id}?language=pt-BR`).then(fullMovie => {
-            if (fullMovie && currentSelectedMovie && String(currentSelectedMovie.id) === String(movie.id)) {
-                currentSelectedMovie = { ...currentSelectedMovie, ...fullMovie };
+        fetchTmdbEndpoint(`movie/${movie.id}?language=pt-BR`).then(full => {
+            if (full && currentSelectedMovie && currentSelectedMovie.id === movie.id) {
+                currentSelectedMovie = { ...currentSelectedMovie, ...full };
                 updateMovieObraCard(currentSelectedMovie);
             }
         }).catch(() => {});
     }
-
-    const playerCard = document.querySelector('#movie-player-view .player-page-card');
-    if (playerCard) playerCard.classList.add('is-loading');
 
     let firstButton = null;
     const serversGrid = document.getElementById("movie-servers-grid");
@@ -1335,6 +1771,7 @@ export function playMovie(movie, options = {}) {
 export function stopMoviePlayer() {
     moviePlaybackSessionId++;
     leaveStageFullscreen();
+    toggleMovieServersFlyout(false);
     if (pendingMovieIframeTimer) {
         clearTimeout(pendingMovieIframeTimer);
         pendingMovieIframeTimer = null;
@@ -1351,10 +1788,11 @@ export function stopMoviePlayer() {
     if (movieLoader) movieLoader.classList.add("hidden");
     const playerCard = document.querySelector('#movie-player-view .player-page-card');
     if (playerCard) {
-        playerCard.classList.remove('is-loading', 'is-paused');
+        playerCard.classList.remove('is-loading', 'is-paused', 'has-servers-open', 'is-error', 'is-ui-visible');
     }
     document.querySelectorAll("#movie-servers-grid .btn-movie-server").forEach(btn => btn.classList.remove("active"));
     activeMovieServer = null;
+    activeMovieAudioPreference = null;
     const view = moviePlayerView();
     const wasOpen = Boolean(view) && !view.classList.contains("hidden");
     if (view) view.classList.add("hidden");
@@ -1365,6 +1803,49 @@ export function stopMoviePlayer() {
     }
 }
 
+function renderMovieError(title, desc, { isMissing = false } = {}) {
+    const movieArt = document.getElementById("movie-artplayer-container");
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (playerCard) {
+        playerCard.classList.remove('is-loading');
+        playerCard.classList.add('is-error', 'is-ui-visible');
+    }
+    if (!movieArt) return;
+    movieArt.innerHTML = `
+        <div class="tvz-player-error-wrap">
+            <div class="tvz-error-icon-circle">
+                <svg width="30" height="30" fill="none" stroke="${isMissing ? 'rgba(255, 255, 255, 0.75)' : '#ef4444'}" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/>
+                </svg>
+            </div>
+            <div class="tvz-error-title">${escapeHtml(title)}</div>
+            <div class="tvz-error-desc">${escapeHtml(desc)}</div>
+            <div class="tvz-error-actions">
+                <button type="button" class="tvz-btn-error-primary btn-error-server-switch">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                    Trocar Servidor
+                </button>
+                <button type="button" class="tvz-btn-error-secondary btn-error-reload">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    Tentar Novamente
+                </button>
+            </div>
+        </div>
+    `;
+    movieArt.classList.remove("hidden");
+
+    movieArt.querySelector('.btn-error-server-switch')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMovieServersFlyout(true);
+    });
+    movieArt.querySelector('.btn-error-reload')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (activeMovieServer && currentSelectedMovie) {
+            selectMovieServer(activeMovieServer);
+        }
+    });
+}
+
 export function selectMovieServer(server, buttonElement = null) {
     if (!currentSelectedMovie) return;
     const currentSessionId = ++moviePlaybackSessionId;
@@ -1372,7 +1853,11 @@ export function selectMovieServer(server, buttonElement = null) {
         clearTimeout(pendingMovieIframeTimer);
         pendingMovieIframeTimer = null;
     }
+    const previousServer = activeMovieServer;
     activeMovieServer = server;
+    if (server.id === 'native_fenix' && previousServer?.id === 'native_direct') {
+        activeMovieAudioPreference = 'dubbed';
+    }
     // Opened with any server: it enters "Continuar assistindo" (only the Player Principal can tell the time)
     const movie = currentSelectedMovie;
     recordMovieOpened(movie);
@@ -1382,9 +1867,19 @@ export function selectMovieServer(server, buttonElement = null) {
         buttonElement.classList.add("active");
     }
 
+    const activeLabel = document.getElementById("movie-player-active-server-name");
+    if (activeLabel) {
+        activeLabel.textContent = (server.name || 'Servidores').replace(' (BETA)', '');
+    }
+
     const serverTitle = document.getElementById("movie-player-server-title");
     const movieArt = document.getElementById("movie-artplayer-container");
     const movieLoader = document.getElementById("movie-player-loader");
+    const playerCard = document.querySelector('#movie-player-view .player-page-card');
+    if (playerCard) {
+        playerCard.classList.remove('is-error');
+        playerCard.classList.add('is-loading');
+    }
 
     if (serverTitle) {
         serverTitle.textContent = currentSelectedMovie.title || server.name;
@@ -1403,29 +1898,29 @@ export function selectMovieServer(server, buttonElement = null) {
 
     if (server.isNative) {
 
+        const reqLang = (server.source === 'fenixflix' && activeMovieAudioPreference === 'subtitled') ? 'sub' : 'dub';
         resolveDirectStream({
             id: currentSelectedMovie.id,
             type: "movie",
             title: currentSelectedMovie.title,
             imdb_id: currentSelectedMovie.imdb_id || null,
-            source: server.source || 'mgeb'
+            source: server.source || 'mgeb',
+            lang: reqLang,
+            audio: reqLang === 'sub' ? 'subtitled' : 'dubbed'
         }).then(data => {
             if (currentSessionId !== moviePlaybackSessionId || !isMoviePlayerOpen()) {
                 console.warn("[Movies] Abortando montagem nativa: reprodução cancelada ou player fechado.");
                 return;
             }
+            if (playerCard) playerCard.classList.remove('is-loading');
             if (movieLoader) movieLoader.classList.add("hidden");
             if (!data || !data.primary_source) {
-                showToast(`O ${sName} não encontrou fontes para este filme. Escolha outro player ou um servidor externo abaixo.`);
-                if (movieArt) {
-                    movieArt.innerHTML = `
-                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);border-radius:12px;">
-                            <svg width="44" height="44" fill="none" stroke="#eab308" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
-                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${escapeHtml(sName)} sem fontes</div>
-                            <div style="font-size:13px;max-width:380px;line-height:1.5;">O ${escapeHtml(sName)} não encontrou fontes para este filme no momento. Escolha outro player ou um servidor externo abaixo.</div>
-                        </div>`;
-                    movieArt.classList.remove("hidden");
-                }
+                showToast(`O ${sName} não encontrou fontes para este filme. Escolha outro servidor.`);
+                renderMovieError(
+                    `${sName} sem fontes`,
+                    `O ${sName} não encontrou fontes funcionais para este filme no momento. Escolha outro player ou servidor para assistir.`,
+                    { isMissing: true }
+                );
                 return;
             }
 
@@ -1436,6 +1931,7 @@ export function selectMovieServer(server, buttonElement = null) {
             const resumeAt = currentMoviePlayOptions.restart
                 ? 0
                 : resumeStartTime(getMovieProgress(movie.id), { server: server.id });
+            if (playerCard) playerCard.classList.remove('is-error');
             mountNativePlayer({
                 containerId: "movie-artplayer-container",
                 // From where it stopped, with "Continuando de 12:34 / Começar do início" (same rules as episodes)
@@ -1448,6 +1944,12 @@ export function selectMovieServer(server, buttonElement = null) {
                     title: currentSelectedMovie.title
                 },
                 provider: data.provider || server.source || 'mgeb',
+                servers: MOVIE_SERVERS,
+                activeServerId: server.id,
+                onSelectServer: (targetServer) => {
+                    const btn = document.querySelector(`#movie-servers-grid .btn-movie-server[data-server="${targetServer.id}"]`);
+                    selectMovieServer(targetServer, btn);
+                },
                 onProgress: (info) => {
                     saveMovieProgress(movie, server.id, info);
                     // Credits reached (or almost the end): Assistido, and the "Gostou? Avalie" card
@@ -1460,22 +1962,24 @@ export function selectMovieServer(server, buttonElement = null) {
                 subtitles: data.subtitles || [],
                 onAllFailed: () => {
                     atomicPlayerReset();
-                    showToast(`Nenhuma fonte do ${sName} respondeu. Escolha outro player ou um servidor externo abaixo.`);
-                    if (movieArt) {
-                        movieArt.innerHTML = `
-                            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);border-radius:12px;">
-                                <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${escapeHtml(sName)} sem resposta</div>
-                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Nenhuma fonte do ${escapeHtml(sName)} respondeu para este filme. Escolha outro player ou um servidor externo abaixo para continuar assistindo.</div>
-                            </div>`;
-                        movieArt.classList.remove("hidden");
-                    }
+                    showToast(`Nenhuma fonte do ${sName} respondeu. Escolha outro player ou servidor.`);
+                    renderMovieError(
+                        `${sName} sem resposta`,
+                        `Nenhuma fonte do ${sName} respondeu para este filme. Escolha outro player ou servidor para continuar assistindo.`,
+                        { isMissing: false }
+                    );
                 }
             });
         }).catch(err => {
+            if (currentSessionId !== moviePlaybackSessionId || !isMoviePlayerOpen()) return;
             atomicPlayerReset();
             if (movieLoader) movieLoader.classList.add("hidden");
-            showToast(`Não foi possível conectar ao ${sName}.`);
+            showToast(`Não foi possível conectar ao ${sName}. Escolha outro servidor.`);
+            renderMovieError(
+                `Falha ao conectar ao ${sName}`,
+                `Ocorreu um erro ao conectar ao ${sName}. Escolha outro player ou servidor para continuar assistindo.`,
+                { isMissing: false }
+            );
         });
         return;
     }
@@ -1504,10 +2008,12 @@ export function selectMovieServer(server, buttonElement = null) {
         }, 30);
 
         iframe.onload = () => {
+            if (playerCard) playerCard.classList.remove('is-loading');
             if (movieLoader) movieLoader.classList.add("hidden");
             setPlaybackActiveState(true);
         };
         setTimeout(() => {
+            if (playerCard) playerCard.classList.remove('is-loading');
             if (movieLoader) movieLoader.classList.add("hidden");
         }, 3000);
     }

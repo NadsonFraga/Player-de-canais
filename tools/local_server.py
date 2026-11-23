@@ -1393,16 +1393,17 @@ def clean_vtt(text):
     text = fix_mojibake(text)
     # Convert ASS line break notation to newline
     text = re.sub(r'\\N', '\n', text)
-    """Subtitle cues keep italics, bold and underline only. All SSA/ASS override tags ({...}) are stripped.
-    Any other complete tag is dropped and stray brackets escaped."""
+    """Subtitle cues strip all SSA/ASS override tags ({...}) and any HTML/XML tags so raw tags never leak."""
     lines = []
     for line in text.split("\n"):
         if "-->" not in line:
             # Strip all SSA/ASS override tags and MicroDVD tags: {...}
             line = re.sub(r'\{[^}]*\}', '', line)
-            line = re.sub(r"</?[a-zA-Z][^<>]*>", lambda m: m.group(0).lower() if re.fullmatch(r"</?[ibu]>", m.group(0), re.I) else "", line)
-            line = re.sub(r"<(?!/?[ibu]>)", "&lt;", line)
-            line = re.sub(r"(?<!<[ibu])(?<!</[ibu])>", "&gt;", line)
+            # Strip all HTML/XML tags completely so raw tags never display as literal text on screen
+            line = re.sub(r'</?[a-zA-Z][^<>]*>', '', line)
+            line = re.sub(r'&lt;/?(?:[a-zA-Z][^&>]*|i|b|u)&gt;', '', line, flags=re.I)
+            line = re.sub(r'&[a-zA-Z0-9#]+;', ' ', line)
+            line = re.sub(r'[<>]', '', line)
         lines.append(line)
     return "\n".join(lines)
 
@@ -2201,12 +2202,13 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     },
                 }
 
-        # Route 2: FenixFlix (PT-BR Dublado)
+        # Route 2: FenixFlix (PT-BR Dublado & Subtitled Multi-Cluster)
         if not result and requested_source == "fenixflix" and (media_id or imdb_id):
             active_imdb_id = imdb_id
-            if not active_imdb_id and media_id and tmdb_api_key:
+            if not active_imdb_id and media_id and TMDB_API_KEY:
                 active_imdb_id = timed("imdb", fetch_imdb_id, media_id, "movie" if media_type == "movie" else "serie")
-            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, active_imdb_id, media_type, season, episode, "dubbed")
+            requested_audio = params.get("audio", ["subtitled" if lang == "sub" else "dubbed"])[0]
+            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, active_imdb_id, media_type, season, episode, requested_audio)
             if fenix_data and fenix_data.get("sources"):
                 parsed = []
                 for s in fenix_data["sources"]:
@@ -2242,14 +2244,17 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         "raw_url": clean_url,
                         "headers": {"Referer": referer, "Origin": origin},
                         "quality": s.get("quality", 1080),
-                        "providerTier": s.get("providerTier", 3)
+                        "providerTier": s.get("providerTier", 3),
+                        "isDubbed": bool(s.get("isDubbed", False)),
+                        "isSubbed": bool(s.get("isSubbed", False)),
+                        "audio": "dubbed" if s.get("isDubbed") else ("subtitled" if s.get("isSubbed") else "original")
                     })
                 ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: (s.get("providerTier", 0) * 100), media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
                 result = {
                     "success": True,
                     "title": fenix_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
                     "category": media_type,
-                    "audio": "dubbed",
+                    "audio": requested_audio,
                     "provider": "fenixflix",
                     "primary_source": ranked[0],
                     "fallback_sources": ranked[1:],

@@ -76,12 +76,122 @@
 }
 
 .art-video-player .art-control-progress .art-control-progress-inner {
-    height: 5px !important;
+    height: 3.5px !important;
     transition: height 0.15s ease !important;
 }
 
 .art-video-player .art-control-progress:hover .art-control-progress-inner {
-    height: 8px !important;
+    height: 5.5px !important;
+}
+
+/* Warm Deep Gold Progress Bar & Scrubber Thumb */
+.art-video-player .art-progress-played {
+    background: #c09328 !important;
+    background-color: #c09328 !important;
+}
+
+.art-video-player .art-progress-indicator {
+    width: 12px !important;
+    height: 12px !important;
+    background: #c09328 !important;
+    background-color: #c09328 !important;
+    border: 1.5px solid #ffffff !important;
+    border-radius: 50% !important;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.6) !important;
+    transition: width 0.15s ease, height 0.15s ease !important;
+}
+
+.art-video-player .art-control-progress:hover .art-progress-indicator {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+.art-video-player .art-progress-highlight {
+    background: rgba(255, 255, 255, 0.5) !important;
+    background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Interactive responsive time control */
+.art-video-player .art-control-time {
+    cursor: pointer !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    outline: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0 4px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transition: opacity 0.12s ease, transform 0.12s cubic-bezier(0.2, 0, 0.2, 1) !important;
+}
+
+.art-video-player .art-control-time:hover,
+.art-video-player .art-control-time:focus,
+.art-video-player .art-control-time:focus-visible {
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border: none !important;
+}
+
+.art-video-player .art-control-time:active {
+    opacity: 0.8 !important;
+    transform: scale(0.92) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border: none !important;
+}
+
+.art-video-player .tvz-control-time-inner {
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+}
+
+.art-video-player .tvz-time-current,
+.art-video-player .tvz-time-total,
+.art-video-player .tvz-time-sep {
+    font-variant-numeric: tabular-nums;
+}
+
+.art-video-player .tvz-time-current {
+    display: inline-block;
+    transition: opacity 0.12s cubic-bezier(0.4, 0, 0.2, 1), transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.art-video-player .tvz-time-current.tvz-time-fade {
+    opacity: 0 !important;
+    transform: translateY(2px) !important;
+}
+
+.art-video-player .tvz-time-target {
+    display: inline-block;
+    transition: opacity 0.12s cubic-bezier(0.4, 0, 0.2, 1), transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+    font-variant-numeric: tabular-nums;
+}
+
+.art-video-player .tvz-time-target.tvz-time-fade {
+    opacity: 0 !important;
+    transform: translateY(2px) !important;
+}
+
+/* Projected finish time suffix on desktop */
+.art-video-player .tvz-time-end {
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    margin-left: 2px !important;
+    letter-spacing: -0.01em !important;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+    .art-video-player .tvz-time-end {
+        display: none !important;
+    }
 }
 
 /* Volume: the built-in vertical panel opens over the progress bar; a horizontal control replaces it */
@@ -114,7 +224,7 @@
     margin: 0;
     opacity: 0;
     border-radius: 2px;
-    background: linear-gradient(to right, #22c55e var(--tvz-fill), rgba(255, 255, 255, 0.28) var(--tvz-fill));
+    background: linear-gradient(to right, var(--tvz-player-accent, #ffffff) var(--tvz-fill), rgba(255, 255, 255, 0.28) var(--tvz-fill));
     cursor: pointer;
     transition: width 0.18s ease, opacity 0.18s ease, margin 0.18s ease;
     -webkit-appearance: none;
@@ -166,10 +276,10 @@
 }
 
 .btn-movie-server.native-direct.active {
-    background: #16a34a !important;
-    color: #ffffff !important;
-    border-color: #22c55e !important;
-    box-shadow: 0 0 16px rgba(34, 197, 94, 0.45) !important;
+    background: #ffffff !important;
+    color: #080808 !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.3) !important;
     font-weight: 700 !important;
 }
 
@@ -191,10 +301,10 @@
 
 .btn-series-server-pill[data-server="native_direct"].active,
 .btn-series-server-pill[data-server="native_anime"].active {
-    background: #16a34a !important;
-    color: #ffffff !important;
-    border-color: #22c55e !important;
-    box-shadow: 0 0 14px rgba(34, 197, 94, 0.45) !important;
+    background: #ffffff !important;
+    color: #080808 !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.3) !important;
     font-weight: 700 !important;
 }
 
@@ -348,7 +458,7 @@
 .art-video-player .tvz-quality-hd {
     font-size: 9px;
     font-weight: 800;
-    color: #22c55e;
+    color: var(--tvz-player-accent, #ffffff);
     margin-left: 2px;
     vertical-align: super;
     letter-spacing: 0.02em;
@@ -417,22 +527,50 @@
 }
 
 .art-video-player .tvz-upnext-actions .tvz-upnext-play {
-    background: #22c55e;
-    border-color: #22c55e;
-    color: #04130a;
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #080808;
 }
 
 /* The stage (not Artplayer's element) goes fullscreen, so the next episode mounts inside it and stays fullscreen */
-.movie-player-stage:fullscreen {
+.movie-player-stage:fullscreen,
+.movie-player-stage:-webkit-full-screen,
+.series-theater-stage:fullscreen,
+.series-theater-stage:-webkit-full-screen {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100vw !important;
+    width: 100% !important;
     height: 100vh !important;
-    background: #000;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #000000 !important;
+    z-index: 999999 !important;
 }
 
-.movie-player-stage:-webkit-full-screen {
-    width: 100vw !important;
-    height: 100vh !important;
-    background: #000;
+.movie-player-stage:fullscreen .movie-artplayer-stage,
+.movie-player-stage:fullscreen .series-artplayer-stage,
+.movie-player-stage:fullscreen .art-video-player,
+.movie-player-stage:-webkit-full-screen .movie-artplayer-stage,
+.movie-player-stage:-webkit-full-screen .series-artplayer-stage,
+.movie-player-stage:-webkit-full-screen .art-video-player,
+.series-theater-stage:fullscreen .movie-artplayer-stage,
+.series-theater-stage:fullscreen .series-artplayer-stage,
+.series-theater-stage:fullscreen .art-video-player,
+.series-theater-stage:-webkit-full-screen .movie-artplayer-stage,
+.series-theater-stage:-webkit-full-screen .series-artplayer-stage,
+.series-theater-stage:-webkit-full-screen .art-video-player {
+    position: absolute !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* "Tela: Preencher": the picture covers the whole box, cropping the edges */
@@ -445,22 +583,29 @@
    short, the box now gets narrower (centered) instead of flatter. Phones keep their own layout (below 641 px). */
 @media (min-width: 641px) {
     .movie-modal-card.is-playing .movie-modal-media-area {
-        aspect-ratio: auto;
-        max-height: none;
-        height: auto;
-        background: transparent;
+        position: absolute !important;
+        inset: 0 !important;
+        aspect-ratio: auto !important;
+        max-height: none !important;
+        height: 100% !important;
+        width: 100% !important;
+        background: #000000 !important;
     }
 
     .movie-modal-card.is-playing .movie-player-stage {
-        flex: none;
-        height: auto;
-        aspect-ratio: 16 / 9;
-        width: min(100%, calc((100vh - 200px) * 16 / 9));
-        margin: 0 auto;
+        position: absolute !important;
+        inset: 0 !important;
+        flex: none !important;
+        height: 100% !important;
+        width: 100% !important;
+        max-width: none !important;
+        aspect-ratio: auto !important;
+        margin: 0 !important;
+        background: #000000 !important;
     }
 }
 
-/* Opening, recap and ending on the progress bar: a lighter band, nothing louder */
+/* Opening, recap and ending on the progress bar: high-contrast markers */
 .art-video-player .tvz-skip-ranges {
     position: absolute;
     inset: 0;
@@ -472,9 +617,10 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.38);
-    border-left: 1px solid rgba(0, 0, 0, 0.45);
-    border-right: 1px solid rgba(0, 0, 0, 0.45);
+    background: rgba(255, 255, 255, 0.7);
+    border-left: 1.5px solid rgba(0, 0, 0, 0.6);
+    border-right: 1.5px solid rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.35);
 }
 
 /* "Pular abertura" button, same look as the "Próximo episódio" card */
@@ -516,7 +662,7 @@
 }
 
 .art-video-player .tvz-skip-next {
-    color: #22c55e !important;
+    color: var(--tvz-player-accent, #ffffff) !important;
 }
 
 .art-video-player .tvz-skip-close {
@@ -540,7 +686,11 @@
 .art-video-player .tvz-side-card {
     /* measured by the engine (placeSideCards): just above the progress bar in every layout */
     bottom: var(--tvz-side-card-bottom, 84px) !important;
-    transition: opacity 0.25s ease;
+    transition: bottom 0.25s cubic-bezier(0.2, 0, 0, 1), opacity 0.25s ease;
+}
+
+.art-video-player:not(.art-control-show) .tvz-side-card {
+    bottom: 24px !important;
 }
 
 /* "Continuando de 12:34" notice, bottom left, same card look */
@@ -582,7 +732,7 @@
     right: 1px;
     padding: 0 3px;
     border-radius: 3px;
-    background: #22c55e;
+    background: var(--tvz-player-accent, #ffffff);
     color: #04130a;
     font-size: 8px;
     font-weight: 800;
@@ -626,15 +776,15 @@
 }
 
 .channel-direct-error-overlay .error-overlay-desc strong {
-    color: #facc15;
+    color: #ffffff;
 }
 
 .btn-error-retry {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: #22c55e;
-    color: #ffffff;
+    background: #ffffff;
+    color: #080808;
     border: none;
     padding: 9px 18px;
     border-radius: var(--radius-md);
@@ -645,7 +795,7 @@
 }
 
 .btn-error-retry:hover {
-    background: #16a34a;
+    background: #e4e4e7;
     transform: translateY(-1px);
 }
 
@@ -714,9 +864,9 @@
 }
 
 .badge-server-native {
-    background: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.20);
     padding: 2px 7px;
     border-radius: 4px;
     font-size: 0.68rem;
@@ -726,9 +876,9 @@
 }
 
 .badge-server-contingency {
-    background: rgba(234, 179, 8, 0.12);
-    color: #fde047;
-    border: 1px solid rgba(234, 179, 8, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: #e4e4e7;
+    border: 1px solid rgba(255, 255, 255, 0.16);
     padding: 2px 7px;
     border-radius: 4px;
     font-size: 0.68rem;
@@ -738,33 +888,33 @@
 }
 
 .btn-server-option.native-server {
-    border-color: rgba(34, 197, 94, 0.2);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .btn-server-option.native-server:hover {
-    border-color: rgba(34, 197, 94, 0.4);
+    border-color: rgba(255, 255, 255, 0.28);
 }
 
 .btn-server-option.native-server.active {
-    background: #16a34a !important;
-    border-color: #22c55e !important;
-    color: #ffffff !important;
-    box-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
+    background: #ffffff !important;
+    border-color: #ffffff !important;
+    color: #080808 !important;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.25);
 }
 
 .btn-server-option.contingency-server {
-    border-color: rgba(234, 179, 8, 0.2);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .btn-server-option.contingency-server:hover {
-    border-color: rgba(234, 179, 8, 0.4);
+    border-color: rgba(255, 255, 255, 0.28);
 }
 
 .btn-server-option.contingency-server.active {
-    background: #d97706 !important;
-    border-color: #f59e0b !important;
-    color: #ffffff !important;
-    box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+    background: #ffffff !important;
+    border-color: #ffffff !important;
+    color: #080808 !important;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.25);
 }
 
 /* Player header: icon-only buttons (back to episodes, reload, exit to the catalog) next to the title */
@@ -812,39 +962,27 @@
 
 /* Phones: one row (back, title, reload, exit). The title may use two lines, so the bar grows a little and
    the media area becomes a column so the video stage takes the height the bar leaves. */
-@media (max-width: 640px) {
-    .movie-modal-card.is-playing .movie-modal-media-area {
-        display: flex;
-        flex-direction: column;
+@media (max-width: 640px) and (orientation: landscape) {
+    .movie-modal-card.is-playing .movie-modal-media-area,
+    .series-modal-media-area {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        background: #000000 !important;
     }
 
-    .movie-modal-card.is-playing .movie-player-top-bar {
-        height: auto;
-        min-height: 52px;
-        flex: 0 0 auto;
-        padding: 8px 10px;
-        gap: 8px;
-    }
-
-    .movie-modal-card.is-playing .movie-player-server-title,
-    .movie-modal-card.is-playing .series-player-header-title {
-        line-height: 1.3;
-        white-space: normal;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        overflow: hidden;
-    }
-
-    .movie-modal-card.is-playing .movie-player-stage {
-        flex: 1 1 0;
-        min-height: 0;
-        height: auto;
-    }
-
-    .btn-player-icon {
-        width: 38px;
-        height: 38px;
+    .movie-modal-card.is-playing .movie-player-stage,
+    .series-theater-stage {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        background: #000000 !important;
     }
 }
 
@@ -934,13 +1072,14 @@
 
     /* Streaming Industry Standard Typography */
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     letter-spacing: 0.02em !important;
-    line-height: 1.35 !important;
+    line-height: 1.15 !important;
     text-align: center !important;
+    gap: 2px !important;
 
     /* Responsive font-size in windowed mode, multiplied by user scale */
-    font-size: calc(clamp(18px, 1.9vw, 22px) * var(--tvz-sub-scale, 1)) !important;
+    font-size: calc(clamp(24px, 2.6vw, 32px) * var(--tvz-sub-scale, 1)) !important;
     color: var(--tvz-sub-color, #ffffff) !important;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -953,9 +1092,9 @@
         0 1px 3px rgba(0, 0, 0, 0.95),
         0 2px 4px rgba(0, 0, 0, 0.95),
         0 0 8px rgba(0, 0, 0, 0.6) !important;
-    -webkit-text-stroke: 0.35px rgba(0, 0, 0, 0.3);
+    -webkit-text-stroke: 0.4px rgba(0, 0, 0, 0.35);
 
-    bottom: 45px !important;
+    bottom: 80px !important;
     transition: bottom 0.2s cubic-bezier(0.2, 0, 0, 1), font-size 0.15s ease;
 }
 
@@ -964,11 +1103,14 @@
     display: flex !important;
 }
 
-/* Individual subtitle lines rendered by Artplayer: centered with safety margin */
-.art-video-player .art-subtitle .art-subtitle-line {
+/* Individual subtitle lines rendered by Artplayer: tight line spacing (Netflix style) */
+.art-video-player .art-subtitle .art-subtitle-line,
+.art-video-player .art-subtitle p {
     display: inline-block !important;
     max-width: 85% !important;
-    margin: 2px auto !important;
+    margin: 0 auto !important;
+    padding: 1px 0 !important;
+    line-height: 1.08 !important;
     text-align: center !important;
     word-break: break-word !important;
 }
@@ -985,10 +1127,10 @@
 /* Native video ::cue fallback in case browser native cues activate */
 .art-video-player video::cue {
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     background-color: rgba(0, 0, 0, 0.75) !important;
     color: #ffffff !important;
-    font-size: 1.15rem !important;
+    font-size: 1.25rem !important;
     line-height: 1.35 !important;
     text-shadow: 0 0 3px #000000, 0 1px 3px rgba(0, 0, 0, 0.95) !important;
 }
@@ -996,16 +1138,15 @@
 /* Controls visible in windowed mode: lift subtitle slightly */
 .art-video-player.art-control-show .art-subtitle,
 .art-video-player.art-hover .art-subtitle {
-    bottom: 75px !important;
+    bottom: 115px !important;
 }
 
-/* Fullscreen mode on desktop / TV / Web Fullscreen:
-   Proportionally scaled to 2.7vh (~29px at 1080p, ~34px at 1440p) */
+/* Fullscreen mode on desktop / TV / Web Fullscreen */
 .art-video-player.art-fullscreen .art-subtitle,
 .art-video-player.art-fullscreen-web .art-subtitle,
 :fullscreen .art-video-player .art-subtitle {
-    font-size: calc(clamp(25px, 2.7vh, 34px) * var(--tvz-sub-scale, 1)) !important;
-    bottom: 60px !important;
+    font-size: calc(clamp(32px, 3.8vh, 48px) * var(--tvz-sub-scale, 1)) !important;
+    bottom: 85px !important;
 }
 
 /* When controls appear in fullscreen mode: lift subtitle above player bar */
@@ -1013,20 +1154,26 @@
 .art-video-player.art-fullscreen-web.art-control-show .art-subtitle,
 .art-video-player.art-fullscreen.art-hover .art-subtitle,
 .art-video-player.art-fullscreen-web.art-hover .art-subtitle {
-    bottom: 95px !important;
+    bottom: 125px !important;
 }
 
 /* Mobile Devices in Portrait */
 @media (max-width: 768px) and (orientation: portrait) {
     .art-video-player .art-subtitle {
-        font-size: calc(clamp(15px, 3.8vw, 18px) * var(--tvz-sub-scale, 1)) !important;
-        bottom: 30px !important;
+        font-size: calc(clamp(13px, 3.2vw, 15px) * var(--tvz-sub-scale, 1)) !important;
+        line-height: 1.15 !important;
+        gap: 2px !important;
+        bottom: 38px !important;
     }
-    .art-video-player .art-subtitle .art-subtitle-line {
+    .art-video-player .art-subtitle .art-subtitle-line,
+    .art-video-player .art-subtitle p {
         max-width: 92% !important;
+        line-height: 1.15 !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
     }
     .art-video-player.art-control-show .art-subtitle {
-        bottom: 60px !important;
+        bottom: 58px !important;
     }
 }
 
@@ -1034,17 +1181,23 @@
 @media (max-height: 520px) and (orientation: landscape) {
     .art-video-player.art-fullscreen .art-subtitle,
     .art-video-player.art-fullscreen-web .art-subtitle {
-        font-size: calc(clamp(16px, 4.2vh, 21px) * var(--tvz-sub-scale, 1)) !important;
-        bottom: 25px !important;
+        font-size: calc(clamp(17px, 4.2vh, 22px) * var(--tvz-sub-scale, 1)) !important;
+        line-height: 1.15 !important;
+        gap: 2px !important;
+        bottom: 36px !important;
     }
     .art-video-player .art-subtitle .art-subtitle-line,
+    .art-video-player .art-subtitle p,
     .art-video-player.art-fullscreen .art-subtitle .art-subtitle-line,
     .art-video-player.art-fullscreen-web .art-subtitle .art-subtitle-line {
         max-width: 90% !important;
+        line-height: 1.15 !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
     }
     .art-video-player.art-fullscreen.art-control-show .art-subtitle,
     .art-video-player.art-fullscreen-web.art-control-show .art-subtitle {
-        bottom: 65px !important;
+        bottom: 72px !important;
     }
 }
 
@@ -1130,77 +1283,62 @@
     pointer-events: auto;
 }
 
-/* Subtitle Panel - Strictly aligned with native Artplayer Settings (.art-settings) */
+/* Subtitle Panel - Strictly unified with TVZINHA Settings Panel */
 .tvz-subtitles-panel {
     position: absolute;
-    right: 12px;
-    bottom: 65px;
+    right: 20px;
+    bottom: 74px;
     z-index: 160;
-    width: 290px;
-    max-width: calc(100% - 24px);
-    max-height: calc(100% - 85px);
-    background: rgba(20, 20, 22, 0.94) !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
+    width: 330px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100% - 90px);
+    background: rgba(14, 15, 19, 0.92) !important;
+    backdrop-filter: blur(28px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75) !important;
-    color: #f1f1f1;
-    font-size: 14px;
-    display: flex;
+    border-radius: 16px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif) !important;
+    font-size: 13.5px;
+    display: none;
     flex-direction: column;
     overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(8px);
-    transition: opacity 0.15s ease, transform 0.15s ease;
     user-select: none;
 }
 
 .tvz-subtitles-panel.is-open {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
+    display: flex;
+    animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Subtitle Panel Header - Mirrors .art-setting-item-back */
+/* Subtitle Panel Header */
 .tvz-sub-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 40px;
-    min-height: 40px;
-    padding: 0 10px 0 10px;
-    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
-    font-weight: 600;
-    font-size: 14px;
+    padding: 13px 16px;
+    min-height: 52px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-weight: 700;
+    font-size: 15px;
     color: #ffffff;
     user-select: none;
+    flex-shrink: 0;
 }
 
 .tvz-sub-header-left {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
     min-width: 0;
     flex: 1;
-}
-
-.tvz-sub-header-left.is-clickable {
-    cursor: pointer;
-    border-radius: 6px;
-    padding: 4px 6px 4px 2px;
-    transition: background-color 0.15s ease;
-}
-
-.tvz-sub-header-left.is-clickable:hover {
-    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .tvz-sub-header-right {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
 }
 
@@ -1214,56 +1352,122 @@
 }
 
 .tvz-sub-title {
-    font-weight: 600;
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 15px;
+    font-weight: 700;
     color: #ffffff;
-    font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+/* Universal Panel Back Button (apenas o símbolo da seta, sem contorno) */
+.tvz-panel-back-btn,
+.tvz-settings-back-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: #a1a1aa !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    transition: color 0.15s ease, transform 0.15s ease !important;
+}
+
+.tvz-panel-back-btn:hover,
+.tvz-settings-back-btn:hover {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: #ffffff !important;
+    transform: translateX(-2px) !important;
+}
+
+.tvz-panel-back-btn:active,
+.tvz-settings-back-btn:active {
+    background: transparent !important;
+    border: none !important;
+    transform: scale(0.92) translateX(-2px) !important;
+}
+
+.tvz-panel-back-btn svg,
+.tvz-settings-back-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+    stroke: currentColor !important;
+    stroke-width: 2.2 !important;
+    fill: none !important;
+}
+
+.tvz-panel-close-btn,
+.tvz-settings-close-btn,
+.tvz-sub-close-btn,
+.tvz-servers-close-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: #a1a1aa !important;
+    cursor: pointer !important;
+    transition: color 0.15s ease !important;
+    padding: 0 !important;
+}
+
+.tvz-panel-close-btn:hover,
+.tvz-settings-close-btn:hover,
+.tvz-sub-close-btn:hover,
+.tvz-servers-close-btn:hover {
+    color: #ffffff !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+}
+
+.tvz-panel-action-btn,
 .tvz-sub-custom-trigger {
-    color: #22c55e !important;
-    font-size: 13px;
-    font-weight: 600;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 4px;
-    transition: opacity 0.15s ease, background-color 0.15s ease;
-    flex-shrink: 0;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: #ffffff !important;
+    padding: 5px 12px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
 }
 
+.tvz-panel-action-btn:hover,
 .tvz-sub-custom-trigger:hover {
-    background-color: rgba(34, 197, 94, 0.14);
-}
-
-.tvz-sub-close-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    background: transparent;
-    border: none;
-    color: rgba(255, 255, 255, 0.65);
-    cursor: pointer;
-    transition: color 0.15s ease, background-color 0.15s ease;
-    padding: 0;
-}
-
-.tvz-sub-close-btn:hover {
-    color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.14) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
 }
 
 /* Subtitle Items List */
 .tvz-sub-list {
     overflow-y: auto;
-    padding: 4px 0;
-    max-height: 280px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 320px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
 }
@@ -1289,29 +1493,37 @@
     background: rgba(255, 255, 255, 0.4);
 }
 
-/* Subtitle Item Rows - Mirrors .art-setting-item */
+/* Subtitle Item Rows - Harmonized with .tvz-settings-option */
 .tvz-sub-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 40px;
-    min-height: 40px;
-    padding: 0 14px 0 10px;
-    cursor: pointer;
-    font-size: 14px;
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 9px;
+    color: #e4e4e7;
+    font-size: 13.5px;
     font-weight: 500;
-    color: #f1f1f1;
-    transition: background-color 0.15s ease;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+    min-height: 42px;
     user-select: none;
 }
 
 .tvz-sub-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
 }
 
 .tvz-sub-item.is-selected {
-    color: #ffffff;
-    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
 }
 
 .tvz-sub-item-left {
@@ -1340,8 +1552,9 @@
 .tvz-sub-badge {
     font-size: 10px;
     font-weight: 600;
-    background: rgba(34, 197, 94, 0.16);
-    color: #22c55e;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
     padding: 1px 6px;
     border-radius: 4px;
     flex-shrink: 0;
@@ -1369,7 +1582,7 @@
 }
 
 .tvz-sub-check {
-    color: #22c55e;
+    color: #ffffff;
     display: flex;
     align-items: center;
 }
@@ -1408,7 +1621,7 @@
 }
 
 .tvz-delay-value {
-    color: #22c55e;
+    color: #ffffff;
     font-variant-numeric: tabular-nums;
 }
 
@@ -1435,15 +1648,15 @@
 }
 
 .tvz-pill-btn.is-active {
-    background: rgba(34, 197, 94, 0.2);
-    border-color: #22c55e;
-    color: #22c55e;
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
     font-weight: 600;
 }
 
 .tvz-delay-slider {
     width: 100%;
-    accent-color: #22c55e;
+    accent-color: #ffffff;
     cursor: pointer;
     margin-top: 4px;
 }
@@ -1474,8 +1687,8 @@
 }
 
 .tvz-color-swatch.is-active {
-    border-color: #22c55e;
-    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.4);
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 /* Mobile Media Queries: STRICTLY KEEP ON RIGHT SIDE, NEVER full width */
@@ -1526,3 +1739,2669 @@
         max-height: calc(100vh - 120px) !important;
     }
 }
+
+/* ============================================================
+   TVZINHA IMMERSIVE CINEMA PLAYER (Fase 1 & 2 Refactor)
+   ============================================================ */
+
+:root {
+    --tvz-player-accent: #ffffff;
+    --tvz-player-bg: rgba(14, 15, 19, 0.92);
+    --tvz-player-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Obra Card suppression: standardized cleanly in the top bar without obscuring the canvas */
+.tvz-obra-card {
+    display: none !important;
+}
+
+/* Top Bar - Standardized Media Information (Movies, Series & Animes) */
+.tvz-player-top-left {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    min-width: 0 !important;
+    pointer-events: auto !important;
+}
+
+.tvz-player-title-info {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    width: fit-content !important;
+    pointer-events: auto !important;
+}
+
+.tvz-player-thumb-top {
+    width: 38px !important;
+    height: 54px !important;
+    object-fit: cover !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+    flex-shrink: 0 !important;
+    background: #121318;
+}
+
+.tvz-player-thumb-top.hidden {
+    display: none !important;
+}
+
+.tvz-player-title-meta {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    width: fit-content !important;
+}
+
+.tvz-player-main-title {
+    font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8) !important;
+}
+
+.tvz-player-meta-badges {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+    flex: 0 1 auto !important;
+    width: fit-content !important;
+    min-width: 0 !important;
+}
+
+.tvz-player-sub-title {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: #ffffff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+}
+
+.movie-player-server-title,
+.series-player-header-title,
+#series-player-current-ep {
+    flex: 0 1 auto !important;
+    margin-right: 0 !important;
+    max-width: 360px !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+}
+
+.tvz-meta-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    padding: 2px 7px !important;
+    border-radius: 5px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    line-height: 1.1 !important;
+}
+
+.tvz-meta-pill.hidden {
+    display: none !important;
+}
+
+.tvz-meta-pill.rating {
+    background: rgba(255, 255, 255, 0.10) !important;
+    border: 1px solid rgba(255, 255, 255, 0.20) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.tvz-meta-pill.cert {
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Top Bar Overlay */
+.movie-player-top-bar,
+.series-player-top-bar {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 80px !important;
+    z-index: 140 !important;
+    display: grid !important;
+    grid-template-columns: minmax(80px, 1fr) auto minmax(130px, 1fr) !important;
+    align-items: center !important;
+    padding: 0 32px !important;
+    gap: 16px !important;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.25) 60%, transparent 100%) !important;
+    border: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.movie-player-top-bar .btn-player-back,
+.series-player-top-bar .btn-player-back {
+    justify-self: start !important;
+}
+
+.movie-player-top-bar .tvz-player-title-info,
+.series-player-top-bar .tvz-player-title-info {
+    justify-self: center !important;
+    max-width: 100% !important;
+}
+
+.movie-player-top-bar .movie-player-actions,
+.series-player-top-bar .movie-player-actions {
+    justify-self: end !important;
+}
+
+.movie-player-top-bar button,
+.series-player-top-bar button,
+.movie-player-top-bar a,
+.series-player-top-bar a {
+    pointer-events: auto !important;
+}
+
+.movie-player-top-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+    pointer-events: auto !important;
+}
+
+.btn-player-back {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 6px 10px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em !important;
+    cursor: pointer !important;
+    transition: color 0.18s ease, transform 0.18s ease !important;
+}
+
+.btn-player-back:hover {
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    transform: translateX(-3px) !important;
+}
+
+.btn-player-back svg {
+    flex-shrink: 0 !important;
+    transition: transform 0.18s ease !important;
+}
+
+.btn-player-back:hover svg {
+    transform: translateX(-2px) !important;
+}
+
+.series-player-title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.series-player-main-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.movie-player-server-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #94a3b8;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sr-only,
+.tvz-mobile-title.sr-only,
+.tvz-mobile-title.hidden,
+.movie-player-server-title.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    display: none !important;
+}
+
+.btn-player-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    transition: color 0.18s ease, transform 0.18s ease !important;
+}
+
+.btn-player-icon:hover {
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    transform: scale(1.15) !important;
+}
+
+.btn-player-icon.danger {
+    color: #ffffff !important;
+}
+
+.btn-player-icon.danger:hover {
+    background: transparent !important;
+    border: none !important;
+    color: #ef4444 !important;
+    transform: scale(1.15) !important;
+}
+
+/* Top Bar Overlay: Synchronized with bottom controls HUD & Always Accessible on Error */
+.player-page-card.is-ui-visible .movie-player-top-bar,
+.player-page-card.is-ui-visible .series-player-top-bar,
+.player-page-card:has(.art-video-player.art-control-show) .movie-player-top-bar,
+.player-page-card:has(.art-video-player.art-control-show) .series-player-top-bar,
+.player-page-card.is-loading .movie-player-top-bar,
+.player-page-card.is-loading .series-player-top-bar,
+.player-page-card.has-servers-open .movie-player-top-bar,
+.player-page-card.has-servers-open .series-player-top-bar,
+.player-page-card.is-error .movie-player-top-bar,
+.player-page-card.is-error .series-player-top-bar,
+.player-page-card:not(:has(.art-video-player)):not(.is-iframe) .movie-player-top-bar,
+.player-page-card:not(:has(.art-video-player)):not(.is-iframe) .series-player-top-bar,
+.player-page-card .movie-player-top-bar:focus-within,
+.player-page-card .series-player-top-bar:focus-within {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+}
+
+.player-page-card.is-ui-visible .movie-player-top-bar *,
+.player-page-card.is-ui-visible .series-player-top-bar *,
+.player-page-card:has(.art-video-player.art-control-show) .movie-player-top-bar *,
+.player-page-card:has(.art-video-player.art-control-show) .series-player-top-bar *,
+.player-page-card.is-loading .movie-player-top-bar *,
+.player-page-card.is-loading .series-player-top-bar *,
+.player-page-card.has-servers-open .movie-player-top-bar *,
+.player-page-card.has-servers-open .series-player-top-bar *,
+.player-page-card.is-error .movie-player-top-bar *,
+.player-page-card.is-error .series-player-top-bar * {
+    pointer-events: auto !important;
+}
+
+/* Force Top Bar to hide when controls are hidden or in clean screenshot pause mode */
+.player-page-card:has(.art-video-player.art-clean-pause) .movie-player-top-bar,
+.player-page-card:has(.art-video-player.art-clean-pause) .series-player-top-bar,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar {
+    opacity: 0 !important;
+    transform: translateY(-8px) !important;
+    pointer-events: none !important;
+}
+
+/* Complete lockdown on all controls, buttons, and top/bottom elements when controls are hidden or in clean pause */
+.art-video-player:not(.art-control-show) .art-bottom,
+.art-video-player:not(.art-control-show) .art-controls,
+.art-video-player:not(.art-control-show) .art-top,
+.art-video-player:not(.art-control-show) .art-state,
+.art-video-player:not(.art-control-show) .art-bottom *,
+.art-video-player:not(.art-control-show) .art-controls *,
+.art-video-player:not(.art-control-show) .art-top *,
+.art-video-player:not(.art-control-show) .art-state *,
+.art-video-player.art-clean-pause .art-bottom,
+.art-video-player.art-clean-pause .art-controls,
+.art-video-player.art-clean-pause .art-top,
+.art-video-player.art-clean-pause .art-state,
+.art-video-player.art-clean-pause .art-bottom *,
+.art-video-player.art-clean-pause .art-controls *,
+.art-video-player.art-clean-pause .art-top *,
+.art-video-player.art-clean-pause .art-state *,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar *,
+.player-page-card:not(.is-ui-visible):not(:has(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar *,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .movie-player-top-bar *,
+.player-page-card:has(.art-video-player:not(.art-control-show)):not(.is-error):not(.has-servers-open):not(.is-loading) .series-player-top-bar *,
+.player-page-card:has(.art-video-player.art-clean-pause) .movie-player-top-bar *,
+.player-page-card:has(.art-video-player.art-clean-pause) .series-player-top-bar * {
+    pointer-events: none !important;
+}
+
+/* Player Error State Overlay & Interactive Action Buttons */
+.tvz-player-error-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    color: #a1a1aa;
+    padding: 32px 24px;
+    text-align: center;
+    background: radial-gradient(circle at center, rgba(30, 41, 59, 0.45) 0%, rgba(10, 12, 16, 0.98) 100%);
+    box-sizing: border-box;
+}
+
+.tvz-error-icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.tvz-error-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+}
+
+.tvz-error-desc {
+    font-size: 13.5px;
+    max-width: 440px;
+    line-height: 1.6;
+    color: #94a3b8;
+    margin-bottom: 24px;
+}
+
+.tvz-error-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    pointer-events: auto !important;
+}
+
+.tvz-btn-error-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #080808;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.tvz-btn-error-primary:hover {
+    background: #e4e4e7;
+    transform: translateY(-1px);
+}
+
+.tvz-btn-error-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.tvz-btn-error-secondary:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.28);
+    transform: translateY(-1px);
+}
+
+/* Loader Instant Server Switcher */
+.tvz-loader-spinner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.tvz-loader-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e2e8f0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.tvz-loader-servers-row {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+}
+
+.tvz-loader-servers-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.tvz-loader-chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: 600px;
+}
+
+.tvz-loader-server-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #cbd5e1;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.18s ease;
+}
+
+.tvz-loader-server-chip:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.tvz-loader-server-chip.active {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+/* Obra card empty image styling */
+.tvz-obra-poster:not([src]),
+.tvz-obra-poster[src=""] {
+    visibility: hidden !important;
+}
+
+/* Seek 10s icon protection against Artplayer global SVG fill */
+.art-video-player .art-control-seek-backward svg path,
+.art-video-player .art-control-seek-forward svg path {
+    fill: none !important;
+    stroke: currentColor !important;
+}
+.art-video-player .art-control-seek-backward svg text,
+.art-video-player .art-control-seek-forward svg text {
+    fill: currentColor !important;
+    stroke: none !important;
+}
+
+/* Modern Series Episode Drawer (Floating Frosted Glass UI) */
+.series-player-drawer {
+    position: absolute !important;
+    bottom: 74px !important;
+    right: 20px !important;
+    top: auto !important;
+    width: 390px !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100% - 90px) !important;
+    height: 520px !important;
+    background: rgba(14, 15, 19, 0.92) !important;
+    backdrop-filter: blur(28px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    z-index: 180 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    color: #ffffff !important;
+    user-select: none !important;
+    font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif) !important;
+    animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.series-player-drawer.hidden {
+    display: none !important;
+}
+
+.series-drawer-header {
+    padding: 13px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: transparent !important;
+    flex-shrink: 0 !important;
+    min-height: 52px !important;
+}
+
+.series-drawer-header-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+}
+
+.series-drawer-header-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.series-drawer-heading {
+    font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.01em !important;
+}
+
+.series-drawer-season-wrap {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.series-drawer-season-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-radius: 8px !important;
+    padding: 6px 28px 6px 12px !important;
+    font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    outline: none !important;
+    transition: background 0.18s ease, border-color 0.18s ease !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 8px center !important;
+}
+
+.series-drawer-season-select:hover {
+    background-color: rgba(255, 255, 255, 0.10) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
+}
+
+.series-drawer-season-select option {
+    background: #111216 !important;
+    color: #ffffff !important;
+    padding: 8px !important;
+}
+
+.art-video-player.art-fullscreen .series-player-drawer,
+.art-video-player.art-fullscreen-web .series-player-drawer,
+:fullscreen .art-video-player .series-player-drawer {
+    bottom: 84px !important;
+    right: 24px !important;
+}
+
+.series-drawer-list {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 12px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.tvz-drawer-ep-card {
+    display: flex;
+    gap: 12px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    color: #cbd5e1;
+}
+
+.tvz-drawer-ep-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+    transform: translateX(-2px);
+    color: #ffffff;
+}
+
+.tvz-drawer-ep-card.active {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.ep-thumb-wrap {
+    position: relative;
+    width: 110px;
+    height: 64px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #121318;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ep-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.ep-thumb-empty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+}
+
+.ep-playing-pill {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    right: 4px;
+    padding: 2px 4px;
+    background: #ffffff;
+    color: #080808;
+    font-size: 9px;
+    font-weight: 800;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 3px;
+}
+
+.ep-info-wrap {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+}
+
+.ep-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.ep-num-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ep-duration {
+    font-size: 11px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.ep-synopsis {
+    font-size: 11px;
+    line-height: 1.4;
+    color: #94a3b8;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+
+}
+
+
+/* Controls Styling */
+.art-control-seek-backward,
+.art-control-seek-forward,
+.art-control-servers-btn,
+.art-control-episodes-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #ffffff;
+    opacity: 0.85;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.art-control-seek-backward:hover,
+.art-control-seek-forward:hover,
+.art-control-servers-btn:hover,
+.art-control-episodes-btn:hover {
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+/* Servers Flyout Panel */
+.tvz-servers-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 155;
+    background: transparent;
+    display: none;
+}
+
+.tvz-servers-backdrop.is-open {
+    display: block;
+}
+
+.tvz-servers-panel {
+    position: absolute;
+    bottom: 80px;
+    right: 24px;
+    width: 320px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100% - 100px);
+    background: rgba(14, 15, 19, 0.92);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    z-index: 160;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    color: #ffffff;
+    user-select: none;
+    font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif);
+    animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tvz-servers-panel.is-open {
+    display: flex;
+}
+
+.tvz-servers-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    min-height: 52px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tvz-servers-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.tvz-servers-close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tvz-servers-close-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.tvz-servers-body {
+    padding: 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tvz-servers-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    padding: 8px 10px 4px;
+}
+
+.tvz-server-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.tvz-server-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.09);
+}
+
+.tvz-server-item.is-active {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+}
+
+.tvz-server-name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.tvz-server-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+.tvz-server-item.is-active .tvz-server-badge {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.20);
+}
+
+@keyframes tvzPanelFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Server Selector Button in Top Bar: Clean icon button matching reload and close */
+.btn-player-pill.btn-player-servers,
+.btn-player-servers {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    transition: color 0.18s ease, transform 0.18s ease !important;
+}
+
+.btn-player-pill.btn-player-servers:hover,
+.btn-player-pill.btn-player-servers:focus-visible,
+.btn-player-servers:hover,
+.btn-player-servers:focus-visible {
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    transform: scale(1.15) !important;
+}
+
+.btn-player-servers svg {
+    flex-shrink: 0 !important;
+    stroke: currentColor !important;
+}
+
+/* Top-anchored Server Flyout Panel */
+.tvz-servers-panel-top {
+    top: 72px !important;
+    bottom: auto !important;
+    right: 32px !important;
+    z-index: 170 !important;
+    max-height: calc(100vh - 100px) !important;
+}
+
+/* ============================================================
+   TVZINHA SETTINGS FLYOUT (Atlantic-inspired Frosted Glass UI)
+   ============================================================ */
+
+/* Suppress Artplayer's default notice (Reproduzir) and built-in menu */
+.art-video-player .art-notice {
+    display: none !important;
+}
+
+.art-video-player .art-settings {
+    display: none !important;
+}
+
+.tvz-settings-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 155;
+    background: transparent;
+    display: none;
+}
+
+.tvz-settings-backdrop.is-open {
+    display: block;
+}
+
+.tvz-settings-panel {
+    position: absolute;
+    bottom: 74px;
+    right: 20px;
+    width: 330px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100% - 90px);
+    background: rgba(14, 15, 19, 0.92);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    z-index: 160;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    color: #ffffff;
+    user-select: none;
+    font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif) !important;
+    animation: tvzPanelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tvz-settings-panel.is-open {
+    display: flex;
+}
+
+.tvz-settings-panel svg {
+    fill: none;
+    stroke: currentColor;
+}
+
+.tvz-settings-header,
+.tvz-settings-sub-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    min-height: 52px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+
+.tvz-settings-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.tvz-settings-sub-title,
+.tvz-settings-title-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.tvz-settings-body {
+    padding: 14px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 2x2 Grid of Quick Cards */
+.tvz-settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.tvz-setting-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+    text-align: left;
+    width: 100%;
+}
+
+.tvz-setting-tile:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.tvz-setting-tile-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    color: #ffffff;
+}
+
+.tvz-setting-tile-top svg {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+}
+
+.tvz-icon-hq {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    padding: 1px 4px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tvz-setting-tile-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #a1a1aa;
+}
+
+.tvz-setting-tile-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f4f4f5;
+    margin-top: 5px;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tvz-setting-tile-value.tvz-val-muted {
+    color: #71717a;
+    font-weight: 500;
+}
+
+.tvz-settings-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 2px 0;
+}
+
+/* List Rows */
+.tvz-settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tvz-setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 9px;
+    color: #e4e4e7;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    text-align: left;
+}
+
+.tvz-setting-row:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.tvz-setting-row-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tvz-setting-row-left svg {
+    flex-shrink: 0;
+    color: #94a3b8;
+}
+
+.tvz-setting-row:hover .tvz-setting-row-left svg {
+    color: #ffffff;
+}
+
+.tvz-setting-row-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #a1a1aa;
+    font-size: 12.5px;
+}
+
+.tvz-chevron {
+    color: #71717a;
+    flex-shrink: 0;
+}
+
+.tvz-setting-row:hover .tvz-chevron {
+    color: #cbd5e1;
+}
+
+/* Toggle Switch (Modern Obsidian style) */
+.tvz-setting-toggle-row {
+    cursor: default;
+}
+
+.tvz-setting-toggle-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.tvz-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.tvz-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.tvz-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tvz-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.tvz-toggle-switch input:checked + .tvz-toggle-slider {
+    background-color: #ffffff;
+}
+
+.tvz-toggle-switch input:checked + .tvz-toggle-slider:before {
+    transform: translateX(20px);
+    background-color: #0e0f13;
+}
+
+/* Sub-views Options List */
+.tvz-settings-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 9px;
+    color: #e4e4e7;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    text-align: left;
+}
+
+.tvz-settings-option:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.tvz-settings-option.is-active {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.tvz-option-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.tvz-sub-settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.tvz-sub-settings-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #a1a1aa;
+    padding: 0 4px;
+}
+
+.tvz-sub-settings-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tvz-sub-chip {
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.tvz-sub-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+.tvz-sub-chip.is-active {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.30);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.art-video-player.art-fullscreen .tvz-settings-panel,
+.art-video-player.art-fullscreen-web .tvz-settings-panel,
+:fullscreen .art-video-player .tvz-settings-panel {
+    bottom: 84px;
+    right: 24px;
+}
+
+/* ============================================================
+   TVZINHA MOBILE PLAYER RESPONSIVE DESIGN (PHONES & TABLETS)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    /* Safe Area & Top Bar Height */
+    .movie-player-top-bar,
+    .series-player-top-bar {
+        height: 56px !important;
+        padding: max(8px, env(safe-area-inset-top, 0px)) 12px 6px 12px !important;
+        gap: 8px !important;
+    }
+
+    /* Back Button: Compact Circular Icon */
+    .btn-player-back {
+        min-width: 38px !important;
+        min-height: 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        border-radius: 9999px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .btn-player-back-text {
+        display: none !important;
+    }
+
+    .btn-player-back svg {
+        width: 20px !important;
+        height: 20px !important;
+        stroke-width: 2.2 !important;
+    }
+
+    /* Thumb: Hidden on small screens to prioritize title readability */
+    .tvz-player-thumb-top {
+        display: none !important;
+    }
+
+    /* Title Info: Vertical flex column with truncation */
+    .tvz-player-title-info {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+        gap: 2px !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-player-title-meta {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 2px !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-player-main-title {
+        display: block !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        line-height: 1.25 !important;
+    }
+
+    .tvz-player-meta-badges {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .tvz-meta-pill {
+        font-size: 10px !important;
+        padding: 1px 5px !important;
+        height: 18px !important;
+        line-height: 16px !important;
+        flex-shrink: 0 !important;
+        border-radius: 4px !important;
+    }
+
+    .movie-player-server-title,
+    .series-player-header-title,
+    .tvz-player-sub-title {
+        font-size: 11px !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Top Bar Actions: Compact Pill & Icon Buttons */
+    .movie-player-actions,
+    .series-player-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-shrink: 0 !important;
+        height: 36px !important;
+    }
+
+    .btn-player-pill.btn-player-servers {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        min-height: 34px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        justify-content: center !important;
+        gap: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    #movie-player-active-server-name,
+    #series-player-active-server-name,
+    .btn-player-servers svg:last-child {
+        display: none !important;
+    }
+
+    .btn-player-servers svg:first-child {
+        width: 17px !important;
+        height: 17px !important;
+    }
+
+    .btn-player-icon {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        padding: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .btn-player-icon svg {
+        width: 17px !important;
+        height: 17px !important;
+    }
+
+    /* Artplayer Bottom Controls on Mobile */
+    .art-video-player .art-bottom {
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)) !important;
+        padding-left: max(8px, env(safe-area-inset-left, 0px)) !important;
+        padding-right: max(8px, env(safe-area-inset-right, 0px)) !important;
+        height: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    .art-video-player .art-control-tvz-volume,
+    .art-video-player .art-control-pip,
+    .art-video-player .art-control-tvz-seek-backward,
+    .art-video-player .art-control-tvz-seek-forward,
+    .art-video-player .art-control-seek-backward,
+    .art-video-player .art-control-seek-forward,
+    .art-video-player [data-name="tvz-seek-backward"],
+    .art-video-player [data-name="tvz-seek-forward"] {
+        display: none !important;
+    }
+
+    .art-video-player .art-controls {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        gap: 4px !important;
+    }
+
+    .art-video-player .art-controls-left {
+        display: flex !important;
+        align-items: center !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        overflow: hidden !important;
+        gap: 2px !important;
+    }
+
+    .art-video-player .art-controls-right {
+        display: flex !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        margin-left: auto !important;
+        gap: 2px !important;
+        z-index: 2 !important;
+    }
+
+    .art-video-player .art-control-time {
+        font-size: 11px !important;
+        padding: 0 4px !important;
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .art-video-player .art-controls .art-icon,
+    .art-video-player .art-controls button {
+        padding: 0 !important;
+        width: 32px !important;
+    }
+
+    .art-video-player .art-control-fullscreen {
+        display: flex !important;
+        visibility: visible !important;
+    }
+
+    /* Mobile Timeline & Scrubber Thumb Proportions */
+    .art-video-player .art-control-progress .art-control-progress-inner {
+        height: 3px !important;
+    }
+
+    .art-video-player .art-control-progress:hover .art-control-progress-inner {
+        height: 4.5px !important;
+    }
+
+    .art-video-player .art-progress-indicator {
+        width: 10px !important;
+        height: 10px !important;
+    }
+
+    .art-video-player .art-control-progress:hover .art-progress-indicator {
+        width: 12px !important;
+        height: 12px !important;
+    }
+
+    /* Episode Quick Drawer (Floating cleanly above bottom controls, matching Settings & Subtitles) */
+    .series-player-drawer {
+        position: absolute !important;
+        inset: auto 10px 72px 10px !important;
+        width: auto !important;
+        max-width: none !important;
+        height: 70% !important;
+        max-height: calc(100% - 130px) !important;
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        padding-bottom: 0 !important;
+        z-index: 180 !important;
+    }
+
+    /* Flyout Panels on Mobile Portrait */
+    .tvz-servers-panel-top {
+        position: absolute !important;
+        top: 60px !important;
+        left: 10px !important;
+        right: 10px !important;
+        bottom: auto !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100vh - 120px) !important;
+        border-radius: 16px !important;
+        z-index: 170 !important;
+    }
+
+    .tvz-settings-panel {
+        position: absolute !important;
+        inset: auto 10px 72px 10px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100% - 130px) !important;
+        border-radius: 16px !important;
+        z-index: 165 !important;
+    }
+
+    .tvz-subtitles-panel {
+        position: absolute !important;
+        inset: auto 10px 72px 10px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100% - 130px) !important;
+        border-radius: 16px !important;
+        z-index: 165 !important;
+    }
+}
+
+/* Mobile Devices in Landscape (e.g. 844x390, 896x414) */
+@media (max-height: 520px) and (orientation: landscape) {
+    .movie-player-top-bar,
+    .series-player-top-bar {
+        height: 48px !important;
+        padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)) !important;
+    }
+
+    .art-video-player .art-bottom {
+        height: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+        padding: 0 max(16px, env(safe-area-inset-right, 0px)) max(4px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)) !important;
+    }
+
+    .series-player-drawer {
+        position: absolute !important;
+        bottom: 58px !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        top: auto !important;
+        left: auto !important;
+        width: 340px !important;
+        max-width: calc(100vw - 32px) !important;
+        height: auto !important;
+        max-height: calc(100% - 110px) !important;
+        border-radius: 14px !important;
+        z-index: 180 !important;
+    }
+
+    .tvz-servers-panel-top {
+        position: absolute !important;
+        top: 48px !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        left: auto !important;
+        bottom: auto !important;
+        width: 320px !important;
+        max-width: calc(100vw - 32px) !important;
+        max-height: calc(100vh - 60px) !important;
+        border-radius: 14px !important;
+        z-index: 170 !important;
+    }
+
+    .tvz-settings-panel {
+        position: absolute !important;
+        bottom: 58px !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        top: auto !important;
+        left: auto !important;
+        width: 300px !important;
+        max-width: calc(100vw - 32px) !important;
+        max-height: calc(100% - 110px) !important;
+        overflow-y: auto !important;
+        border-radius: 14px !important;
+        z-index: 165 !important;
+    }
+
+    .tvz-subtitles-panel {
+        position: absolute !important;
+        bottom: 58px !important;
+        right: max(16px, env(safe-area-inset-right, 0px)) !important;
+        top: auto !important;
+        left: auto !important;
+        width: 300px !important;
+        max-width: calc(100vw - 32px) !important;
+        max-height: calc(100% - 110px) !important;
+        overflow-y: auto !important;
+        border-radius: 14px !important;
+        z-index: 165 !important;
+    }
+}
+
+/* ============================================================
+   TVZINHA MOBILE VERTICAL STREAMING VIEW (Spacedom Architecture)
+   Clean 16:9 Player on Top + Scrollable Hub Below (Portrait Only)
+   ============================================================ */
+
+/* Hidden everywhere by default (desktop and landscape cinema) */
+.tvz-mobile-player-body {
+    display: none;
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+    /* Full Viewport Card acting as App Shell */
+    .movie-modal-backdrop.player-page {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        background: #0b0c10 !important;
+        z-index: 2500 !important;
+    }
+
+    /* Floating Nav Capsule stays visible and interactive above player in mobile portrait */
+    .floating-nav-capsule {
+        z-index: 2600 !important;
+        position: fixed !important;
+        top: max(8px, env(safe-area-inset-top, 0px)) !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+
+    .movie-modal-backdrop.player-page .movie-modal-card,
+    .player-page-card {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        background: #0b0c10 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding-top: calc(max(8px, env(safe-area-inset-top, 0px)) + 46px) !important;
+    }
+
+    /* When player is fullscreen (native API or Artplayer class), clear portrait padding and stretch to 100% */
+    :fullscreen .player-page-card,
+    :-webkit-full-screen .player-page-card,
+    .player-page-card:has(:fullscreen),
+    .player-page-card:has(:-webkit-full-screen),
+    .player-page-card:has(.art-fullscreen),
+    .player-page-card:has(.art-fullscreen-web),
+    .player-page-card.art-fullscreen-active {
+        padding-top: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: none !important;
+    }
+
+    :fullscreen .movie-modal-media-area,
+    :-webkit-full-screen .movie-modal-media-area,
+    .player-page-card:has(:fullscreen) .movie-modal-media-area,
+    .player-page-card:has(:-webkit-full-screen) .movie-modal-media-area,
+    .player-page-card:has(.art-fullscreen) .movie-modal-media-area,
+    .player-page-card:has(.art-fullscreen-web) .movie-modal-media-area,
+    .player-page-card.art-fullscreen-active .movie-modal-media-area {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: none !important;
+        aspect-ratio: auto !important;
+        z-index: 200 !important;
+    }
+
+    /* Hide floating nav capsule when any fullscreen is active */
+    :fullscreen .floating-nav-capsule,
+    :-webkit-full-screen .floating-nav-capsule,
+    body:has(:fullscreen) .floating-nav-capsule,
+    body:has(:-webkit-full-screen) .floating-nav-capsule,
+    body:has(.art-fullscreen) .floating-nav-capsule,
+    body:has(.art-fullscreen-web) .floating-nav-capsule,
+    body.tvz-has-fullscreen .floating-nav-capsule {
+        display: none !important;
+    }
+
+    /* Loading State: Hide all controls and center state icon completely while buffering/loading */
+    .player-page-card.is-loading .art-state,
+    .player-page-card.is-loading .art-controls,
+    .player-page-card.is-loading .art-bottom,
+    .player-page-card.is-loading .movie-player-top-bar,
+    .player-page-card.is-loading .series-player-top-bar,
+    .art-video-player.art-loading-show .art-state,
+    .art-video-player.art-loading-show .art-controls,
+    .art-video-player.art-loading-show .art-bottom {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+    }
+
+    /* Fixed 16:9 Video Player at Top */
+    .movie-modal-card.is-playing .movie-modal-media-area,
+    .series-modal-media-area,
+    .player-page-card .movie-modal-media-area {
+        position: relative !important;
+        inset: auto !important;
+        width: 100% !important;
+        aspect-ratio: 16 / 9 !important;
+        height: auto !important;
+        max-height: 40vh !important;
+        min-height: 200px !important;
+        flex-shrink: 0 !important;
+        background: #000000 !important;
+        overflow: hidden !important;
+    }
+
+    .player-page-card .movie-modal-player-container,
+    .player-page-card .movie-player-stage,
+    .player-page-card .series-theater-stage,
+    .player-page-card .movie-artplayer-stage,
+    .player-page-card .series-artplayer-stage,
+    .player-page-card .art-video-player {
+        position: absolute !important;
+        inset: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .player-page-card .art-video-player .art-video,
+    .player-page-card .art-video-player .art-video-inner {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+    }
+
+    .player-page-card .art-video-player .art-bottom {
+        position: absolute !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+        gap: 0 !important;
+        padding: 0 10px 4px 10px !important;
+        z-index: 150 !important;
+        overflow: visible !important;
+    }
+
+    .player-page-card .art-video-player .art-progress {
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+        height: auto !important;
+    }
+
+    .player-page-card .art-video-player .art-control-progress {
+        height: 18px !important;
+        margin: 0 0 1px 0 !important;
+    }
+
+    .player-page-card .art-video-player .art-control-progress .art-control-progress-inner {
+        height: 3px !important;
+    }
+
+    .player-page-card .art-video-player .art-controls {
+        height: 36px !important;
+        overflow: hidden !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .player-page-card .art-video-player .art-controls-left {
+        display: flex !important;
+        align-items: center !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        overflow: hidden !important;
+        gap: 2px !important;
+    }
+
+    .player-page-card .art-video-player .art-controls-right {
+        display: flex !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        margin-left: auto !important;
+        gap: 2px !important;
+        z-index: 2 !important;
+    }
+
+    .player-page-card .art-video-player .art-control-time {
+        font-size: 11px !important;
+        padding: 0 4px !important;
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* Hide 10s seek buttons on mobile portrait (unneeded due to double tap skip gesture) */
+    .player-page-card .art-video-player .art-control-tvz-seek-backward,
+    .player-page-card .art-video-player .art-control-tvz-seek-forward,
+    .player-page-card .art-video-player .art-control-seek-backward,
+    .player-page-card .art-video-player .art-control-seek-forward,
+    .player-page-card .art-video-player [data-name="tvz-seek-backward"],
+    .player-page-card .art-video-player [data-name="tvz-seek-forward"] {
+        display: none !important;
+    }
+
+    /* Minimal Top Bar over 16:9 Video: Hide title on video to keep it clean */
+    .player-page-card .tvz-player-title-info {
+        display: none !important;
+    }
+
+    .player-page-card .movie-player-top-bar,
+    .player-page-card .series-player-top-bar {
+        display: flex !important;
+        justify-content: space-between !important;
+        height: 46px !important;
+        padding: 6px 10px !important;
+    }
+
+    /* Modals & Flyouts as clean floating modals on mobile portrait (Servers, Settings, Subtitles, Drawer) */
+    .player-page-card .tvz-servers-backdrop,
+    .player-page-card .tvz-settings-backdrop,
+    .player-page-card .tvz-subtitles-backdrop {
+        position: fixed !important;
+        inset: 0 !important;
+        background: rgba(0, 0, 0, 0.75) !important;
+        backdrop-filter: blur(6px) !important;
+        -webkit-backdrop-filter: blur(6px) !important;
+        z-index: 2600 !important;
+    }
+
+    .player-page-card .tvz-servers-panel-top,
+    .player-page-card .tvz-settings-panel,
+    .player-page-card .tvz-subtitles-panel,
+    .player-page-card .series-player-drawer {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        bottom: auto !important;
+        right: auto !important;
+        transform: translate(-50%, -50%) !important;
+        width: min(340px, calc(100vw - 32px)) !important;
+        max-width: 340px !important;
+        max-height: min(490px, 75vh) !important;
+        border-radius: 16px !important;
+        z-index: 2610 !important;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+        background: rgba(14, 15, 19, 0.96) !important;
+    }
+
+    .player-page-card .tvz-settings-list,
+    .player-page-card .tvz-sub-list,
+    .player-page-card .series-drawer-list {
+        max-height: min(380px, 55vh) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Hide end time toggle row in mobile settings modal: mobile uses direct tap toggle on the timestamp */
+    .player-page-card .tvz-setting-row[data-action="toggle-end-time"],
+    .tvz-settings-panel .tvz-setting-row[data-action="toggle-end-time"],
+    .tvz-settings-panel .tvz-setting-row:has(.tvz-end-time-toggle-input) {
+        display: none !important;
+    }
+
+    /* Central Play Button strictly centered in 16:9 player on Mobile Portrait */
+    .player-page-card .art-video-player .art-state {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: 64px !important;
+        height: 64px !important;
+        display: none !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        cursor: pointer !important;
+        z-index: 100 !important;
+        transition: transform 0.15s ease, opacity 0.15s ease !important;
+    }
+
+    .player-page-card .art-video-player.art-control-show:not(.art-clean-pause) .art-state,
+    .player-page-card .art-video-player.art-hover:not(.art-clean-pause) .art-state,
+    .player-page-card .art-video-player.art-is-paused:not(.art-clean-pause) .art-state {
+        display: flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    .player-page-card .art-video-player .art-state:active {
+        transform: translate(-50%, -50%) scale(0.9) !important;
+    }
+
+    .player-page-card .art-video-player .art-state .art-icon-state {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 64px !important;
+        height: 64px !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+
+    .player-page-card .art-video-player .art-state .art-icon-state svg {
+        width: 48px !important;
+        height: 48px !important;
+        fill: #ffffff !important;
+        stroke: none !important;
+        filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.85)) !important;
+    }
+
+    /* Compact Resume / Skip notice banner on mobile portrait */
+    .player-page-card .art-video-player .tvz-side-card {
+        bottom: 12px !important;
+        top: auto !important;
+        width: auto !important;
+        max-width: calc(100% - 24px) !important;
+        height: auto !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        z-index: 160 !important;
+        pointer-events: auto !important;
+        transition: bottom 0.25s cubic-bezier(0.2, 0, 0, 1), opacity 0.25s ease !important;
+    }
+
+    .player-page-card .art-video-player:not(.art-control-show) .tvz-side-card {
+        bottom: 12px !important;
+    }
+
+    .player-page-card .art-video-player.art-control-show .tvz-side-card {
+        bottom: 64px !important;
+    }
+
+    .player-page-card .art-video-player .art-layer-tvz-resume {
+        left: 12px !important;
+        right: auto !important;
+    }
+
+    .player-page-card .art-video-player .art-layer-tvz-skip {
+        right: 12px !important;
+        left: auto !important;
+    }
+
+    .player-page-card .art-video-player .tvz-skip {
+        display: inline-flex !important;
+        align-items: center !important;
+        width: auto !important;
+        height: 32px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+        background: rgba(20, 20, 22, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        overflow: hidden !important;
+    }
+
+    .player-page-card .art-video-player .tvz-resume-text {
+        padding: 0 8px 0 10px !important;
+        font-size: 11px !important;
+        white-space: nowrap !important;
+    }
+
+    .player-page-card .art-video-player .tvz-resume-restart {
+        padding: 0 10px !important;
+        font-size: 11px !important;
+        height: 100% !important;
+        white-space: nowrap !important;
+    }
+
+    .player-page-card .art-video-player .tvz-skip-go {
+        padding: 0 10px !important;
+        font-size: 11px !important;
+        height: 100% !important;
+        white-space: nowrap !important;
+    }
+
+    .player-page-card .art-video-player .tvz-skip-close {
+        padding: 0 8px !important;
+        height: 100% !important;
+    }
+
+    /* Scrollable Hub Below Video */
+    .player-page .movie-modal-body.tvz-mobile-player-body {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 16px 16px 40px 16px !important;
+        gap: 12px !important;
+        background: #0b0c10 !important;
+        color: #ffffff !important;
+    }
+
+    /* Metadata Info Section */
+    .tvz-mobile-info-section {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+
+    .tvz-mobile-title-logo {
+        max-height: 44px !important;
+        max-width: 220px !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important;
+        object-position: left center !important;
+        margin-bottom: 2px !important;
+    }
+
+    .tvz-mobile-title-logo.hidden {
+        display: none !important;
+    }
+
+    .tvz-mobile-title {
+        font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+        font-size: 19px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        letter-spacing: -0.01em !important;
+        line-height: 1.25 !important;
+        margin: 0 !important;
+    }
+
+    .tvz-mobile-subtitle {
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        line-height: 1.3 !important;
+    }
+
+    /* Genres with middle dots (matching Title Page) */
+    .tvz-mobile-genres {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #e4e4e7 !important;
+        margin-top: 2px !important;
+    }
+
+    .tvz-mobile-genres:empty {
+        display: none !important;
+    }
+
+    .tvz-mobile-genres span + span::before {
+        content: "•" !important;
+        margin: 0 8px !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+    }
+
+    /* Clean Round Mobile Actions Row (Matching Title Page standard) */
+    .tvz-mobile-actions-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin: 4px 0 2px 0 !important;
+    }
+
+    .tvz-mobile-actions-row .title-action {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        border-radius: 50% !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        background: rgba(14, 14, 18, 0.6) !important;
+        color: #ffffff !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        position: relative !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .tvz-mobile-actions-row .title-action:active {
+        transform: scale(0.92) !important;
+    }
+
+    /* Watched / Active / Copied button: solid white background with dark icon (matches Title Page) */
+    .tvz-mobile-actions-row .title-action.is-on,
+    .tvz-mobile-actions-row .title-action.is-copied {
+        background: #ffffff !important;
+        border-color: #ffffff !important;
+        color: #09090b !important;
+    }
+
+    .tvz-mobile-actions-row .title-action.is-on svg,
+    .tvz-mobile-actions-row .title-action.is-copied svg {
+        stroke: #09090b !important;
+    }
+
+    .tvz-mobile-actions-row .title-action.is-on .icon-off {
+        display: none !important;
+    }
+
+    .tvz-mobile-actions-row .title-action:not(.is-on) .icon-on {
+        display: none !important;
+    }
+
+    /* Rating Button: expands into oval pill when rated (matches Title Page) */
+    .tvz-mobile-actions-row .title-action-rate.is-on {
+        width: auto !important;
+        min-width: 58px !important;
+        padding: 0 14px !important;
+        border-radius: 9999px !important;
+        background: rgba(14, 14, 18, 0.7) !important;
+        border-color: rgba(251, 191, 36, 0.55) !important;
+        color: #ffffff !important;
+        gap: 6px !important;
+    }
+
+    .tvz-mobile-actions-row .title-action-rate.is-on svg {
+        fill: #fbbf24 !important;
+        stroke: #fbbf24 !important;
+        width: 17px !important;
+        height: 17px !important;
+    }
+
+    .tvz-mobile-actions-row .title-action-rate .title-rate-value {
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+    }
+
+    /* Clean Meta Section matching Title Page (year, duration, age rating badge, score) */
+    .tvz-mobile-meta-section {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        margin-top: 2px !important;
+    }
+
+    .tvz-mobile-meta {
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 6px 14px !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #f4f4f5 !important;
+    }
+
+    .tvz-mobile-meta:empty {
+        display: none !important;
+    }
+
+    .tvz-mobile-crew {
+        margin: 0 !important;
+        font-size: 12.5px !important;
+        color: #94a3b8 !important;
+        line-height: 1.4 !important;
+    }
+
+    .tvz-mobile-crew strong {
+        color: #e2e8f0 !important;
+        font-weight: 600 !important;
+    }
+
+    .tvz-mobile-overview {
+        font-size: 13px !important;
+        line-height: 1.55 !important;
+        color: #d4d4d8 !important;
+        margin: 2px 0 0 0 !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 3 !important;
+        overflow: hidden !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+    }
+
+    .tvz-mobile-overview.is-expanded {
+        -webkit-line-clamp: unset !important;
+        display: block !important;
+    }
+
+    .tvz-mobile-actions-row .title-rate-wrap {
+        position: relative !important;
+    }
+
+    .tvz-mobile-actions-row .title-rate-panel {
+        position: absolute !important;
+        top: calc(100% + 10px) !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        z-index: 50 !important;
+        min-width: 236px !important;
+        max-width: calc(100vw - 32px) !important;
+        padding: 14px 16px 12px !important;
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        background: #141417 !important;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65) !important;
+    }
+
+    /* Accordion for Mobile Episodes */
+    .tvz-mobile-episodes-section {
+        margin-top: 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .tvz-mobile-episodes-accordion-btn {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 12px 14px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .tvz-mobile-episodes-accordion-btn:active {
+        background: rgba(255, 255, 255, 0.09) !important;
+        transform: scale(0.98) !important;
+    }
+
+    .tvz-mobile-episodes-header-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .tvz-mobile-episodes-heading {
+        font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+        font-size: 14.5px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        letter-spacing: -0.01em !important;
+    }
+
+    .tvz-mobile-season-badge {
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        padding: 2px 8px !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 999px !important;
+        color: #e2b755 !important;
+    }
+
+    .tvz-mobile-episodes-chevron {
+        color: #94a3b8 !important;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .tvz-mobile-episodes-accordion-btn.is-open .tvz-mobile-episodes-chevron {
+        transform: rotate(180deg) !important;
+        color: #ffffff !important;
+    }
+
+    .tvz-mobile-episodes-collapse.hidden {
+        display: none !important;
+    }
+
+    .tvz-mobile-episodes-collapse {
+        animation: nav-menu-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Mobile Player Hub Episodes Grid - Rich Cards (2 columns on mobile, 3 on larger) */
+    .tvz-mobile-episodes-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        padding-bottom: 24px !important;
+    }
+
+    @media (min-width: 600px) {
+        .tvz-mobile-episodes-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 12px !important;
+        }
+    }
+
+    .tvz-mobile-episodes-grid .series-ep-card {
+        margin: 0 !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 10px !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        cursor: pointer !important;
+        transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease !important;
+    }
+
+    .tvz-mobile-episodes-grid .series-ep-card:hover,
+    .tvz-mobile-episodes-grid .series-ep-card:active {
+        background: rgba(255, 255, 255, 0.06) !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+    }
+
+    .tvz-mobile-episodes-grid .series-ep-card.is-active-playing {
+        border-color: rgba(255, 255, 255, 0.6) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 0 14px rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-thumbnail-box {
+        width: 100% !important;
+        aspect-ratio: 16 / 9 !important;
+        position: relative !important;
+        background: #111113 !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-thumbnail-img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-info-box {
+        padding: 8px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        flex: 1 1 auto !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-title {
+        font-family: var(--font-heading, 'Outfit', sans-serif) !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        line-height: 1.25 !important;
+        margin: 0 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-meta-row {
+        font-size: 0.68rem !important;
+        color: #a1a1aa !important;
+        display: flex !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+        margin: 0 !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-overview {
+        font-size: 0.7rem !important;
+        color: #71717a !important;
+        line-height: 1.3 !important;
+        margin-top: 2px !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-overview.is-expanded {
+        display: block !important;
+        -webkit-line-clamp: unset !important;
+        color: #d4d4d8 !important;
+    }
+
+    .tvz-mobile-episodes-grid .ep-overview-more {
+        font-size: 0.68rem !important;
+        margin-top: 2px !important;
+    }
+
+    /* Legacy fallback class */
+    .tvz-mobile-ep-btn {
+        display: none !important;
+    }
+}
+
+/* Central Play Button: Global styling for True Fullscreen, Desktop & Landscape */
+.art-video-player .art-state {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 64px !important;
+    height: 64px !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    z-index: 100 !important;
+    transition: transform 0.15s ease, opacity 0.2s ease !important;
+}
+
+.art-video-player.art-control-show:not(.art-clean-pause) .art-state,
+.art-video-player.art-hover:not(.art-clean-pause) .art-state,
+.art-video-player.art-is-paused:not(.art-clean-pause) .art-state {
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.art-video-player .art-state:active {
+    transform: translate(-50%, -50%) scale(0.9) !important;
+}
+
+.art-video-player .art-state .art-icon-state {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 64px !important;
+    height: 64px !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.art-video-player .art-state .art-icon-state svg {
+    width: 48px !important;
+    height: 48px !important;
+    fill: #ffffff !important;
+    stroke: none !important;
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.85)) !important;
+}
+
+/* Hide .art-state unconditionally whenever controls are hidden or in clean screenshot mode */
+.art-video-player:not(.art-control-show):not(.art-hover) .art-state,
+.art-video-player.art-clean-pause .art-state {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* Clean screenshot frame when tapping video in paused mobile mode */
+.art-video-player.art-clean-pause .art-state,
+.art-video-player.art-clean-pause .art-controls,
+.art-video-player.art-clean-pause .art-top,
+.art-video-player.art-clean-pause .art-bottom,
+.art-video-player.art-clean-pause .tvz-resume-banner,
+.art-video-player.art-clean-pause .tvz-side-card,
+.art-video-player.art-clean-pause .art-mask-show {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transition: opacity 0.2s ease !important;
+}
+

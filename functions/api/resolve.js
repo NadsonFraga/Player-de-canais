@@ -1467,7 +1467,7 @@ export async function onRequestGet(context) {
     }
   };
 
-  // Determine requested provider (mgeb, fenixflix, movy, anime_native)
+  // Determine requested provider (mgeb, fenixflix, anime_native)
   const requestedSource = urlObj.searchParams.get("source") || (type === "anime" && lang === "sub" ? "anime_native" : "mgeb");
   const imdbId = urlObj.searchParams.get("imdb_id");
 
@@ -1550,13 +1550,14 @@ export async function onRequestGet(context) {
     if (!activeImdbId && id && tmdbApiKey) {
       imdbPromise = timed("imdb", fetchImdbId(id, type === "movie" ? "movie" : "serie"));
     }
+    const requestedAudio = urlObj.searchParams.get("audio") || (lang === "sub" ? "subtitled" : "dubbed");
     const fenixData = await timed("fenixflix", resolveFenixFlix({
       id,
       imdbId: activeImdbId || imdbPromise,
       type,
       season,
       episode,
-      audio: "dubbed"
+      audio: requestedAudio
     }));
     providerDebug = fenixData?.debug || null;
     if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
@@ -1597,7 +1598,10 @@ export async function onRequestGet(context) {
           raw_url: directCleanUrl,
           headers: { "Referer": referer, ...(origin ? { "Origin": origin } : {}) },
           quality: s.quality || 1080,
-          providerTier: s.providerTier || 3
+          providerTier: s.providerTier || 3,
+          isDubbed: Boolean(s.isDubbed),
+          isSubbed: Boolean(s.isSubbed),
+          audio: s.isDubbed ? "dubbed" : (s.isSubbed ? "subtitled" : "original")
         };
       }));
       const rankedSources = await timed("probe", rankSourcesByQuality(
@@ -1611,7 +1615,7 @@ export async function onRequestGet(context) {
         success: true,
         title: fenixData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
         category: type,
-        audio: "dubbed",
+        audio: requestedAudio === "subtitled" ? "subtitled" : "dubbed",
         provider: "fenixflix",
         primary_source: rankedSources[0],
         fallback_sources: rankedSources.slice(1),

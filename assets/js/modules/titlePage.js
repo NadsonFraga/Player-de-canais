@@ -13,17 +13,17 @@ import {
     TMDB_IMG_W500,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261118_1124';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1124';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1124';
-import { showToast } from '../core/toast.js?v=20261118_1124';
-import { syncPageLock } from '../core/activity.js?v=20261118_1124';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261118_1124';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1124';
-import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261118_1124';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261118_1124';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261118_1124';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261118_1124';
+} from '../core/constants.js?v=20261123_1005';
+import { fetchTmdb } from '../core/tmdb.js?v=20261123_1005';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261123_1005';
+import { showToast } from '../core/toast.js?v=20261123_1005';
+import { syncPageLock } from '../core/activity.js?v=20261123_1005';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261123_1005';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261123_1005';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261123_1005';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261123_1005';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261123_1005';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261123_1005';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -33,7 +33,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261118_1124';
+} from './series.js?v=20261123_1005';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
@@ -676,7 +676,7 @@ function ensureRateStars() {
     if (!box) return null;
     rateStars = createRateStars({
         onPick: (value) => saveRating(value),
-        onPreview: (value) => setText('title-rate-hint', value ? `${formatStars(value)} de 5 estrelas` : 'Escolha de meia a cinco estrelas')
+        onPreview: (value) => setText('title-rate-hint', value ? `${formatStars(value)} de 5 estrelas` : 'Faça sua avaliação')
     });
     box.appendChild(rateStars.element);
     return rateStars;
@@ -690,6 +690,7 @@ function openRatePanel() {
     if (!panel || !button || !stars) return;
     const value = getLibraryState(current.kind, current.item.id).rating || 0;
     stars.setValue(value);
+    setText('title-rate-hint', value ? `${formatStars(value)} de 5 estrelas` : 'Faça sua avaliação');
     document.getElementById('btn-title-rate-clear')?.classList.toggle('hidden', !value);
     panel.classList.remove('hidden');
     button.setAttribute('aria-expanded', 'true');
@@ -1027,6 +1028,48 @@ export function setupTitlePage() {
     });
     document.getElementById('btn-title-watchlist')?.addEventListener('click', () => libraryToggle('watchlist'));
     document.getElementById('btn-title-watched')?.addEventListener('click', () => libraryToggle('watched'));
+    document.getElementById('btn-title-share')?.addEventListener('click', async () => {
+        const entry = currentEntry;
+        if (!entry || !entry.item) return;
+        const item = fullItem(entry);
+        const title = item.title || item.name || 'TVzinha';
+        const isMovie = entry.kind === 'movie';
+        const param = isMovie ? 'filme' : (entry.kind === 'anime' ? 'anime' : 'serie');
+        const shareUrl = `${window.location.origin}${window.location.pathname}?${param}=${encodeURIComponent(item.id)}`;
+        const shareBtn = document.getElementById('btn-title-share');
+
+        const triggerFeedback = () => {
+            if (!shareBtn) return;
+            if (shareBtn._shareTimer) clearTimeout(shareBtn._shareTimer);
+            const originalHtml = shareBtn.innerHTML;
+            shareBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            shareBtn.classList.add('is-copied');
+            shareBtn._shareTimer = setTimeout(() => {
+                shareBtn.innerHTML = originalHtml;
+                shareBtn.classList.remove('is-copied');
+                shareBtn._shareTimer = null;
+            }, 1500);
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share({ title, text: `Assista ${title} no TVzinha Online!`, url: shareUrl });
+                triggerFeedback();
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                triggerFeedback();
+                showToast('Link copiado para a área de transferência!');
+                return;
+            } catch (_) {}
+        }
+        showToast('Link: ' + shareUrl);
+    });
     document.getElementById('btn-title-rate')?.addEventListener('click', (e) => {
         e.stopPropagation();
         const panel = document.getElementById('title-rate-panel');

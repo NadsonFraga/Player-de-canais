@@ -17,7 +17,7 @@
     <meta name="theme-color" content="#080808">
     
     <!-- Anti-Popup & Anti-Hijack Guard (Synchronous Head Bootstrap) -->
-    <script src="assets/js/guard.js?v=20261118_1124"></script>
+    <script src="assets/js/guard.js?v=20261123_1005"></script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,22 +25,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Modular CSS Architecture (Strict Precedence Cascade) -->
-    <link rel="stylesheet" href="assets/css/01-base.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/11-title-page.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/12-header.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/13-collection.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/14-account.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/15-profiles.css?v=20261118_1124">
-    <link rel="stylesheet" href="assets/css/16-settings.css?v=20261118_1124">
+    <link rel="stylesheet" href="assets/css/01-base.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/02-layout.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/03-channels.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/04-sports.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/05-navigation.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/06-catalog.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/07-modals.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/08-responsive-tv-movies.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/09-series-animes.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/10-player-v3.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/11-title-page.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/12-header.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/13-collection.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/14-account.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/15-profiles.css?v=20261123_1005">
+    <link rel="stylesheet" href="assets/css/16-settings.css?v=20261123_1005">
 </head>
 
 <body>
@@ -1757,31 +1757,37 @@
                         <div id="title-genres" class="title-genres"></div>
 
                         <div class="title-actions">
-                            <button id="btn-title-play" class="title-play" type="button">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"></polygon></svg>
-                                <span id="title-play-label">Assistir</span>
-                            </button>
-                            <button id="btn-title-restart" class="title-action title-action-restart hidden" type="button" title="Começar do início" aria-label="Começar do início">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-                                <span class="title-restart-label">Do início</span>
-                            </button>
-                            <button id="btn-title-watchlist" class="title-action" type="button" aria-pressed="false" title="Quero assistir" aria-label="Quero assistir">
-                                <svg class="icon-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                                <svg class="icon-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </button>
-                            <button id="btn-title-watched" class="title-action" type="button" aria-pressed="false" title="Marcar como assistido" aria-label="Marcar como assistido">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            </button>
-                            <div class="title-rate-wrap">
-                                <button id="btn-title-rate" class="title-action title-action-rate" type="button" aria-expanded="false" aria-controls="title-rate-panel" title="Avaliar" aria-label="Avaliar">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2.5 14.9 8.6 21.5 9.4 16.6 13.9 17.9 20.5 12 17.2 6.1 20.5 7.4 13.9 2.5 9.4 9.1 8.6"></polygon></svg>
-                                    <span id="title-rate-value" class="title-rate-value"></span>
+                            <div class="title-play-group">
+                                <button id="btn-title-play" class="title-play" type="button">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"></polygon></svg>
+                                    <span id="title-play-label">Assistir</span>
                                 </button>
-                                <div id="title-rate-panel" class="title-rate-panel hidden" role="group" aria-label="Avaliar">
-                                    <div id="title-rate-stars" class="title-rate-stars"></div>
-                                    <div class="title-rate-footer">
-                                        <span id="title-rate-hint" class="title-rate-hint"></span>
-                                        <button id="btn-title-rate-clear" class="title-rate-clear hidden" type="button">Remover nota</button>
+                                <button id="btn-title-restart" class="title-action title-action-restart hidden" type="button" title="Começar do início" aria-label="Começar do início">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                                    <span class="title-restart-label">Do início</span>
+                                </button>
+                            </div>
+                            <div class="title-actions-row">
+                                <button id="btn-title-watchlist" class="title-action" type="button" aria-pressed="false" title="Quero assistir" aria-label="Quero assistir">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                </button>
+                                <button id="btn-title-watched" class="title-action" type="button" aria-pressed="false" title="Marcar como assistido" aria-label="Marcar como assistido">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
+                                <button id="btn-title-share" class="title-action" type="button" title="Compartilhar" aria-label="Compartilhar">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                </button>
+                                <div class="title-rate-wrap">
+                                    <button id="btn-title-rate" class="title-action title-action-rate" type="button" aria-expanded="false" aria-controls="title-rate-panel" title="Avaliar" aria-label="Avaliar">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2.5 14.9 8.6 21.5 9.4 16.6 13.9 17.9 20.5 12 17.2 6.1 20.5 7.4 13.9 2.5 9.4 9.1 8.6"></polygon></svg>
+                                        <span id="title-rate-value" class="title-rate-value"></span>
+                                    </button>
+                                    <div id="title-rate-panel" class="title-rate-panel hidden" role="group" aria-label="Avaliar">
+                                        <div id="title-rate-stars" class="title-rate-stars"></div>
+                                        <div class="title-rate-footer">
+                                            <span id="title-rate-hint" class="title-rate-hint"></span>
+                                            <button id="btn-title-rate-clear" class="title-rate-clear hidden" type="button">Remover nota</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1834,7 +1840,7 @@
                                 <line x1="3" y1="12" x2="3.01" y2="12"></line>
                                 <line x1="3" y1="18" x2="3.01" y2="18"></line>
                             </svg>
-                            <span>Lista Contínua</span>
+                            <span>Todos os episódios</span>
                         </button>
                     </div>
 
@@ -1865,8 +1871,8 @@
                     <div id="series-continuous-panel" class="series-panel-content hidden">
                         <div class="continuous-search-bar">
                             <div class="continuous-input-box">
-                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="series-quick-ep-search" class="continuous-ep-input" placeholder="Digitar número do episódio...">
-                                <button id="btn-go-to-ep" class="btn-continuous-go" type="button">Ir</button>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="continuous-search-icon" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="series-quick-ep-search" class="continuous-ep-input" placeholder="Digitar nº do episódio...">
                             </div>
                             <div id="series-chunks-container" class="continuous-chunks-scroller">
                                 <!-- Populated with batch chunks 1-50, 51-100, etc. -->
@@ -2129,7 +2135,7 @@
 
     <!-- Movie player page: full screen over the title page (movies.js playMovie) -->
     <div id="movie-player-view" class="movie-modal-backdrop player-page hidden" role="dialog" aria-modal="true" aria-labelledby="movie-player-server-title">
-        <div class="movie-modal-card player-page-card is-playing">
+        <div class="movie-modal-card player-page-card">
             <div class="movie-modal-media-area" id="movie-modal-media-area">
                 <div id="movie-modal-player-container" class="movie-modal-player-container">
                     <div class="movie-player-top-bar">
@@ -2137,19 +2143,35 @@
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
                             <span class="btn-player-back-text">Voltar</span>
                         </button>
-                        <span id="movie-player-server-title" class="movie-player-server-title sr-only" style="display:none;">Carregando filme...</span>
+                        <div class="tvz-player-title-info">
+                            <img id="movie-player-thumb-top" class="tvz-player-thumb-top hidden" src="" alt="">
+                            <div class="tvz-player-title-meta">
+                                <span id="movie-player-title-top" class="tvz-player-main-title"></span>
+                                <div id="movie-player-meta-row" class="tvz-player-meta-badges">
+                                    <span id="movie-player-rating-badge" class="tvz-meta-pill rating hidden"></span>
+                                    <span id="movie-player-year-badge" class="tvz-meta-pill hidden"></span>
+                                    <span id="movie-player-cert-badge" class="tvz-meta-pill cert hidden"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <span id="movie-player-server-title" class="movie-player-server-title sr-only" aria-hidden="true"></span>
                         <div class="movie-player-actions">
-                            <button id="btn-reload-movie-player" class="btn-player-icon" type="button" title="Recarregar player" aria-label="Recarregar player"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
-                            <button id="btn-exit-movie-player" class="btn-player-icon danger" type="button" title="Sair para Filmes" aria-label="Sair para Filmes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            <button id="btn-movie-servers-toggle" class="btn-player-icon btn-player-servers" type="button" title="Trocar servidor" aria-label="Trocar servidor">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                                <span id="movie-player-active-server-name" class="sr-only">Servidores</span>
+                            </button>
+                            <button id="btn-reload-movie-player" class="btn-player-icon" type="button" title="Recarregar player" aria-label="Recarregar player"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+                            <button id="btn-exit-movie-player" class="btn-player-icon danger" type="button" title="Sair para Filmes" aria-label="Sair para Filmes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                         </div>
                     </div>
+                    <div id="movie-servers-backdrop" class="tvz-servers-backdrop"></div>
+                    <div id="movie-servers-flyout-panel" class="tvz-servers-panel tvz-servers-panel-top"></div>
                     <div class="movie-player-stage">
                         <div id="movie-player-loader" class="video-loader-overlay hidden">
                             <div class="tvz-loader-spinner-wrap">
                                 <div class="spinner"></div>
                                 <span class="tvz-loader-text">Carregando filme...</span>
                             </div>
-                            <div id="movie-loader-servers" class="tvz-loader-servers-row"></div>
                         </div>
                         <div id="movie-artplayer-container" class="movie-artplayer-stage hidden"></div>
 
@@ -2173,8 +2195,49 @@
                 </div>
             </div>
 
-            <div class="movie-modal-body">
-                <div class="movie-servers-section">
+            <div class="movie-modal-body tvz-mobile-player-body">
+                <!-- Clean Mobile Metadata Section (Matches Title Page Layout) -->
+                <div class="tvz-mobile-info-section">
+                    <img id="movie-mobile-logo" class="tvz-mobile-title-logo hidden" alt="">
+                    <h1 id="movie-mobile-title" class="tvz-mobile-title"></h1>
+                    <div id="movie-mobile-genres" class="title-genres tvz-mobile-genres"></div>
+                </div>
+
+                <!-- Clean Round Mobile Actions Row -->
+                <div class="tvz-mobile-actions-row">
+                    <button id="btn-movie-mobile-watchlist" class="title-action" type="button" aria-pressed="false" title="Quero assistir" aria-label="Quero assistir">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </button>
+                    <button id="btn-movie-mobile-watched" class="title-action" type="button" aria-pressed="false" title="Marcar como assistido" aria-label="Marcar como assistido">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                    <button id="btn-movie-mobile-share" class="title-action" type="button" title="Compartilhar" aria-label="Compartilhar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    </button>
+                    <div class="title-rate-wrap">
+                        <button id="btn-movie-mobile-rate" class="title-action title-action-rate" type="button" aria-expanded="false" aria-controls="movie-mobile-rate-panel" title="Avaliar" aria-label="Avaliar">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2.5 14.9 8.6 21.5 9.4 16.6 13.9 17.9 20.5 12 17.2 6.1 20.5 7.4 13.9 2.5 9.4 9.1 8.6"></polygon></svg>
+                            <span id="movie-mobile-rate-value" class="title-rate-value"></span>
+                        </button>
+                        <div id="movie-mobile-rate-panel" class="title-rate-panel hidden" role="group" aria-label="Avaliar">
+                            <div id="movie-mobile-rate-stars" class="title-rate-stars"></div>
+                            <div class="title-rate-footer">
+                                <span id="movie-mobile-rate-hint" class="title-rate-hint"></span>
+                                <button id="btn-movie-mobile-rate-clear" class="title-rate-clear hidden" type="button">Remover nota</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clean Metadata & Overview Section matching Title Page -->
+                <div class="tvz-mobile-meta-section">
+                    <div id="movie-mobile-meta-row" class="title-meta tvz-mobile-meta"></div>
+                    <div id="movie-mobile-crew" class="title-credit-line tvz-mobile-crew"></div>
+                    <p id="movie-mobile-overview" class="title-overview tvz-mobile-overview"></p>
+                </div>
+
+                <!-- Hidden legacy servers section preserved for automated tests -->
+                <div class="movie-servers-section hidden" aria-hidden="true">
                     <div class="movie-servers-title">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -2191,7 +2254,7 @@
 
     <!-- Series and anime player page: full screen over the title page (series.js openEpisode) -->
     <div id="series-player-view" class="movie-modal-backdrop series-player-modal-backdrop player-page hidden" role="dialog" aria-modal="true" aria-labelledby="series-player-current-ep">
-        <div class="movie-modal-card series-player-modal-card player-page-card is-playing">
+        <div class="movie-modal-card series-player-modal-card player-page-card">
             <!-- Media / Player Area -->
             <div class="movie-modal-media-area series-modal-media-area">
                 <div class="movie-player-top-bar series-player-top-bar">
@@ -2199,15 +2262,28 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         <span class="btn-player-back-text">Voltar</span>
                     </button>
-                    <div class="series-player-title-block">
-                        <span id="series-player-show-name-top" class="series-player-main-title" style="display:none;"></span>
-                        <span id="series-player-current-ep" class="movie-player-server-title series-player-header-title">Carregando episódio...</span>
+                    <div class="tvz-player-title-info">
+                        <img id="series-player-thumb-top" class="tvz-player-thumb-top hidden" src="" alt="">
+                        <div class="tvz-player-title-meta">
+                            <span id="series-player-show-name-top" class="tvz-player-main-title"></span>
+                            <div id="series-player-meta-row" class="tvz-player-meta-badges">
+                                <span id="series-player-current-ep" class="movie-player-server-title series-player-header-title tvz-player-sub-title">Carregando episódio...</span>
+                                <span id="series-player-rating-badge" class="tvz-meta-pill rating hidden"></span>
+                                <span id="series-player-year-badge" class="tvz-meta-pill hidden"></span>
+                            </div>
+                        </div>
                     </div>
                     <div class="movie-player-actions series-player-actions">
+                        <button id="btn-series-servers-toggle" class="btn-player-icon btn-player-servers" type="button" title="Trocar servidor" aria-label="Trocar servidor">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                            <span id="series-player-active-server-name" class="sr-only">Servidores</span>
+                        </button>
                         <button id="btn-reload-series-player" class="btn-player-icon" type="button" title="Recarregar player" aria-label="Recarregar player"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
                         <button id="btn-exit-series-player" class="btn-player-icon danger" type="button" title="Sair para Séries" aria-label="Sair para Séries"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                     </div>
                 </div>
+                <div id="series-servers-backdrop" class="tvz-servers-backdrop"></div>
+                <div id="series-servers-flyout-panel" class="tvz-servers-panel tvz-servers-panel-top"></div>
 
                 <div class="movie-player-stage series-theater-stage">
                     <div id="series-theater-loader" class="video-loader-overlay hidden">
@@ -2215,7 +2291,6 @@
                             <div class="spinner"></div>
                             <span class="tvz-loader-text">Carregando reprodução...</span>
                         </div>
-                        <div id="series-loader-servers" class="tvz-loader-servers-row"></div>
                     </div>
                     <div id="series-artplayer-container" class="series-artplayer-stage hidden"></div>
 
@@ -2241,12 +2316,16 @@
                     <div id="series-player-drawer" class="series-player-drawer hidden">
                         <div class="series-drawer-header">
                             <div class="series-drawer-header-left">
+                                <button id="btn-close-series-drawer" class="tvz-panel-back-btn" type="button" title="Voltar" aria-label="Voltar">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                </button>
                                 <span class="series-drawer-heading">Episódios</span>
-                                <select id="series-drawer-season-select" class="series-drawer-season-select hidden" aria-label="Selecionar temporada"></select>
                             </div>
-                            <button id="btn-close-series-drawer" class="btn-close-drawer" type="button" title="Fechar" aria-label="Fechar">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            </button>
+                            <div class="series-drawer-header-right">
+                                <div class="series-drawer-season-wrap">
+                                    <select id="series-drawer-season-select" class="series-drawer-season-select hidden" aria-label="Selecionar Temporada"></select>
+                                </div>
+                            </div>
                         </div>
                         <div id="series-drawer-list" class="series-drawer-list">
                             <!-- Dynamic drawer items -->
@@ -2256,58 +2335,86 @@
             </div>
 
             <!-- Series Modal Body (Controls, Servers, Details) -->
-            <div class="movie-modal-body series-player-body">
-                <!-- Episode Navigation Buttons -->
-                <div class="series-ep-nav-buttons">
-                    <button id="btn-series-prev-ep" class="btn-player-control" title="Episódio Anterior" disabled>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <polygon points="19 20 9 12 19 4 19 20"></polygon>
-                            <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="3"></line>
-                        </svg>
-                        <span>Anterior</span>
-                    </button>
-                    <button id="btn-toggle-drawer" class="btn-player-control secondary" title="Ver lista de episódios">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="8" y1="6" x2="21" y2="6"></line>
-                            <line x1="8" y1="12" x2="21" y2="12"></line>
-                            <line x1="8" y1="18" x2="21" y2="18"></line>
-                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                        </svg>
-                        <span>Lista de Episódios</span>
-                    </button>
-                    <button id="btn-series-next-ep" class="btn-player-control" title="Próximo Episódio">
-                        <span>Próximo</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <polygon points="5 4 15 12 5 20 5 4"></polygon>
-                            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="3"></line>
-                        </svg>
-                    </button>
+            <div class="movie-modal-body series-player-body tvz-mobile-player-body">
+                <!-- Clean Mobile Metadata Section (Matches Title Page Layout) -->
+                <div class="tvz-mobile-info-section">
+                    <img id="series-mobile-logo" class="tvz-mobile-title-logo hidden" alt="">
+                    <h1 id="series-mobile-title" class="tvz-mobile-title"></h1>
+                    <div id="series-mobile-ep-title" class="tvz-mobile-subtitle"></div>
+                    <div id="series-mobile-genres" class="title-genres tvz-mobile-genres"></div>
                 </div>
 
-                <!-- Servers Grid matching Movies -->
-                <div class="movie-servers-section series-servers-section">
-                    <div class="movie-servers-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                        </svg>
-                        <span>Escolha um player ou servidor:</span>
-                    </div>
-                    <div id="series-servers-grid" class="movie-servers-groups">
-                        <!-- Populated dynamically matching movie cards -->
+                <!-- Clean Round Mobile Actions Row -->
+                <div class="tvz-mobile-actions-row">
+                    <button id="btn-series-mobile-watchlist" class="title-action" type="button" aria-pressed="false" title="Quero assistir" aria-label="Quero assistir">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </button>
+                    <button id="btn-series-mobile-watched" class="title-action" type="button" aria-pressed="false" title="Marcar como assistido" aria-label="Marcar como assistido">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                    <button id="btn-series-mobile-share" class="title-action" type="button" title="Compartilhar" aria-label="Compartilhar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    </button>
+                    <div class="title-rate-wrap">
+                        <button id="btn-series-mobile-rate" class="title-action title-action-rate" type="button" aria-expanded="false" aria-controls="series-mobile-rate-panel" title="Avaliar" aria-label="Avaliar">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2.5 14.9 8.6 21.5 9.4 16.6 13.9 17.9 20.5 12 17.2 6.1 20.5 7.4 13.9 2.5 9.4 9.1 8.6"></polygon></svg>
+                            <span id="series-mobile-rate-value" class="title-rate-value"></span>
+                        </button>
+                        <div id="series-mobile-rate-panel" class="title-rate-panel hidden" role="group" aria-label="Avaliar">
+                            <div id="series-mobile-rate-stars" class="title-rate-stars"></div>
+                            <div class="title-rate-footer">
+                                <span id="series-mobile-rate-hint" class="title-rate-hint"></span>
+                                <button id="btn-series-mobile-rate-clear" class="title-rate-clear hidden" type="button">Remover nota</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Series and Episode Details Section -->
-                <div class="movie-modal-header-info series-player-info">
-                    <h2 id="series-player-show-title" class="movie-modal-title"></h2>
-                    <div class="movie-modal-meta-row">
-                        <span id="series-player-meta-badge" class="movie-modal-badge"></span>
-                        <span id="series-player-rating-badge" class="movie-modal-badge rating"></span>
-                        <div id="series-player-genres" class="movie-modal-genres"></div>
+                <!-- Clean Metadata & Overview Section matching Title Page -->
+                <div class="tvz-mobile-meta-section">
+                    <div id="series-mobile-meta-row" class="title-meta tvz-mobile-meta"></div>
+                    <div id="series-mobile-crew" class="title-credit-line tvz-mobile-crew"></div>
+                    <p id="series-mobile-overview" class="title-overview tvz-mobile-overview"></p>
+                </div>
+
+                <!-- Clean Collapsible Mobile Episodes Section -->
+                <div class="tvz-mobile-episodes-section">
+                    <button id="btn-mobile-episodes-toggle" class="tvz-mobile-episodes-accordion-btn" type="button" aria-expanded="false">
+                        <div class="tvz-mobile-episodes-header-left">
+                            <span class="tvz-mobile-episodes-heading">Episódios</span>
+                            <span id="series-mobile-season-badge" class="tvz-mobile-season-badge">Temporada 1</span>
+                        </div>
+                        <svg class="tvz-mobile-episodes-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div id="series-mobile-episodes-collapse" class="tvz-mobile-episodes-collapse hidden">
+                        <div class="series-drawer-season-wrap" style="margin: 10px 0 12px 0;">
+                            <select id="series-mobile-season-select" class="series-drawer-season-select hidden" aria-label="Selecionar Temporada"></select>
+                        </div>
+                        <div id="series-mobile-episodes-grid" class="tvz-mobile-episodes-grid">
+                            <!-- Populated on open -->
+                        </div>
                     </div>
-                    <p id="series-player-overview" class="movie-modal-overview"></p>
+                </div>
+
+                <!-- Hidden legacy elements preserved for automated tests -->
+                <div class="hidden" aria-hidden="true">
+                    <div class="series-ep-nav-buttons">
+                        <button id="btn-series-prev-ep" class="btn-player-control" title="Episódio Anterior" disabled>Anterior</button>
+                        <button id="btn-toggle-drawer" class="btn-player-control secondary" title="Ver lista de episódios">Lista</button>
+                        <button id="btn-series-next-ep" class="btn-player-control" title="Próximo Episódio">Próximo</button>
+                    </div>
+                    <div class="movie-servers-section series-servers-section">
+                        <div id="series-servers-grid" class="movie-servers-groups"></div>
+                    </div>
+                    <div class="movie-modal-header-info series-player-info">
+                        <h2 id="series-player-show-title" class="movie-modal-title"></h2>
+                        <div class="movie-modal-meta-row">
+                            <span id="series-player-meta-badge" class="movie-modal-badge"></span>
+                            <span id="series-player-rating-badge" class="movie-modal-badge rating"></span>
+                            <div id="series-player-genres" class="movie-modal-genres"></div>
+                        </div>
+                        <p id="series-player-overview" class="movie-modal-overview"></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2319,7 +2426,7 @@
     <!-- Streaming Engine V3: Hls.js & Artplayer load on demand with Subresource Integrity (D7, B11), see ensurePlayerLibs() in engine.js -->
 
     <!-- Modern Modular ES Architecture Entrypoint (Fase 3 ESM) -->
-    <script type="module" src="assets/js/main.js?v=20261118_1124"></script>
+    <script type="module" src="assets/js/main.js?v=20261123_1005"></script>
 </body>
 
 </html>

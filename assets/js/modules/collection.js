@@ -6,20 +6,20 @@
  * Reads the watch progress (core/watchProgress.js), the library (core/library.js) and the channel favorites
  * (store); everything stays in this browser until the account sync.
  */
-import { store } from '../core/state.js?v=20261118_1124';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1124';
-import { showToast } from '../core/toast.js?v=20261118_1124';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261118_1124';
-import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1124';
-import { libraryEntries, setWatchlist, setWatched, setRating, LIBRARY_EVENT } from '../core/library.js?v=20261118_1124';
-import { formatStars, starSvg } from '../core/rateStars.js?v=20261118_1124';
-import { switchAppView } from '../navigation/router.js?v=20261118_1124';
-import { openTitle, fillCards } from './titlePage.js?v=20261118_1124';
-import { selectChannelByName } from './channels.js?v=20261118_1124';
+import { store } from '../core/state.js?v=20261123_1005';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261123_1005';
+import { showToast } from '../core/toast.js?v=20261123_1005';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261123_1005';
+import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261123_1005';
+import { libraryEntries, setWatchlist, setWatched, setRating, LIBRARY_EVENT } from '../core/library.js?v=20261123_1005';
+import { formatStars, starSvg } from '../core/rateStars.js?v=20261123_1005';
+import { switchAppView } from '../navigation/router.js?v=20261123_1005';
+import { openTitle, fillCards } from './titlePage.js?v=20261123_1005';
+import { selectChannelByName } from './channels.js?v=20261123_1005';
 
 const TABS = [
     { id: 'watching', label: 'Assistindo', empty: 'Nada em andamento. Comece um filme ou episódio e ele aparece aqui.' },
-    { id: 'watchlist', label: 'Quero assistir', empty: 'Use o botão + na página de um título para guardar aqui o que você quer assistir.' },
+    { id: 'watchlist', label: 'Quero assistir', empty: 'Use o botão Quero assistir na página de um título para guardar aqui o que você quer assistir.' },
     { id: 'watched', label: 'Assistidos', empty: 'O que você terminar de assistir, ou marcar com o olho na página do título, aparece aqui.' },
     { id: 'rated', label: 'Avaliados', empty: 'Dê uma nota com as estrelas na página de um título e ele aparece aqui.' },
     { id: 'channels', label: 'Canais favoritos', empty: 'Marque a estrela de um canal em Canais para ele aparecer aqui.' }

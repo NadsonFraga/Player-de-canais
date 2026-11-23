@@ -93,7 +93,13 @@ const DEBUG_PORT = 9855;
 // Reuse a server already on 8787: Windows lets a second one bind the same port, and requests then hit either at random
 const serverRunning = await fetch("http://127.0.0.1:8787/", { signal: AbortSignal.timeout(2000) }).then(() => true, () => false);
 const serverProc = serverRunning ? null : spawn("python", ["tools/local_server.py", "--port", "8787"], { stdio: "ignore" });
-if (serverProc) await new Promise(r => setTimeout(r, 600));
+if (serverProc) {
+  for (let i = 0; i < 30; i++) {
+    const up = await fetch("http://127.0.0.1:8787/", { signal: AbortSignal.timeout(500) }).then(() => true, () => false);
+    if (up) break;
+    await new Promise(r => setTimeout(r, 200));
+  }
+}
 
 const profile = tempDir(join(tmpdir(), "tvz-xss-"));
 const browserProc = spawn(CHROMIUM, [
@@ -115,8 +121,14 @@ process.on("exit", cleanup);
 process.on("SIGINT", () => { cleanup(); process.exit(1); });
 
 try {
-  await new Promise(r => setTimeout(r, 1200));
-  const targetsRes = await fetch(`http://127.0.0.1:${DEBUG_PORT}/json`);
+  let targetsRes = null;
+  for (let i = 0; i < 30; i++) {
+    try {
+      targetsRes = await fetch(`http://127.0.0.1:${DEBUG_PORT}/json`);
+      if (targetsRes && targetsRes.ok) break;
+    } catch {}
+    await new Promise(r => setTimeout(r, 200));
+  }
   const targets = await targetsRes.json();
   const pageTarget = targets.find(t => t.type === "page") || targets[0];
 
@@ -141,6 +153,9 @@ try {
   });
 
   await send("Runtime.enable");
+  await send("Page.enable");
+  await send("Page.navigate", { url: "http://127.0.0.1:8787/" });
+  await new Promise(r => setTimeout(r, 1000));
 
   // Evaluate injection test inside the browser runtime
   const testScript = `
@@ -204,6 +219,10 @@ try {
     awaitPromise: true,
     returnByValue: true
   });
+
+  if (evalResult.exceptionDetails) {
+    console.error("CDP Exception:", evalResult.exceptionDetails);
+  }
 
   const res = evalResult.result.value;
   assert(res.xssExecuted === false, "Zero XSS execution in Chromium DOM");
