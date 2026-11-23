@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261123_1005';
-import { fetchTmdb } from '../core/tmdb.js?v=20261123_1005';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261123_1850';
+import { fetchTmdb } from '../core/tmdb.js?v=20261123_1850';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -79,6 +79,9 @@ function getStreamHeaders(rawUrl) {
   if (!rawUrl) return defaultHeaders;
   try {
     const lower = rawUrl.toLowerCase();
+    if (lower.includes('duckdns') || lower.includes('megafonte') || lower.includes('koyeb')) {
+      return { referer: 'https://tvzinhaonline.pages.dev/', origin: '' };
+    }
     if (lower.includes('zunderflix') || lower.includes('zunder')) {
       return { referer: 'https://zunderflix.lat/', origin: 'https://zunderflix.lat' };
     }

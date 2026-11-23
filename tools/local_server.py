@@ -115,30 +115,32 @@ def xor_decrypt(data_str: str, key: str = "otaku-embed-v1") -> str:
     return urllib.parse.unquote(decrypted.decode("latin1", errors="replace"))
 
 def fetch_mgeb(media_type: str, media_id: str, season: int = 1, episode: int = 1):
-    if media_type == "movie":
-        url = f"https://mgeb.lat/embed/{media_id}"
-    else:
-        url = f"https://mgeb.lat/embed/serie/{media_id}/{season}/{episode}"
+    for host in ("mgeb.space", "mgeb.lat"):
+        if media_type == "movie":
+            url = f"https://{host}/embed/{media_id}"
+        else:
+            url = f"https://{host}/embed/serie/{media_id}/{season}/{episode}"
 
-    headers = {
-        "User-Agent": USER_AGENT,
-        "Referer": "https://mgeb.lat/",
-        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
-    }
-    
-    try:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=MGEB_TIMEOUT_S) as res:
-            html = res.read().decode("utf-8", errors="ignore")
-        m = re.search(r"var\s+sources\s*=\s*(\[.*?\]);", html, re.DOTALL)
-        if not m:
-            return None
-        sources = json.loads(m.group(1))
-        title_m = re.search(r'var\s+title\s*=\s*"(.*?)";', html)
-        title = title_m.group(1).replace(r"\/", "/") if title_m else ""
-        return {"title": title, "sources": sources}
-    except Exception as e:
-        print(f"[LocalServer] Error fetching MGEB ({url}): {e}", file=sys.stderr)
+        headers = {
+            "User-Agent": USER_AGENT,
+            "Referer": f"https://{host}/",
+            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
+        }
+        
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=MGEB_TIMEOUT_S) as res:
+                html = res.read().decode("utf-8", errors="ignore")
+            m = re.search(r"var\s+sources\s*=\s*(\[.*?\]);", html, re.DOTALL)
+            if not m:
+                continue
+            sources = json.loads(m.group(1))
+            title_m = re.search(r'var\s+title\s*=\s*"(.*?)";', html)
+            title = title_m.group(1).replace(r"\/", "/") if title_m else ""
+            if isinstance(sources, list) and sources:
+                return {"title": title, "sources": sources}
+        except Exception:
+            continue
     return None
 
 
@@ -2347,7 +2349,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
                     referer = "https://embedplayer2.xyz/"
                     if any(k in raw_file for k in ("peliculaplay.com", "cache/hls", "mgeb.lat", "mgeb.top", "mgeb.space")):
-                        referer = "https://mgeb.lat/"
+                        referer = "https://mgeb.space/"
 
                     final_stream_url = direct_clean_url if is_direct_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
                     source_type = s.get("type") or ("hls" if ".m3u8" in raw_file else "mp4")
@@ -2464,7 +2466,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             elif "googlevideo.com" in target_url or "blogger.com" in target_url:
                 referer = "https://www.blogger.com/"
             elif "peliculaplay.com" in target_url or "mgeb.lat" in target_url or "mgeb.top" in target_url or "mgeb.space" in target_url:
-                referer = "https://mgeb.lat/"
+                referer = "https://mgeb.space/"
+            elif "duckdns.org" in target_url or "megafonte" in target_url or "koyeb.app" in target_url:
+                referer, origin = "https://tvzinhaonline.pages.dev/", ""
             elif "fenixhub.online" in target_url or "fenixflix" in target_url:
                 referer, origin = "https://fenixflix.fenixhub.online/", "https://fenixflix.fenixhub.online"
             else:

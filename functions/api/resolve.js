@@ -251,42 +251,49 @@ function xorDecrypt(base64Str, key = "otaku-embed-v1") {
  * Resolves MGEB streams for Movies, Series, and Dubbed Anime
  */
 async function resolveMgeb(type, id, season = 1, episode = 1) {
-  const embedUrl = type === "movie" 
-    ? `https://mgeb.lat/embed/${id}` 
-    : `https://mgeb.lat/embed/serie/${id}/${season}/${episode}`;
+  const hosts = ["mgeb.space", "mgeb.lat"];
+  const path = type === "movie" 
+    ? `embed/${id}` 
+    : `embed/serie/${id}/${season}/${episode}`;
 
-  const headers = {
-    "User-Agent": USER_AGENT,
-    "Referer": "https://mgeb.lat/",
-    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
-  };
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), MGEB_TIMEOUT_MS);
-  try {
-    const res = await fetch(embedUrl, {
-      headers,
-      signal: controller.signal,
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-
-    const sourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
-    if (!sourcesMatch) return null;
-
-    const rawSources = JSON.parse(sourcesMatch[1]);
-    const titleMatch = html.match(/var\s+title\s*=\s*"(.*?)";/);
-    const title = titleMatch ? titleMatch[1].replace(/\\\//g, "/") : "";
-
-    return {
-      title,
-      sources: rawSources,
+  for (const host of hosts) {
+    const embedUrl = `https://${host}/${path}`;
+    const headers = {
+      "User-Agent": USER_AGENT,
+      "Referer": `https://${host}/`,
+      "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
     };
-  } catch (e) {
-    return null;
-  } finally {
-    clearTimeout(timeoutId);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), MGEB_TIMEOUT_MS);
+    try {
+      const res = await fetch(embedUrl, {
+        headers,
+        signal: controller.signal,
+      });
+      if (!res.ok) continue;
+      const html = await res.text();
+
+      const sourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
+      if (!sourcesMatch) continue;
+
+      const rawSources = JSON.parse(sourcesMatch[1]);
+      const titleMatch = html.match(/var\s+title\s*=\s*"(.*?)";/);
+      const title = titleMatch ? titleMatch[1].replace(/\\\//g, "/") : "";
+
+      if (Array.isArray(rawSources) && rawSources.length > 0) {
+        return {
+          title,
+          sources: rawSources,
+        };
+      }
+    } catch (e) {
+      // Try next host
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
+  return null;
 }
 
 /**
@@ -1703,7 +1710,7 @@ export async function onRequestGet(context) {
 
         let referer = "https://embedplayer2.xyz/";
         if (rawFile.includes("peliculaplay.com") || rawFile.includes("cache/hls") || rawFile.includes("mgeb.lat") || rawFile.includes("mgeb.top") || rawFile.includes("mgeb.space")) {
-          referer = "https://mgeb.lat/";
+          referer = "https://mgeb.space/";
         }
         
         // Direct MP4 streams bypass datacenter proxy to eliminate Cloudflare WAF 403 blocks and enable native HTTP 206 byte-ranges
