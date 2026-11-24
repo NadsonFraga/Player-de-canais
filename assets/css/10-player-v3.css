@@ -3814,9 +3814,9 @@
         transition: transform 0.15s ease, opacity 0.15s ease !important;
     }
 
-    .player-page-card .art-video-player.art-control-show:not(.art-clean-pause) .art-state,
-    .player-page-card .art-video-player.art-hover:not(.art-clean-pause) .art-state,
-    .player-page-card .art-video-player.art-is-paused:not(.art-clean-pause) .art-state {
+    .player-page-card .art-video-player.art-control-show:not(.art-clean-pause):not(.art-loading-show):not(.is-buffering):not(.is-loading) .art-state,
+    .player-page-card .art-video-player.art-hover:not(.art-clean-pause):not(.art-loading-show):not(.is-buffering):not(.is-loading) .art-state,
+    .player-page-card .art-video-player.art-is-paused:not(.art-clean-pause):not(.art-loading-show):not(.is-buffering):not(.is-loading) .art-state {
         display: flex !important;
         opacity: 1 !important;
         pointer-events: auto !important;
@@ -4348,9 +4348,9 @@
     transition: transform 0.15s ease, opacity 0.2s ease !important;
 }
 
-.art-video-player.art-control-show:not(.art-clean-pause) .art-state,
-.art-video-player.art-hover:not(.art-clean-pause) .art-state,
-.art-video-player.art-is-paused:not(.art-clean-pause) .art-state {
+.art-video-player.art-control-show:not(.art-clean-pause):not(.art-loading-show):not(.is-buffering):not(.is-loading) .art-state,
+.art-video-player.art-hover:not(.art-clean-pause):not(.art-loading-show):not(.is-buffering):not(.is-loading) .art-state,
+.art-video-player.art-is-paused:not(.art-clean-pause):not(.art-loading-show):not(.is-buffering):not(.is-loading) .art-state {
     display: flex !important;
     opacity: 1 !important;
     pointer-events: auto !important;
@@ -4382,7 +4382,16 @@
     filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.85)) !important;
 }
 
-/* Hide .art-state unconditionally whenever controls are hidden or in clean screenshot mode */
+/* Hide .art-state unconditionally whenever loading, buffering, controls are hidden, or in clean screenshot mode */
+.player-page-card.is-loading .art-state,
+.movie-modal-card.is-loading .art-state,
+.series-modal-card.is-loading .art-state,
+.art-video-player.art-loading-show .art-state,
+.art-video-player.is-buffering .art-state,
+.art-video-player.is-loading .art-state,
+.art-video-player:has(.art-loading:not([style*="display: none"])) .art-state,
+.movie-player-stage:has(.video-loader-overlay:not(.hidden)) .art-state,
+.series-theater-stage:has(.video-loader-overlay:not(.hidden)) .art-state,
 .art-video-player:not(.art-control-show):not(.art-hover) .art-state,
 .art-video-player.art-clean-pause .art-state {
     display: none !important;
