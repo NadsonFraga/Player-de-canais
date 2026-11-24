@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261124_1350';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_1350';
-import { showToast } from '../core/toast.js?v=20261124_1350';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_1350';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261124_1350';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261124_1350';
-import { formatClock } from '../core/resume.js?v=20261124_1350';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261124_1350';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_1350';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261124_1350';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261124_1350';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1350';
-import { fetchTmdb } from '../core/tmdb.js?v=20261124_1350';
+import { store } from '../core/state.js?v=20261124_1426';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_1426';
+import { showToast } from '../core/toast.js?v=20261124_1426';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_1426';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261124_1426';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261124_1426';
+import { formatClock } from '../core/resume.js?v=20261124_1426';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261124_1426';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_1426';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261124_1426';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261124_1426';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1426';
+import { fetchTmdb } from '../core/tmdb.js?v=20261124_1426';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -760,9 +760,33 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
     const currentSource = sources[currentIndex];
     let isStreamWorking = false;
 
-    function triggerDirectCascade(reason) {
+    async function triggerDirectCascade(reason) {
         if (isStreamWorking) return;
         console.warn(`[TvPlayer] Falha na fonte ${currentIndex + 1}/${sources.length} (${currentSource.name}): ${reason}`);
+
+        // Dynamic auto-heal: if the source has a slug and hasn't been auto-healed yet, fetch a fresh stream token
+        if (currentSource && currentSource.slug && !currentSource._autoHealed) {
+            currentSource._autoHealed = true;
+            console.log(`[TvPlayer] Tentando auto-cura dinâmica para slug: ${currentSource.slug}...`);
+            try {
+                const res = await fetch(`/api/resolve?type=channel&id=${encodeURIComponent(currentSource.slug)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.success && data.primary_source && data.primary_source.stream_url) {
+                        const freshUrl = data.primary_source.stream_url;
+                        console.log(`[TvPlayer] Auto-cura bem sucedida para ${currentSource.slug}:`, freshUrl);
+                        currentSource.url = freshUrl;
+                        if (sources[currentIndex + 1] && sources[currentIndex + 1].slug === currentSource.slug) {
+                            sources[currentIndex + 1].url = freshUrl;
+                        }
+                        mountTvDirectStream(channelData, currentIndex, onAllDirectFailed, onSourceChanged);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.warn(`[TvPlayer] Auto-cura dinâmica falhou para ${currentSource.slug}:`, err);
+            }
+        }
 
         if (currentIndex + 1 < sources.length) {
             const nextIndex = currentIndex + 1;

@@ -323,6 +323,92 @@ async function resolveZoko(malId, episode = 1) {
   }
 }
 
+/**
+ * Resolves dynamic live HLS stream for TV Channels through rdembed.online -> penterosa.lat
+ */
+async function resolveLiveChannel(slug) {
+  if (!slug) return null;
+  const userAgent = USER_AGENT;
+  const endpoints = [
+    `https://rdembed.online/${slug}`,
+    `https://v1.rdembed.online/${slug}`,
+    `https://w1.rdembed.online/${slug}`
+  ];
+
+  for (const embedUrl of endpoints) {
+    try {
+      const controller1 = new AbortController();
+      const t1 = setTimeout(() => controller1.abort(), 4000);
+      const res1 = await fetch(embedUrl, {
+        headers: { "User-Agent": userAgent, "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+        signal: controller1.signal
+      });
+      clearTimeout(t1);
+      if (!res1.ok) continue;
+      const html1 = await res1.text();
+      const m1 = html1.match(/src="(https:\/\/[^/]+\/__play\/[^"]+)"/);
+      if (!m1) continue;
+      const iframeSrc = m1[1].replaceAll("&amp;", "&");
+
+      const controller2 = new AbortController();
+      const t2 = setTimeout(() => controller2.abort(), 4000);
+      const res2 = await fetch(iframeSrc, {
+        headers: { "User-Agent": userAgent, "Referer": embedUrl },
+        signal: controller2.signal
+      });
+      clearTimeout(t2);
+      if (!res2.ok) continue;
+      const html2 = await res2.text();
+      const m2 = html2.match(/src="(https:\/\/[^/]+\/[^"]+)"/);
+      if (!m2) continue;
+      const playerUrl = m2[1].replaceAll("&amp;", "&");
+
+      const mHost = playerUrl.match(/^(https:\/\/[^/]+)/);
+      const playerBase = mHost ? mHost[1] : "https://penterosa.lat";
+
+      const controller3 = new AbortController();
+      const t3 = setTimeout(() => controller3.abort(), 4000);
+      const res3 = await fetch(playerUrl, {
+        headers: { "User-Agent": userAgent, "Referer": embedUrl },
+        signal: controller3.signal
+      });
+      clearTimeout(t3);
+      if (!res3.ok) continue;
+      const html3 = await res3.text();
+      const mRef = html3.match(/"ref":"([^"]+)"/);
+      if (!mRef) continue;
+      const refPath = mRef[1].replace(/\\\//g, "/");
+      const refUrl = `${playerBase}${refPath}`;
+
+      const controller4 = new AbortController();
+      const t4 = setTimeout(() => controller4.abort(), 4000);
+      const res4 = await fetch(refUrl, {
+        method: "POST",
+        headers: {
+          "User-Agent": userAgent,
+          "Referer": playerUrl,
+          "Origin": playerBase,
+          "Accept": "application/json"
+        },
+        signal: controller4.signal
+      });
+      clearTimeout(t4);
+      if (!res4.ok) continue;
+      const refData = await res4.json();
+      if (refData && refData.src) {
+        return {
+          slug,
+          stream_url: refData.src,
+          type: "m3u8"
+        };
+      }
+    } catch (e) {
+      // Try next endpoint
+    }
+  }
+  return null;
+}
+
 /* ============================================================
  * QUALITY PROBING
  * Discovers the real resolution of each source so the player can rank
@@ -1423,7 +1509,40 @@ export async function onRequestGet(context) {
   }
 
   const id = urlObj.searchParams.get("id");
-  const type = urlObj.searchParams.get("type") || "movie"; // 'movie' | 'serie' | 'anime'
+  const type = urlObj.searchParams.get("type") || "movie"; // 'movie' | 'serie' | 'anime' | 'channel'
+
+  if (type === "channel" || type === "live") {
+    const slug = id;
+    if (!slug) {
+      return new Response(JSON.stringify({ success: false, error: "Missing channel id/slug" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    }
+    const liveData = await resolveLiveChannel(slug);
+    if (liveData && liveData.stream_url) {
+      return new Response(JSON.stringify({
+        success: true,
+        category: "channel",
+        slug,
+        primary_source: {
+          label: "Servidor 1 (Ao Vivo)",
+          type: "hls",
+          stream_url: liveData.stream_url,
+          direct_url: liveData.stream_url,
+          quality: 1080,
+          alive: true
+        }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    }
+    return new Response(JSON.stringify({ success: false, error: "channel_stream_unavailable" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+    });
+  }
   const season = parseInt(urlObj.searchParams.get("season") || "1", 10);
   const episode = parseInt(urlObj.searchParams.get("episode") || "1", 10);
   const lang = urlObj.searchParams.get("lang") || (type === "anime" ? "sub" : "dub");
@@ -1582,8 +1701,10 @@ export async function onRequestGet(context) {
         let referer = s.referer;
         let origin = "";
         if (rawLower.includes("fenixhub") || rawLower.includes("fenixflix")) {
-          referer = "https://fenixflix.fenixhub.online/";
-          origin = "https://fenixflix.fenixhub.online";
+          // FenixHub rejects requests that carry fenixflix/fenixhub origin/referer with HTTP 403 ("Origem bloqueada").
+          // Upstream streams require empty referer and origin to allow direct CDN streaming.
+          referer = "";
+          origin = "";
         } else if (rawLower.includes("zunderflix") || rawLower.includes("zunder")) {
           referer = "https://zunderflix.lat/";
           origin = "https://zunderflix.lat";
