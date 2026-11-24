@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261124_0910';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_0910';
-import { showToast } from '../core/toast.js?v=20261124_0910';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_0910';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261124_0910';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261124_0910';
-import { formatClock } from '../core/resume.js?v=20261124_0910';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261124_0910';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_0910';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261124_0910';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261124_0910';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_0910';
-import { fetchTmdb } from '../core/tmdb.js?v=20261124_0910';
+import { store } from '../core/state.js?v=20261124_1350';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_1350';
+import { showToast } from '../core/toast.js?v=20261124_1350';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_1350';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261124_1350';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261124_1350';
+import { formatClock } from '../core/resume.js?v=20261124_1350';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261124_1350';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_1350';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261124_1350';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261124_1350';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1350';
+import { fetchTmdb } from '../core/tmdb.js?v=20261124_1350';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -1845,10 +1845,26 @@ export function updateCenterStateIcon(art) {
     const stateEl = art.template.$player.querySelector('.art-state');
     if (!stateEl) return;
     const card = getActivePlayerCard(art);
-    if (card && card.classList.contains('is-loading')) {
+    const playerEl = art.template.$player;
+    const isPlayerLoading = Boolean(
+        (card && card.classList.contains('is-loading')) ||
+        (art.loading && art.loading.show) ||
+        playerEl.classList.contains('art-loading-show') ||
+        playerEl.classList.contains('is-buffering') ||
+        playerEl.classList.contains('is-loading') ||
+        (art.video && art.video.readyState < 3 && !art.video.paused)
+    );
+    if (isPlayerLoading) {
         stateEl.style.setProperty('display', 'none', 'important');
+        stateEl.style.setProperty('opacity', '0', 'important');
+        stateEl.style.setProperty('pointer-events', 'none', 'important');
+        stateEl.style.setProperty('visibility', 'hidden', 'important');
         return;
     }
+    stateEl.style.removeProperty('display');
+    stateEl.style.removeProperty('opacity');
+    stateEl.style.removeProperty('pointer-events');
+    stateEl.style.removeProperty('visibility');
     const iconWrap = stateEl.querySelector('.art-icon-state') || stateEl;
     const isPaused = Boolean(art.video && art.video.paused);
     iconWrap.innerHTML = isPaused ? STATE_PLAY_SVG : STATE_PAUSE_SVG;
@@ -2550,9 +2566,27 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             updateCenterStateIcon(art);
         };
 
-        art.on('video:canplay', markStreamSuccess);
-        art.on('video:playing', markStreamSuccess);
+        art.on('loading', (show) => {
+            if (art.template?.$player) {
+                art.template.$player.classList.toggle('art-loading-show', Boolean(show));
+            }
+            updateCenterStateIcon(art);
+        });
+
+        art.on('video:waiting', () => {
+            art.template?.$player?.classList.add('art-loading-show');
+            updateCenterStateIcon(art);
+        });
+
+        art.on('video:canplay', () => {
+            markStreamSuccess();
+            art.template?.$player?.classList.remove('art-loading-show');
+            updateCenterStateIcon(art);
+        });
+
         art.on('video:playing', () => {
+            markStreamSuccess();
+            art.template?.$player?.classList.remove('art-loading-show');
             syncPauseUi(false);
             if (isSessionLive(session, token)) {
                 if (session.qualityRollback && session.currentIndex !== session.qualityRollback.previousSourceIndex) {
