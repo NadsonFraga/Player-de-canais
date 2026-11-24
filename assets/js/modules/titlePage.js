@@ -11,19 +11,20 @@
  */
 import {
     TMDB_IMG_W500,
+    TMDB_IMG_W342,
     TMDB_IMG_W185,
     TMDB_IMG_W1280
-} from '../core/constants.js?v=20261123_1850';
-import { fetchTmdb } from '../core/tmdb.js?v=20261123_1850';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261123_1850';
-import { showToast } from '../core/toast.js?v=20261123_1850';
-import { syncPageLock } from '../core/activity.js?v=20261123_1850';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261123_1850';
-import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261123_1850';
-import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261123_1850';
-import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261123_1850';
-import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261123_1850';
-import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261123_1850';
+} from '../core/constants.js?v=20261124_0910';
+import { fetchTmdb } from '../core/tmdb.js?v=20261124_0910';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_0910';
+import { showToast } from '../core/toast.js?v=20261124_0910';
+import { syncPageLock } from '../core/activity.js?v=20261124_0910';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261124_0910';
+import { getMovieProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261124_0910';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261124_0910';
+import { pushNavLayer, popNavLayer, runNavBatch } from '../navigation/historyManager.js?v=20261124_0910';
+import { switchAppView, setViewSwitchGuard } from '../navigation/router.js?v=20261124_0910';
+import { playMovie, stopMoviePlayer, isMoviePlayerOpen } from './movies.js?v=20261124_0910';
 import {
     loadShowDetails,
     showSeriesEpisodes,
@@ -33,7 +34,7 @@ import {
     stopSeriesPlayer,
     isSeriesPlayerOpen,
     isAnimeShow
-} from './series.js?v=20261123_1850';
+} from './series.js?v=20261124_0910';
 
 // Kinds: 'movie', 'tv' (series), 'anime'. The address uses Portuguese names.
 const URL_PARAM = { movie: 'filme', tv: 'serie', anime: 'anime' };
@@ -807,7 +808,7 @@ export function fillCards(grid, cards, options = {}) {
         const name = titleText(item) || 'Título';
         const year = String(item.release_date || item.first_air_date || '').substring(0, 4);
         card.setAttribute('aria-label', year ? `${name} (${year})` : name);
-        const poster = item.poster_path ? `${TMDB_IMG_W500}${item.poster_path}` : PLACEHOLDER;
+        const poster = item.poster_path ? `${TMDB_IMG_W342}${item.poster_path}` : PLACEHOLDER;
         const score = item.vote_average ? Number(item.vote_average).toFixed(1) : '';
         card.innerHTML = `
             <img class="movie-poster-img fade-in" src="${escapeAttr(poster)}" alt="${escapeAttr(name)}" loading="lazy" data-fallback-src="${PLACEHOLDER}">
