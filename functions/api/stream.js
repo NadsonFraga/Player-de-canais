@@ -213,8 +213,9 @@ export async function onRequestGet(context) {
       customReferer = "https://tvzinhaonline.pages.dev/";
       customOrigin = "";
     } else if (targetUrl.includes("fenixhub.online") || targetUrl.includes("fenixflix")) {
-      customReferer = "https://fenixflix.fenixhub.online/";
-      customOrigin = "https://fenixflix.fenixhub.online";
+      // FenixHub rejects requests carrying fenixflix/fenixhub origin/referer with HTTP 403 ("Origem bloqueada").
+      customReferer = "";
+      customOrigin = "";
     } else {
       customReferer = "https://tvzinhaonline.pages.dev/";
     }
@@ -224,7 +225,7 @@ export async function onRequestGet(context) {
 
   const forwardHeaders = new Headers();
   forwardHeaders.set("User-Agent", USER_AGENT);
-  forwardHeaders.set("Referer", customReferer);
+  if (customReferer) forwardHeaders.set("Referer", customReferer);
   if (customOrigin) forwardHeaders.set("Origin", customOrigin);
   if (request.headers.has("Range")) forwardHeaders.set("Range", request.headers.get("Range"));
   if (request.headers.has("Accept")) forwardHeaders.set("Accept", request.headers.get("Accept"));

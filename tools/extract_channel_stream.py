@@ -32,9 +32,9 @@ PRIMARY_CDN_PREFIX = "5eae58763dcbe2a0584afac0ef91415a"
 BACKUP_CDN_PREFIX = "52d080a3e172c33fd6886a37e7"
 
 EMBED_ENDPOINTS = [
-    "https://w7.embedtv.cc/{slug}",
-    "https://w7.embedtv.lat/{slug}",
-    "https://7a6111736975081d37f185029a1fc088.embedtv.cc/{slug}"
+    "https://rdembed.online/{slug}",
+    "https://v1.rdembed.online/{slug}",
+    "https://w1.rdembed.online/{slug}"
 ]
 
 def fetch_url(url, timeout=6):
@@ -55,47 +55,71 @@ def fetch_url(url, timeout=6):
         return None
 
 def extract_stream_from_embed(slug):
-    """Fetches embed page and parses the dynamic stream URL."""
-    html = None
+    """Fetches embed page through rdembed.online -> penterosa.lat and extracts dynamic live stream URL."""
+    ctx = ssl._create_unverified_context()
     for endpoint in EMBED_ENDPOINTS:
-        target = endpoint.format(slug=slug)
-        html = fetch_url(target, timeout=6)
-        if html and "const src" in html:
-            break
+        try:
+            embed_url = endpoint.format(slug=slug)
+            html1 = fetch_url(embed_url, timeout=6)
+            if not html1:
+                continue
 
-    if not html:
-        return None, f"Could not fetch working embed page for slug '{slug}'"
+            m1 = re.search(r'src="(https://[^/]+/__play/[^"]+)"', html1)
+            if not m1:
+                continue
+            iframe_src = m1.group(1).replace("&amp;", "&")
 
-    match = re.search(r'const\s+src\s*=\s*"([^"]+)"', html)
-    if not match:
-        return None, f"No stream URL found in embed HTML for slug '{slug}'"
+            req2 = urllib.request.Request(iframe_src, headers={
+                "User-Agent": USER_AGENT,
+                "Referer": embed_url
+            })
+            with urllib.request.urlopen(req2, timeout=6, context=ctx) as r2:
+                html2 = r2.read().decode("utf-8", errors="ignore")
 
-    raw_src = match.group(1)
+            m2 = re.search(r'src="(https://[^/]+/[^"]+)"', html2)
+            if not m2:
+                continue
+            player_url = m2.group(1).replace("&amp;", "&")
 
-    m_base = re.match(r'^(https://[^/]+/stream/[^/]+/).*$', raw_src)
-    if not m_base:
-        return None, f"Unexpected stream URL pattern: {raw_src}"
+            # Extract base player host (e.g. penterosa.lat)
+            m_host = re.match(r'^(https://[^/]+)', player_url)
+            player_base = m_host.group(1) if m_host else "https://penterosa.lat"
 
-    base_path = m_base.group(1)
-    
-    # Extract domain suffix (e.g. s25-cloudfront-net.lat)
-    domain_match = re.search(r'https://[^.]+\.([^/]+)', base_path)
-    domain_suffix = domain_match.group(1) if domain_match else "s25-cloudfront-net.lat"
-    
-    # Path token: /stream/<token>/
-    token_match = re.search(r'/stream/([^/]+)/', base_path)
-    stream_token = token_match.group(1) if token_match else ""
+            req3 = urllib.request.Request(player_url, headers={
+                "User-Agent": USER_AGENT,
+                "Referer": embed_url
+            })
+            with urllib.request.urlopen(req3, timeout=6, context=ctx) as r3:
+                html3 = r3.read().decode("utf-8", errors="ignore")
 
-    src1 = f"https://{PRIMARY_CDN_PREFIX}.{domain_suffix}/stream/{stream_token}/error.txt"
-    src2 = f"https://{BACKUP_CDN_PREFIX}.{domain_suffix}/stream/{stream_token}/error.txt"
+            m_ref = re.search(r'"ref":"([^"]+)"', html3)
+            if not m_ref:
+                continue
+            ref_path = m_ref.group(1).replace(r"\/", "/")
+            ref_url = f"{player_base}{ref_path}"
 
-    return {
-        "slug": slug,
-        "raw_src": raw_src,
-        "token": stream_token,
-        "primary_url": src1,
-        "backup_url": src2,
-    }, None
+            req4 = urllib.request.Request(ref_url, data=b"", headers={
+                "User-Agent": USER_AGENT,
+                "Referer": player_url,
+                "Origin": player_base,
+                "Accept": "application/json"
+            }, method="POST")
+            with urllib.request.urlopen(req4, timeout=6, context=ctx) as r4:
+                ref_data = json.loads(r4.read().decode("utf-8"))
+
+            stream_url = ref_data.get("src", "")
+            if stream_url:
+                return {
+                    "slug": slug,
+                    "raw_src": stream_url,
+                    "token": "",
+                    "primary_url": stream_url,
+                    "backup_url": stream_url,
+                }, None
+        except Exception as e:
+            continue
+
+    return None, f"Could not extract working stream for slug '{slug}'"
 
 def find_channel_in_data(data, slug, channel_name):
     """Finds category and channel key across nested dictionary categories."""
@@ -139,7 +163,7 @@ def update_single_channel_data(data, fallback_obj, slug, channel_name, src1, src
             continue
         cleaned_contingency[c_name] = c_url
     
-    cleaned_contingency["Servidor 5 (EmbedTV)"] = f"https://w7.embedtv.cc/{slug}"
+    cleaned_contingency["Servidor 5 (EmbedTV / RD)"] = f"https://rdembed.online/{slug}"
     data[cat_name][ch_name]["contingency"] = cleaned_contingency
 
     if fallback_obj:

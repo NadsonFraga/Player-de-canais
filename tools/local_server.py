@@ -2080,6 +2080,35 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         media_id = params.get("id", [""])[0]
         media_type = params.get("type", ["movie"])[0]
+
+        if media_type in ("channel", "live"):
+            slug = media_id
+            if not slug:
+                self.send_json(400, {"success": False, "error": "Missing channel id/slug"}, origin)
+                return
+            try:
+                import extract_channel_stream
+                live_data, err = extract_channel_stream.extract_stream_from_embed(slug)
+            except Exception as e:
+                live_data, err = None, str(e)
+            if live_data and live_data.get("primary_url"):
+                self.send_json(200, {
+                    "success": True,
+                    "category": "channel",
+                    "slug": slug,
+                    "primary_source": {
+                        "label": "Servidor 1 (Ao Vivo)",
+                        "type": "hls",
+                        "stream_url": live_data["primary_url"],
+                        "direct_url": live_data["primary_url"],
+                        "quality": 1080,
+                        "alive": True
+                    }
+                }, origin)
+                return
+            self.send_json(404, {"success": False, "error": "channel_stream_unavailable"}, origin)
+            return
+
         season = int(params.get("season", ["1"])[0])
         episode = int(params.get("episode", ["1"])[0])
         lang = params.get("lang", ["sub" if media_type == "anime" else "dub"])[0]
@@ -2217,8 +2246,9 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     raw_file = s["file"].strip()
                     raw_lower = raw_file.lower()
                     if "fenixhub" in raw_lower or "fenixflix" in raw_lower:
-                        referer = "https://fenixflix.fenixhub.online/"
-                        origin = "https://fenixflix.fenixhub.online"
+                        # FenixHub rejects requests carrying fenixflix/fenixhub origin/referer with HTTP 403 ("Origem bloqueada").
+                        referer = ""
+                        origin = ""
                     elif "zunderflix" in raw_lower or "zunder" in raw_lower:
                         referer = "https://zunderflix.lat/"
                         origin = "https://zunderflix.lat"
@@ -2470,7 +2500,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             elif "duckdns.org" in target_url or "megafonte" in target_url or "koyeb.app" in target_url:
                 referer, origin = "https://tvzinhaonline.pages.dev/", ""
             elif "fenixhub.online" in target_url or "fenixflix" in target_url:
-                referer, origin = "https://fenixflix.fenixhub.online/", "https://fenixflix.fenixhub.online"
+                referer, origin = "", ""
             else:
                 referer = "https://tvzinhaonline.pages.dev/"
         # The anime host checks Origin together with its Referer (the resolver's probe sends both)
