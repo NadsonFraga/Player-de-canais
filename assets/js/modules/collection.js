@@ -6,16 +6,16 @@
  * Reads the watch progress (core/watchProgress.js), the library (core/library.js) and the channel favorites
  * (store); everything stays in this browser until the account sync.
  */
-import { store } from '../core/state.js?v=20261124_1438';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1438';
-import { showToast } from '../core/toast.js?v=20261124_1438';
-import { getChannelLogoSrc } from '../core/icons.js?v=20261124_1438';
-import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261124_1438';
-import { libraryEntries, setWatchlist, setWatched, setRating, LIBRARY_EVENT } from '../core/library.js?v=20261124_1438';
-import { formatStars, starSvg } from '../core/rateStars.js?v=20261124_1438';
-import { switchAppView } from '../navigation/router.js?v=20261124_1438';
-import { openTitle, fillCards } from './titlePage.js?v=20261124_1438';
-import { selectChannelByName } from './channels.js?v=20261124_1438';
+import { store } from '../core/state.js?v=20261124_1806';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1806';
+import { showToast } from '../core/toast.js?v=20261124_1806';
+import { getChannelLogoSrc } from '../core/icons.js?v=20261124_1806';
+import { continueWatchingEntries, hideFromContinueWatching, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261124_1806';
+import { libraryEntries, setWatchlist, setWatched, setRating, LIBRARY_EVENT } from '../core/library.js?v=20261124_1806';
+import { formatStars, starSvg } from '../core/rateStars.js?v=20261124_1806';
+import { switchAppView } from '../navigation/router.js?v=20261124_1806';
+import { openTitle, fillCards } from './titlePage.js?v=20261124_1806';
+import { selectChannelByName } from './channels.js?v=20261124_1806';
 
 const TABS = [
     { id: 'watching', label: 'Assistindo', empty: 'Nada em andamento. Comece um filme ou episódio e ele aparece aqui.' },

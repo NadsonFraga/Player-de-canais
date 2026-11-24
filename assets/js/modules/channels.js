@@ -4,14 +4,14 @@
  * Home screen quick-cards grid, and pixel-perfect TV player view.
  */
 
-import { store } from '../core/state.js?v=20261124_1438';
-import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261124_1438';
-import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261124_1438';
-import { showToast } from '../core/toast.js?v=20261124_1438';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261124_1438';
-import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261124_1438';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_1438';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1438';
+import { store } from '../core/state.js?v=20261124_1806';
+import { FALLBACK_CHANNELS } from '../core/fallbackChannels.js?v=20261124_1806';
+import { getUiSvg, createLogoBadgeHtml, createChannelCardLogoHtml, getChannelLogoSrc } from '../core/icons.js?v=20261124_1806';
+import { showToast } from '../core/toast.js?v=20261124_1806';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261124_1806';
+import { mountTvDirectStream, mountTvContingencyIframe, atomicTvPlayerReset, handleAllDirectSourcesFailed } from '../player/engine.js?v=20261124_1806';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_1806';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1806';
 
 /**
  * Counts available direct and contingency options for a channel
@@ -1332,7 +1332,14 @@ export function renderPlayerView(activeChannel) {
         mountTvDirectStream(
             activeChannel.data,
             sourceIdx,
-            () => handleAllDirectSourcesFailed(() => startDirectStream(0), fallbackContingency),
+            () => {
+                if (fallbackContingency) {
+                    showToast("Player Principal sem resposta. Alternando para servidor alternativo...", 3500);
+                    fallbackContingency();
+                } else {
+                    handleAllDirectSourcesFailed(() => startDirectStream(0), null);
+                }
+            },
             (newIdx) => {
                 activeChannel.sourceIndex = newIdx;
                 updateServerButtonsActiveState(activeChannel);

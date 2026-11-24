@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261124_1438';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_1438';
-import { showToast } from '../core/toast.js?v=20261124_1438';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_1438';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261124_1438';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261124_1438';
-import { formatClock } from '../core/resume.js?v=20261124_1438';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261124_1438';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_1438';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261124_1438';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261124_1438';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1438';
-import { fetchTmdb } from '../core/tmdb.js?v=20261124_1438';
+import { store } from '../core/state.js?v=20261124_1806';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_1806';
+import { showToast } from '../core/toast.js?v=20261124_1806';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_1806';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261124_1806';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261124_1806';
+import { formatClock } from '../core/resume.js?v=20261124_1806';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261124_1806';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_1806';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261124_1806';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261124_1806';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1806';
+import { fetchTmdb } from '../core/tmdb.js?v=20261124_1806';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -449,7 +449,11 @@ export function atomicTvPlayerReset() {
     if (window.tvArtInstance) {
         try {
             window.tvArtInstance.pause();
+        } catch (_) {}
+        try {
             releaseVideoElement(window.tvArtInstance.video);
+        } catch (_) {}
+        try {
             window.tvArtInstance.destroy(true);
         } catch (e) {
             console.warn("[TvArtplayer] Notice during instance destruction:", e);
@@ -507,12 +511,26 @@ export function atomicPlayerReset() {
     if (window.artInstance) {
         try {
             window.artInstance.pause();
+        } catch (_) {}
+        try {
             releaseVideoElement(window.artInstance.video);
+        } catch (_) {}
+        try {
             window.artInstance.destroy(true);
         } catch (e) {
             console.warn("[Artplayer] Notice during instance destruction:", e);
         }
         window.artInstance = null;
+    }
+
+    // Safeguard: Ensure no orphaned Artplayer instance remains registered on containers
+    if (window.Artplayer && Array.isArray(window.Artplayer.instances)) {
+        window.Artplayer.instances.slice().forEach(inst => {
+            try {
+                inst.destroy(true);
+            } catch (_) {}
+        });
+        window.Artplayer.instances.length = 0;
     }
 
     if (window.hlsInstance) {
@@ -1939,6 +1957,7 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
     const viaDirect = Boolean(source.directUrl) && !source.useProxy && !directRefusedHosts.has(hostOf(source.directUrl));
     session.viaDirect = viaDirect;
     let hasStarted = false;
+    let controlsHideTimer = null;
     const mountedAt = Date.now();
 
     function markStreamSuccess() {
@@ -2294,9 +2313,10 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             createSettingsFlyout(session);
 
             // Reliable auto-hide controls: hides controls on inactivity or when mouse leaves window
-            let controlsHideTimer = null;
+            controlsHideTimer = null;
             const scheduleControlsHide = (delayMs = 4000) => {
-                clearTimeout(controlsHideTimer);
+                if (controlsHideTimer) clearTimeout(controlsHideTimer);
+                controlsHideTimer = null;
                 if (!art.video || art.video.paused) return;
                 if (session.settingsFlyoutPanel?.classList.contains('is-open') ||
                     session.subtitlesFlyoutPanel?.classList.contains('is-open') ||
@@ -2520,7 +2540,10 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
             };
             window.addEventListener('tvzinha:closeFlyouts', onCloseAllFlyouts);
             art.on('destroy', () => {
-                clearTimeout(controlsHideTimer);
+                if (controlsHideTimer) {
+                    clearTimeout(controlsHideTimer);
+                    controlsHideTimer = null;
+                }
                 window.removeEventListener('tvzinha:closeFlyouts', onCloseAllFlyouts);
             });
 
@@ -2577,8 +2600,10 @@ function mountNativeSource(session, index, { startTime = 0 } = {}) {
                 }
             }
             if (paused) {
-                clearTimeout(controlsHideTimer);
-                controlsHideTimer = null;
+                if (controlsHideTimer) {
+                    clearTimeout(controlsHideTimer);
+                    controlsHideTimer = null;
+                }
                 art.controls.show = true;
                 if (art.template?.$player) {
                     art.template.$player.classList.add('art-control-show');
