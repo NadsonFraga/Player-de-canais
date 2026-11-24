@@ -14,24 +14,24 @@ import {
     FAMOUS_DIRECTORS,
     FAMOUS_STUDIOS,
     MOVIE_SERVERS
-} from '../core/constants.js?v=20261124_1426';
-import { showToast } from '../core/toast.js?v=20261124_1426';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261124_1426';
-import { buildFeedRows } from '../core/feedRows.js?v=20261124_1426';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261124_1426';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_1426';
-import { getUiSvg } from '../core/icons.js?v=20261124_1426';
-import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261124_1426';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261124_1426';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1426';
-import { fetchTmdb } from '../core/tmdb.js?v=20261124_1426';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261124_1426';
-import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261124_1426';
-import { resumeStartTime } from '../core/resume.js?v=20261124_1426';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261124_1426';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261124_1426';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261124_1426';
-import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261124_1426';
+} from '../core/constants.js?v=20261124_1438';
+import { showToast } from '../core/toast.js?v=20261124_1438';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261124_1438';
+import { buildFeedRows } from '../core/feedRows.js?v=20261124_1438';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261124_1438';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_1438';
+import { getUiSvg } from '../core/icons.js?v=20261124_1438';
+import { mountNativePlayer, resolveDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261124_1438';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261124_1438';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1438';
+import { fetchTmdb } from '../core/tmdb.js?v=20261124_1438';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261124_1438';
+import { recordMovieOpened, saveMovieProgress, getMovieProgress } from '../core/watchProgress.js?v=20261124_1438';
+import { resumeStartTime } from '../core/resume.js?v=20261124_1438';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261124_1438';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261124_1438';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261124_1438';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261124_1438';
 
 let isMoviesInitialized = false;
 let moviesCacheData = null;

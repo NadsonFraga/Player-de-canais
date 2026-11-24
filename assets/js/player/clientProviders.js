@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_1426';
-import { fetchTmdb } from '../core/tmdb.js?v=20261124_1426';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_1438';
+import { fetchTmdb } from '../core/tmdb.js?v=20261124_1438';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -88,7 +88,10 @@ function getStreamHeaders(rawUrl) {
     if (lower.includes('hollymovies')) {
       return { referer: 'https://hollymovies.org/', origin: 'https://hollymovies.org' };
     }
-    if (lower.includes('fenixhub') || lower.includes('fenixflix') || lower.includes('embedplayer2') || lower.includes('playercdn')) {
+    if (lower.includes('fenixhub') || lower.includes('fenixflix')) {
+      return { referer: '', origin: '' };
+    }
+    if (lower.includes('embedplayer2') || lower.includes('playercdn')) {
       return { referer: 'https://embedplayer2.xyz/', origin: 'https://embedplayer2.xyz' };
     }
     const u = new URL(rawUrl);

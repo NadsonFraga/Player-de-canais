@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261124_1426';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_1426';
-import { showToast } from '../core/toast.js?v=20261124_1426';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_1426';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261124_1426';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261124_1426';
-import { formatClock } from '../core/resume.js?v=20261124_1426';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261124_1426';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_1426';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261124_1426';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261124_1426';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1426';
-import { fetchTmdb } from '../core/tmdb.js?v=20261124_1426';
+import { store } from '../core/state.js?v=20261124_1438';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261124_1438';
+import { showToast } from '../core/toast.js?v=20261124_1438';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_1438';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261124_1438';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261124_1438';
+import { formatClock } from '../core/resume.js?v=20261124_1438';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261124_1438';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261124_1438';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261124_1438';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261124_1438';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_1438';
+import { fetchTmdb } from '../core/tmdb.js?v=20261124_1438';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
