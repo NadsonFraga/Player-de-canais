@@ -7,26 +7,28 @@
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
+    TMDB_IMG_W342,
+    TMDB_IMG_W1280,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261123_1850';
-import { showToast } from '../core/toast.js?v=20261123_1850';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261123_1850';
-import { buildFeedRows } from '../core/feedRows.js?v=20261123_1850';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261123_1850';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261123_1850';
-import { resumeStartTime } from '../core/resume.js?v=20261123_1850';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261123_1850';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261123_1850';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261123_1850';
-import { fetchTmdb } from '../core/tmdb.js?v=20261123_1850';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261123_1850';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261123_1850';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261123_1850';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261123_1850';
-import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261123_1850';
-import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261123_1850';
+} from '../core/constants.js?v=20261124_0910';
+import { showToast } from '../core/toast.js?v=20261124_0910';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261124_0910';
+import { buildFeedRows } from '../core/feedRows.js?v=20261124_0910';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261124_0910';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261124_0910';
+import { resumeStartTime } from '../core/resume.js?v=20261124_0910';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261124_0910';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261124_0910';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261124_0910';
+import { fetchTmdb } from '../core/tmdb.js?v=20261124_0910';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261124_0910';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261124_0910';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261124_0910';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261124_0910';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261124_0910';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261124_0910';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -488,7 +490,7 @@ function renderPaginationControls(containerId, currentPage, totalPages, totalRes
 }
 
 // --- Card Creator Element ---
-function createSeriesCardElement(seriesItem, mediaType = 'tv') {
+function createSeriesCardElement(seriesItem, mediaType = 'tv', isAboveFold = false, priority = false) {
     const card = document.createElement("div");
     card.className = "movie-poster-card";
     card.tabIndex = 0;
@@ -502,7 +504,7 @@ function createSeriesCardElement(seriesItem, mediaType = 'tv') {
     card.setAttribute("aria-label", `${title} (${year})`);
 
     const posterUrl = seriesItem.poster_path
-        ? `${TMDB_IMG_W500}${seriesItem.poster_path}`
+        ? `${TMDB_IMG_W342}${seriesItem.poster_path}`
         : 'assets/logos/fav/icon-detailed.svg';
 
     const safeTitle = escapeHtml(title);
@@ -510,9 +512,11 @@ function createSeriesCardElement(seriesItem, mediaType = 'tv') {
     const safePoster = escapeAttr(posterUrl);
     const safeYear = escapeHtml(year);
     const safeRating = escapeHtml(rating);
+    const loadingAttr = isAboveFold ? '' : 'loading="lazy"';
+    const priorityAttr = priority ? 'fetchpriority="high"' : '';
 
     card.innerHTML = `
-        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
+        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" ${loadingAttr} ${priorityAttr} decoding="async" data-fallback-src="assets/logos/fav/icon-detailed.svg">
         <div class="movie-poster-overlay">
             <h4 class="movie-card-title" title="${safeTitleAttr}">${safeTitle}</h4>
             <div class="movie-card-meta">
@@ -611,7 +615,7 @@ function populateSeriesTrack(trackId, items, mediaType = 'tv') {
         return;
     }
     const fragment = document.createDocumentFragment();
-    items.forEach(item => fragment.appendChild(createSeriesCardElement(item, mediaType)));
+    items.forEach((item, idx) => fragment.appendChild(createSeriesCardElement(item, mediaType, idx < 6, idx < 2)));
     track.appendChild(fragment);
 }
 
@@ -625,7 +629,7 @@ function initHeroSeriesCarousel(seriesItems) {
     seriesItems.forEach(item => {
         if (item.backdrop_path) {
             const preBackdrop = new Image();
-            preBackdrop.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            preBackdrop.src = `${TMDB_IMG_W1280}${item.backdrop_path}`;
         }
 
         if (!item.logo_url && !item.has_no_logo) {
@@ -689,7 +693,8 @@ function initHeroSeriesCarousel(seriesItems) {
         const btnWatch = document.getElementById("btn-series-hero-watch");
 
         if (backdropImg && item.backdrop_path) {
-            backdropImg.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            backdropImg.fetchPriority = "high";
+            backdropImg.src = `${TMDB_IMG_W1280}${item.backdrop_path}`;
         }
 
         if (item.logo_url) {
@@ -1221,7 +1226,7 @@ function initHeroAnimesCarousel(animeItems) {
     animeItems.forEach(item => {
         if (item.backdrop_path) {
             const preBackdrop = new Image();
-            preBackdrop.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            preBackdrop.src = `${TMDB_IMG_W1280}${item.backdrop_path}`;
         }
 
         if (!item.logo_url && !item.has_no_logo) {
@@ -1286,7 +1291,8 @@ function initHeroAnimesCarousel(animeItems) {
         const btnWatch = document.getElementById("btn-animes-hero-watch");
 
         if (backdropImg && item.backdrop_path) {
-            backdropImg.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            backdropImg.fetchPriority = "high";
+            backdropImg.src = `${TMDB_IMG_W1280}${item.backdrop_path}`;
         }
 
         if (item.logo_url) {
@@ -3847,7 +3853,7 @@ function startEpisodePlayback(context, options = {}) {
             const backdropUrl = epData?.still_path
                 ? `${TMDB_IMG_W500}${epData.still_path}`
                 : showItem.backdrop_path
-                    ? `${TMDB_IMG_ORIGINAL}${showItem.backdrop_path}`
+                    ? `${TMDB_IMG_W1280}${showItem.backdrop_path}`
                     : '';
 
             // Read after the previous player saved its last time (the reset above), so a switch keeps it

@@ -6,6 +6,7 @@
 // TMDB Movies & Series Engine (reads go through /api/tmdb, which holds the key: see core/tmdb.js)
 export const TMDB_IMG_W500 = 'https://image.tmdb.org/t/p/w500';
 export const TMDB_IMG_ORIGINAL = 'https://image.tmdb.org/t/p/original';
+export const TMDB_IMG_W342 = 'https://image.tmdb.org/t/p/w342';
 export const TMDB_IMG_W185 = 'https://image.tmdb.org/t/p/w185';
 export const TMDB_IMG_W1280 = 'https://image.tmdb.org/t/p/w1280';
 
