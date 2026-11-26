@@ -2495,6 +2495,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 referer, origin = "https://zunderflix.lat/", "https://zunderflix.lat"
             elif "playercdn" in target_url or "embedplayer2.xyz" in target_url:
                 referer, origin = "https://embedplayer2.xyz/", "https://embedplayer2.xyz"
+            elif "bombrilhoso.lat" in target_url or "penterosa.lat" in target_url or "rdembed.online" in target_url:
+                referer, origin = "https://penterosa.lat/", "https://penterosa.lat"
             elif "googlevideo.com" in target_url or "blogger.com" in target_url:
                 referer = "https://www.blogger.com/"
             elif "peliculaplay.com" in target_url or "mgeb.lat" in target_url or "mgeb.top" in target_url or "mgeb.space" in target_url:

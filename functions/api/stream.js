@@ -205,6 +205,9 @@ export async function onRequestGet(context) {
     } else if (targetUrl.includes("playercdn") || targetUrl.includes("embedplayer2.xyz")) {
       customReferer = "https://embedplayer2.xyz/";
       customOrigin = "https://embedplayer2.xyz";
+    } else if (targetUrl.includes("bombrilhoso.lat") || targetUrl.includes("penterosa.lat") || targetUrl.includes("rdembed.online")) {
+      customReferer = "https://penterosa.lat/";
+      customOrigin = "https://penterosa.lat";
     } else if (targetUrl.includes("googlevideo.com") || targetUrl.includes("blogger.com")) {
       customReferer = "https://www.blogger.com/";
     } else if (targetUrl.includes("peliculaplay.com") || targetUrl.includes("mgeb.lat") || targetUrl.includes("mgeb.top") || targetUrl.includes("mgeb.space")) {
