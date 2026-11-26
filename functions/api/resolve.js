@@ -1840,8 +1840,10 @@ export async function onRequestGet(context) {
           : await proxied(rawFile, referer);
         const sourceType = s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4");
         // Every HLS segment through the proxy is one function call (~450 an hour of video). The player tries the
-        // host first and falls back to the proxy, so hosts that need their Referer still play
-        const directUrl = !isDirectMp4 && sourceType === "hls" && /^https:\/\//i.test(rawFile) ? rawFile : null;
+        // host first and falls back to the proxy, so hosts that need their Referer still play.
+        // CDNs that lock tokens to the resolving IP (like playercdn/workers.dev) MUST NOT use direct_url in browser.
+        const isIpLockedCdn = rawFile.includes("playercdn") || rawFile.includes("workers.dev");
+        const directUrl = !isDirectMp4 && !isIpLockedCdn && sourceType === "hls" && /^https:\/\//i.test(rawFile) ? rawFile : null;
 
         return {
           label: s.label || `Servidor ${idx + 1}`,

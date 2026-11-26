@@ -10,13 +10,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://tufazeseli.bombrilhoso.lat/docs/pinhal15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBpbmhhbDE1IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL3BpbmhhbDE1L2luZGV4LnR4dCIsImUiOjE3OTU1NDExNjMsImoiOiJhYTA3OGU2Ni0yNTc4LTRmYjctOTBlMC01YzNkMzM4YmRjYmEiLCJpYXQiOjE3OTU1NDA4NjMsInJzIjoiZ2xvYm9zcCIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.a7a73966094eee8eeb3e77775b09e24b5b26b96d41fa9d796d3d327b79492984",
+          "url": "https://buvubefe.bombrilhoso.lat/docs/pinhal15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBpbmhhbDE1IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL3BpbmhhbDE1L2luZGV4LnR4dCIsImUiOjE3OTU2OTczMDYsImoiOiJkN2MzMWE3ZC0zZDQ1LTQ2YjctYmJkMi1hMzJhZmM5OGQ1ODIiLCJpYXQiOjE3OTU2OTcwMDYsInJzIjoiZ2xvYm9zcCIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.aaec55e62c01e0673a2b8ecf0e4ada917c21d3ee55caa0015ad831e14ea555f5",
           "slug": "globosp",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://tufazeseli.bombrilhoso.lat/docs/pinhal15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBpbmhhbDE1IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL3BpbmhhbDE1L2luZGV4LnR4dCIsImUiOjE3OTU1NDExNjMsImoiOiJhYTA3OGU2Ni0yNTc4LTRmYjctOTBlMC01YzNkMzM4YmRjYmEiLCJpYXQiOjE3OTU1NDA4NjMsInJzIjoiZ2xvYm9zcCIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.a7a73966094eee8eeb3e77775b09e24b5b26b96d41fa9d796d3d327b79492984",
+          "url": "https://buvubefe.bombrilhoso.lat/docs/pinhal15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBpbmhhbDE1IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL3BpbmhhbDE1L2luZGV4LnR4dCIsImUiOjE3OTU2OTczMDYsImoiOiJkN2MzMWE3ZC0zZDQ1LTQ2YjctYmJkMi1hMzJhZmM5OGQ1ODIiLCJpYXQiOjE3OTU2OTcwMDYsInJzIjoiZ2xvYm9zcCIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.aaec55e62c01e0673a2b8ecf0e4ada917c21d3ee55caa0015ad831e14ea555f5",
           "slug": "globosp",
           "cdn": "CDN 2"
         }
@@ -34,13 +34,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://bedunupori.bombrilhoso.lat/docs/guarita33/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Imd1YXJpdGEzMyIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ndWFyaXRhMzMvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE2NiwiaiI6ImMzZDg2MTYwLWY2OGItNDEwNi1iOWZkLWYxZjIwZDc4NDk2NSIsImlhdCI6MTc5NTU0MDg2NiwicnMiOiJiYW5kc3AiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.0470bce2cb953ed9b2da41a64b8d8b01d5cac832f47d9f5927f048c75ae1003b",
+          "url": "https://cazebetava.bombrilhoso.lat/docs/guarita33/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Imd1YXJpdGEzMyIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ndWFyaXRhMzMvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMwOCwiaiI6IjZjZGYyZWMyLTFjNmYtNGRkNC1iMmFmLWRkMDViODU4NjMxZCIsImlhdCI6MTc5NTY5NzAwOCwicnMiOiJiYW5kc3AiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.19c939a7100e9698ec83a6e46a655538f7d62bc16a126bfcb8042d51e1bc15c8",
           "slug": "bandsp",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://bedunupori.bombrilhoso.lat/docs/guarita33/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Imd1YXJpdGEzMyIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ndWFyaXRhMzMvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE2NiwiaiI6ImMzZDg2MTYwLWY2OGItNDEwNi1iOWZkLWYxZjIwZDc4NDk2NSIsImlhdCI6MTc5NTU0MDg2NiwicnMiOiJiYW5kc3AiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.0470bce2cb953ed9b2da41a64b8d8b01d5cac832f47d9f5927f048c75ae1003b",
+          "url": "https://cazebetava.bombrilhoso.lat/docs/guarita33/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Imd1YXJpdGEzMyIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ndWFyaXRhMzMvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMwOCwiaiI6IjZjZGYyZWMyLTFjNmYtNGRkNC1iMmFmLWRkMDViODU4NjMxZCIsImlhdCI6MTc5NTY5NzAwOCwicnMiOiJiYW5kc3AiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.19c939a7100e9698ec83a6e46a655538f7d62bc16a126bfcb8042d51e1bc15c8",
           "slug": "bandsp",
           "cdn": "CDN 2"
         }
@@ -59,13 +59,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://zosogote.bombrilhoso.lat/docs/turquesa67/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InR1cnF1ZXNhNjciLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvdHVycXVlc2E2Ny9pbmRleC50eHQiLCJlIjoxNzk1NTQxMTY4LCJqIjoiM2EwN2E3ZDMtZmUxMi00MTI2LTlhMTctODBmODNhOWNhNDQxIiwiaWF0IjoxNzk1NTQwODY4LCJycyI6InNidCIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.1a63385283be99c7ff401213703434928ba19b74e9939a6faf0879f66a76a415",
+          "url": "https://gobuburana.bombrilhoso.lat/docs/turquesa67/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InR1cnF1ZXNhNjciLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvdHVycXVlc2E2Ny9pbmRleC50eHQiLCJlIjoxNzk1Njk3MzExLCJqIjoiOTQxZGQ3OTUtY2EwYS00NDJiLWJmNjktNzI5ZjQ5NTM5ZTYzIiwiaWF0IjoxNzk1Njk3MDExLCJycyI6InNidCIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.73c7195dd1ddf8367e9de83df00ff6ce24c169d4214229b8d2ad403601119681",
           "slug": "sbt",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://zosogote.bombrilhoso.lat/docs/turquesa67/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InR1cnF1ZXNhNjciLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvdHVycXVlc2E2Ny9pbmRleC50eHQiLCJlIjoxNzk1NTQxMTY4LCJqIjoiM2EwN2E3ZDMtZmUxMi00MTI2LTlhMTctODBmODNhOWNhNDQxIiwiaWF0IjoxNzk1NTQwODY4LCJycyI6InNidCIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.1a63385283be99c7ff401213703434928ba19b74e9939a6faf0879f66a76a415",
+          "url": "https://gobuburana.bombrilhoso.lat/docs/turquesa67/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InR1cnF1ZXNhNjciLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvdHVycXVlc2E2Ny9pbmRleC50eHQiLCJlIjoxNzk1Njk3MzExLCJqIjoiOTQxZGQ3OTUtY2EwYS00NDJiLWJmNjktNzI5ZjQ5NTM5ZTYzIiwiaWF0IjoxNzk1Njk3MDExLCJycyI6InNidCIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.73c7195dd1ddf8367e9de83df00ff6ce24c169d4214229b8d2ad403601119681",
           "slug": "sbt",
           "cdn": "CDN 2"
         }
@@ -83,13 +83,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://bumubevumo.bombrilhoso.lat/docs/incenso45/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImluY2Vuc280NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9pbmNlbnNvNDUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3MCwiaiI6IjI3M2YyMmYxLTdlNTctNDUxMS1hZmI5LWJiMWU5YWZlZDI4NyIsImlhdCI6MTc5NTU0MDg3MCwicnMiOiJyZWNvcmRzcCIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.fa6e925e1e70059c5a2c6cc3bfcaab36b107fdb470cce3940465edae29b6ea45",
+          "url": "https://bilotenipe.bombrilhoso.lat/docs/incenso45/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImluY2Vuc280NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9pbmNlbnNvNDUvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMxMywiaiI6ImUxNmJkN2FlLTZjOTUtNGUzNy1hZDhkLWZiNDM0OWM2OWFmZCIsImlhdCI6MTc5NTY5NzAxMywicnMiOiJyZWNvcmRzcCIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.10be96eaf69b7cd494d31fd7325f2b5ce1a577babdb74c1381b951ee4d32dbf8",
           "slug": "recordsp",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://bumubevumo.bombrilhoso.lat/docs/incenso45/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImluY2Vuc280NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9pbmNlbnNvNDUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3MCwiaiI6IjI3M2YyMmYxLTdlNTctNDUxMS1hZmI5LWJiMWU5YWZlZDI4NyIsImlhdCI6MTc5NTU0MDg3MCwicnMiOiJyZWNvcmRzcCIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.fa6e925e1e70059c5a2c6cc3bfcaab36b107fdb470cce3940465edae29b6ea45",
+          "url": "https://bilotenipe.bombrilhoso.lat/docs/incenso45/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImluY2Vuc280NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9pbmNlbnNvNDUvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMxMywiaiI6ImUxNmJkN2FlLTZjOTUtNGUzNy1hZDhkLWZiNDM0OWM2OWFmZCIsImlhdCI6MTc5NTY5NzAxMywicnMiOiJyZWNvcmRzcCIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.10be96eaf69b7cd494d31fd7325f2b5ce1a577babdb74c1381b951ee4d32dbf8",
           "slug": "recordsp",
           "cdn": "CDN 2"
         }
@@ -109,13 +109,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://muputabo.bombrilhoso.lat/docs/palermo32/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBhbGVybW8zMiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9wYWxlcm1vMzIvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3MiwiaiI6IjhlYmY0YWFjLWQ4MGEtNDQwMy1hZjJjLTVkZDcxN2UwMDNlYiIsImlhdCI6MTc5NTU0MDg3MiwicnMiOiJzcG9ydHYiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.16af05f6a1886e9945922c39b2d7bec0af4c3b3cc25920ccfb2d314c1959004c",
+          "url": "https://ricafezi.bombrilhoso.lat/docs/palermo32/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBhbGVybW8zMiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9wYWxlcm1vMzIvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMxNSwiaiI6IjQ1ZGY4YzEwLTU3ZDYtNDE5ZS1iODlmLTg4MDYyOGJiMzU1MiIsImlhdCI6MTc5NTY5NzAxNSwicnMiOiJzcG9ydHYiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.880868a7d994631b652c79d41da68930818e2357d9c176fc6809974b09ddc7d1",
           "slug": "sportv",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://muputabo.bombrilhoso.lat/docs/palermo32/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBhbGVybW8zMiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9wYWxlcm1vMzIvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3MiwiaiI6IjhlYmY0YWFjLWQ4MGEtNDQwMy1hZjJjLTVkZDcxN2UwMDNlYiIsImlhdCI6MTc5NTU0MDg3MiwicnMiOiJzcG9ydHYiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.16af05f6a1886e9945922c39b2d7bec0af4c3b3cc25920ccfb2d314c1959004c",
+          "url": "https://ricafezi.bombrilhoso.lat/docs/palermo32/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBhbGVybW8zMiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9wYWxlcm1vMzIvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMxNSwiaiI6IjQ1ZGY4YzEwLTU3ZDYtNDE5ZS1iODlmLTg4MDYyOGJiMzU1MiIsImlhdCI6MTc5NTY5NzAxNSwicnMiOiJzcG9ydHYiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.880868a7d994631b652c79d41da68930818e2357d9c176fc6809974b09ddc7d1",
           "slug": "sportv",
           "cdn": "CDN 2"
         }
@@ -131,13 +131,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://gapibafu.bombrilhoso.lat/docs/valente39/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InZhbGVudGUzOSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii92YWxlbnRlMzkvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3NCwiaiI6IjExODNhMmNmLWRlNTAtNDMwNS05MzczLWE1NmU3YzBjZjg5YyIsImlhdCI6MTc5NTU0MDg3NCwicnMiOiJzcG9ydHYyIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.2815961fb49c58788c35b5d32300efad942ba3b49a2c0634239113132d24f6f9",
+          "url": "https://lopilanu.bombrilhoso.lat/docs/valente39/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InZhbGVudGUzOSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii92YWxlbnRlMzkvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMxNywiaiI6IjU0ZDgyMDkxLWFhMDYtNDEyOC1hYjdhLTc3Yjg4NTlkMDVkZCIsImlhdCI6MTc5NTY5NzAxNywicnMiOiJzcG9ydHYyIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.8c8793a90f196ba3e31913ff16e70f36822a1f31f3966c82e5fab96ffe6ea55f",
           "slug": "sportv2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://gapibafu.bombrilhoso.lat/docs/valente39/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InZhbGVudGUzOSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii92YWxlbnRlMzkvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3NCwiaiI6IjExODNhMmNmLWRlNTAtNDMwNS05MzczLWE1NmU3YzBjZjg5YyIsImlhdCI6MTc5NTU0MDg3NCwicnMiOiJzcG9ydHYyIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.2815961fb49c58788c35b5d32300efad942ba3b49a2c0634239113132d24f6f9",
+          "url": "https://lopilanu.bombrilhoso.lat/docs/valente39/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InZhbGVudGUzOSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii92YWxlbnRlMzkvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMxNywiaiI6IjU0ZDgyMDkxLWFhMDYtNDEyOC1hYjdhLTc3Yjg4NTlkMDVkZCIsImlhdCI6MTc5NTY5NzAxNywicnMiOiJzcG9ydHYyIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.8c8793a90f196ba3e31913ff16e70f36822a1f31f3966c82e5fab96ffe6ea55f",
           "slug": "sportv2",
           "cdn": "CDN 2"
         }
@@ -152,13 +152,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://malibace.bombrilhoso.lat/docs/granito55/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImdyYW5pdG81NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ncmFuaXRvNTUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3NiwiaiI6IjJhMzgxMGQ2LTAzNjItNDJkYS1hNGZiLTU3MzI0OGYxYmE1NyIsImlhdCI6MTc5NTU0MDg3NiwicnMiOiJzcG9ydHYzIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.46c4e7eea69adbd7b86cbbc508a210cdf0fa1e680d774968311fa2fb09c7a21d",
+          "url": "https://cegepido.bombrilhoso.lat/docs/granito55/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImdyYW5pdG81NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ncmFuaXRvNTUvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMxOSwiaiI6IjRkZjJhOTdlLTRkZmEtNGIzYS1iYmM2LTc5NWEyYjlmMjA1NSIsImlhdCI6MTc5NTY5NzAxOSwicnMiOiJzcG9ydHYzIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.2a4c1eeb19fed244cc3fd8ba6d88a2ab0798f8c0c850290979da7595f50c5122",
           "slug": "sportv3",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://malibace.bombrilhoso.lat/docs/granito55/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImdyYW5pdG81NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ncmFuaXRvNTUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3NiwiaiI6IjJhMzgxMGQ2LTAzNjItNDJkYS1hNGZiLTU3MzI0OGYxYmE1NyIsImlhdCI6MTc5NTU0MDg3NiwicnMiOiJzcG9ydHYzIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.46c4e7eea69adbd7b86cbbc508a210cdf0fa1e680d774968311fa2fb09c7a21d",
+          "url": "https://cegepido.bombrilhoso.lat/docs/granito55/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImdyYW5pdG81NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ncmFuaXRvNTUvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMxOSwiaiI6IjRkZjJhOTdlLTRkZmEtNGIzYS1iYmM2LTc5NWEyYjlmMjA1NSIsImlhdCI6MTc5NTY5NzAxOSwicnMiOiJzcG9ydHYzIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.2a4c1eeb19fed244cc3fd8ba6d88a2ab0798f8c0c850290979da7595f50c5122",
           "slug": "sportv3",
           "cdn": "CDN 2"
         }
@@ -174,13 +174,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://rosebonu.bombrilhoso.lat/docs/sincero92/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InNpbmNlcm85MiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9zaW5jZXJvOTIvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3OCwiaiI6ImE5MThiZWYxLWMwYjgtNDBjMi1hZWRhLTc3NDVmNGMyZjE4OCIsImlhdCI6MTc5NTU0MDg3OCwicnMiOiJwcmVtaWVyZSIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.e1929d5e1ba5d9dd7d258454779f7d3b55cba8696bce103d4f599311d7a4cdc8",
+          "url": "https://durosabu.bombrilhoso.lat/docs/sincero92/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InNpbmNlcm85MiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9zaW5jZXJvOTIvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMyMSwiaiI6IjE1ZjMzOTkyLWM4ZWItNDczZi04M2MxLWY2ZDhmY2EwMGUzNSIsImlhdCI6MTc5NTY5NzAyMSwicnMiOiJwcmVtaWVyZSIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.c0918365187c0cc4c73f4e76b54c15db4a1b7a2a66f02287ab6db94b12efed4b",
           "slug": "premiere",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://rosebonu.bombrilhoso.lat/docs/sincero92/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InNpbmNlcm85MiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9zaW5jZXJvOTIvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTE3OCwiaiI6ImE5MThiZWYxLWMwYjgtNDBjMi1hZWRhLTc3NDVmNGMyZjE4OCIsImlhdCI6MTc5NTU0MDg3OCwicnMiOiJwcmVtaWVyZSIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.e1929d5e1ba5d9dd7d258454779f7d3b55cba8696bce103d4f599311d7a4cdc8",
+          "url": "https://durosabu.bombrilhoso.lat/docs/sincero92/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InNpbmNlcm85MiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9zaW5jZXJvOTIvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzMyMSwiaiI6IjE1ZjMzOTkyLWM4ZWItNDczZi04M2MxLWY2ZDhmY2EwMGUzNSIsImlhdCI6MTc5NTY5NzAyMSwicnMiOiJwcmVtaWVyZSIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.c0918365187c0cc4c73f4e76b54c15db4a1b7a2a66f02287ab6db94b12efed4b",
           "slug": "premiere",
           "cdn": "CDN 2"
         }
@@ -344,13 +344,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://cubapipena.bombrilhoso.lat/docs/tridente49/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InRyaWRlbnRlNDkiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvdHJpZGVudGU0OS9pbmRleC50eHQiLCJlIjoxNzk1NTQxMjkzLCJqIjoiNTFjNjliZWUtODZkOC00OTFkLTkyNjUtYmUwMzA1OTJlNmViIiwiaWF0IjoxNzk1NTQwOTkzLCJycyI6ImVzcG4iLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.8229da91a3ae2ab6a723829875014f62149bd354dae786181af904e346a94ee1",
+          "url": "https://libamasi.bombrilhoso.lat/docs/tridente49/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InRyaWRlbnRlNDkiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvdHJpZGVudGU0OS9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDM0LCJqIjoiMGFmNzljNGYtN2VjMy00NzNkLWI4OTQtYTZjYWE1OWQ5ZmVlIiwiaWF0IjoxNzk1Njk3MTM0LCJycyI6ImVzcG4iLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.65879742ea6ca0c2407a1ab703d2ace23d13dae98ee9965b0e45ce72a046d0a2",
           "slug": "espn",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://cubapipena.bombrilhoso.lat/docs/tridente49/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InRyaWRlbnRlNDkiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvdHJpZGVudGU0OS9pbmRleC50eHQiLCJlIjoxNzk1NTQxMjkzLCJqIjoiNTFjNjliZWUtODZkOC00OTFkLTkyNjUtYmUwMzA1OTJlNmViIiwiaWF0IjoxNzk1NTQwOTkzLCJycyI6ImVzcG4iLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.8229da91a3ae2ab6a723829875014f62149bd354dae786181af904e346a94ee1",
+          "url": "https://libamasi.bombrilhoso.lat/docs/tridente49/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InRyaWRlbnRlNDkiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvdHJpZGVudGU0OS9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDM0LCJqIjoiMGFmNzljNGYtN2VjMy00NzNkLWI4OTQtYTZjYWE1OWQ5ZmVlIiwiaWF0IjoxNzk1Njk3MTM0LCJycyI6ImVzcG4iLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.65879742ea6ca0c2407a1ab703d2ace23d13dae98ee9965b0e45ce72a046d0a2",
           "slug": "espn",
           "cdn": "CDN 2"
         }
@@ -366,13 +366,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://caguvabopu.bombrilhoso.lat/docs/nobreza80/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5vYnJlemE4MCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ub2JyZXphODAvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTI5NSwiaiI6IjEzYzI0NzZlLTliZWEtNGMxNS1iNWE4LTI1YWFjOWM3Yzk1ZCIsImlhdCI6MTc5NTU0MDk5NSwicnMiOiJlc3BuMiIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.6de9386aabfc097ee0ae1c566b7223cec5bffcdaf608b8be0e065a9e0bf35af4",
+          "url": "https://zasitaza.bombrilhoso.lat/docs/nobreza80/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5vYnJlemE4MCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ub2JyZXphODAvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQzNiwiaiI6IjkyODRiYmUwLWFhMmItNDY2YS1hYjU4LTVmYTFhMTk5ODc4MSIsImlhdCI6MTc5NTY5NzEzNiwicnMiOiJlc3BuMiIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.333d3e4d1ebd5a3543e30bbc81e46aa4830baa8dca98c83778d8382b3de8b54a",
           "slug": "espn2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://caguvabopu.bombrilhoso.lat/docs/nobreza80/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5vYnJlemE4MCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ub2JyZXphODAvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTI5NSwiaiI6IjEzYzI0NzZlLTliZWEtNGMxNS1iNWE4LTI1YWFjOWM3Yzk1ZCIsImlhdCI6MTc5NTU0MDk5NSwicnMiOiJlc3BuMiIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.6de9386aabfc097ee0ae1c566b7223cec5bffcdaf608b8be0e065a9e0bf35af4",
+          "url": "https://zasitaza.bombrilhoso.lat/docs/nobreza80/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5vYnJlemE4MCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ub2JyZXphODAvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQzNiwiaiI6IjkyODRiYmUwLWFhMmItNDY2YS1hYjU4LTVmYTFhMTk5ODc4MSIsImlhdCI6MTc5NTY5NzEzNiwicnMiOiJlc3BuMiIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.333d3e4d1ebd5a3543e30bbc81e46aa4830baa8dca98c83778d8382b3de8b54a",
           "slug": "espn2",
           "cdn": "CDN 2"
         }
@@ -388,13 +388,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://badifuta.bombrilhoso.lat/docs/cacto96/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhY3RvOTYiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2FjdG85Ni9pbmRleC50eHQiLCJlIjoxNzk1NTQxMjk4LCJqIjoiMGYyOWEwNjQtZmZmOS00NjQzLWExYjgtNWNjN2MxMzRmMzE3IiwiaWF0IjoxNzk1NTQwOTk4LCJycyI6ImVzcG4zIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.29647cef4bc54aa67d89b239c48782807cfa24f81a6e9a7579bd42d977707415",
+          "url": "https://zodobepafi.bombrilhoso.lat/docs/cacto96/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhY3RvOTYiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2FjdG85Ni9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDM5LCJqIjoiMWI5MTc0YjgtMDJjNy00MDdlLTk4MmItZjM1ZjA2ZDk5ZDUzIiwiaWF0IjoxNzk1Njk3MTM5LCJycyI6ImVzcG4zIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.0f5d367d301eab749b0e1eac304a3b1b623fec888860009c38e1ca80db12e78d",
           "slug": "espn3",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://badifuta.bombrilhoso.lat/docs/cacto96/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhY3RvOTYiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2FjdG85Ni9pbmRleC50eHQiLCJlIjoxNzk1NTQxMjk4LCJqIjoiMGYyOWEwNjQtZmZmOS00NjQzLWExYjgtNWNjN2MxMzRmMzE3IiwiaWF0IjoxNzk1NTQwOTk4LCJycyI6ImVzcG4zIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.29647cef4bc54aa67d89b239c48782807cfa24f81a6e9a7579bd42d977707415",
+          "url": "https://zodobepafi.bombrilhoso.lat/docs/cacto96/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhY3RvOTYiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2FjdG85Ni9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDM5LCJqIjoiMWI5MTc0YjgtMDJjNy00MDdlLTk4MmItZjM1ZjA2ZDk5ZDUzIiwiaWF0IjoxNzk1Njk3MTM5LCJycyI6ImVzcG4zIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.0f5d367d301eab749b0e1eac304a3b1b623fec888860009c38e1ca80db12e78d",
           "slug": "espn3",
           "cdn": "CDN 2"
         }
@@ -410,13 +410,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://zonurozu.bombrilhoso.lat/docs/navio49/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5hdmlvNDkiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvbmF2aW80OS9pbmRleC50eHQiLCJlIjoxNzk1NTQxMzAwLCJqIjoiNjA3ZDY5NzctNjdlNi00MTk0LThkN2UtODg2ZWQ1YzhhYTJlIiwiaWF0IjoxNzk1NTQxMDAwLCJycyI6ImVzcG40IiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.a019db775d701bbeb4c8bd3666a937b2f51023f0c0c1622c1e52199fa4417bfa",
+          "url": "https://fimorefi.bombrilhoso.lat/docs/navio49/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5hdmlvNDkiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvbmF2aW80OS9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDQxLCJqIjoiYWE1OGQ0MmItOTk4Ni00ZjRmLTllYmEtMjFkZGJmYTA5ZjEyIiwiaWF0IjoxNzk1Njk3MTQxLCJycyI6ImVzcG40IiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.25a113b037a8016f605f219f78c718aeeab88e995feb9f3c06a8ec13e9af1e29",
           "slug": "espn4",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://zonurozu.bombrilhoso.lat/docs/navio49/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5hdmlvNDkiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvbmF2aW80OS9pbmRleC50eHQiLCJlIjoxNzk1NTQxMzAwLCJqIjoiNjA3ZDY5NzctNjdlNi00MTk0LThkN2UtODg2ZWQ1YzhhYTJlIiwiaWF0IjoxNzk1NTQxMDAwLCJycyI6ImVzcG40IiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.a019db775d701bbeb4c8bd3666a937b2f51023f0c0c1622c1e52199fa4417bfa",
+          "url": "https://fimorefi.bombrilhoso.lat/docs/navio49/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5hdmlvNDkiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvbmF2aW80OS9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDQxLCJqIjoiYWE1OGQ0MmItOTk4Ni00ZjRmLTllYmEtMjFkZGJmYTA5ZjEyIiwiaWF0IjoxNzk1Njk3MTQxLCJycyI6ImVzcG40IiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.25a113b037a8016f605f219f78c718aeeab88e995feb9f3c06a8ec13e9af1e29",
           "slug": "espn4",
           "cdn": "CDN 2"
         }
@@ -461,13 +461,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://novolima.bombrilhoso.lat/docs/cedro15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNlZHJvMTUiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2Vkcm8xNS9pbmRleC50eHQiLCJlIjoxNzk1NTQxMzAzLCJqIjoiMWQ3MTcwYjktMzc4YS00ZjljLWIyOGEtZjY1MmZlMDU4MWM5IiwiaWF0IjoxNzk1NTQxMDAzLCJycyI6ImVzcG41IiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.d3213e05703a3be8c321ba4984108d2371fc77d3108db704f9b6ecff5d2be999",
+          "url": "https://fesipige.bombrilhoso.lat/docs/cedro15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNlZHJvMTUiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2Vkcm8xNS9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDQyLCJqIjoiZTg3MjA5ZGUtYTk3YS00NGUyLTkxNTctMzQ5NzBhOGVhM2IwIiwiaWF0IjoxNzk1Njk3MTQyLCJycyI6ImVzcG41IiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.61bb543413feeced78cb0a48b3f7578e4569d6e175e10231bd67abd4a4783ffa",
           "slug": "espn5",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://novolima.bombrilhoso.lat/docs/cedro15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNlZHJvMTUiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2Vkcm8xNS9pbmRleC50eHQiLCJlIjoxNzk1NTQxMzAzLCJqIjoiMWQ3MTcwYjktMzc4YS00ZjljLWIyOGEtZjY1MmZlMDU4MWM5IiwiaWF0IjoxNzk1NTQxMDAzLCJycyI6ImVzcG41IiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.d3213e05703a3be8c321ba4984108d2371fc77d3108db704f9b6ecff5d2be999",
+          "url": "https://fesipige.bombrilhoso.lat/docs/cedro15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNlZHJvMTUiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2Vkcm8xNS9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDQyLCJqIjoiZTg3MjA5ZGUtYTk3YS00NGUyLTkxNTctMzQ5NzBhOGVhM2IwIiwiaWF0IjoxNzk1Njk3MTQyLCJycyI6ImVzcG41IiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.61bb543413feeced78cb0a48b3f7578e4569d6e175e10231bd67abd4a4783ffa",
           "slug": "espn5",
           "cdn": "CDN 2"
         }
@@ -483,13 +483,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://macaniburo.bombrilhoso.lat/docs/kiwi53/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Imtpd2k1MyIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9raXdpNTMvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTMwNSwiaiI6ImUwMjBmODA2LTg5MmUtNDgwNC04OTk2LWY1ZmNmODgwZmUyNiIsImlhdCI6MTc5NTU0MTAwNSwicnMiOiJiYW5kc3BvcnRzIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.f94bded1a23c99eef884535f87e4457cf5edbe9b3938994ad07fa0d12eff1643",
+          "url": "https://netififidu.bombrilhoso.lat/docs/kiwi53/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Imtpd2k1MyIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9raXdpNTMvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQ0NSwiaiI6ImFiMmYxZDBiLWZkZjQtNGRjMi04YjEwLWViNzU4NDIwZjhhMCIsImlhdCI6MTc5NTY5NzE0NSwicnMiOiJiYW5kc3BvcnRzIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.258cbc3445b04f6cd2b6b1f9b3e44cc41448d8dc7f011988138721c2acea8d20",
           "slug": "bandsports",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://macaniburo.bombrilhoso.lat/docs/kiwi53/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Imtpd2k1MyIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9raXdpNTMvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTMwNSwiaiI6ImUwMjBmODA2LTg5MmUtNDgwNC04OTk2LWY1ZmNmODgwZmUyNiIsImlhdCI6MTc5NTU0MTAwNSwicnMiOiJiYW5kc3BvcnRzIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.f94bded1a23c99eef884535f87e4457cf5edbe9b3938994ad07fa0d12eff1643",
+          "url": "https://netififidu.bombrilhoso.lat/docs/kiwi53/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Imtpd2k1MyIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9raXdpNTMvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQ0NSwiaiI6ImFiMmYxZDBiLWZkZjQtNGRjMi04YjEwLWViNzU4NDIwZjhhMCIsImlhdCI6MTc5NTY5NzE0NSwicnMiOiJiYW5kc3BvcnRzIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.258cbc3445b04f6cd2b6b1f9b3e44cc41448d8dc7f011988138721c2acea8d20",
           "slug": "bandsports",
           "cdn": "CDN 2"
         }
@@ -529,13 +529,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://didatufaca.bombrilhoso.lat/docs/ambar90/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFtYmFyOTAiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvYW1iYXI5MC9pbmRleC50eHQiLCJlIjoxNzk1NTQxMzI2LCJqIjoiZjllZjQ4ZmQtYzIzYS00Y2M4LTljOWYtM2M1OTE1MGFjMDI3IiwiaWF0IjoxNzk1NTQxMDI2LCJycyI6ImNvbWJhdGUiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.aa1d4efb020d9877d55f4ec3f5359decb1c12f2ce95fb2513df66b8a40922064",
+          "url": "https://birupumu.bombrilhoso.lat/docs/ambar90/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFtYmFyOTAiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvYW1iYXI5MC9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDY1LCJqIjoiN2E5ZmQ4OWMtZTMxMS00NTEzLWI0OTItMWYwM2JkZWJjMzNhIiwiaWF0IjoxNzk1Njk3MTY1LCJycyI6ImNvbWJhdGUiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.e0e2243a0b505627ca435bad21077d5d9607c7e2ce919894ea41e58373d69ade",
           "slug": "combate",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://didatufaca.bombrilhoso.lat/docs/ambar90/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFtYmFyOTAiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvYW1iYXI5MC9pbmRleC50eHQiLCJlIjoxNzk1NTQxMzI2LCJqIjoiZjllZjQ4ZmQtYzIzYS00Y2M4LTljOWYtM2M1OTE1MGFjMDI3IiwiaWF0IjoxNzk1NTQxMDI2LCJycyI6ImNvbWJhdGUiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.aa1d4efb020d9877d55f4ec3f5359decb1c12f2ce95fb2513df66b8a40922064",
+          "url": "https://birupumu.bombrilhoso.lat/docs/ambar90/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFtYmFyOTAiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvYW1iYXI5MC9pbmRleC50eHQiLCJlIjoxNzk1Njk3NDY1LCJqIjoiN2E5ZmQ4OWMtZTMxMS00NTEzLWI0OTItMWYwM2JkZWJjMzNhIiwiaWF0IjoxNzk1Njk3MTY1LCJycyI6ImNvbWJhdGUiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.e0e2243a0b505627ca435bad21077d5d9607c7e2ce919894ea41e58373d69ade",
           "slug": "combate",
           "cdn": "CDN 2"
         }
@@ -551,13 +551,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://papeculefa.bombrilhoso.lat/docs/quartzo12/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1YXJ0em8xMiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWFydHpvMTIvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTMyOCwiaiI6Ijc1MzFmODVlLTkzNmYtNDM0OC05MDhjLWNkODRjZjQ0ZDVmOSIsImlhdCI6MTc5NTU0MTAyOCwicnMiOiJ1ZmMiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.7de1907c47acebe80d392137979829bf484f2dc5dfa26d12de36ed254f4aa183",
+          "url": "https://felofuru.bombrilhoso.lat/docs/quartzo12/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1YXJ0em8xMiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWFydHpvMTIvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQ2NiwiaiI6IjQyNTgzOGQxLTE1YmQtNGE3ZC1hNTQ5LTZiZDdiMjY4YTQwYyIsImlhdCI6MTc5NTY5NzE2NiwicnMiOiJ1ZmMiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.d89a372fc92a94495a174ef75c4f667414bbdccd7aaaf5be711e9f2e2174a59c",
           "slug": "ufcfightpass",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://papeculefa.bombrilhoso.lat/docs/quartzo12/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1YXJ0em8xMiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWFydHpvMTIvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTMyOCwiaiI6Ijc1MzFmODVlLTkzNmYtNDM0OC05MDhjLWNkODRjZjQ0ZDVmOSIsImlhdCI6MTc5NTU0MTAyOCwicnMiOiJ1ZmMiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.7de1907c47acebe80d392137979829bf484f2dc5dfa26d12de36ed254f4aa183",
+          "url": "https://felofuru.bombrilhoso.lat/docs/quartzo12/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1YXJ0em8xMiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWFydHpvMTIvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQ2NiwiaiI6IjQyNTgzOGQxLTE1YmQtNGE3ZC1hNTQ5LTZiZDdiMjY4YTQwYyIsImlhdCI6MTc5NTY5NzE2NiwicnMiOiJ1ZmMiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.d89a372fc92a94495a174ef75c4f667414bbdccd7aaaf5be711e9f2e2174a59c",
           "slug": "ufcfightpass",
           "cdn": "CDN 2"
         }
@@ -574,13 +574,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://zutesite.bombrilhoso.lat/docs/palermo42/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBhbGVybW80MiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9wYWxlcm1vNDIvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTMyOSwiaiI6IjMwMDVmZDY5LTcxOTYtNDAxOC05ODY0LTY1ZmI3YzRjMjQ1ZiIsImlhdCI6MTc5NTU0MTAyOSwicnMiOiJ4c3BvcnRzIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.365a687f1de53268f4becfed03272c432c94af32e14efc9799c46ff0a425e3dc",
+          "url": "https://nifupete.bombrilhoso.lat/docs/palermo42/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBhbGVybW80MiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9wYWxlcm1vNDIvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQ2OCwiaiI6IjQ0YTNmNTczLTgzYmItNGIwNi1hOTcwLTVmZGEyZjVkNWFjYSIsImlhdCI6MTc5NTY5NzE2OCwicnMiOiJ4c3BvcnRzIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.d0750363795cc5b1e3d5d7a25e6e6410738cf8a6885ba712c9d04ce99c1bbb81",
           "slug": "xsports",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://zutesite.bombrilhoso.lat/docs/palermo42/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBhbGVybW80MiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9wYWxlcm1vNDIvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTMyOSwiaiI6IjMwMDVmZDY5LTcxOTYtNDAxOC05ODY0LTY1ZmI3YzRjMjQ1ZiIsImlhdCI6MTc5NTU0MTAyOSwicnMiOiJ4c3BvcnRzIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.365a687f1de53268f4becfed03272c432c94af32e14efc9799c46ff0a425e3dc",
+          "url": "https://nifupete.bombrilhoso.lat/docs/palermo42/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InBhbGVybW80MiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9wYWxlcm1vNDIvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQ2OCwiaiI6IjQ0YTNmNTczLTgzYmItNGIwNi1hOTcwLTVmZGEyZjVkNWFjYSIsImlhdCI6MTc5NTY5NzE2OCwicnMiOiJ4c3BvcnRzIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.d0750363795cc5b1e3d5d7a25e6e6410738cf8a6885ba712c9d04ce99c1bbb81",
           "slug": "xsports",
           "cdn": "CDN 2"
         }
@@ -599,13 +599,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://pubepudu.bombrilhoso.lat/docs/avelar62/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImF2ZWxhcjYyIiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2F2ZWxhcjYyL2luZGV4LnR4dCIsImUiOjE3OTU1NDEzMzIsImoiOiI1MDg0ODQwZC02M2FmLTRmNDAtYTU5NC1iZTU4NGZkYjM1YWMiLCJpYXQiOjE3OTU1NDEwMzIsInJzIjoiaGJvIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.ba32fd7b79f2c2313fa9e6fa07aa983688604255a8248980e3d1b29cc962ab3b",
+          "url": "https://gabavasu.bombrilhoso.lat/docs/avelar62/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImF2ZWxhcjYyIiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2F2ZWxhcjYyL2luZGV4LnR4dCIsImUiOjE3OTU2OTc0NzAsImoiOiI2YjIxMWM5Zi1hNmFlLTQxZGEtYWEwMC0yN2Q4Mzc5NTgxNGYiLCJpYXQiOjE3OTU2OTcxNzAsInJzIjoiaGJvIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.4f25cd0b13ef5242d64bcad8cf5984061b1e51351a2883aa5b9d5a5fcb165d01",
           "slug": "hbo",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://pubepudu.bombrilhoso.lat/docs/avelar62/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImF2ZWxhcjYyIiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2F2ZWxhcjYyL2luZGV4LnR4dCIsImUiOjE3OTU1NDEzMzIsImoiOiI1MDg0ODQwZC02M2FmLTRmNDAtYTU5NC1iZTU4NGZkYjM1YWMiLCJpYXQiOjE3OTU1NDEwMzIsInJzIjoiaGJvIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.ba32fd7b79f2c2313fa9e6fa07aa983688604255a8248980e3d1b29cc962ab3b",
+          "url": "https://gabavasu.bombrilhoso.lat/docs/avelar62/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImF2ZWxhcjYyIiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2F2ZWxhcjYyL2luZGV4LnR4dCIsImUiOjE3OTU2OTc0NzAsImoiOiI2YjIxMWM5Zi1hNmFlLTQxZGEtYWEwMC0yN2Q4Mzc5NTgxNGYiLCJpYXQiOjE3OTU2OTcxNzAsInJzIjoiaGJvIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.4f25cd0b13ef5242d64bcad8cf5984061b1e51351a2883aa5b9d5a5fcb165d01",
           "slug": "hbo",
           "cdn": "CDN 2"
         }
@@ -621,13 +621,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://nufalodu.bombrilhoso.lat/docs/nobreza18/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5vYnJlemExOCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ub2JyZXphMTgvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTMzNCwiaiI6IjQ3MTgwMzAzLTc2YzQtNDA1NC1hZmRhLTZhZWZjNzU0MWUzNyIsImlhdCI6MTc5NTU0MTAzNCwicnMiOiJoYm8yIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.61ac5a302e2b93afea03d56ea812c8735fdc4be8226b6a46e6939f592a5bb284",
+          "url": "https://zisaduco.bombrilhoso.lat/docs/nobreza18/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5vYnJlemExOCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ub2JyZXphMTgvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQ3MiwiaiI6IjQyYTM5M2FkLTA0ZWItNDg0Ny04MGFiLTFmMGNkODNhODliZiIsImlhdCI6MTc5NTY5NzE3MiwicnMiOiJoYm8yIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.b7fddc701ffe9a37819b7321e09be437a0540abb4086aa90072b9ab180f1544c",
           "slug": "hbo2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://nufalodu.bombrilhoso.lat/docs/nobreza18/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5vYnJlemExOCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ub2JyZXphMTgvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTMzNCwiaiI6IjQ3MTgwMzAzLTc2YzQtNDA1NC1hZmRhLTZhZWZjNzU0MWUzNyIsImlhdCI6MTc5NTU0MTAzNCwicnMiOiJoYm8yIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.61ac5a302e2b93afea03d56ea812c8735fdc4be8226b6a46e6939f592a5bb284",
+          "url": "https://zisaduco.bombrilhoso.lat/docs/nobreza18/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6Im5vYnJlemExOCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9ub2JyZXphMTgvaW5kZXgudHh0IiwiZSI6MTc5NTY5NzQ3MiwiaiI6IjQyYTM5M2FkLTA0ZWItNDg0Ny04MGFiLTFmMGNkODNhODliZiIsImlhdCI6MTc5NTY5NzE3MiwicnMiOiJoYm8yIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.b7fddc701ffe9a37819b7321e09be437a0540abb4086aa90072b9ab180f1544c",
           "slug": "hbo2",
           "cdn": "CDN 2"
         }
@@ -643,13 +643,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://legogadabo.bombrilhoso.lat/docs/riacho27/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InJpYWNobzI3IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL3JpYWNobzI3L2luZGV4LnR4dCIsImUiOjE3OTU1NDEzMzYsImoiOiIwYTZmZmRmNC1kMThmLTQ4NzMtYTg1My01NmNiOTRmMWJhYzUiLCJpYXQiOjE3OTU1NDEwMzYsInJzIjoiaGJvcGx1cyIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.9dd3de1cc1f8b06e9962f81c92cbee3e336b358c66a96470173fad3eec42b790",
+          "url": "https://subobapise.bombrilhoso.lat/docs/riacho27/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InJpYWNobzI3IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL3JpYWNobzI3L2luZGV4LnR4dCIsImUiOjE3OTU2OTg1ODgsImoiOiJiNDE4ODg4NC01MTNmLTQ2NzYtYTM2MS0xMjg0ZjBmMGMyNjQiLCJpYXQiOjE3OTU2OTgyODgsInJzIjoiaGJvcGx1cyIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.0c5195acba572c98fc07b255c49b05914b8878aef4d19e78869659879c295f7c",
           "slug": "hboplus",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://legogadabo.bombrilhoso.lat/docs/riacho27/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InJpYWNobzI3IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL3JpYWNobzI3L2luZGV4LnR4dCIsImUiOjE3OTU1NDEzMzYsImoiOiIwYTZmZmRmNC1kMThmLTQ4NzMtYTg1My01NmNiOTRmMWJhYzUiLCJpYXQiOjE3OTU1NDEwMzYsInJzIjoiaGJvcGx1cyIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.9dd3de1cc1f8b06e9962f81c92cbee3e336b358c66a96470173fad3eec42b790",
+          "url": "https://subobapise.bombrilhoso.lat/docs/riacho27/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InJpYWNobzI3IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL3JpYWNobzI3L2luZGV4LnR4dCIsImUiOjE3OTU2OTg1ODgsImoiOiJiNDE4ODg4NC01MTNmLTQ2NzYtYTM2MS0xMjg0ZjBmMGMyNjQiLCJpYXQiOjE3OTU2OTgyODgsInJzIjoiaGJvcGx1cyIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.0c5195acba572c98fc07b255c49b05914b8878aef4d19e78869659879c295f7c",
           "slug": "hboplus",
           "cdn": "CDN 2"
         }
@@ -686,13 +686,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://zadifile.bombrilhoso.lat/docs/lirio96/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImxpcmlvOTYiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvbGlyaW85Ni9pbmRleC50eHQiLCJlIjoxNzk1NTQxMzM3LCJqIjoiOWY4YmRhNWMtZDY0MC00N2EwLWJmZGQtNjgwODc1NGY3ODQ0IiwiaWF0IjoxNzk1NTQxMDM3LCJycyI6Imhib2ZhbWlseSIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.0ac122867f4689991b0c6ac3cc779cac82f45daa365bc22b62a756ef81627d71",
+          "url": "https://tudocevi.bombrilhoso.lat/docs/lirio96/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImxpcmlvOTYiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvbGlyaW85Ni9pbmRleC50eHQiLCJlIjoxNzk1Njk4NTkxLCJqIjoiYzI5MzhjNWMtYTBiOS00ODgxLTg4ZGItZDllMTZjYWI0NjQ4IiwiaWF0IjoxNzk1Njk4MjkxLCJycyI6Imhib2ZhbWlseSIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.460e299356b049d2d341f65563fc9d29029ca11b9dff896d8e73076c7abe133a",
           "slug": "hbofamily",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://zadifile.bombrilhoso.lat/docs/lirio96/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImxpcmlvOTYiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvbGlyaW85Ni9pbmRleC50eHQiLCJlIjoxNzk1NTQxMzM3LCJqIjoiOWY4YmRhNWMtZDY0MC00N2EwLWJmZGQtNjgwODc1NGY3ODQ0IiwiaWF0IjoxNzk1NTQxMDM3LCJycyI6Imhib2ZhbWlseSIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.0ac122867f4689991b0c6ac3cc779cac82f45daa365bc22b62a756ef81627d71",
+          "url": "https://tudocevi.bombrilhoso.lat/docs/lirio96/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImxpcmlvOTYiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvbGlyaW85Ni9pbmRleC50eHQiLCJlIjoxNzk1Njk4NTkxLCJqIjoiYzI5MzhjNWMtYTBiOS00ODgxLTg4ZGItZDllMTZjYWI0NjQ4IiwiaWF0IjoxNzk1Njk4MjkxLCJycyI6Imhib2ZhbWlseSIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.460e299356b049d2d341f65563fc9d29029ca11b9dff896d8e73076c7abe133a",
           "slug": "hbofamily",
           "cdn": "CDN 2"
         }
@@ -737,13 +737,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://neteburu.bombrilhoso.lat/docs/sincero85/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InNpbmNlcm84NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9zaW5jZXJvODUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTM1OCwiaiI6IjZhNzQzNDM3LTVjMjgtNGQ5Mi04YzhjLWEyMjRhYmJkODI2OSIsImlhdCI6MTc5NTU0MTA1OCwicnMiOiJkaXNuZXlwbHVzMSIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.9601e09b051bb34fec9e60dedfe7977cca2314cd95139800bf982d7659bef305",
+          "url": "https://derubule.bombrilhoso.lat/docs/sincero85/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InNpbmNlcm84NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9zaW5jZXJvODUvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODYxMiwiaiI6IjgwYTljMjE3LTcwMmEtNDk4My1iZGI4LWU3NDhkY2FiNmQxMiIsImlhdCI6MTc5NTY5ODMxMiwicnMiOiJkaXNuZXlwbHVzMSIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.52c2ea49dd8bbf6a7b3b7466b8a1288654b4524bc672342056e901b781827674",
           "slug": "disneyplus1",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://neteburu.bombrilhoso.lat/docs/sincero85/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InNpbmNlcm84NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9zaW5jZXJvODUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTM1OCwiaiI6IjZhNzQzNDM3LTVjMjgtNGQ5Mi04YzhjLWEyMjRhYmJkODI2OSIsImlhdCI6MTc5NTU0MTA1OCwicnMiOiJkaXNuZXlwbHVzMSIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.9601e09b051bb34fec9e60dedfe7977cca2314cd95139800bf982d7659bef305",
+          "url": "https://derubule.bombrilhoso.lat/docs/sincero85/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InNpbmNlcm84NSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9zaW5jZXJvODUvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODYxMiwiaiI6IjgwYTljMjE3LTcwMmEtNDk4My1iZGI4LWU3NDhkY2FiNmQxMiIsImlhdCI6MTc5NTY5ODMxMiwicnMiOiJkaXNuZXlwbHVzMSIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.52c2ea49dd8bbf6a7b3b7466b8a1288654b4524bc672342056e901b781827674",
           "slug": "disneyplus1",
           "cdn": "CDN 2"
         }
@@ -762,13 +762,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://raginasu.bombrilhoso.lat/docs/canela39/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhbmVsYTM5IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2NhbmVsYTM5L2luZGV4LnR4dCIsImUiOjE3OTU1NDEzNjAsImoiOiI2ZjdhMDg1OS1iMTczLTRkZmYtOTVlZi04YzEzNWQ5M2JlYzIiLCJpYXQiOjE3OTU1NDEwNjAsInJzIjoibWF4MSIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.17ccfd443945a866945069c63ed0226a14d34cf01585d334768fe4fc6e8e0ad0",
+          "url": "https://mulubuda.bombrilhoso.lat/docs/canela39/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhbmVsYTM5IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2NhbmVsYTM5L2luZGV4LnR4dCIsImUiOjE3OTU2OTg2MTQsImoiOiI4NTgzZjNlNi1mMjhkLTRhMGUtYTJkZS03NjZjNjAwMDUzOTEiLCJpYXQiOjE3OTU2OTgzMTQsInJzIjoibWF4MSIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.59364655b380dd9958ade4ff2fa023b159360e1518a979066b3220bbf8b6f352",
           "slug": "max1",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://raginasu.bombrilhoso.lat/docs/canela39/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhbmVsYTM5IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2NhbmVsYTM5L2luZGV4LnR4dCIsImUiOjE3OTU1NDEzNjAsImoiOiI2ZjdhMDg1OS1iMTczLTRkZmYtOTVlZi04YzEzNWQ5M2JlYzIiLCJpYXQiOjE3OTU1NDEwNjAsInJzIjoibWF4MSIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.17ccfd443945a866945069c63ed0226a14d34cf01585d334768fe4fc6e8e0ad0",
+          "url": "https://mulubuda.bombrilhoso.lat/docs/canela39/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhbmVsYTM5IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2NhbmVsYTM5L2luZGV4LnR4dCIsImUiOjE3OTU2OTg2MTQsImoiOiI4NTgzZjNlNi1mMjhkLTRhMGUtYTJkZS03NjZjNjAwMDUzOTEiLCJpYXQiOjE3OTU2OTgzMTQsInJzIjoibWF4MSIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.59364655b380dd9958ade4ff2fa023b159360e1518a979066b3220bbf8b6f352",
           "slug": "max1",
           "cdn": "CDN 2"
         }
@@ -811,13 +811,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://cenavavobo.bombrilhoso.lat/docs/varanda15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InZhcmFuZGExNSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii92YXJhbmRhMTUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTM4MCwiaiI6ImY1YmZmOWZmLTc2NTYtNGRlOS1hNjQ4LTk3OTgxODUyMTc4ZSIsImlhdCI6MTc5NTU0MTA4MCwicnMiOiJwcmltZXZpZGVvIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.ad2f2544e5be49b1b2de60f827231948dc70f10f27ce4ca992dfcfbbaf9626e3",
+          "url": "https://sadevigofe.bombrilhoso.lat/docs/varanda15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InZhcmFuZGExNSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii92YXJhbmRhMTUvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODYxOCwiaiI6Ijc0ZTYwMzRhLTliNTQtNDUxNC1hODc3LTA0NWE2MDk2MzkwNyIsImlhdCI6MTc5NTY5ODMxOCwicnMiOiJwcmltZXZpZGVvIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.223cfe760e86a498a46c297c537d269637162e5015c7415c63a03fa96265132a",
           "slug": "primevideo",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://cenavavobo.bombrilhoso.lat/docs/varanda15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InZhcmFuZGExNSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii92YXJhbmRhMTUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTM4MCwiaiI6ImY1YmZmOWZmLTc2NTYtNGRlOS1hNjQ4LTk3OTgxODUyMTc4ZSIsImlhdCI6MTc5NTU0MTA4MCwicnMiOiJwcmltZXZpZGVvIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.ad2f2544e5be49b1b2de60f827231948dc70f10f27ce4ca992dfcfbbaf9626e3",
+          "url": "https://sadevigofe.bombrilhoso.lat/docs/varanda15/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InZhcmFuZGExNSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii92YXJhbmRhMTUvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODYxOCwiaiI6Ijc0ZTYwMzRhLTliNTQtNDUxNC1hODc3LTA0NWE2MDk2MzkwNyIsImlhdCI6MTc5NTY5ODMxOCwicnMiOiJwcmltZXZpZGVvIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.223cfe760e86a498a46c297c537d269637162e5015c7415c63a03fa96265132a",
           "slug": "primevideo",
           "cdn": "CDN 2"
         }
@@ -838,13 +838,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://copopivo.bombrilhoso.lat/docs/quimera90/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1aW1lcmE5MCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWltZXJhOTAvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTM4MywiaiI6ImQ5ODRiN2FlLTYzNWMtNDYxMy04OTM2LTVmMzQ4NjJjZGE3YiIsImlhdCI6MTc5NTU0MTA4MywicnMiOiJjYXJ0b29ubmV0d29yayIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.cfd737e2c59326eabacaca1e4e5f2e7d7388d78c5fde966ee62b0598e8afcb97",
+          "url": "https://casuvivoso.bombrilhoso.lat/docs/quimera90/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1aW1lcmE5MCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWltZXJhOTAvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODYyMCwiaiI6IjExZDg2OTAxLTVlODQtNDdkNy1iZGU5LWE5Zjg1ZDI0MWM1MCIsImlhdCI6MTc5NTY5ODMyMCwicnMiOiJjYXJ0b29ubmV0d29yayIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.5ceaf860bba510914784a1808162f21dc4ac129a44816cf0048cddc1e78be136",
           "slug": "cartoonnetwork",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://copopivo.bombrilhoso.lat/docs/quimera90/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1aW1lcmE5MCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWltZXJhOTAvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTM4MywiaiI6ImQ5ODRiN2FlLTYzNWMtNDYxMy04OTM2LTVmMzQ4NjJjZGE3YiIsImlhdCI6MTc5NTU0MTA4MywicnMiOiJjYXJ0b29ubmV0d29yayIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.cfd737e2c59326eabacaca1e4e5f2e7d7388d78c5fde966ee62b0598e8afcb97",
+          "url": "https://casuvivoso.bombrilhoso.lat/docs/quimera90/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1aW1lcmE5MCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWltZXJhOTAvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODYyMCwiaiI6IjExZDg2OTAxLTVlODQtNDdkNy1iZGU5LWE5Zjg1ZDI0MWM1MCIsImlhdCI6MTc5NTY5ODMyMCwicnMiOiJjYXJ0b29ubmV0d29yayIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.5ceaf860bba510914784a1808162f21dc4ac129a44816cf0048cddc1e78be136",
           "slug": "cartoonnetwork",
           "cdn": "CDN 2"
         }
@@ -860,13 +860,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://finodebiro.bombrilhoso.lat/docs/duna25/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImR1bmEyNSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9kdW5hMjUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTM4NSwiaiI6IjM4N2UxOTZkLWNkM2UtNDc5Zi04OWVmLTIyMDRkYjMwZTExMyIsImlhdCI6MTc5NTU0MTA4NSwicnMiOiJjYXJ0b29uaXRvIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.d9295578e8fb5df586a1a385be1b46437c374c315ca9f8fff4623a9bf3beec2c",
+          "url": "https://balipavu.bombrilhoso.lat/docs/duna25/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImR1bmEyNSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9kdW5hMjUvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODYyMiwiaiI6IjAxZmIyMmM0LTllNGMtNDI1NS1hYTQwLWNhZTZmNjc4MWNiOCIsImlhdCI6MTc5NTY5ODMyMiwicnMiOiJjYXJ0b29uaXRvIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.504333cff619ea5345fb47d44143e943b41d993e86762f9bfeeef8b30f3cdb5f",
           "slug": "cartoonito",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://finodebiro.bombrilhoso.lat/docs/duna25/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImR1bmEyNSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9kdW5hMjUvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTM4NSwiaiI6IjM4N2UxOTZkLWNkM2UtNDc5Zi04OWVmLTIyMDRkYjMwZTExMyIsImlhdCI6MTc5NTU0MTA4NSwicnMiOiJjYXJ0b29uaXRvIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.d9295578e8fb5df586a1a385be1b46437c374c315ca9f8fff4623a9bf3beec2c",
+          "url": "https://balipavu.bombrilhoso.lat/docs/duna25/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImR1bmEyNSIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9kdW5hMjUvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODYyMiwiaiI6IjAxZmIyMmM0LTllNGMtNDI1NS1hYTQwLWNhZTZmNjc4MWNiOCIsImlhdCI6MTc5NTY5ODMyMiwicnMiOiJjYXJ0b29uaXRvIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.504333cff619ea5345fb47d44143e943b41d993e86762f9bfeeef8b30f3cdb5f",
           "slug": "cartoonito",
           "cdn": "CDN 2"
         }
@@ -977,13 +977,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://mosegocu.bombrilhoso.lat/docs/lacuna38/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImxhY3VuYTM4IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2xhY3VuYTM4L2luZGV4LnR4dCIsImUiOjE3OTU1NDE0MjUsImoiOiJlNmZjZDU1Yi1jMGQzLTQyOTktOGFlZC0wMGQxMzM3ZDI2YzQiLCJpYXQiOjE3OTU1NDExMjUsInJzIjoiZGlzY292ZXJ5a2lkcyIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.8f77ce9f2eadc70e4c81abd4d41fe15e55080ef609834824bf04f0e38ac9ff04",
+          "url": "https://tacomidi.bombrilhoso.lat/docs/lacuna38/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImxhY3VuYTM4IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2xhY3VuYTM4L2luZGV4LnR4dCIsImUiOjE3OTU2OTg2NjEsImoiOiJkMDQ4NTVhYS1iMjFkLTQxODctYTBjYy1iZTk2YzRkMGVhYTkiLCJpYXQiOjE3OTU2OTgzNjEsInJzIjoiZGlzY292ZXJ5a2lkcyIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.0ab1a619502edcddef1e7a5180d40dcb2b9cd0d2c8120b078eec097813288607",
           "slug": "discoverykids",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://mosegocu.bombrilhoso.lat/docs/lacuna38/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImxhY3VuYTM4IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2xhY3VuYTM4L2luZGV4LnR4dCIsImUiOjE3OTU1NDE0MjUsImoiOiJlNmZjZDU1Yi1jMGQzLTQyOTktOGFlZC0wMGQxMzM3ZDI2YzQiLCJpYXQiOjE3OTU1NDExMjUsInJzIjoiZGlzY292ZXJ5a2lkcyIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.8f77ce9f2eadc70e4c81abd4d41fe15e55080ef609834824bf04f0e38ac9ff04",
+          "url": "https://tacomidi.bombrilhoso.lat/docs/lacuna38/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImxhY3VuYTM4IiwicCI6InBlbnRlcm9zYS5sYXQiLCJwYXRoIjoiL2xhY3VuYTM4L2luZGV4LnR4dCIsImUiOjE3OTU2OTg2NjEsImoiOiJkMDQ4NTVhYS1iMjFkLTQxODctYTBjYy1iZTk2YzRkMGVhYTkiLCJpYXQiOjE3OTU2OTgzNjEsInJzIjoiZGlzY292ZXJ5a2lkcyIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.0ab1a619502edcddef1e7a5180d40dcb2b9cd0d2c8120b078eec097813288607",
           "slug": "discoverykids",
           "cdn": "CDN 2"
         }
@@ -999,13 +999,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://cilosoregi.bombrilhoso.lat/docs/ambar35/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFtYmFyMzUiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvYW1iYXIzNS9pbmRleC50eHQiLCJlIjoxNzk1NTQxNDI4LCJqIjoiNjQzMzNlYzYtOWJiNC00NTExLWIxNGYtMGZjNDk3ZTYxZTEyIiwiaWF0IjoxNzk1NTQxMTI4LCJycyI6Imdsb29iIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.d976d4d062475d0c974e0193474ae880e6f09d23aa8aad054dba9b7aa13ef0a0",
+          "url": "https://fifodaci.bombrilhoso.lat/docs/ambar35/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFtYmFyMzUiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvYW1iYXIzNS9pbmRleC50eHQiLCJlIjoxNzk1Njk4NjY0LCJqIjoiMTEwMjgwNTUtMTgwNy00NzhkLWFhNTEtZTUwMmMzMWVmNzMxIiwiaWF0IjoxNzk1Njk4MzY0LCJycyI6Imdsb29iIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.5ed0b0e0ae9e3d5b283c23ceac952b3d6608b715d645ab44629adfb0a1c9c43b",
           "slug": "gloob",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://cilosoregi.bombrilhoso.lat/docs/ambar35/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFtYmFyMzUiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvYW1iYXIzNS9pbmRleC50eHQiLCJlIjoxNzk1NTQxNDI4LCJqIjoiNjQzMzNlYzYtOWJiNC00NTExLWIxNGYtMGZjNDk3ZTYxZTEyIiwiaWF0IjoxNzk1NTQxMTI4LCJycyI6Imdsb29iIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.d976d4d062475d0c974e0193474ae880e6f09d23aa8aad054dba9b7aa13ef0a0",
+          "url": "https://fifodaci.bombrilhoso.lat/docs/ambar35/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFtYmFyMzUiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvYW1iYXIzNS9pbmRleC50eHQiLCJlIjoxNzk1Njk4NjY0LCJqIjoiMTEwMjgwNTUtMTgwNy00NzhkLWFhNTEtZTUwMmMzMWVmNzMxIiwiaWF0IjoxNzk1Njk4MzY0LCJycyI6Imdsb29iIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.5ed0b0e0ae9e3d5b283c23ceac952b3d6608b715d645ab44629adfb0a1c9c43b",
           "slug": "gloob",
           "cdn": "CDN 2"
         }
@@ -1044,13 +1044,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://putofezufe.bombrilhoso.lat/docs/topazio24/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InRvcGF6aW8yNCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii90b3BhemlvMjQvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTQzMCwiaiI6IjNhOTllOGY2LTkxMTYtNGI3Mi04OWNkLTJlZmM4MWNiMmEzNCIsImlhdCI6MTc5NTU0MTEzMCwicnMiOiJkaXNjb3ZlcnljaGFubmVsIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.143a2f673eb73f93d1ab20d487ef290eea281cf20e27fe6b68141e0e5c7b64d5",
+          "url": "https://nurucube.bombrilhoso.lat/docs/topazio24/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InRvcGF6aW8yNCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii90b3BhemlvMjQvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODY2NiwiaiI6IjNlNTQyZWViLTdiMjEtNDYzNi05MzRiLWY2MDQzOTgxOWNjMSIsImlhdCI6MTc5NTY5ODM2NiwicnMiOiJkaXNjb3ZlcnljaGFubmVsIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.70cf4c7d73538b8d50ba5802e1ea520870f4220d11687cdd9afd350564b1ca18",
           "slug": "discoverychannel",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://putofezufe.bombrilhoso.lat/docs/topazio24/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InRvcGF6aW8yNCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii90b3BhemlvMjQvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTQzMCwiaiI6IjNhOTllOGY2LTkxMTYtNGI3Mi04OWNkLTJlZmM4MWNiMmEzNCIsImlhdCI6MTc5NTU0MTEzMCwicnMiOiJkaXNjb3ZlcnljaGFubmVsIiwibmIiOiIyZmUwNjJmOTE2MGU2ZDc1MTAwZmVjYjMyMTBlMDgxOWUyZGNmZjE3NWJlZmYxNWRiN2EwMGYzNTNjNjVlN2Y3IiwibmYiOjZ9.143a2f673eb73f93d1ab20d487ef290eea281cf20e27fe6b68141e0e5c7b64d5",
+          "url": "https://nurucube.bombrilhoso.lat/docs/topazio24/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InRvcGF6aW8yNCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii90b3BhemlvMjQvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODY2NiwiaiI6IjNlNTQyZWViLTdiMjEtNDYzNi05MzRiLWY2MDQzOTgxOWNjMSIsImlhdCI6MTc5NTY5ODM2NiwicnMiOiJkaXNjb3ZlcnljaGFubmVsIiwibmIiOiJhN2NiZTBhMDhjMTQyYThjMTAwZmM4YWViMjRhNmQwNDg5N2E3NDA1NjA3MGRmMDNjNmE1ZWFhNDE4NWJhMDJiIiwibmYiOjZ9.70cf4c7d73538b8d50ba5802e1ea520870f4220d11687cdd9afd350564b1ca18",
           "slug": "discoverychannel",
           "cdn": "CDN 2"
         }
@@ -1066,13 +1066,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://rigibari.bombrilhoso.lat/docs/alameda66/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFsYW1lZGE2NiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9hbGFtZWRhNjYvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTQzMiwiaiI6Ijc2YWZmMmQwLWI2ODMtNDJjMS04YTdiLWM3MTFkZGJmOGZkMiIsImlhdCI6MTc5NTU0MTEzMiwicnMiOiJhbmltYWxwbGFuZXQiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.4f4a38c78e11fa5b263bf4a17dc5e622d7235612c503c0534a9997b02ec2f6ff",
+          "url": "https://gefavibe.bombrilhoso.lat/docs/alameda66/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFsYW1lZGE2NiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9hbGFtZWRhNjYvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODY2OCwiaiI6IjM5OWEyNWIwLTk1ODQtNDg0ZC04ZThhLTQzNWMwMTJmZGNkZCIsImlhdCI6MTc5NTY5ODM2OCwicnMiOiJhbmltYWxwbGFuZXQiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.5d7ac6499acf7b0ac8acfd3f91c2f8da208d184707eb1c34ca8fd45799ea6cbb",
           "slug": "animalplanet",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://rigibari.bombrilhoso.lat/docs/alameda66/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFsYW1lZGE2NiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9hbGFtZWRhNjYvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTQzMiwiaiI6Ijc2YWZmMmQwLWI2ODMtNDJjMS04YTdiLWM3MTFkZGJmOGZkMiIsImlhdCI6MTc5NTU0MTEzMiwicnMiOiJhbmltYWxwbGFuZXQiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.4f4a38c78e11fa5b263bf4a17dc5e622d7235612c503c0534a9997b02ec2f6ff",
+          "url": "https://gefavibe.bombrilhoso.lat/docs/alameda66/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImFsYW1lZGE2NiIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9hbGFtZWRhNjYvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODY2OCwiaiI6IjM5OWEyNWIwLTk1ODQtNDg0ZC04ZThhLTQzNWMwMTJmZGNkZCIsImlhdCI6MTc5NTY5ODM2OCwicnMiOiJhbmltYWxwbGFuZXQiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.5d7ac6499acf7b0ac8acfd3f91c2f8da208d184707eb1c34ca8fd45799ea6cbb",
           "slug": "animalplanet",
           "cdn": "CDN 2"
         }
@@ -1112,13 +1112,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://fenidocave.bombrilhoso.lat/docs/esmeril94/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImVzbWVyaWw5NCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9lc21lcmlsOTQvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTQzNCwiaiI6ImZkZWEyYjE5LTgyNzAtNDg2ZS1iNjQzLTc1YjVjNmZkMmYxMSIsImlhdCI6MTc5NTU0MTEzNCwicnMiOiJnbG9ib25ld3MiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.e74de9dea9d1c16acf144b8045b1a615bbc807b35f5b5c65aa30a884a577cc19",
+          "url": "https://ranuvepeti.bombrilhoso.lat/docs/esmeril94/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImVzbWVyaWw5NCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9lc21lcmlsOTQvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODY3MCwiaiI6ImI5ZDZmNWYyLTlhMTktNGExNi05YzU5LWEyZjk1N2ViMmM0NSIsImlhdCI6MTc5NTY5ODM3MCwicnMiOiJnbG9ib25ld3MiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.ed4161734ce11d927c8aed8b6fe32ba99f611cb7ab0f8406f9eb7fcb9cdcf3de",
           "slug": "globonews",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://fenidocave.bombrilhoso.lat/docs/esmeril94/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImVzbWVyaWw5NCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9lc21lcmlsOTQvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTQzNCwiaiI6ImZkZWEyYjE5LTgyNzAtNDg2ZS1iNjQzLTc1YjVjNmZkMmYxMSIsImlhdCI6MTc5NTU0MTEzNCwicnMiOiJnbG9ib25ld3MiLCJuYiI6IjJmZTA2MmY5MTYwZTZkNzUxMDBmZWNiMzIxMGUwODE5ZTJkY2ZmMTc1YmVmZjE1ZGI3YTAwZjM1M2M2NWU3ZjciLCJuZiI6Nn0.e74de9dea9d1c16acf144b8045b1a615bbc807b35f5b5c65aa30a884a577cc19",
+          "url": "https://ranuvepeti.bombrilhoso.lat/docs/esmeril94/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImVzbWVyaWw5NCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9lc21lcmlsOTQvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODY3MCwiaiI6ImI5ZDZmNWYyLTlhMTktNGExNi05YzU5LWEyZjk1N2ViMmM0NSIsImlhdCI6MTc5NTY5ODM3MCwicnMiOiJnbG9ib25ld3MiLCJuYiI6ImE3Y2JlMGEwOGMxNDJhOGMxMDBmYzhhZWIyNGE2ZDA0ODk3YTc0MDU2MDcwZGYwM2M2YTVlYWE0MTg1YmEwMmIiLCJuZiI6Nn0.ed4161734ce11d927c8aed8b6fe32ba99f611cb7ab0f8406f9eb7fcb9cdcf3de",
           "slug": "globonews",
           "cdn": "CDN 2"
         }
@@ -1135,13 +1135,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://nudafinece.bombrilhoso.lat/docs/quartzo24/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1YXJ0em8yNCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWFydHpvMjQvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTQzNiwiaiI6Ijc5YzdjYWNlLTY5MTktNDk4Ni1iZjViLTNiMWNkNWQ5ZjBkYiIsImlhdCI6MTc5NTU0MTEzNiwicnMiOiJiYW5kbmV3cyIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.8bf81b631c9a99ebc8ba126c9d2956a34e7b6ce5d3be57656458d6f13dd98851",
+          "url": "https://nolurugozu.bombrilhoso.lat/docs/quartzo24/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1YXJ0em8yNCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWFydHpvMjQvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODY3MiwiaiI6IjkwZTczMmY1LTQyZmQtNDA2ZC05OTk4LWJiOGI4MDJmY2ZlNSIsImlhdCI6MTc5NTY5ODM3MiwicnMiOiJiYW5kbmV3cyIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.b11da65b44f8a603b3bc521093175ce6b9e92700fe88d87313c23884daaef712",
           "slug": "bandnews",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://nudafinece.bombrilhoso.lat/docs/quartzo24/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1YXJ0em8yNCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWFydHpvMjQvaW5kZXgudHh0IiwiZSI6MTc5NTU0MTQzNiwiaiI6Ijc5YzdjYWNlLTY5MTktNDk4Ni1iZjViLTNiMWNkNWQ5ZjBkYiIsImlhdCI6MTc5NTU0MTEzNiwicnMiOiJiYW5kbmV3cyIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.8bf81b631c9a99ebc8ba126c9d2956a34e7b6ce5d3be57656458d6f13dd98851",
+          "url": "https://nolurugozu.bombrilhoso.lat/docs/quartzo24/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6InF1YXJ0em8yNCIsInAiOiJwZW50ZXJvc2EubGF0IiwicGF0aCI6Ii9xdWFydHpvMjQvaW5kZXgudHh0IiwiZSI6MTc5NTY5ODY3MiwiaiI6IjkwZTczMmY1LTQyZmQtNDA2ZC05OTk4LWJiOGI4MDJmY2ZlNSIsImlhdCI6MTc5NTY5ODM3MiwicnMiOiJiYW5kbmV3cyIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.b11da65b44f8a603b3bc521093175ce6b9e92700fe88d87313c23884daaef712",
           "slug": "bandnews",
           "cdn": "CDN 2"
         }
@@ -1157,13 +1157,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://pivuzume.bombrilhoso.lat/docs/cacto50/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhY3RvNTAiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2FjdG81MC9pbmRleC50eHQiLCJlIjoxNzk1NTQxNDM4LCJqIjoiMTcxZWMyZGEtNDFhMC00NjJhLWFmZjYtODk2ZWZkM2U0ZGVmIiwiaWF0IjoxNzk1NTQxMTM4LCJycyI6Im11bHRpc2hvdyIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.fad35603e03ed44da3d955f20ade2d8a523403b1e08685b6625e446e63704246",
+          "url": "https://zugubabuba.bombrilhoso.lat/docs/cacto50/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhY3RvNTAiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2FjdG81MC9pbmRleC50eHQiLCJlIjoxNzk1Njk4NjczLCJqIjoiZGZkNmRiN2EtNzFiYi00OWQ3LTljN2YtYmEzMjJjYzQwMmU2IiwiaWF0IjoxNzk1Njk4MzczLCJycyI6Im11bHRpc2hvdyIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.c6604e5dc0c6cf33ecf9c4dbcd418d9ab90ad09017df1906825652543fd2fa78",
           "slug": "multishow",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://pivuzume.bombrilhoso.lat/docs/cacto50/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhY3RvNTAiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2FjdG81MC9pbmRleC50eHQiLCJlIjoxNzk1NTQxNDM4LCJqIjoiMTcxZWMyZGEtNDFhMC00NjJhLWFmZjYtODk2ZWZkM2U0ZGVmIiwiaWF0IjoxNzk1NTQxMTM4LCJycyI6Im11bHRpc2hvdyIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.fad35603e03ed44da3d955f20ade2d8a523403b1e08685b6625e446e63704246",
+          "url": "https://zugubabuba.bombrilhoso.lat/docs/cacto50/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNhY3RvNTAiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2FjdG81MC9pbmRleC50eHQiLCJlIjoxNzk1Njk4NjczLCJqIjoiZGZkNmRiN2EtNzFiYi00OWQ3LTljN2YtYmEzMjJjYzQwMmU2IiwiaWF0IjoxNzk1Njk4MzczLCJycyI6Im11bHRpc2hvdyIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.c6604e5dc0c6cf33ecf9c4dbcd418d9ab90ad09017df1906825652543fd2fa78",
           "slug": "multishow",
           "cdn": "CDN 2"
         }
@@ -1179,13 +1179,13 @@ export const FALLBACK_CHANNELS = {
       "sources": [
         {
           "name": "Servidor 1 (Principal)",
-          "url": "https://bivurola.bombrilhoso.lat/docs/cedro18/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNlZHJvMTgiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2Vkcm8xOC9pbmRleC50eHQiLCJlIjoxNzk1NTQxNDQwLCJqIjoiYjlmOGNjMDQtMWFkZi00Y2ZlLWFjOWQtNWVhNjg3NTFmM2VlIiwiaWF0IjoxNzk1NTQxMTQwLCJycyI6Im10diIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.23de2a9d9dc2856fac88bdf66b411905d20691fffa1e801155c2cc68f95e2d47",
+          "url": "https://dozefeba.bombrilhoso.lat/docs/cedro18/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNlZHJvMTgiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2Vkcm8xOC9pbmRleC50eHQiLCJlIjoxNzk1Njk4Njc1LCJqIjoiNTgxOTE4OTktYzVjMy00ZmZkLWFhZWUtMmQxYWFjNzlhZTRkIiwiaWF0IjoxNzk1Njk4Mzc1LCJycyI6Im10diIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.02319727580dd0f2e5084a691a63517d01a2d32c6b02f4faa79067608e13f90f",
           "slug": "mtv",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Backup)",
-          "url": "https://bivurola.bombrilhoso.lat/docs/cedro18/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNlZHJvMTgiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2Vkcm8xOC9pbmRleC50eHQiLCJlIjoxNzk1NTQxNDQwLCJqIjoiYjlmOGNjMDQtMWFkZi00Y2ZlLWFjOWQtNWVhNjg3NTFmM2VlIiwiaWF0IjoxNzk1NTQxMTQwLCJycyI6Im10diIsIm5iIjoiMmZlMDYyZjkxNjBlNmQ3NTEwMGZlY2IzMjEwZTA4MTllMmRjZmYxNzViZWZmMTVkYjdhMDBmMzUzYzY1ZTdmNyIsIm5mIjo2fQ.23de2a9d9dc2856fac88bdf66b411905d20691fffa1e801155c2cc68f95e2d47",
+          "url": "https://dozefeba.bombrilhoso.lat/docs/cedro18/__index.txt?token=eyJ2IjoyLCJzdCI6MSwicyI6ImNlZHJvMTgiLCJwIjoicGVudGVyb3NhLmxhdCIsInBhdGgiOiIvY2Vkcm8xOC9pbmRleC50eHQiLCJlIjoxNzk1Njk4Njc1LCJqIjoiNTgxOTE4OTktYzVjMy00ZmZkLWFhZWUtMmQxYWFjNzlhZTRkIiwiaWF0IjoxNzk1Njk4Mzc1LCJycyI6Im10diIsIm5iIjoiYTdjYmUwYTA4YzE0MmE4YzEwMGZjOGFlYjI0YTZkMDQ4OTdhNzQwNTYwNzBkZjAzYzZhNWVhYTQxODViYTAyYiIsIm5mIjo2fQ.02319727580dd0f2e5084a691a63517d01a2d32c6b02f4faa79067608e13f90f",
           "slug": "mtv",
           "cdn": "CDN 2"
         }

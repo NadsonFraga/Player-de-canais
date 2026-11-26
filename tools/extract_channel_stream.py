@@ -15,6 +15,7 @@ import re
 import json
 import argparse
 import urllib.request
+import urllib.parse
 import ssl
 
 USER_AGENT = (
@@ -37,26 +38,44 @@ EMBED_ENDPOINTS = [
     "https://w1.rdembed.online/{slug}"
 ]
 
-def fetch_url(url, timeout=6):
+def fetch_url(url, timeout=6, referer="https://google.com/", method="GET", data=None, origin=None):
     ctx = ssl._create_unverified_context()
-    req = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Referer": "https://google.com/"
-        }
-    )
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml,application/json;q=0.9,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Referer": referer
+    }
+    if origin:
+        headers["Origin"] = origin
+
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
             return resp.read().decode("utf-8", errors="ignore")
     except Exception:
-        return None
+        pass
+
+    # Fallback: Proxy through Cloudflare Pages Function if direct fetch is blocked (e.g. GitHub Actions / Azure IP)
+    try:
+        q_url = urllib.parse.quote(url, safe="")
+        q_ref = urllib.parse.quote(referer, safe="")
+        sign_url = f"https://tvzinhaonline.pages.dev/api/resolve?action=sign&url={q_url}&referer={q_ref}"
+        s_req = urllib.request.Request(sign_url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(s_req, timeout=8, context=ctx) as s_resp:
+            s_data = json.loads(s_resp.read().decode())
+            signed_url = s_data.get("signed_url")
+        if signed_url:
+            p_req = urllib.request.Request(signed_url, data=data, headers=headers, method=method)
+            with urllib.request.urlopen(p_req, timeout=8, context=ctx) as p_resp:
+                return p_resp.read().decode("utf-8", errors="ignore")
+    except Exception:
+        pass
+
+    return None
 
 def extract_stream_from_embed(slug):
     """Fetches embed page through rdembed.online -> penterosa.lat and extracts dynamic live stream URL."""
-    ctx = ssl._create_unverified_context()
     for endpoint in EMBED_ENDPOINTS:
         try:
             embed_url = endpoint.format(slug=slug)
@@ -69,12 +88,9 @@ def extract_stream_from_embed(slug):
                 continue
             iframe_src = m1.group(1).replace("&amp;", "&")
 
-            req2 = urllib.request.Request(iframe_src, headers={
-                "User-Agent": USER_AGENT,
-                "Referer": embed_url
-            })
-            with urllib.request.urlopen(req2, timeout=6, context=ctx) as r2:
-                html2 = r2.read().decode("utf-8", errors="ignore")
+            html2 = fetch_url(iframe_src, timeout=6, referer=embed_url)
+            if not html2:
+                continue
 
             m2 = re.search(r'src="(https://[^/]+/[^"]+)"', html2)
             if not m2:
@@ -85,12 +101,9 @@ def extract_stream_from_embed(slug):
             m_host = re.match(r'^(https://[^/]+)', player_url)
             player_base = m_host.group(1) if m_host else "https://penterosa.lat"
 
-            req3 = urllib.request.Request(player_url, headers={
-                "User-Agent": USER_AGENT,
-                "Referer": embed_url
-            })
-            with urllib.request.urlopen(req3, timeout=6, context=ctx) as r3:
-                html3 = r3.read().decode("utf-8", errors="ignore")
+            html3 = fetch_url(player_url, timeout=6, referer=embed_url)
+            if not html3:
+                continue
 
             m_ref = re.search(r'"ref":"([^"]+)"', html3)
             if not m_ref:
@@ -98,14 +111,10 @@ def extract_stream_from_embed(slug):
             ref_path = m_ref.group(1).replace(r"\/", "/")
             ref_url = f"{player_base}{ref_path}"
 
-            req4 = urllib.request.Request(ref_url, data=b"", headers={
-                "User-Agent": USER_AGENT,
-                "Referer": player_url,
-                "Origin": player_base,
-                "Accept": "application/json"
-            }, method="POST")
-            with urllib.request.urlopen(req4, timeout=6, context=ctx) as r4:
-                ref_data = json.loads(r4.read().decode("utf-8"))
+            res4 = fetch_url(ref_url, timeout=6, referer=player_url, origin=player_base, method="POST", data=b"")
+            if not res4:
+                continue
+            ref_data = json.loads(res4)
 
             stream_url = ref_data.get("src", "")
             if stream_url:
@@ -116,7 +125,7 @@ def extract_stream_from_embed(slug):
                     "primary_url": stream_url,
                     "backup_url": stream_url,
                 }, None
-        except Exception as e:
+        except Exception:
             continue
 
     return None, f"Could not extract working stream for slug '{slug}'"

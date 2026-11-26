@@ -202,7 +202,7 @@ export async function onRequestGet(context) {
     } else if (targetUrl.includes("zunderflix") || targetUrl.includes("zunder")) {
       customReferer = "https://zunderflix.lat/";
       customOrigin = "https://zunderflix.lat";
-    } else if (targetUrl.includes("playercdn.workers.dev") || targetUrl.includes("embedplayer2.xyz")) {
+    } else if (targetUrl.includes("playercdn") || targetUrl.includes("embedplayer2.xyz")) {
       customReferer = "https://embedplayer2.xyz/";
       customOrigin = "https://embedplayer2.xyz";
     } else if (targetUrl.includes("googlevideo.com") || targetUrl.includes("blogger.com")) {

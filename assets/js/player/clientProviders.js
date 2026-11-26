@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261125_1418';
-import { fetchTmdb } from '../core/tmdb.js?v=20261125_1418';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261126_1010';
+import { fetchTmdb } from '../core/tmdb.js?v=20261126_1010';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -155,8 +155,8 @@ export async function resolveFenixFlixClient(options = {}) {
 
   if (queryCandidates.length > 0) {
     const controller = new AbortController();
-    // Unified parallel budget of 4.5 seconds
-    const timer = setTimeout(() => controller.abort(), 4500);
+    // Unified parallel budget of 8 seconds
+    const timer = setTimeout(() => controller.abort(), 8000);
 
     try {
       const fetchCandidate = async (baseUrl, qId) => {
@@ -330,7 +330,7 @@ export async function resolveFenixFlixClient(options = {}) {
     const signedResults = await signStreamUrlsBatch(itemsToSign);
 
     const sources = signedResults.map((item, idx) => {
-      const s = item.sourceItem || filtered[idx];
+      const s = parsed[idx] || item.sourceItem;
       const finalStreamUrl = item.isDirectMp4 ? item.url : (item.signed_url || item.url);
       const isDirectHls = !item.isDirectMp4 && s.type === 'hls' && /^https:\/\//i.test(s.file);
       return {

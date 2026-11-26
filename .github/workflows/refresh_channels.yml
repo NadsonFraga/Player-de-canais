@@ -31,7 +31,8 @@ jobs:
           git add data/canais.json assets/js/core/fallbackChannels.js
           if ! git diff --staged --quiet; then
             git commit -m "chore(channels): refresh live channel stream tokens [automated]"
-            git push
+            git push origin HEAD
+            git push origin HEAD:staging || true
           else
             echo "All channel stream tokens are already fresh."
           fi

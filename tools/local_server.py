@@ -2384,8 +2384,10 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     final_stream_url = direct_clean_url if is_direct_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
                     source_type = s.get("type") or ("hls" if ".m3u8" in raw_file else "mp4")
                     # Every HLS segment through the proxy is one function call (~450 an hour of video). The player tries
-                    # the host first and falls back to the proxy, so hosts that need their Referer still play
-                    direct_url = raw_file if (not is_direct_mp4 and source_type == "hls" and re.match(r'^https://', raw_file, re.I)) else None
+                    # the host first and falls back to the proxy, so hosts that need their Referer still play.
+                    # CDNs that lock tokens to the resolving IP (like playercdn/workers.dev) MUST NOT use direct_url in browser.
+                    is_ip_locked_cdn = "playercdn" in raw_file or "workers.dev" in raw_file
+                    direct_url = raw_file if (not is_direct_mp4 and not is_ip_locked_cdn and source_type == "hls" and re.match(r'^https://', raw_file, re.I)) else None
 
                     parsed_sources.append({
                         "label": s.get("label", f"Servidor {idx + 1}"),
@@ -2491,7 +2493,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 referer, origin = "https://zokoanime.video/", "https://zokoanime.video"
             elif "zunderflix" in target_url or "zunder" in target_url:
                 referer, origin = "https://zunderflix.lat/", "https://zunderflix.lat"
-            elif "playercdn.workers.dev" in target_url or "embedplayer2.xyz" in target_url:
+            elif "playercdn" in target_url or "embedplayer2.xyz" in target_url:
                 referer, origin = "https://embedplayer2.xyz/", "https://embedplayer2.xyz"
             elif "googlevideo.com" in target_url or "blogger.com" in target_url:
                 referer = "https://www.blogger.com/"
