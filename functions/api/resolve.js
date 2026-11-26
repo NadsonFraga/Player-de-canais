@@ -251,7 +251,7 @@ function xorDecrypt(base64Str, key = "otaku-embed-v1") {
  * Resolves MGEB streams for Movies, Series, and Dubbed Anime
  */
 async function resolveMgeb(type, id, season = 1, episode = 1) {
-  const hosts = ["mgeb.space", "mgeb.lat"];
+  const hosts = ["mgeb.lat", "mgeb.space"];
   const path = type === "movie" 
     ? `embed/${id}` 
     : `embed/serie/${id}/${season}/${episode}`;
@@ -265,7 +265,7 @@ async function resolveMgeb(type, id, season = 1, episode = 1) {
     };
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), MGEB_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     try {
       const res = await fetch(embedUrl, {
         headers,
@@ -1006,7 +1006,7 @@ function isMirrorSource(src) {
 
 /** Low trust: synthetic master, or a known re-hosting mirror. */
 function isLowTrustSource(src) {
-  return Boolean(src.synthetic) || isMirrorSource(src);
+  return false;
 }
 
 /** Detects CAM / TeleSync / Cinema recording markers in stream labels, titles and URLs. */
@@ -1521,6 +1521,9 @@ export async function onRequestGet(context) {
     }
     const liveData = await resolveLiveChannel(slug);
     if (liveData && liveData.stream_url) {
+      const proxyBase = `${urlObj.origin}/api/stream`;
+      const streamKey = await streamSigningKey(context.env);
+      const proxiedUrl = await proxiedStreamUrl(proxyBase, streamKey, liveData.stream_url, "https://penterosa.lat/", { origin: "https://penterosa.lat" });
       return new Response(JSON.stringify({
         success: true,
         category: "channel",
@@ -1528,8 +1531,8 @@ export async function onRequestGet(context) {
         primary_source: {
           label: "Servidor 1 (Ao Vivo)",
           type: "hls",
-          stream_url: liveData.stream_url,
-          direct_url: liveData.stream_url,
+          stream_url: proxiedUrl,
+          direct_url: null,
           quality: 1080,
           alive: true
         }
@@ -1860,15 +1863,15 @@ export async function onRequestGet(context) {
       function scoreSource(src) {
         const u = (src.raw_url || "").toLowerCase();
         // Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
-        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || isBrazilianCdn(u)) {
+        if (u.includes("playercdn") || u.includes("workers.dev") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || isBrazilianCdn(u)) {
           return 95;
         }
         // Tier 2: Standard generic HLS streams (Score 80)
         if (u.includes(".m3u8")) {
           return 80;
         }
-        // Tier 3: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
-        if (u.includes("playercdn") || u.includes("workers.dev") || u.includes("powestream")) {
+        // Tier 3: Low-bitrate cached SD mirrors (Score 60 - Preserved as safety net)
+        if (u.includes("cache/hls") || u.includes("powestream")) {
           return 60;
         }
         // Tier 4: Other MP4 streams (Score 50)

@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261126_1015';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261126_1015';
-import { showToast } from '../core/toast.js?v=20261126_1015';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261126_1015';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261126_1015';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261126_1015';
-import { formatClock } from '../core/resume.js?v=20261126_1015';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261126_1015';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261126_1015';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261126_1015';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261126_1015';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261126_1015';
-import { fetchTmdb } from '../core/tmdb.js?v=20261126_1015';
+import { store } from '../core/state.js?v=20261126_1736';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261126_1736';
+import { showToast } from '../core/toast.js?v=20261126_1736';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261126_1736';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261126_1736';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261126_1736';
+import { formatClock } from '../core/resume.js?v=20261126_1736';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261126_1736';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261126_1736';
+import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261126_1736';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261126_1736';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261126_1736';
+import { fetchTmdb } from '../core/tmdb.js?v=20261126_1736';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -778,6 +778,29 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
     const currentSource = sources[currentIndex];
     let isStreamWorking = false;
 
+    // Instant dynamic token refresh for live TV channels with static or expired tokens
+    if (currentSource && currentSource.slug && !currentSource._autoHealed && currentSource.url && (currentSource.url.includes("bombrilhoso.lat") || currentSource.url.includes("__index.txt") || currentSource.url.includes("penterosa.lat"))) {
+        currentSource._autoHealed = true;
+        const waitLoader = document.getElementById("video-loader");
+        if (waitLoader) setLoaderText(waitLoader, "Conectando transmissão ao vivo...");
+        fetch(`/api/resolve?type=channel&id=${encodeURIComponent(currentSource.slug)}`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data && data.success && data.primary_source && data.primary_source.stream_url) {
+                    const freshUrl = data.primary_source.stream_url;
+                    currentSource.url = freshUrl;
+                    if (sources[currentIndex + 1] && sources[currentIndex + 1].slug === currentSource.slug) {
+                        sources[currentIndex + 1].url = freshUrl;
+                    }
+                    mountTvDirectStream(channelData, currentIndex, onAllDirectFailed, onSourceChanged);
+                } else {
+                    triggerDirectCascade("Não foi possível autenticar o canal ao vivo");
+                }
+            })
+            .catch(() => triggerDirectCascade("Falha na conexão com o servidor ao vivo"));
+        return;
+    }
+
     async function triggerDirectCascade(reason) {
         if (isStreamWorking) return;
         console.warn(`[TvPlayer] Falha na fonte ${currentIndex + 1}/${sources.length} (${currentSource.name}): ${reason}`);
@@ -1088,37 +1111,8 @@ export function mountTvContingencyIframe(contingencyUrl) {
 const RESOLVE_CACHE_TTL_MS = 20 * 60 * 1000;
 const resolveCache = new Map();
 
-/**
- * Resolves direct media stream via local or remote proxy API
- */
-export async function resolveDirectStream(options = {}) {
+async function fetchServerDirectStream(options = {}) {
     const { id, type, season = 1, episode = 1, lang = 'dub', title = '', original_title = '', year = '', season_name = '', mal_id = null, imdb_id = null, absolute_episode = '', total_episodes = '', aniskip_only = false, source = '' } = options;
-    // The player libraries download while the sources are looked up
-    if (typeof window !== 'undefined' && !aniskip_only) ensurePlayerLibs().catch(() => { /* the mount shows the error */ });
-
-    // Client-side extraction for direct providers (bypasses Cloudflare cross-zone blocks)
-    if (!aniskip_only && source && CLIENT_PROVIDERS.includes(source)) {
-        const clientKey = `client_${source}_${id}_${imdb_id}_${type}_${season}_${episode}_${lang}`;
-        const cached = resolveCache.get(clientKey);
-        if (cached && Date.now() - cached.at < RESOLVE_CACHE_TTL_MS) return cached.promise;
-
-        const promise = (async () => {
-            try {
-                const data = await resolveClientProvider(source, options);
-                return data && data.success ? data : null;
-            } catch (err) {
-                console.error(`[StreamEngine] Erro ao resolver stream client-side (${source}):`, err);
-                return null;
-            }
-        })();
-
-        resolveCache.set(clientKey, { at: Date.now(), promise });
-        promise.then(data => {
-            if (!data && resolveCache.get(clientKey)?.promise === promise) resolveCache.delete(clientKey);
-        });
-        return promise;
-    }
-
     const params = new URLSearchParams();
     if (id) params.set("id", id);
     if (type) params.set("type", type);
@@ -1151,7 +1145,7 @@ export async function resolveDirectStream(options = {}) {
             const data = await res.json();
             return data && data.success ? data : null;
         } catch (err) {
-            console.error("[StreamEngine] Erro ao resolver stream:", err);
+            console.error("[StreamEngine] Erro ao resolver stream no servidor:", err);
             return null;
         }
     })();
@@ -1161,6 +1155,40 @@ export async function resolveDirectStream(options = {}) {
         if (!data && resolveCache.get(url)?.promise === promise) resolveCache.delete(url);
     });
     return promise;
+}
+
+/**
+ * Resolves direct media stream via local or remote proxy API
+ */
+export async function resolveDirectStream(options = {}) {
+    const { id, type, season = 1, episode = 1, lang = 'dub', aniskip_only = false, source = '', imdb_id = null } = options;
+    // The player libraries download while the sources are looked up
+    if (typeof window !== 'undefined' && !aniskip_only) ensurePlayerLibs().catch(() => { /* the mount shows the error */ });
+
+    // Client-side extraction for direct providers (bypasses Cloudflare cross-zone blocks)
+    if (!aniskip_only && source && CLIENT_PROVIDERS.includes(source)) {
+        const clientKey = `client_${source}_${id}_${imdb_id}_${type}_${season}_${episode}_${lang}`;
+        const cached = resolveCache.get(clientKey);
+        if (cached && Date.now() - cached.at < RESOLVE_CACHE_TTL_MS) return cached.promise;
+
+        const promise = (async () => {
+            try {
+                const data = await resolveClientProvider(source, options);
+                if (data && data.success) return data;
+            } catch (err) {
+                console.warn(`[StreamEngine] Client-side extraction falhou (${source}), tentando servidor:`, err);
+            }
+            return fetchServerDirectStream(options);
+        })();
+
+        resolveCache.set(clientKey, { at: Date.now(), promise });
+        promise.then(data => {
+            if (!data && resolveCache.get(clientKey)?.promise === promise) resolveCache.delete(clientKey);
+        });
+        return promise;
+    }
+
+    return fetchServerDirectStream(options);
 }
 
 /** Resolves in the background (e.g. the next episode) so a later resolveDirectStream() is instant. */

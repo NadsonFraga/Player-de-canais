@@ -115,7 +115,7 @@ def xor_decrypt(data_str: str, key: str = "otaku-embed-v1") -> str:
     return urllib.parse.unquote(decrypted.decode("latin1", errors="replace"))
 
 def fetch_mgeb(media_type: str, media_id: str, season: int = 1, episode: int = 1):
-    for host in ("mgeb.space", "mgeb.lat"):
+    for host in ("mgeb.lat", "mgeb.space"):
         if media_type == "movie":
             url = f"https://{host}/embed/{media_id}"
         else:
@@ -891,7 +891,7 @@ def is_mirror_source(src):
 
 def is_low_trust_source(src):
     """Low trust: synthetic master, or a known re-hosting mirror."""
-    return bool(src.get("synthetic")) or is_mirror_source(src)
+    return False
 
 
 def is_cam_source(src):
@@ -2092,6 +2092,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 live_data, err = None, str(e)
             if live_data and live_data.get("primary_url"):
+                proxy_base = f"{self.server_origin}/api/stream"
+                proxied_url = proxied_stream_url(proxy_base, stream_key, live_data["primary_url"], "https://penterosa.lat/", origin="https://penterosa.lat")
                 self.send_json(200, {
                     "success": True,
                     "category": "channel",
@@ -2099,8 +2101,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     "primary_source": {
                         "label": "Servidor 1 (Ao Vivo)",
                         "type": "hls",
-                        "stream_url": live_data["primary_url"],
-                        "direct_url": live_data["primary_url"],
+                        "stream_url": proxied_url,
+                        "direct_url": None,
                         "quality": 1080,
                         "alive": True
                     }
@@ -2401,14 +2403,14 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 def score_source(src):
                     url = src.get("raw_url", "").lower()
                     # Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
-                    if ("cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url
+                    if ("playercdn" in url or "workers.dev" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url
                             or is_brazilian_cdn(url)):
                         return 95
                     # Tier 2: Standard generic HLS streams (Score 80)
                     if ".m3u8" in url:
                         return 80
-                    # Tier 3: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
-                    if "playercdn" in url or "workers.dev" in url or "powestream" in url:
+                    # Tier 3: Low-bitrate cached SD mirrors (Score 60 - Preserved as safety net)
+                    if "cache/hls" in url or "powestream" in url:
                         return 60
                     # Tier 4: Other MP4 streams (Score 50)
                     if ".mp4" in url:

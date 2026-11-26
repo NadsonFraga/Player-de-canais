@@ -6,8 +6,8 @@
  * Signs final proxy URLs through /api/resolve?action=sign for streams requiring custom Referer headers.
  */
 
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261126_1015';
-import { fetchTmdb } from '../core/tmdb.js?v=20261126_1015';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261126_1736';
+import { fetchTmdb } from '../core/tmdb.js?v=20261126_1736';
 
 /* ============================================================
  * 0. STREAM SIGNING HELPER
@@ -371,15 +371,111 @@ export async function resolveFenixFlixClient(options = {}) {
 
 
 /* ============================================================
+ * 2. MGEB (Client-Side Direct Stream Resolver)
+ * Resolves directly in the user's browser to bind upstream CDN
+ * tokens to the user's residential IP instead of Cloudflare Datacenter IPs.
+ * ============================================================ */
+
+export async function resolveMgebClient(options = {}) {
+  const { id, imdb_id = null, type = 'movie', season = 1, episode = 1, title = '' } = options;
+  if (!id && !imdb_id) return null;
+  const isSeries = type === 'series' || type === 'serie' || type === 'tv' || type === 'anime';
+
+  const targetIds = [];
+  if (id) targetIds.push(id);
+  if (imdb_id && imdb_id !== id) targetIds.push(imdb_id);
+
+  const hosts = ['https://mgeb.lat', 'https://mgeb.space'];
+
+  for (const mediaId of targetIds) {
+    const path = isSeries
+      ? `embed/serie/${mediaId}/${season}/${episode}`
+      : `embed/${mediaId}`;
+
+    for (const host of hosts) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(`${host}/${path}`, {
+          headers: { 'Accept': 'text/html' },
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        if (!res.ok) continue;
+
+        const html = await res.text();
+        const sourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
+        if (!sourcesMatch) continue;
+
+        const rawSources = JSON.parse(sourcesMatch[1]);
+        if (!Array.isArray(rawSources) || rawSources.length === 0) continue;
+
+        const titleMatch = html.match(/var\s+title\s*=\s*"(.*?)";/);
+        const resolvedTitle = titleMatch ? titleMatch[1].replace(/\\\//g, '/') : (title || (isSeries ? `Série T${season}E${episode}` : 'Filme'));
+
+        const validSources = rawSources.filter(s => {
+          const f = (s.file || '').toLowerCase();
+          return f && !f.includes('streamtape') && !f.includes('tapecontent');
+        });
+
+        if (!validSources.length) continue;
+
+        const sources = validSources.map((s, idx) => {
+          const rawFile = (s.file || '').trim();
+          const label = s.label || `Opção ${idx + 1}`;
+          const isHls = rawFile.includes('.m3u8') || rawFile.includes('/hls') || (s.type === 'hls');
+          let quality = 1080;
+          if (label.includes('4K') || label.includes('2160')) quality = 2160;
+          else if (label.includes('1080')) quality = 1080;
+          else if (label.includes('720')) quality = 720;
+          else if (label.includes('480') || rawFile.includes('480p') || rawFile.includes('-sd.')) quality = 480;
+          else if (rawFile.includes('cache/hls')) quality = 480;
+
+          return {
+            label,
+            type: isHls ? 'hls' : 'mp4',
+            stream_url: rawFile,
+            direct_url: rawFile,
+            raw_url: rawFile,
+            quality,
+            alive: true
+          };
+        });
+
+        // Highest quality first: 1080p/720p before 480p
+        sources.sort((a, b) => (b.quality - a.quality));
+
+        return {
+          success: true,
+          provider: 'mgeb',
+          title: resolvedTitle,
+          category: type,
+          primary_source: sources[0],
+          fallback_sources: sources.slice(1),
+          subtitles: [],
+          aniskip: { mal_id: null, episode, ready: false }
+        };
+      } catch (e) {
+        console.warn(`[ClientProviders] MgebClient falhou no host ${host}:`, e);
+      }
+    }
+  }
+
+  return null;
+}
+
+/* ============================================================
  * 5. UNIFIED DISPATCHER
  * ============================================================ */
 
-export const CLIENT_PROVIDERS = ['fenixflix'];
+export const CLIENT_PROVIDERS = ['fenixflix', 'mgeb'];
 
 export async function resolveClientProvider(source, options) {
   switch (source) {
     case 'fenixflix':
       return resolveFenixFlixClient(options);
+    case 'mgeb':
+      return resolveMgebClient(options);
     default:
       return null;
   }
