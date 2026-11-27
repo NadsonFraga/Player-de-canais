@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261127_1406';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261127_1406';
-import { showToast } from '../core/toast.js?v=20261127_1406';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261127_1406';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261127_1406';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261127_1406';
-import { formatClock } from '../core/resume.js?v=20261127_1406';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261127_1406';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261127_1406';
-import { CLIENT_PROVIDERS, resolveClientProvider } from './clientProviders.js?v=20261127_1406';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261127_1406';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261127_1406';
-import { fetchTmdb } from '../core/tmdb.js?v=20261127_1406';
+import { store } from '../core/state.js?v=20261127_1500';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261127_1500';
+import { showToast } from '../core/toast.js?v=20261127_1500';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261127_1500';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261127_1500';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261127_1500';
+import { formatClock } from '../core/resume.js?v=20261127_1500';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261127_1500';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261127_1500';
+import { CLIENT_PROVIDERS, resolveClientProvider, signStreamUrl } from './clientProviders.js?v=20261127_1500';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261127_1500';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261127_1500';
+import { fetchTmdb } from '../core/tmdb.js?v=20261127_1500';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -717,7 +717,7 @@ export function handleAllDirectSourcesFailed(onRetry = null, onContingency = nul
 /**
  * Mounts a TV channel using direct HLS stream via Artplayer + Hls.js
  */
-export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFailed = null, onSourceChanged = null) {
+export async function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFailed = null, onSourceChanged = null) {
     if (!playerLibsReady()) {
         // The 12 s source watchdog only starts once the libraries are here, so a slow connection never drops good sources
         atomicTvPlayerReset();
@@ -764,6 +764,7 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
         tvContainer.classList.remove("hidden");
     }
     if (loader) {
+        setLoaderText(loader, "Conectando transmissão ao vivo...");
         loader.classList.remove("hidden");
     }
 
@@ -778,56 +779,40 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
     const currentSource = sources[currentIndex];
     let isStreamWorking = false;
 
-    // Instant dynamic token refresh for live TV channels with static or expired tokens
-    if (currentSource && currentSource.slug && !currentSource._autoHealed && currentSource.url && (currentSource.url.includes("bombrilhoso.lat") || currentSource.url.includes("__index.txt") || currentSource.url.includes("penterosa.lat"))) {
+    // Concurrency guard: ignore outdated async mount requests if channel changes rapidly
+    window.tvMountCounter = (window.tvMountCounter || 0) + 1;
+    const mountId = window.tvMountCounter;
+
+    let finalStreamUrl = currentSource.url || "";
+
+    // Instant dynamic token resolution for live TV channels with slugs
+    if (currentSource && currentSource.slug && !currentSource._autoHealed) {
         currentSource._autoHealed = true;
-        const waitLoader = document.getElementById("video-loader");
-        if (waitLoader) setLoaderText(waitLoader, "Conectando transmissão ao vivo...");
-        fetch(`/api/resolve?type=channel&id=${encodeURIComponent(currentSource.slug)}`)
-            .then(res => res.ok ? res.json() : null)
-            .then(data => {
+        try {
+            const res = await fetch(`/api/resolve?type=channel&id=${encodeURIComponent(currentSource.slug)}`);
+            if (mountId !== window.tvMountCounter) return;
+            if (res.ok) {
+                const data = await res.json();
                 if (data && data.success && data.primary_source && data.primary_source.stream_url) {
-                    const freshUrl = data.primary_source.stream_url;
-                    currentSource.url = freshUrl;
-                    if (sources[currentIndex + 1] && sources[currentIndex + 1].slug === currentSource.slug) {
-                        sources[currentIndex + 1].url = freshUrl;
+                    finalStreamUrl = data.primary_source.stream_url;
+                    currentSource.url = finalStreamUrl;
+                    for (let s = currentIndex + 1; s < sources.length; s++) {
+                        if (sources[s] && sources[s].slug === currentSource.slug) {
+                            sources[s].url = finalStreamUrl;
+                        }
                     }
-                    mountTvDirectStream(channelData, currentIndex, onAllDirectFailed, onSourceChanged);
-                } else {
-                    triggerDirectCascade("Não foi possível autenticar o canal ao vivo");
                 }
-            })
-            .catch(() => triggerDirectCascade("Falha na conexão com o servidor ao vivo"));
-        return;
+            }
+        } catch (err) {
+            console.warn(`[TvPlayer] Falha ao resolver token dinâmico para ${currentSource.slug}:`, err);
+        }
     }
 
-    async function triggerDirectCascade(reason) {
-        if (isStreamWorking) return;
-        console.warn(`[TvPlayer] Falha na fonte ${currentIndex + 1}/${sources.length} (${currentSource.name}): ${reason}`);
+    if (mountId !== window.tvMountCounter) return;
 
-        // Dynamic auto-heal: if the source has a slug and hasn't been auto-healed yet, fetch a fresh stream token
-        if (currentSource && currentSource.slug && !currentSource._autoHealed) {
-            currentSource._autoHealed = true;
-            console.log(`[TvPlayer] Tentando auto-cura dinâmica para slug: ${currentSource.slug}...`);
-            try {
-                const res = await fetch(`/api/resolve?type=channel&id=${encodeURIComponent(currentSource.slug)}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.success && data.primary_source && data.primary_source.stream_url) {
-                        const freshUrl = data.primary_source.stream_url;
-                        console.log(`[TvPlayer] Auto-cura bem sucedida para ${currentSource.slug}:`, freshUrl);
-                        currentSource.url = freshUrl;
-                        if (sources[currentIndex + 1] && sources[currentIndex + 1].slug === currentSource.slug) {
-                            sources[currentIndex + 1].url = freshUrl;
-                        }
-                        mountTvDirectStream(channelData, currentIndex, onAllDirectFailed, onSourceChanged);
-                        return;
-                    }
-                }
-            } catch (err) {
-                console.warn(`[TvPlayer] Auto-cura dinâmica falhou para ${currentSource.slug}:`, err);
-            }
-        }
+    async function triggerDirectCascade(reason) {
+        if (isStreamWorking || mountId !== window.tvMountCounter) return;
+        console.warn(`[TvPlayer] Falha na fonte ${currentIndex + 1}/${sources.length} (${currentSource.name}): ${reason}`);
 
         if (currentIndex + 1 < sources.length) {
             const nextIndex = currentIndex + 1;
@@ -841,9 +826,26 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
         }
     }
 
+    // If source url is empty or unavailable after dynamic resolve, cascade immediately
+    if (!finalStreamUrl) {
+        triggerDirectCascade("Fonte sem endereço de transmissão disponível");
+        return;
+    }
+
+    // Ensure stream URL is secure and proxied over HTTPS with open CORS
+    if (!finalStreamUrl.includes("/api/stream") && (finalStreamUrl.startsWith("http://") || finalStreamUrl.startsWith("https://"))) {
+        try {
+            finalStreamUrl = await signStreamUrl(finalStreamUrl);
+        } catch (err) {
+            console.warn("[TvPlayer] Erro ao assinar URL de transmissão:", err);
+        }
+    }
+
+    if (mountId !== window.tvMountCounter) return;
+
     // 12-second Watchdog Timer for stall/timeout detection
     window.tvWatchdogTimer = setTimeout(() => {
-        if (!isStreamWorking) {
+        if (!isStreamWorking && mountId === window.tvMountCounter) {
             triggerDirectCascade("Tempo limite de carregamento (12s) esgotado");
         }
     }, 12000);
@@ -853,7 +855,7 @@ export function mountTvDirectStream(channelData, sourceIndex = 0, onAllDirectFai
         window.Artplayer.MOBILE_DBCLICK_PLAY = true;
         const art = new window.Artplayer({
             container: '#tv-artplayer-container',
-            url: currentSource.url,
+            url: finalStreamUrl,
             type: 'm3u8',
             isLive: true,
             autoplay: true,

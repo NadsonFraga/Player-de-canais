@@ -41,19 +41,19 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (FHD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/308227.m3u8",
-          "slug": "band",
+          "slug": "bandsp",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (HD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/308229.m3u8",
-          "slug": "band",
+          "slug": "bandsp",
           "cdn": "CDN 2"
         },
         {
           "name": "Servidor 3 (Reserva)",
           "url": "http://apontaaimeupatrao.lat:80/live/65689527/29278256/236022.m3u8",
-          "slug": "band",
+          "slug": "bandsp",
           "cdn": "CDN 3"
         }
       ],
@@ -281,13 +281,13 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (FHD 1080p)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/357.m3u8",
-          "slug": "premiere2",
+          "slug": "premiere-2",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (HD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/358.m3u8",
-          "slug": "premiere2",
+          "slug": "premiere-2",
           "cdn": "CDN 2"
         }
       ],
@@ -302,13 +302,13 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (FHD 1080p)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/360.m3u8",
-          "slug": "premiere3",
+          "slug": "premiere-3",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (HD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/361.m3u8",
-          "slug": "premiere3",
+          "slug": "premiere-3",
           "cdn": "CDN 2"
         }
       ],
@@ -323,7 +323,7 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (HD 720p)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/364.m3u8",
-          "slug": "premiere4",
+          "slug": "premiere-4",
           "cdn": "CDN 1"
         }
       ],
@@ -338,13 +338,13 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (FHD 1080p)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/366.m3u8",
-          "slug": "premiere5",
+          "slug": "premiere-5",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (HD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/367.m3u8",
-          "slug": "premiere5",
+          "slug": "premiere-5",
           "cdn": "CDN 2"
         }
       ],
@@ -359,13 +359,13 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (FHD 1080p)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/369.m3u8",
-          "slug": "premiere6",
+          "slug": "premiere-6",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (HD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/370.m3u8",
-          "slug": "premiere6",
+          "slug": "premiere-6",
           "cdn": "CDN 2"
         }
       ],
@@ -380,13 +380,13 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (FHD 1080p)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/372.m3u8",
-          "slug": "premiere7",
+          "slug": "premiere-7",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (HD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/373.m3u8",
-          "slug": "premiere7",
+          "slug": "premiere-7",
           "cdn": "CDN 2"
         }
       ],
@@ -401,19 +401,19 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (FHD 1080p)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/354.m3u8",
-          "slug": "premiereclubes",
+          "slug": "premiere",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (HD Alt)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/355.m3u8",
-          "slug": "premiereclubes",
+          "slug": "premiere",
           "cdn": "CDN 2"
         },
         {
           "name": "Servidor 3 (Reserva)",
           "url": "http://apontaaimeupatrao.lat:80/live/65689527/29278256/236244.m3u8",
-          "slug": "premiereclubes",
+          "slug": "premiere",
           "cdn": "CDN 3"
         }
       ],
@@ -719,19 +719,19 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (BandSports F1 FHD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/315.m3u8",
-          "slug": "f1tv",
+          "slug": "bandsports",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (Band SP F1 FHD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/308227.m3u8",
-          "slug": "f1tv",
+          "slug": "bandsports",
           "cdn": "CDN 2"
         },
         {
           "name": "Servidor 3 (Feed Internacional)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/431.m3u8",
-          "slug": "f1tv",
+          "slug": "bandsports",
           "cdn": "CDN 3"
         }
       ],
@@ -745,13 +745,13 @@ export const FALLBACK_CHANNELS = {
         {
           "name": "Servidor 1 (FHD 1080p)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/375.m3u8",
-          "slug": "premiere8",
+          "slug": "premiere-8",
           "cdn": "CDN 1"
         },
         {
           "name": "Servidor 2 (HD)",
           "url": "http://rfc-infinite.top/live/91098174/vGBc4fp/376.m3u8",
-          "slug": "premiere8",
+          "slug": "premiere-8",
           "cdn": "CDN 2"
         }
       ],
@@ -1675,16 +1675,10 @@ export const FALLBACK_CHANNELS = {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Servidor 1 (Principal)",
-          "url": "https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/stream/d08f36a6c8a9d09fde266aba17be808d/error.txt",
-          "slug": "24h_naruto",
-          "cdn": "CDN 1"
-        },
-        {
-          "name": "Servidor 2 (Backup)",
-          "url": "https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/stream/d08f36a6c8a9d09fde266aba17be808d/error.txt",
-          "slug": "24h_naruto",
-          "cdn": "CDN 2"
+          "name": "Servidor 1 (Pluto TV HD)",
+          "url": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5f6df5a173d7340007c559f7/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "naruto_24h",
+          "cdn": "Pluto TV"
         }
       ],
       "contingency": {
@@ -1775,8 +1769,8 @@ export const FALLBACK_CHANNELS = {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Servidor 1 (Pluto TV)",
-          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/607860b798bca4000787a747/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "name": "Servidor 1 (Pluto TV HD)",
+          "url": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/609ae66b359b270007869ff1/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
           "slug": "south_park_24h",
           "cdn": "Pluto TV"
         }
@@ -1789,9 +1783,9 @@ export const FALLBACK_CHANNELS = {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Servidor 1 (Pluto TV)",
-          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/6051515bb564990007f369f6/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
-          "slug": "masterchef_24h",
+          "name": "Servidor 1 (Pluto TV HD)",
+          "url": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/6051515bb564990007f369f6/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "masterchef_brasil_24h",
           "cdn": "Pluto TV"
         }
       ],
@@ -1803,9 +1797,9 @@ export const FALLBACK_CHANNELS = {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Servidor 1 (Pluto TV)",
-          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5fd3d7fc349ff00007817eb4/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
-          "slug": "startrek_24h",
+          "name": "Servidor 1 (Pluto TV HD)",
+          "url": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5fd3d7fc349ff00007817eb4/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "star_trek_24h",
           "cdn": "Pluto TV"
         }
       ],
@@ -1815,9 +1809,9 @@ export const FALLBACK_CHANNELS = {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Servidor 1 (Pluto TV)",
-          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/613fd20be0c3130007e9d40a/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
-          "slug": "trapalhoes_24h",
+          "name": "Servidor 1 (Pluto TV HD)",
+          "url": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/613fd20be0c3130007e9d40a/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "os_trapalhões_24h",
           "cdn": "Pluto TV"
         }
       ],
@@ -1827,9 +1821,33 @@ export const FALLBACK_CHANNELS = {
       "status": "ONLINE",
       "sources": [
         {
-          "name": "Servidor 1 (Pluto TV)",
-          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5faac9634960300007c08272/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
-          "slug": "pluto_anime_24h",
+          "name": "Servidor 1 (Pluto TV HD)",
+          "url": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5f12136385bccc00070142ed/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "pluto_tv_anime_24h",
+          "cdn": "Pluto TV"
+        }
+      ],
+      "contingency": {}
+    },
+    "Turma da Mônica 24h": {
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Pluto TV HD)",
+          "url": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5f997e44949bc70007a6941e/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "turma_da_monica_24h",
+          "cdn": "Pluto TV"
+        }
+      ],
+      "contingency": {}
+    },
+    "Bob Esponja 24h": {
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Pluto TV HD)",
+          "url": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/62545c0b002f4b0007688b61/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "bob_esponja_24h",
           "cdn": "Pluto TV"
         }
       ],

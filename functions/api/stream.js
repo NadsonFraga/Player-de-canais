@@ -228,6 +228,9 @@ export async function onRequestGet(context) {
     } else if (targetUrl.includes("pluto.tv")) {
       customReferer = "https://pluto.tv/";
       customOrigin = "https://pluto.tv";
+    } else if (targetUrl.includes("rfc-infinite.top") || targetUrl.includes("apontaaimeupatrao.lat") || targetUrl.includes("governosptx.org") || targetUrl.includes("logicahost.com.br") || targetUrl.includes("otteravision.com") || targetUrl.includes("streamingdevideo.com.br")) {
+      customReferer = "";
+      customOrigin = "";
     } else {
       customReferer = "https://tvzinhaonline.pages.dev/";
     }

@@ -2514,6 +2514,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 referer, origin = "", ""
             elif "pluto.tv" in target_url:
                 referer, origin = "https://pluto.tv/", "https://pluto.tv"
+            elif any(h in target_url for h in ["rfc-infinite.top", "apontaaimeupatrao.lat", "governosptx.org", "logicahost.com.br", "otteravision.com", "streamingdevideo.com.br"]):
+                referer, origin = "", ""
             else:
                 referer = "https://tvzinhaonline.pages.dev/"
         # The anime host checks Origin together with its Referer (the resolver's probe sends both)
