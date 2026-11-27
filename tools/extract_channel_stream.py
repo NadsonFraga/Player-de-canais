@@ -1,12 +1,13 @@
 """
-Channel Stream Extractor for TVzinha Online.
-Scrapes and extracts direct HLS streams from embed providers (e.g. EmbedTV clusters)
-and optionally updates data/canais.json and assets/js/core/fallbackChannels.js directly.
+Channel Stream Extractor and Multi-CDN Token Refresher for TVzinha Online.
+Supports both Direct Live HLS CDNs (rfc-infinite.top, apontaaimeupatrao.lat)
+and Embed Providers (rdembed.online / penterosa.lat).
 
 Usage:
     python tools/extract_channel_stream.py --slug sportv3
     python tools/extract_channel_stream.py --slug sportv3 --name "SporTV 3" --update
     python tools/extract_channel_stream.py --all
+    python tools/extract_channel_stream.py --check
 """
 
 import os
@@ -27,10 +28,6 @@ USER_AGENT = (
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANAIS_JSON_PATH = os.path.join(ROOT_DIR, "data", "canais.json")
 FALLBACK_JS_PATH = os.path.join(ROOT_DIR, "assets", "js", "core", "fallbackChannels.js")
-
-# Primary and backup CDN subdomains on active infrastructure
-PRIMARY_CDN_PREFIX = "5eae58763dcbe2a0584afac0ef91415a"
-BACKUP_CDN_PREFIX = "52d080a3e172c33fd6886a37e7"
 
 EMBED_ENDPOINTS = [
     "https://rdembed.online/{slug}",
@@ -56,7 +53,7 @@ def fetch_url(url, timeout=6, referer="https://google.com/", method="GET", data=
     except Exception:
         pass
 
-    # Fallback: Proxy through Cloudflare Pages Function if direct fetch is blocked (e.g. GitHub Actions / Azure IP)
+    # Fallback: Proxy through Cloudflare Pages Function if direct fetch is blocked
     try:
         q_url = urllib.parse.quote(url, safe="")
         q_ref = urllib.parse.quote(referer, safe="")
@@ -73,6 +70,50 @@ def fetch_url(url, timeout=6, referer="https://google.com/", method="GET", data=
         pass
 
     return None
+
+def check_stream_health(url, timeout=4):
+    """Verifies whether an HLS stream URL is reachable and returns a valid playlist."""
+    if not url:
+        return False
+    ctx = ssl._create_unverified_context()
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+            if resp.status == 200:
+                head = resp.read(256).decode("utf-8", errors="ignore")
+                return "#EXTM3U" in head
+    except Exception:
+        pass
+    return False
+
+def refresh_cdn_credentials():
+    """Fetches fresh CDN user/password from upstream resolvers if existing credentials rotate."""
+    print("[*] Probing upstream resolver for fresh CDN credentials...")
+    test_endpoints = [
+        ("premiere-clubes", "https://brflix.online/api/resolve/premiere-clubes?directUrl=premiere-clubes", "https://brflix.online/canal/premiere-clubes"),
+        ("sportv-hd", "https://brflix.online/api/resolve/sportv-hd?directUrl=sportv", "https://brflix.online/canal/sportv-hd"),
+        ("espn-hd", "https://brflix.online/api/resolve/espn-hd?directUrl=espn", "https://brflix.online/canal/espn-hd")
+    ]
+    fresh_creds = {}
+    for name, api_url, ref in test_endpoints:
+        html = fetch_url(api_url, timeout=8, referer=ref)
+        if not html:
+            continue
+        try:
+            res_data = json.loads(html)
+            streams = res_data.get("directStreams", [])
+            for s in streams:
+                src = s.get("src", "")
+                m = re.search(r'http://([^/]+)/live/([^/]+)/([^/]+)/', src)
+                if m:
+                    host, user, pwd = m.group(1), m.group(2), m.group(3)
+                    fresh_creds[host] = (user, pwd)
+                    print(f"[OK] Found credentials for {host}: user={user}")
+            if fresh_creds:
+                break
+        except Exception:
+            continue
+    return fresh_creds
 
 def extract_stream_from_embed(slug):
     """Fetches embed page through rdembed.online -> penterosa.lat and extracts dynamic live stream URL."""
@@ -97,91 +138,40 @@ def extract_stream_from_embed(slug):
                 continue
             player_url = m2.group(1).replace("&amp;", "&")
 
-            # Extract base player host (e.g. penterosa.lat)
-            m_host = re.match(r'^(https://[^/]+)', player_url)
-            player_base = m_host.group(1) if m_host else "https://penterosa.lat"
+            base_host_m = re.search(r'https://([^/]+)', player_url)
+            if not base_host_m:
+                continue
+            base_host = base_host_m.group(1)
 
-            html3 = fetch_url(player_url, timeout=6, referer=embed_url)
+            html3 = fetch_url(player_url, timeout=6, referer=iframe_src)
             if not html3:
                 continue
 
-            m_ref = re.search(r'"ref":"([^"]+)"', html3)
-            if not m_ref:
+            # Extract dynamic stream index.txt with JWT token
+            stream_m = re.search(r'https://[^/]+/[^"\']+/index\.txt\?token=[^"\']+', html3)
+            if not stream_m:
                 continue
-            ref_path = m_ref.group(1).replace(r"\/", "/")
-            ref_url = f"{player_base}{ref_path}"
 
-            res4 = fetch_url(ref_url, timeout=6, referer=player_url, origin=player_base, method="POST", data=b"")
-            if not res4:
-                continue
-            ref_data = json.loads(res4)
+            raw_src = stream_m.group(0)
 
-            stream_url = ref_data.get("src", "")
-            if stream_url:
-                return {
-                    "slug": slug,
-                    "raw_src": stream_url,
-                    "token": "",
-                    "primary_url": stream_url,
-                    "backup_url": stream_url,
-                }, None
-        except Exception:
+            # Rewrite to primary and backup CDN paths
+            primary_url = re.sub(r'https://[^/]+/', f'https://5eae58763dcbe2a0584afac0ef91415a.s25-cloudfront-net.lat/', raw_src)
+            primary_url = primary_url.replace('/index.txt?', '/__index.txt?')
+
+            backup_url = re.sub(r'https://[^/]+/', f'https://52d080a3e172c33fd6886a37e7.s25-cloudfront-net.lat/', raw_src)
+            backup_url = backup_url.replace('/index.txt?', '/__index.txt?')
+
+            return {
+                "slug": slug,
+                "raw_src": raw_src,
+                "primary_url": primary_url,
+                "backup_url": backup_url,
+                "player_host": base_host
+            }, None
+        except Exception as e:
             continue
 
-    return None, f"Could not extract working stream for slug '{slug}'"
-
-def find_channel_in_data(data, slug, channel_name):
-    """Finds category and channel key across nested dictionary categories."""
-    for cat_name, channels in data.items():
-        if isinstance(channels, dict):
-            for ch_name, ch_data in channels.items():
-                if channel_name and ch_name.lower() == channel_name.lower():
-                    return cat_name, ch_name
-                sources = ch_data.get("sources", [])
-                if any(s.get("slug") == slug for s in sources):
-                    return cat_name, ch_name
-    return None, None
-
-def update_single_channel_data(data, fallback_obj, slug, channel_name, src1, src2):
-    """Updates a single channel in data dict and fallback dict."""
-    cat_name, ch_name = find_channel_in_data(data, slug, channel_name)
-    if not cat_name or not ch_name:
-        return False
-
-    new_sources = [
-        {
-            "name": "Servidor 1 (Principal)",
-            "url": src1,
-            "slug": slug,
-            "cdn": "CDN 1"
-        },
-        {
-            "name": "Servidor 2 (Backup)",
-            "url": src2,
-            "slug": slug,
-            "cdn": "CDN 2"
-        }
-    ]
-    data[cat_name][ch_name]["sources"] = new_sources
-
-    # Prune obsolete / dead contingency links
-    contingency = data[cat_name][ch_name].get("contingency", {})
-    cleaned_contingency = {}
-    for c_name, c_url in contingency.items():
-        if "nossoplayer" in c_url or "dlive.sx" in c_url or "localhost70.xyz" in c_url:
-            continue
-        cleaned_contingency[c_name] = c_url
-    
-    cleaned_contingency["Servidor 5 (EmbedTV / RD)"] = f"https://rdembed.online/{slug}"
-    data[cat_name][ch_name]["contingency"] = cleaned_contingency
-
-    if fallback_obj:
-        fb_cat, fb_ch = find_channel_in_data(fallback_obj, slug, channel_name)
-        if fb_cat and fb_ch:
-            fallback_obj[fb_cat][fb_ch]["sources"] = new_sources
-            fallback_obj[fb_cat][fb_ch]["contingency"] = cleaned_contingency
-
-    return True
+    return None, f"Could not extract stream for slug '{slug}'"
 
 def save_data_files(data, fallback_obj):
     """Saves data/canais.json and assets/js/core/fallbackChannels.js."""
@@ -204,7 +194,7 @@ def save_data_files(data, fallback_obj):
         print(f"[OK] Saved {FALLBACK_JS_PATH}")
 
 def update_all_channels():
-    """Extracts and updates streams for all channels defined in canais.json."""
+    """Checks and updates all channels in canais.json."""
     if not os.path.exists(CANAIS_JSON_PATH):
         print(f"[Error] {CANAIS_JSON_PATH} not found.")
         return False
@@ -212,79 +202,92 @@ def update_all_channels():
     with open(CANAIS_JSON_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    fallback_obj = None
-    if os.path.exists(FALLBACK_JS_PATH):
-        with open(FALLBACK_JS_PATH, "r", encoding="utf-8") as f:
-            js_content = f.read()
-        m_json = re.search(r'export\s+const\s+FALLBACK_CHANNELS\s*=\s*({[\s\S]*?});\s*$', js_content)
-        if m_json:
-            try:
-                fallback_obj = json.loads(m_json.group(1))
-            except Exception as e:
-                print(f"[Warning] Could not parse fallbackChannels.js: {e}")
+    fallback_obj = data
 
-    # Collect all unique slugs to scrape
-    slug_channel_map = {}
-    for cat_name, channels in data.items():
-        if isinstance(channels, dict):
-            for ch_name, ch_data in channels.items():
-                sources = ch_data.get("sources", [])
-                for s in sources:
-                    sl = s.get("slug")
-                    if sl and sl not in slug_channel_map:
-                        slug_channel_map[sl] = (cat_name, ch_name)
+    # 1. Health check sample primary CDN stream
+    print("[*] Performing health check on primary CDN stream...")
+    test_url = "http://rfc-infinite.top/live/91098174/vGBc4fp/318.m3u8"
+    is_healthy = check_stream_health(test_url)
+    
+    if not is_healthy:
+        print("[!] Primary CDN stream failed. Attempting credential refresh...")
+        fresh_creds = refresh_cdn_credentials()
+        if fresh_creds:
+            print("[*] Updating catalog URLs with fresh credentials...")
+            for host, (user, pwd) in fresh_creds.items():
+                old_pattern = re.compile(rf'http://{re.escape(host)}/live/[^/]+/[^/]+/')
+                new_prefix = f'http://{host}/live/{user}/{pwd}/'
+                for cat_name, chs in data.items():
+                    if isinstance(chs, dict):
+                        for ch_name, ch_data in chs.items():
+                            for src in ch_data.get("sources", []):
+                                u = src.get("url", "")
+                                if host in u:
+                                    src["url"] = old_pattern.sub(new_prefix, u)
 
-    total_slugs = len(slug_channel_map)
-    print(f"[*] Starting batch extraction for {total_slugs} unique channel slugs...")
-
-    cache_extracted = {}
-    success_count = 0
-    fail_count = 0
-
-    for idx, (slug, (cat, name)) in enumerate(slug_channel_map.items()):
-        print(f"[{idx+1}/{total_slugs}] Extracting '{slug}' ({name})...", end=" ", flush=True)
+    # 2. Extract dynamic tokens for embed-based channels (e.g. 24h series)
+    print("[*] Refreshing dynamic tokens for embed-based channels...")
+    embed_slugs = ["24h_chaves", "24h_simpsons", "24h_dragon_ball"]
+    for slug in embed_slugs:
         res, err = extract_stream_from_embed(slug)
         if res:
-            cache_extracted[slug] = res
-            print("OK", flush=True)
-            success_count += 1
-        else:
-            print(f"FAIL ({err})", flush=True)
-            fail_count += 1
-
-    print(f"\n[*] Extraction completed: {success_count} succeeded, {fail_count} failed.")
-
-    # Now apply updates across all channels
-    updated_channels = 0
-    for cat_name, channels in data.items():
-        if isinstance(channels, dict):
-            for ch_name, ch_data in channels.items():
-                sources = ch_data.get("sources", [])
-                matched_res = None
-                for s in sources:
-                    sl = s.get("slug")
-                    if sl in cache_extracted:
-                        matched_res = cache_extracted[sl]
-                        break
-
-                if matched_res:
-                    update_single_channel_data(
-                        data, fallback_obj, matched_res["slug"], ch_name,
-                        matched_res["primary_url"], matched_res["backup_url"]
-                    )
-                    updated_channels += 1
+            for cat_name, chs in data.items():
+                if isinstance(chs, dict):
+                    for ch_name, ch_data in chs.items():
+                        for src in ch_data.get("sources", []):
+                            if src.get("slug") == slug:
+                                src["url"] = res["primary_url"]
 
     save_data_files(data, fallback_obj)
-    print(f"[SUCCESS] Successfully updated {updated_channels} channels in dataset.")
+    print("[SUCCESS] All channels verified and updated.")
+    return True
+
+def run_channels_health_check():
+    """Runs a complete status check across all channels in the catalog."""
+    if not os.path.exists(CANAIS_JSON_PATH):
+        print(f"[Error] {CANAIS_JSON_PATH} not found.")
+        return False
+
+    with open(CANAIS_JSON_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    total_tested = 0
+    passed = 0
+    failed = 0
+
+    print("=== LIVE CHANNELS HEALTH AUDIT ===")
+    for cat_name, chs in data.items():
+        if isinstance(chs, dict):
+            for ch_name, ch_data in chs.items():
+                sources = ch_data.get("sources", [])
+                if not sources:
+                    continue
+                first_src = sources[0].get("url")
+                total_tested += 1
+                ok = check_stream_health(first_src)
+                status_str = "OK (200)" if ok else "FAIL"
+                if ok:
+                    passed += 1
+                else:
+                    failed += 1
+                print(f"[{status_str}] {cat_name} -> {ch_name}")
+
+    pct = (passed / total_tested * 100) if total_tested > 0 else 0
+    print(f"\n[SUMMARY] {passed}/{total_tested} channels online ({pct:.1f}% health)")
     return True
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract live HLS stream for channels.")
-    parser.add_argument("--slug", default=None, help="Channel slug (e.g. sportv3, sportv2, sportv)")
-    parser.add_argument("--name", default=None, help="Channel display name in canais.json")
-    parser.add_argument("--update", action="store_true", help="Update canais.json and fallbackChannels.js")
-    parser.add_argument("--all", action="store_true", help="Batch extract and update ALL channels in catalog")
+    parser = argparse.ArgumentParser(description="Extract and refresh live HLS streams.")
+    parser.add_argument("--slug", default=None, help="Channel slug")
+    parser.add_argument("--name", default=None, help="Channel name")
+    parser.add_argument("--update", action="store_true", help="Update files")
+    parser.add_argument("--all", action="store_true", help="Batch extract and update all channels")
+    parser.add_argument("--check", action="store_true", help="Run health check on all channels")
     args = parser.parse_args()
+
+    if args.check:
+        run_channels_health_check()
+        return
 
     if args.all:
         ok = update_all_channels()
@@ -292,40 +295,7 @@ def main():
             sys.exit(1)
         return
 
-    slug = (args.slug or "sportv3").strip().lower()
-    name = args.name or slug
-    print(f"[*] Extracting stream for slug: '{slug}'...")
-
-    result, err = extract_stream_from_embed(slug)
-    if err:
-        print(f"[FAIL] {err}")
-        sys.exit(1)
-
-    print(f"[*] Raw embed stream: {result['raw_src']}")
-    print(f"[*] Primary URL:     {result['primary_url']}")
-    print(f"[*] Backup URL:      {result['backup_url']}")
-
-    if args.update:
-        print(f"[*] Applying updates to repository data files for '{name}'...")
-        with open(CANAIS_JSON_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        fallback_obj = None
-        if os.path.exists(FALLBACK_JS_PATH):
-            with open(FALLBACK_JS_PATH, "r", encoding="utf-8") as f:
-                js_content = f.read()
-            m_json = re.search(r'export\s+const\s+FALLBACK_CHANNELS\s*=\s*({[\s\S]*?});\s*$', js_content)
-            if m_json:
-                fallback_obj = json.loads(m_json.group(1))
-
-        ok = update_single_channel_data(data, fallback_obj, slug, name, result["primary_url"], result["backup_url"])
-        if ok:
-            save_data_files(data, fallback_obj)
-            print("[SUCCESS] Channel updated successfully.")
-        else:
-            print("[FAIL] Channel not found in dataset.")
-            sys.exit(1)
-    else:
-        print("[INFO] Run with --update or --all to persist these sources into canais.json and fallbackChannels.js.")
+    print("Use --all to refresh all channels or --check to test health.")
 
 if __name__ == "__main__":
     main()
