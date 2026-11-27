@@ -225,6 +225,9 @@ export async function onRequestGet(context) {
       // FenixHub rejects requests carrying fenixflix/fenixhub origin/referer with HTTP 403 ("Origem bloqueada").
       customReferer = "";
       customOrigin = "";
+    } else if (targetUrl.includes("pluto.tv")) {
+      customReferer = "https://pluto.tv/";
+      customOrigin = "https://pluto.tv";
     } else {
       customReferer = "https://tvzinhaonline.pages.dev/";
     }

@@ -2512,6 +2512,8 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 referer, origin = "https://tvzinhaonline.pages.dev/", ""
             elif "fenixhub.online" in target_url or "fenixflix" in target_url:
                 referer, origin = "", ""
+            elif "pluto.tv" in target_url:
+                referer, origin = "https://pluto.tv/", "https://pluto.tv"
             else:
                 referer = "https://tvzinhaonline.pages.dev/"
         # The anime host checks Origin together with its Referer (the resolver's probe sends both)

@@ -1215,8 +1215,7 @@ export const FALLBACK_CHANNELS = {
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_chaves",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_chaves"
+        "Servidor 5 (EmbedTV / RD)": "https://rdembed.online/24h_chaves"
       }
     },
     "Dragon Ball 24h": {
@@ -1236,8 +1235,7 @@ export const FALLBACK_CHANNELS = {
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_dragonball",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_dragonball"
+        "Servidor 5 (EmbedTV / RD)": "https://rdembed.online/24h_dragonball"
       }
     },
     "Naruto 24h": {
@@ -1257,8 +1255,7 @@ export const FALLBACK_CHANNELS = {
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_naruto",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_naruto"
+        "Servidor 5 (EmbedTV / RD)": "https://rdembed.online/24h_naruto"
       }
     },
     "Os Simpsons 24h": {
@@ -1278,8 +1275,7 @@ export const FALLBACK_CHANNELS = {
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_simpsons",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_simpsons"
+        "Servidor 5 (EmbedTV / RD)": "https://rdembed.online/24h_simpsons"
       }
     },
     "Pica-Pau 24h": {
@@ -1299,8 +1295,7 @@ export const FALLBACK_CHANNELS = {
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_picapau",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_picapau"
+        "Servidor 5 (EmbedTV / RD)": "https://rdembed.online/24h_picapau"
       }
     },
     "Friends 24h": {
@@ -1320,8 +1315,7 @@ export const FALLBACK_CHANNELS = {
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_friends",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_friends"
+        "Servidor 5 (EmbedTV / RD)": "https://rdembed.online/24h_friends"
       }
     },
     "Todo Mundo Odeia o Chris 24h": {
@@ -1341,9 +1335,72 @@ export const FALLBACK_CHANNELS = {
         }
       ],
       "contingency": {
-        "EmbedTV": "https://w7.embedtv.lat/24h_odeiachris",
-        "Servidor 5 (EmbedTV)": "https://w7.embedtv.cc/24h_odeiachris"
+        "Servidor 5 (EmbedTV / RD)": "https://rdembed.online/24h_odeiachris"
       }
+    },
+    "South Park 24h": {
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Pluto TV)",
+          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/607860b798bca4000787a747/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "south_park_24h",
+          "cdn": "Pluto TV"
+        }
+      ],
+      "contingency": {
+        "Servidor 5 (EmbedTV / RD)": "https://rdembed.online/southpark"
+      }
+    },
+    "MasterChef Brasil 24h": {
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Pluto TV)",
+          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/6051515bb564990007f369f6/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "masterchef_24h",
+          "cdn": "Pluto TV"
+        }
+      ],
+      "contingency": {
+        "Servidor 5 (EmbedTV / RD)": "https://rdembed.online/masterchef"
+      }
+    },
+    "Star Trek 24h": {
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Pluto TV)",
+          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5fd3d7fc349ff00007817eb4/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "startrek_24h",
+          "cdn": "Pluto TV"
+        }
+      ],
+      "contingency": {}
+    },
+    "Os Trapalhões 24h": {
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Pluto TV)",
+          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/613fd20be0c3130007e9d40a/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "trapalhoes_24h",
+          "cdn": "Pluto TV"
+        }
+      ],
+      "contingency": {}
+    },
+    "Pluto TV Anime 24h": {
+      "status": "ONLINE",
+      "sources": [
+        {
+          "name": "Servidor 1 (Pluto TV)",
+          "url": "https://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5faac9634960300007c08272/master.m3u8?advertisingId=&appName=web&appVersion=na&app_name=web&clientDeviceType=0&deviceDNT=0&deviceId=na&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=na&includeExtendedEvents=false&serverSideAds=false&sid=na",
+          "slug": "pluto_anime_24h",
+          "cdn": "Pluto TV"
+        }
+      ],
+      "contingency": {}
     }
   }
 };

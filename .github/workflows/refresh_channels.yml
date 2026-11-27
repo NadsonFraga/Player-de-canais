@@ -4,7 +4,17 @@ on:
   schedule:
     # Runs every 2 hours to keep tokens warm and synchronized
     - cron: '0 */2 * * *'
-  workflow_dispatch: # Allows manual on-demand trigger from the GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to update'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - staging
+          - master
 
 jobs:
   refresh-tokens:
@@ -15,6 +25,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -28,11 +40,28 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          TARGET="${{ github.event.inputs.target_branch || 'both' }}"
+          CURRENT_BRANCH="$(git branch --show-current)"
+          
           git add data/canais.json assets/js/core/fallbackChannels.js
           if ! git diff --staged --quiet; then
             git commit -m "chore(channels): refresh live channel stream tokens [automated]"
-            git push origin HEAD
-            git push origin HEAD:staging || true
+            
+            if [ "$TARGET" = "both" ] || [ "$TARGET" = "$CURRENT_BRANCH" ]; then
+              git push origin HEAD
+            fi
+            
+            # Sync fresh tokens to staging safely without non-fast-forward rejection
+            if [ "$TARGET" = "both" ] && [ "$CURRENT_BRANCH" != "staging" ]; then
+              git fetch origin staging
+              git checkout staging
+              git checkout HEAD@{1} -- data/canais.json assets/js/core/fallbackChannels.js
+              git add data/canais.json assets/js/core/fallbackChannels.js
+              if ! git diff --staged --quiet; then
+                git commit -m "chore(channels): sync live channel stream tokens to staging [automated]"
+                git push origin staging
+              fi
+            fi
           else
             echo "All channel stream tokens are already fresh."
           fi
