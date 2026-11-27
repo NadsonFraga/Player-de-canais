@@ -3,19 +3,19 @@
  * Pure player controller with zero upward imports into business or navigation modules
  */
 
-import { store } from '../core/state.js?v=20261127_1500';
-import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261127_1500';
-import { showToast } from '../core/toast.js?v=20261127_1500';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261127_1500';
-import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261127_1500';
-import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261127_1500';
-import { formatClock } from '../core/resume.js?v=20261127_1500';
-import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261127_1500';
-import { liveSourceLabel } from '../core/serverGroups.js?v=20261127_1500';
-import { CLIENT_PROVIDERS, resolveClientProvider, signStreamUrl } from './clientProviders.js?v=20261127_1500';
-import { getFlagSvg, srtToVtt } from './flags.js?v=20261127_1500';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261127_1500';
-import { fetchTmdb } from '../core/tmdb.js?v=20261127_1500';
+import { store } from '../core/state.js?v=20261127_1525';
+import { STREAM_ENGINE_API_BASE } from '../core/constants.js?v=20261127_1525';
+import { showToast } from '../core/toast.js?v=20261127_1525';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261127_1525';
+import { syncToLiveEdge, updateLiveStatusBadge, setupLiveLatencySync } from './liveLatency.js?v=20261127_1525';
+import { getPlayerPrefs, setPlayerPref } from '../core/playerPrefs.js?v=20261127_1525';
+import { formatClock } from '../core/resume.js?v=20261127_1525';
+import { fetchAniSkipSegments, fetchTvSkipSegments, complementSegments } from './skipSegments.js?v=20261127_1525';
+import { liveSourceLabel } from '../core/serverGroups.js?v=20261127_1525';
+import { CLIENT_PROVIDERS, resolveClientProvider, signStreamUrl } from './clientProviders.js?v=20261127_1525';
+import { getFlagSvg, srtToVtt } from './flags.js?v=20261127_1525';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261127_1525';
+import { fetchTmdb } from '../core/tmdb.js?v=20261127_1525';
 
 // Global player references for cross-environment inspection and controls
 if (typeof window !== 'undefined') {
@@ -668,9 +668,9 @@ export function handleAllDirectSourcesFailed(onRetry = null, onContingency = nul
         iframe.classList.add("hidden");
     }
 
+    const hasContingency = typeof onContingency === 'function';
     if (tvContainer) {
         tvContainer.classList.remove("hidden");
-        const hasContingency = typeof onContingency === 'function';
         tvContainer.innerHTML = `
             <div class="channel-direct-error-overlay">
                 <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:14px;">
@@ -797,7 +797,7 @@ export async function mountTvDirectStream(channelData, sourceIndex = 0, onAllDir
                     finalStreamUrl = data.primary_source.stream_url;
                     currentSource.url = finalStreamUrl;
                     for (let s = currentIndex + 1; s < sources.length; s++) {
-                        if (sources[s] && sources[s].slug === currentSource.slug) {
+                        if (sources[s] && sources[s].slug === currentSource.slug && !sources[s].url) {
                             sources[s].url = finalStreamUrl;
                         }
                     }
@@ -835,20 +835,36 @@ export async function mountTvDirectStream(channelData, sourceIndex = 0, onAllDir
     // Ensure stream URL is secure and proxied over HTTPS with open CORS
     if (!finalStreamUrl.includes("/api/stream") && (finalStreamUrl.startsWith("http://") || finalStreamUrl.startsWith("https://"))) {
         try {
-            finalStreamUrl = await signStreamUrl(finalStreamUrl);
+            const signed = await signStreamUrl(finalStreamUrl);
+            // signStreamUrl returns the original URL on failure — only accept if it was actually proxied
+            if (signed && signed.includes("/api/stream")) {
+                finalStreamUrl = signed;
+            } else if (finalStreamUrl.startsWith("http://")) {
+                // Cannot send an insecure URL to Artplayer on HTTPS (Mixed Content) — cascade
+                console.warn("[TvPlayer] Falha ao obter proxy seguro para a transmissão — cascateando.");
+                triggerDirectCascade("Proxy seguro indisponível (Mixed Content)");
+                return;
+            }
+            // https:// URLs without /api/stream are acceptable (direct HTTPS CORS stream)
         } catch (err) {
             console.warn("[TvPlayer] Erro ao assinar URL de transmissão:", err);
+            if (finalStreamUrl.startsWith("http://")) {
+                triggerDirectCascade("Erro ao assinar URL de transmissão");
+                return;
+            }
         }
     }
 
     if (mountId !== window.tvMountCounter) return;
 
-    // 12-second Watchdog Timer for stall/timeout detection
+    // Watchdog Timer: channels with dynamic slug resolution get extra time
+    // (dynamic resolve + sign can take up to 10-12s before Artplayer even starts loading)
+    const watchdogMs = (currentSource && currentSource.slug) ? 20000 : 15000;
     window.tvWatchdogTimer = setTimeout(() => {
         if (!isStreamWorking && mountId === window.tvMountCounter) {
-            triggerDirectCascade("Tempo limite de carregamento (12s) esgotado");
+            triggerDirectCascade(`Tempo limite de carregamento (${watchdogMs / 1000}s) esgotado`);
         }
-    }, 12000);
+    }, watchdogMs);
 
     try {
         window.Artplayer.SEEK_STEP = 5;
