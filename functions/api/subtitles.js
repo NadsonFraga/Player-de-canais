@@ -100,11 +100,11 @@ export function cleanVtt(text) {
     return line
       // Strip all SSA/ASS override tags and MicroDVD tags: {...}
       .replace(/\{[^}]*\}/g, "")
-      // Keep only <i>, <b>, <u> formatting
-      .replace(/<\/?[a-zA-Z][^<>]*>/g, tag => (/^<\/?[ibu]>$/i.test(tag) ? tag.toLowerCase() : ""))
-      // Escape stray unescaped < or >
-      .replace(/<(?!\/?[ibu]>)/g, "&lt;")
-      .replace(/(?<!<[ibu])(?<!<\/[ibu])>/g, "&gt;");
+      // Strip all HTML/XML tags completely so raw tags never display as literal text on screen
+      .replace(/<\/?[a-zA-Z][^<>]*>/g, "")
+      .replace(/&lt;\/?[a-zA-Z][^&gt;]*&gt;/gi, "")
+      .replace(/&[a-zA-Z0-9#]+;/g, " ")
+      .replace(/[<>]/g, "");
   }).join("\n");
 }
 

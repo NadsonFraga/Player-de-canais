@@ -402,7 +402,7 @@
         gap: 2px !important;
     }
 
-    .movie-modal-card.is-playing .movie-modal-media-area {
+    .movie-modal-card.is-playing:not(.player-page-card) .movie-modal-media-area {
         aspect-ratio: auto;
         height: 48vh;
         min-height: 290px;

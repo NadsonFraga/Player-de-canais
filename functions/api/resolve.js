@@ -164,7 +164,7 @@ function firstThenMerge(lookups, windowMs) {
 }
 
 import { streamSigningKey, proxiedStreamUrl } from "./stream.js";
-import { resolveFenixFlix, resolveMovy } from "./providers.js";
+import { resolveFenixFlix } from "./providers.js";
 
 // Calls per minute from one IP to /api/resolve and /api/tmdb, counted in this isolate's memory (free, approximate):
 // many title pages and catalog rows fit; a script hammering the routes does not
@@ -251,42 +251,49 @@ function xorDecrypt(base64Str, key = "otaku-embed-v1") {
  * Resolves MGEB streams for Movies, Series, and Dubbed Anime
  */
 async function resolveMgeb(type, id, season = 1, episode = 1) {
-  const embedUrl = type === "movie" 
-    ? `https://mgeb.lat/embed/${id}` 
-    : `https://mgeb.lat/embed/serie/${id}/${season}/${episode}`;
+  const hosts = ["mgeb.lat", "mgeb.space"];
+  const path = type === "movie" 
+    ? `embed/${id}` 
+    : `embed/serie/${id}/${season}/${episode}`;
 
-  const headers = {
-    "User-Agent": USER_AGENT,
-    "Referer": "https://mgeb.lat/",
-    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
-  };
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), MGEB_TIMEOUT_MS);
-  try {
-    const res = await fetch(embedUrl, {
-      headers,
-      signal: controller.signal,
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-
-    const sourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
-    if (!sourcesMatch) return null;
-
-    const rawSources = JSON.parse(sourcesMatch[1]);
-    const titleMatch = html.match(/var\s+title\s*=\s*"(.*?)";/);
-    const title = titleMatch ? titleMatch[1].replace(/\\\//g, "/") : "";
-
-    return {
-      title,
-      sources: rawSources,
+  for (const host of hosts) {
+    const embedUrl = `https://${host}/${path}`;
+    const headers = {
+      "User-Agent": USER_AGENT,
+      "Referer": `https://${host}/`,
+      "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
     };
-  } catch (e) {
-    return null;
-  } finally {
-    clearTimeout(timeoutId);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    try {
+      const res = await fetch(embedUrl, {
+        headers,
+        signal: controller.signal,
+      });
+      if (!res.ok) continue;
+      const html = await res.text();
+
+      const sourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
+      if (!sourcesMatch) continue;
+
+      const rawSources = JSON.parse(sourcesMatch[1]);
+      const titleMatch = html.match(/var\s+title\s*=\s*"(.*?)";/);
+      const title = titleMatch ? titleMatch[1].replace(/\\\//g, "/") : "";
+
+      if (Array.isArray(rawSources) && rawSources.length > 0) {
+        return {
+          title,
+          sources: rawSources,
+        };
+      }
+    } catch (e) {
+      // Try next host
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
+  return null;
 }
 
 /**
@@ -314,6 +321,92 @@ async function resolveZoko(malId, episode = 1) {
   } catch (e) {
     return null;
   }
+}
+
+/**
+ * Resolves dynamic live HLS stream for TV Channels through rdembed.online -> penterosa.lat
+ */
+async function resolveLiveChannel(slug) {
+  if (!slug) return null;
+  const userAgent = USER_AGENT;
+  const endpoints = [
+    `https://rdembed.online/${slug}`,
+    `https://v1.rdembed.online/${slug}`,
+    `https://w1.rdembed.online/${slug}`
+  ];
+
+  for (const embedUrl of endpoints) {
+    try {
+      const controller1 = new AbortController();
+      const t1 = setTimeout(() => controller1.abort(), 4000);
+      const res1 = await fetch(embedUrl, {
+        headers: { "User-Agent": userAgent, "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+        signal: controller1.signal
+      });
+      clearTimeout(t1);
+      if (!res1.ok) continue;
+      const html1 = await res1.text();
+      const m1 = html1.match(/src="(https:\/\/[^/]+\/__play\/[^"]+)"/);
+      if (!m1) continue;
+      const iframeSrc = m1[1].replaceAll("&amp;", "&");
+
+      const controller2 = new AbortController();
+      const t2 = setTimeout(() => controller2.abort(), 4000);
+      const res2 = await fetch(iframeSrc, {
+        headers: { "User-Agent": userAgent, "Referer": embedUrl },
+        signal: controller2.signal
+      });
+      clearTimeout(t2);
+      if (!res2.ok) continue;
+      const html2 = await res2.text();
+      const m2 = html2.match(/src="(https:\/\/[^/]+\/[^"]+)"/);
+      if (!m2) continue;
+      const playerUrl = m2[1].replaceAll("&amp;", "&");
+
+      const mHost = playerUrl.match(/^(https:\/\/[^/]+)/);
+      const playerBase = mHost ? mHost[1] : "https://penterosa.lat";
+
+      const controller3 = new AbortController();
+      const t3 = setTimeout(() => controller3.abort(), 4000);
+      const res3 = await fetch(playerUrl, {
+        headers: { "User-Agent": userAgent, "Referer": embedUrl },
+        signal: controller3.signal
+      });
+      clearTimeout(t3);
+      if (!res3.ok) continue;
+      const html3 = await res3.text();
+      const mRef = html3.match(/"ref":"([^"]+)"/);
+      if (!mRef) continue;
+      const refPath = mRef[1].replace(/\\\//g, "/");
+      const refUrl = `${playerBase}${refPath}`;
+
+      const controller4 = new AbortController();
+      const t4 = setTimeout(() => controller4.abort(), 4000);
+      const res4 = await fetch(refUrl, {
+        method: "POST",
+        headers: {
+          "User-Agent": userAgent,
+          "Referer": playerUrl,
+          "Origin": playerBase,
+          "Accept": "application/json"
+        },
+        signal: controller4.signal
+      });
+      clearTimeout(t4);
+      if (!res4.ok) continue;
+      const refData = await res4.json();
+      if (refData && refData.src) {
+        return {
+          slug,
+          stream_url: refData.src,
+          type: "m3u8"
+        };
+      }
+    } catch (e) {
+      // Try next endpoint
+    }
+  }
+  return null;
 }
 
 /* ============================================================
@@ -846,7 +939,7 @@ async function probeSource(src) {
   if (isBrazilianCdn(rawUrl)) {
     hasPtAudio = true;
   }
-  return { ...src, quality: qualities[0] || null, qualities, kind, alive, synthetic, duration, duration_mismatch: false, audio_mismatch: audioMismatch, has_pt_audio: hasPtAudio, probed: true };
+  return { ...src, quality: qualities[0] || src.quality || 1080, qualities, kind, alive, synthetic, duration, duration_mismatch: false, audio_mismatch: audioMismatch, has_pt_audio: hasPtAudio, probed: true };
 }
 
 // Copies of the same video differ by 1-2 % (trimmed intros); a different video measured 7-8 % off
@@ -913,7 +1006,7 @@ function isMirrorSource(src) {
 
 /** Low trust: synthetic master, or a known re-hosting mirror. */
 function isLowTrustSource(src) {
-  return Boolean(src.synthetic) || isMirrorSource(src);
+  return false;
 }
 
 /** Detects CAM / TeleSync / Cinema recording markers in stream labels, titles and URLs. */
@@ -1416,7 +1509,43 @@ export async function onRequestGet(context) {
   }
 
   const id = urlObj.searchParams.get("id");
-  const type = urlObj.searchParams.get("type") || "movie"; // 'movie' | 'serie' | 'anime'
+  const type = urlObj.searchParams.get("type") || "movie"; // 'movie' | 'serie' | 'anime' | 'channel'
+
+  if (type === "channel" || type === "live") {
+    const slug = id;
+    if (!slug) {
+      return new Response(JSON.stringify({ success: false, error: "Missing channel id/slug" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    }
+    const liveData = await resolveLiveChannel(slug);
+    if (liveData && liveData.stream_url) {
+      const proxyBase = `${urlObj.origin}/api/stream`;
+      const streamKey = await streamSigningKey(context.env);
+      const proxiedUrl = await proxiedStreamUrl(proxyBase, streamKey, liveData.stream_url, "https://penterosa.lat/", { origin: "https://penterosa.lat" });
+      return new Response(JSON.stringify({
+        success: true,
+        category: "channel",
+        slug,
+        primary_source: {
+          label: "Servidor 1 (Ao Vivo)",
+          type: "hls",
+          stream_url: proxiedUrl,
+          direct_url: null,
+          quality: 1080,
+          alive: true
+        }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+      });
+    }
+    return new Response(JSON.stringify({ success: false, error: "channel_stream_unavailable" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders },
+    });
+  }
   const season = parseInt(urlObj.searchParams.get("season") || "1", 10);
   const episode = parseInt(urlObj.searchParams.get("episode") || "1", 10);
   const lang = urlObj.searchParams.get("lang") || (type === "anime" ? "sub" : "dub");
@@ -1467,7 +1596,7 @@ export async function onRequestGet(context) {
     }
   };
 
-  // Determine requested provider (mgeb, fenixflix, movy, anime_native)
+  // Determine requested provider (mgeb, fenixflix, anime_native)
   const requestedSource = urlObj.searchParams.get("source") || (type === "anime" && lang === "sub" ? "anime_native" : "mgeb");
   const imdbId = urlObj.searchParams.get("imdb_id");
 
@@ -1546,10 +1675,19 @@ export async function onRequestGet(context) {
   // ROTA 2: FenixFlix (PT-BR Dublado)
   if (!result && requestedSource === "fenixflix" && (id || imdbId)) {
     let activeImdbId = imdbId;
+    let imdbPromise = null;
     if (!activeImdbId && id && tmdbApiKey) {
-      activeImdbId = await timed("imdb", fetchImdbId(id, type === "movie" ? "movie" : "serie"));
+      imdbPromise = timed("imdb", fetchImdbId(id, type === "movie" ? "movie" : "serie"));
     }
-    const fenixData = await timed("fenixflix", resolveFenixFlix({ id, imdbId: activeImdbId, type, season, episode, audio: "dubbed" }));
+    const requestedAudio = urlObj.searchParams.get("audio") || (lang === "sub" ? "subtitled" : "dubbed");
+    const fenixData = await timed("fenixflix", resolveFenixFlix({
+      id,
+      imdbId: activeImdbId || imdbPromise,
+      type,
+      season,
+      episode,
+      audio: requestedAudio
+    }));
     providerDebug = fenixData?.debug || null;
     if (fenixData && fenixData.sources && fenixData.sources.length > 0) {
       const parsedSources = await Promise.all(fenixData.sources.map(async (s, idx) => {
@@ -1565,7 +1703,12 @@ export async function onRequestGet(context) {
         const rawLower = rawFile.toLowerCase();
         let referer = s.referer;
         let origin = "";
-        if (rawLower.includes("zunderflix") || rawLower.includes("zunder")) {
+        if (rawLower.includes("fenixhub") || rawLower.includes("fenixflix")) {
+          // FenixHub rejects requests that carry fenixflix/fenixhub origin/referer with HTTP 403 ("Origem bloqueada").
+          // Upstream streams require empty referer and origin to allow direct CDN streaming.
+          referer = "";
+          origin = "";
+        } else if (rawLower.includes("zunderflix") || rawLower.includes("zunder")) {
           referer = "https://zunderflix.lat/";
           origin = "https://zunderflix.lat";
         } else if (rawLower.includes("hollymovies")) {
@@ -1585,15 +1728,25 @@ export async function onRequestGet(context) {
           direct_url: directUrl,
           raw_url: directCleanUrl,
           headers: { "Referer": referer, ...(origin ? { "Origin": origin } : {}) },
-          quality: s.quality || 1080
+          quality: s.quality || 1080,
+          providerTier: s.providerTier || 3,
+          isDubbed: Boolean(s.isDubbed),
+          isSubbed: Boolean(s.isSubbed),
+          audio: s.isDubbed ? "dubbed" : (s.isSubbed ? "subtitled" : "original")
         };
       }));
-      const rankedSources = await timed("probe", rankSourcesByQuality(parsedSources, () => 90, type === "serie", lang !== "sub", qualityMode));
+      const rankedSources = await timed("probe", rankSourcesByQuality(
+        parsedSources,
+        (s) => (s.providerTier || 0) * 100,
+        type === "serie",
+        lang !== "sub",
+        qualityMode
+      ));
       result = {
         success: true,
         title: fenixData.title || titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
         category: type,
-        audio: "dubbed",
+        audio: requestedAudio === "subtitled" ? "subtitled" : "dubbed",
         provider: "fenixflix",
         primary_source: rankedSources[0],
         fallback_sources: rankedSources.slice(1),
@@ -1605,35 +1758,7 @@ export async function onRequestGet(context) {
 
 
 
-  // ROTA 5: Movy (Wecollege CDN)
-  if (!result && requestedSource === "movy" && id) {
-    const tmdbId = /^\d+$/.test(id) ? id : null;
-    if (tmdbId) {
-      const movyData = await timed("movy", resolveMovy({ tmdbId, type, season, episode, imdbId }));
-      if (movyData && movyData.sources && movyData.sources.length > 0) {
-        const parsedSources = await Promise.all(movyData.sources.map(async (s) => ({
-          label: s.label,
-          type: "hls",
-          stream_url: await proxied(s.file, s.referer),
-          direct_url: s.file,
-          raw_url: s.file,
-          headers: { "Referer": s.referer },
-          quality: s.quality || 1080
-        })));
-        result = {
-          success: true,
-          title: titleParam || (type === "movie" ? "Filme" : `Série T${season}E${episode}`),
-          category: type,
-          audio: "original",
-          provider: "movy",
-          primary_source: parsedSources[0],
-          fallback_sources: parsedSources.slice(1),
-          subtitles: [],
-          aniskip: { mal_id: malId ? parseInt(malId, 10) : null, episode, ready: Boolean(malId) }
-        };
-      }
-    }
-  }
+
 
   // ROTA 6: MGEB (Player Principal Atual)
   let mgebEpisodeMismatch = false;
@@ -1709,7 +1834,7 @@ export async function onRequestGet(context) {
 
         let referer = "https://embedplayer2.xyz/";
         if (rawFile.includes("peliculaplay.com") || rawFile.includes("cache/hls") || rawFile.includes("mgeb.lat") || rawFile.includes("mgeb.top") || rawFile.includes("mgeb.space")) {
-          referer = "https://mgeb.lat/";
+          referer = "https://mgeb.space/";
         }
         
         // Direct MP4 streams bypass datacenter proxy to eliminate Cloudflare WAF 403 blocks and enable native HTTP 206 byte-ranges
@@ -1718,8 +1843,10 @@ export async function onRequestGet(context) {
           : await proxied(rawFile, referer);
         const sourceType = s.type || (rawFile.includes(".m3u8") ? "hls" : "mp4");
         // Every HLS segment through the proxy is one function call (~450 an hour of video). The player tries the
-        // host first and falls back to the proxy, so hosts that need their Referer still play
-        const directUrl = !isDirectMp4 && sourceType === "hls" && /^https:\/\//i.test(rawFile) ? rawFile : null;
+        // host first and falls back to the proxy, so hosts that need their Referer still play.
+        // CDNs that lock tokens to the resolving IP (like playercdn/workers.dev) MUST NOT use direct_url in browser.
+        const isIpLockedCdn = rawFile.includes("playercdn") || rawFile.includes("workers.dev");
+        const directUrl = !isDirectMp4 && !isIpLockedCdn && sourceType === "hls" && /^https:\/\//i.test(rawFile) ? rawFile : null;
 
         return {
           label: s.label || `Servidor ${idx + 1}`,
@@ -1736,15 +1863,15 @@ export async function onRequestGet(context) {
       function scoreSource(src) {
         const u = (src.raw_url || "").toLowerCase();
         // Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
-        if (u.includes("cache/hls") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || isBrazilianCdn(u)) {
+        if (u.includes("playercdn") || u.includes("workers.dev") || u.includes("peliculaplay.com") || u.includes("playspelis.com") || u.includes("flixlat.com") || u.includes("97bf1.com") || isBrazilianCdn(u)) {
           return 95;
         }
         // Tier 2: Standard generic HLS streams (Score 80)
         if (u.includes(".m3u8")) {
           return 80;
         }
-        // Tier 3: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
-        if (u.includes("playercdn") || u.includes("workers.dev") || u.includes("powestream")) {
+        // Tier 3: Low-bitrate cached SD mirrors (Score 60 - Preserved as safety net)
+        if (u.includes("cache/hls") || u.includes("powestream")) {
           return 60;
         }
         // Tier 4: Other MP4 streams (Score 50)

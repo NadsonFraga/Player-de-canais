@@ -33,7 +33,7 @@ const MAX_REDIRECTS = 5;
 const MAX_BUFFERED_BYTES = 5 * 1024 * 1024;
 const MEDIA_TYPE = /^(video\/|audio\/|application\/(mp4|octet-stream)$|binary\/octet-stream$)/i;
 // Hosts disguise segments (".jpeg", text/html): the address decides the type, else plain data
-const TYPE_BY_EXTENSION = { ts: "video/mp2t", mp4: "video/mp4", m4s: "video/mp4", m4v: "video/mp4", aac: "audio/aac", m4a: "audio/mp4", mp3: "audio/mpeg" };
+const TYPE_BY_EXTENSION = { ts: "video/mp2t", mp4: "video/mp4", m4s: "video/mp4", m4v: "video/mp4", aac: "audio/aac", m4a: "audio/mp4", mp3: "audio/mpeg", woff: "video/mp2t", txt: "video/mp2t" };
 
 // A signed address is good for a day: covers a long pause and casting; resolve answers are cached 30 min at most
 export const STREAM_LINK_TTL_S = 24 * 3600;
@@ -52,7 +52,9 @@ export async function streamSigningKey(env) {
 }
 
 async function linkSignature(key, exp, url, referer, origin) {
-  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(`${exp}\n${url}\n${referer}\n${origin}`)));
+  const ref = referer || "";
+  const orig = origin || "";
+  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(`${exp}\n${url}\n${ref}\n${orig}`)));
   let text = "";
   for (const b of mac.slice(0, 16)) text += String.fromCharCode(b);
   return btoa(text).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -60,11 +62,13 @@ async function linkSignature(key, exp, url, referer, origin) {
 
 /** A proxy address for `url` (signed when `key` is set; `exp` keeps the parent's expiry for playlist parts). */
 export async function proxiedStreamUrl(proxyBase, key, url, referer = "", { origin = "", exp = null } = {}) {
-  let out = `${proxyBase}?url=${encodeURIComponent(url)}&referer=${encodeURIComponent(referer)}`;
-  if (origin) out += `&origin=${encodeURIComponent(origin)}`;
+  const ref = referer || "";
+  const orig = origin || "";
+  let out = `${proxyBase}?url=${encodeURIComponent(url)}&referer=${encodeURIComponent(ref)}`;
+  if (orig) out += `&origin=${encodeURIComponent(orig)}`;
   if (key) {
     const expires = exp || Math.floor(Date.now() / 1000) + STREAM_LINK_TTL_S;
-    out += `&exp=${expires}&sig=${await linkSignature(key, expires, url, referer, origin)}`;
+    out += `&exp=${expires}&sig=${await linkSignature(key, expires, url, ref, orig)}`;
   }
   return out;
 }
@@ -75,7 +79,9 @@ async function linkIsValid(key, params, url, referer, origin) {
   const exp = Number(params.get("exp"));
   const now = Math.floor(Date.now() / 1000);
   if (!Number.isInteger(exp) || exp < now || exp > now + 2 * STREAM_LINK_TTL_S) return false;
-  const expected = await linkSignature(key, exp, url, referer, origin);
+  const ref = referer || "";
+  const orig = origin || "";
+  const expected = await linkSignature(key, exp, url, ref, orig);
   const given = params.get("sig") || "";
   if (given.length !== expected.length) return false;
   let diff = 0;
@@ -202,13 +208,29 @@ export async function onRequestGet(context) {
     } else if (targetUrl.includes("zunderflix") || targetUrl.includes("zunder")) {
       customReferer = "https://zunderflix.lat/";
       customOrigin = "https://zunderflix.lat";
-    } else if (targetUrl.includes("playercdn.workers.dev") || targetUrl.includes("embedplayer2.xyz")) {
+    } else if (targetUrl.includes("playercdn") || targetUrl.includes("embedplayer2.xyz")) {
       customReferer = "https://embedplayer2.xyz/";
       customOrigin = "https://embedplayer2.xyz";
+    } else if (targetUrl.includes("bombrilhoso.lat") || targetUrl.includes("penterosa.lat") || targetUrl.includes("rdembed.online") || targetUrl.includes(".website") || targetUrl.includes("xn--")) {
+      customReferer = "https://penterosa.lat/";
+      customOrigin = "https://penterosa.lat";
     } else if (targetUrl.includes("googlevideo.com") || targetUrl.includes("blogger.com")) {
       customReferer = "https://www.blogger.com/";
     } else if (targetUrl.includes("peliculaplay.com") || targetUrl.includes("mgeb.lat") || targetUrl.includes("mgeb.top") || targetUrl.includes("mgeb.space")) {
-      customReferer = "https://mgeb.lat/";
+      customReferer = "https://mgeb.space/";
+    } else if (targetUrl.includes("duckdns.org") || targetUrl.includes("megafonte") || targetUrl.includes("koyeb.app")) {
+      customReferer = "https://tvzinhaonline.pages.dev/";
+      customOrigin = "";
+    } else if (targetUrl.includes("fenixhub.online") || targetUrl.includes("fenixflix")) {
+      // FenixHub rejects requests carrying fenixflix/fenixhub origin/referer with HTTP 403 ("Origem bloqueada").
+      customReferer = "";
+      customOrigin = "";
+    } else if (targetUrl.includes("pluto.tv")) {
+      customReferer = "https://pluto.tv/";
+      customOrigin = "https://pluto.tv";
+    } else if (targetUrl.includes("rfc-infinite.top") || targetUrl.includes("apontaaimeupatrao.lat") || targetUrl.includes("governosptx.org") || targetUrl.includes("logicahost.com.br") || targetUrl.includes("otteravision.com") || targetUrl.includes("streamingdevideo.com.br")) {
+      customReferer = "";
+      customOrigin = "";
     } else {
       customReferer = "https://tvzinhaonline.pages.dev/";
     }
@@ -218,7 +240,7 @@ export async function onRequestGet(context) {
 
   const forwardHeaders = new Headers();
   forwardHeaders.set("User-Agent", USER_AGENT);
-  forwardHeaders.set("Referer", customReferer);
+  if (customReferer) forwardHeaders.set("Referer", customReferer);
   if (customOrigin) forwardHeaders.set("Origin", customOrigin);
   if (request.headers.has("Range")) forwardHeaders.set("Range", request.headers.get("Range"));
   if (request.headers.has("Accept")) forwardHeaders.set("Accept", request.headers.get("Accept"));
@@ -246,7 +268,7 @@ export async function onRequestGet(context) {
   }
 
   const contentType = (upstream.headers.get("content-type") || "").toLowerCase();
-  const isM3U8 = targetUrl.includes(".m3u8") || finalUrl.includes(".m3u8") || targetUrl.includes("hls-proxy") || contentType.includes("mpegurl");
+  const isM3U8 = targetUrl.includes(".m3u8") || finalUrl.includes(".m3u8") || targetUrl.includes("hls-proxy") || contentType.includes("mpegurl") || targetUrl.includes("index.txt") || targetUrl.includes("bombrilhoso.lat") || targetUrl.includes("penterosa.lat");
   const isVtt = targetUrl.includes(".vtt") || finalUrl.includes(".vtt") || contentType.includes("text/vtt");
 
   // HLS playlist: rewrite relative and absolute paths (against the final address) so segments route through here
@@ -261,7 +283,7 @@ export async function onRequestGet(context) {
     const baseUrl = new URL(finalUrl);
     const proxyBase = `${urlObj.origin}${urlObj.pathname}`;
     // The playlist's parts expire with the playlist
-    const proxied = (uri) => proxiedStreamUrl(proxyBase, signingKey, new URL(uri, baseUrl).toString(), customReferer, { origin: customOrigin, exp: linkExp });
+    const proxied = (uri) => proxiedStreamUrl(proxyBase, signingKey, new URL(uri, baseUrl).toString(), customReferer || "", { origin: customOrigin || "", exp: linkExp });
 
     const rewritten = (await Promise.all(playlistText.split("\n").map(async line => {
       const trimmed = line.trim();

@@ -4,22 +4,24 @@
  * and quick-navigation portals for Movies, Series, Animes, and Live Channels.
  */
 
-import { store } from '../core/state.js?v=20261118_1505';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1505';
+import { store } from '../core/state.js?v=20261127_1525';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261127_1525';
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
+    TMDB_IMG_W342,
+    TMDB_IMG_W1280,
     TMDB_CACHE_KEY,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY
-} from '../core/constants.js?v=20261118_1505';
-import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261118_1505';
-import { switchAppView } from '../navigation/router.js?v=20261118_1505';
-import { fetchTmdbEndpoint } from './movies.js?v=20261118_1505';
-import { fetchSeriesEndpoint } from './series.js?v=20261118_1505';
-import { openTitle } from './titlePage.js?v=20261118_1505';
-import { selectChannelByName } from './channels.js?v=20261118_1505';
-import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261118_1505';
+} from '../core/constants.js?v=20261127_1525';
+import { isBackgroundMediaAllowed } from '../core/activity.js?v=20261127_1525';
+import { switchAppView } from '../navigation/router.js?v=20261127_1525';
+import { fetchTmdbEndpoint } from './movies.js?v=20261127_1525';
+import { fetchSeriesEndpoint } from './series.js?v=20261127_1525';
+import { openTitle } from './titlePage.js?v=20261127_1525';
+import { selectChannelByName } from './channels.js?v=20261127_1525';
+import { getChannelLogoSrc, createLogoBadgeHtml, createChannelCardLogoHtml } from '../core/icons.js?v=20261127_1525';
 
 const TMDB_GENRES = {
     28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 80: "Crime",
@@ -124,7 +126,7 @@ const DEFAULT_HERO_HIGHLIGHTS = [
         rating: "7.7",
         genres: ["Animação", "Família", "Aventura"],
         overview: "Na mente de Riley, recém-chegada à adolescência, a sala de controle sofre uma demolição para abrir espaço para novas e surpreendentes emoções.",
-        backdropUrl: "https://image.tmdb.org/t/p/original/xg27NrXi7EgQxLQVIzGQZfrtlip.jpg",
+        backdropUrl: "https://image.tmdb.org/t/p/w1280/xg27NrXi7EgQxLQVIzGQZfrtlip.jpg",
         targetTab: "movies"
     },
     {
@@ -136,7 +138,7 @@ const DEFAULT_HERO_HIGHLIGHTS = [
         rating: "8.8",
         genres: ["Animação", "Sci-Fi", "Ação"],
         overview: "Em meio ao conflito entre as cidades-gêmeas de Piltover e Zaun, duas irmãs lutam em lados opostos de uma guerra entre tecnologias mágicas e crenças incompatíveis.",
-        backdropUrl: "https://image.tmdb.org/t/p/original/2wT5nF1gM3pA465t6Y345098k.jpg",
+        backdropUrl: "https://image.tmdb.org/t/p/w1280/2wT5nF1gM3pA465t6Y345098k.jpg",
         targetTab: "series"
     },
     {
@@ -148,7 +150,7 @@ const DEFAULT_HERO_HIGHLIGHTS = [
         rating: "8.7",
         genres: ["Anime", "Ação", "Aventura"],
         overview: "Monkey D. Luffy e sua tripulação navegam pelos mares mais perigosos em busca do lendário tesouro supremo deixado por Gol D. Roger.",
-        backdropUrl: "https://image.tmdb.org/t/p/original/4Mt7RSstvJtk5JouOwhKaMeYSTz.jpg",
+        backdropUrl: "https://image.tmdb.org/t/p/w1280/4Mt7RSstvJtk5JouOwhKaMeYSTz.jpg",
         targetTab: "animes"
     },
     {
@@ -234,7 +236,7 @@ function buildHomeHeroShowcase() {
                     rating: m.vote_average ? m.vote_average.toFixed(1) : '',
                     genres: (m.genre_ids || []).map(id => TMDB_GENRES[id]).filter(Boolean).slice(0, 3),
                     overview: m.overview || "Grande sucesso em cartaz no cinema sob demanda da Tvzinha.",
-                    backdropUrl: `${TMDB_IMG_ORIGINAL}${m.backdrop_path}`,
+                    backdropUrl: `${TMDB_IMG_W1280}${m.backdrop_path}`,
                     targetTab: "movies",
                     raw: m
                 });
@@ -259,7 +261,7 @@ function buildHomeHeroShowcase() {
                     rating: s.vote_average ? s.vote_average.toFixed(1) : '',
                     genres: (s.genre_ids || []).map(id => TMDB_GENRES[id]).filter(Boolean).slice(0, 3),
                     overview: s.overview || "Temporadas completas com alta qualidade de reprodução e múltiplos servidores.",
-                    backdropUrl: `${TMDB_IMG_ORIGINAL}${s.backdrop_path}`,
+                    backdropUrl: `${TMDB_IMG_W1280}${s.backdrop_path}`,
                     targetTab: "series",
                     raw: s
                 });
@@ -288,7 +290,7 @@ function buildHomeHeroShowcase() {
                     rating: a.vote_average ? a.vote_average.toFixed(1) : '',
                     genres: (a.genre_ids || []).map(id => TMDB_GENRES[id]).filter(Boolean).slice(0, 3),
                     overview: a.overview || "Animações japonesas de sucesso com legendas e dublagens de alta fidelidade.",
-                    backdropUrl: `${TMDB_IMG_ORIGINAL}${a.backdrop_path}`,
+                    backdropUrl: `${TMDB_IMG_W1280}${a.backdrop_path}`,
                     targetTab: "animes",
                     raw: a
                 });
@@ -448,6 +450,7 @@ function showHeroSlide(index) {
 
     if (backdropEl && item.backdropUrl) {
         backdropEl.classList.add("fade-transition");
+        backdropEl.fetchPriority = "high";
         const img = new Image();
         img.onload = () => {
             backdropEl.src = img.src;
@@ -576,6 +579,14 @@ function renderHomeChannelsTrack() {
     track.appendChild(fragment);
 }
 
+function createTrackSkeletons(count = 6) {
+    return Array.from({ length: count }).map(() => `
+        <div class="movie-poster-card movie-poster-skeleton" style="opacity: 0.35; pointer-events: none;">
+            <div style="width: 100%; height: 100%; background: #27272a; animation: pulse 1.8s infinite;"></div>
+        </div>
+    `).join('');
+}
+
 /**
  * Renders Movies row from TMDB cache
  */
@@ -586,7 +597,7 @@ function renderHomeMoviesTrack() {
     try {
         const raw = localStorage.getItem(TMDB_CACHE_KEY);
         if (!raw) {
-            track.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; padding: 12px;">Carregando catálogo de filmes...</p>`;
+            track.innerHTML = createTrackSkeletons(6);
             return;
         }
         const parsed = JSON.parse(raw);
@@ -595,13 +606,15 @@ function renderHomeMoviesTrack() {
 
         track.innerHTML = "";
         const fragment = document.createDocumentFragment();
-        movies.slice(0, 15).forEach(m => {
+        movies.slice(0, 15).forEach((m, idx) => {
             const card = createPosterCard({
                 id: m.id,
                 title: m.title || m.name,
                 year: (m.release_date || '').substring(0, 4) || 'Cinema',
                 rating: m.vote_average ? m.vote_average.toFixed(1) : '—',
                 posterPath: m.poster_path,
+                isAboveFold: idx < 6,
+                priority: idx < 2,
                 onClick: () => openTitle('movie', m)
             });
             fragment.appendChild(card);
@@ -620,7 +633,7 @@ function renderHomeSeriesTrack() {
     try {
         const raw = localStorage.getItem(TMDB_SERIES_CACHE_KEY);
         if (!raw) {
-            track.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; padding: 12px;">Carregando catálogo de séries...</p>`;
+            track.innerHTML = createTrackSkeletons(6);
             return;
         }
         const parsed = JSON.parse(raw);
@@ -629,13 +642,15 @@ function renderHomeSeriesTrack() {
 
         track.innerHTML = "";
         const fragment = document.createDocumentFragment();
-        series.slice(0, 15).forEach(s => {
+        series.slice(0, 15).forEach((s, idx) => {
             const card = createPosterCard({
                 id: s.id,
                 title: s.name || s.title,
                 year: (s.first_air_date || '').substring(0, 4) || 'Série',
                 rating: s.vote_average ? s.vote_average.toFixed(1) : '—',
                 posterPath: s.poster_path,
+                isAboveFold: idx < 6,
+                priority: idx < 2,
                 onClick: () => openTitle('tv', s)
             });
             fragment.appendChild(card);
@@ -654,7 +669,7 @@ function renderHomeAnimesTrack() {
     try {
         const raw = localStorage.getItem(TMDB_ANIMES_CACHE_KEY);
         if (!raw) {
-            track.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; padding: 12px;">Carregando catálogo de animes...</p>`;
+            track.innerHTML = createTrackSkeletons(6);
             return;
         }
         const parsed = JSON.parse(raw);
@@ -663,13 +678,15 @@ function renderHomeAnimesTrack() {
 
         track.innerHTML = "";
         const fragment = document.createDocumentFragment();
-        animes.slice(0, 15).forEach(a => {
+        animes.slice(0, 15).forEach((a, idx) => {
             const card = createPosterCard({
                 id: a.id,
                 title: a.name || a.title,
                 year: (a.first_air_date || '').substring(0, 4) || 'Anime',
                 rating: a.vote_average ? a.vote_average.toFixed(1) : '—',
                 posterPath: a.poster_path,
+                isAboveFold: idx < 6,
+                priority: idx < 2,
                 onClick: () => openTitle('anime', a)
             });
             fragment.appendChild(card);
@@ -681,7 +698,7 @@ function renderHomeAnimesTrack() {
 /**
  * Helper to build standard 2:3 poster cards identical to catalog rows
  */
-function createPosterCard({ id, title, year, rating, posterPath, onClick }) {
+function createPosterCard({ id, title, year, rating, posterPath, onClick, isAboveFold = false, priority = false }) {
     const card = document.createElement("div");
     card.className = "movie-poster-card";
     card.tabIndex = 0;
@@ -689,11 +706,14 @@ function createPosterCard({ id, title, year, rating, posterPath, onClick }) {
     card.setAttribute("aria-label", `${title} (${year})`);
 
     const posterUrl = posterPath
-        ? `${TMDB_IMG_W500}${posterPath}`
+        ? `${TMDB_IMG_W342}${posterPath}`
         : 'assets/logos/fav/icon-detailed.svg';
 
+    const loadingAttr = isAboveFold ? '' : 'loading="lazy"';
+    const priorityAttr = priority ? 'fetchpriority="high"' : '';
+
     card.innerHTML = `
-        <img class="movie-poster-img" src="${escapeAttr(posterUrl)}" alt="${escapeAttr(title)}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
+        <img class="movie-poster-img" src="${escapeAttr(posterUrl)}" alt="${escapeAttr(title)}" ${loadingAttr} ${priorityAttr} decoding="async" data-fallback-src="assets/logos/fav/icon-detailed.svg">
         <div class="movie-poster-overlay">
             <h4 class="movie-card-title" title="${escapeAttr(title)}">${escapeHtml(title)}</h4>
             <div class="movie-card-meta">

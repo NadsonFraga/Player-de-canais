@@ -1,33 +1,50 @@
 /**
  * Tvzinha Online - Multi-Provider Native Stream Extractors for /api/resolve
- * Implements FenixFlix and Movy resolvers.
+ * Implements FenixFlix multi-cluster stream aggregator for Stremio HTTP backends.
  */
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 
+export const STREMIO_FENIX_ENDPOINTS = [
+  "https://fenixflix.fenixhub.online"
+];
+
+function cleanEmojis(text) {
+  return String(text || "")
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractClusterName(title) {
+  const clean = cleanEmojis(title);
+  const m = clean.match(/\b(Zeus|Badger|Hypex|Figgs|Hydra|Apollo|Ares|Thor|Odin|Zunder|Hollymovies)\b/i);
+  return m ? m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase() : "";
+}
+
 /* ============================================================
- * 1. FENIXFLIX (PT-BR Dublado Native Stream Aggregator)
+ * 1. FENIXFLIX (PT-BR Dublado & Subtitled Multi-Cluster Aggregator)
  * ============================================================ */
 export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode = 1, audio = "dubbed" }) {
   const isSeries = type === "series" || type === "serie" || type === "tv" || type === "anime";
+  const resolvedImdbId = await Promise.resolve(imdbId).catch(() => null);
   const queryCandidates = [];
-  if (imdbId && imdbId.startsWith("tt")) {
-    queryCandidates.push(imdbId);
+  if (resolvedImdbId && String(resolvedImdbId).startsWith("tt")) {
+    queryCandidates.push(String(resolvedImdbId));
   }
   if (id) {
-    queryCandidates.push(String(id).startsWith("tmdb:") ? id : `tmdb:${id}`);
+    const rawId = String(id);
+    queryCandidates.push(rawId.startsWith("tmdb:") ? rawId : `tmdb:${rawId}`);
   }
 
-  let data = null;
-  let rawStreams = [];
   const debug = { endpoint: null, status: null, statusText: null, error: null, streams: 0, body: null };
+  let rawStreams = [];
+  let dataTitle = "";
 
-  for (const qId of queryCandidates) {
+  const fetchCandidateFromBase = async (baseUrl, qId) => {
     const endpoint = isSeries
-      ? `https://fenixflix.fenixhub.online/stream/series/${qId}:${season}:${episode}.json`
-      : `https://fenixflix.fenixhub.online/stream/movie/${qId}.json`;
-    debug.endpoint = endpoint;
-
+      ? `${baseUrl}/stream/series/${qId}:${season}:${episode}.json`
+      : `${baseUrl}/stream/movie/${qId}.json`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 6000);
     try {
@@ -36,90 +53,131 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
         signal: controller.signal
       });
       clearTimeout(timer);
-      debug.status = res.status;
-      debug.statusText = res.statusText;
       if (res.ok) {
         const j = await res.json();
         if (Array.isArray(j.streams) && j.streams.length > 0) {
-          data = j;
-          rawStreams = j.streams;
-          debug.streams = rawStreams.length;
-          break;
+          return { endpoint, status: res.status, title: j.title || "", streams: j.streams };
         }
       }
+      return { endpoint, status: res.status, title: "", streams: [] };
     } catch (e) {
       clearTimeout(timer);
-      debug.error = e.message || String(e);
+      return { endpoint, status: null, error: e.message || String(e), streams: [] };
+    }
+  };
+
+  const tasks = [];
+  for (const base of STREMIO_FENIX_ENDPOINTS) {
+    for (const qId of queryCandidates) {
+      tasks.push(fetchCandidateFromBase(base, qId));
     }
   }
+
+  const results = await Promise.allSettled(tasks);
+  const seenUrls = new Set();
+  for (const r of results) {
+    if (r.status === "fulfilled" && r.value) {
+      const val = r.value;
+      if (!debug.endpoint && val.endpoint) {
+        debug.endpoint = val.endpoint;
+        debug.status = val.status;
+      }
+      if (val.title && !dataTitle) dataTitle = val.title;
+      for (const s of (val.streams || [])) {
+        if (s && s.url && !seenUrls.has(s.url)) {
+          seenUrls.add(s.url);
+          rawStreams.push(s);
+        }
+      }
+    }
+  }
+  debug.streams = rawStreams.length;
 
   try {
     if (!rawStreams.length) return { title: "", sources: [], debug };
 
-    const parsed = rawStreams
-      .filter(s => s && s.url && typeof s.url === "string")
-      .map(s => {
-        const text = `${s.name || ''} ${s.title || ''}`.toLowerCase();
-        let quality = 1080;
-        if (text.includes("4k") || text.includes("2160p")) quality = 2160;
-        else if (text.includes("1440p") || text.includes("2k")) quality = 1440;
-        else if (text.includes("1080p") || text.includes("fhd") || text.includes("full hd") || text.includes("fullhd")) quality = 1080;
-        else if (text.includes("720p") || text.includes("hd")) quality = 720;
-        else if (text.includes("480p") || text.includes("sd")) quality = 480;
-        else if (text.includes("360p")) quality = 360;
+    const seenClusters = new Set();
+    const parsed = [];
+    for (const s of rawStreams) {
+      if (!s || !s.url || typeof s.url !== "string") continue;
 
-        const isSubbed = text.includes("legendado") || text.includes("subbed");
-        const isDubbed = text.includes("dublado") ||
-                         text.includes("nacional") ||
-                         text.includes("dual") ||
-                         text.includes("multi") ||
-                         text.includes("tri áudio") ||
-                         text.includes("tri audio") ||
-                         text.includes("pt-br") ||
-                         text.includes("ptbr") ||
-                         (text.includes("🇧🇷") && !isSubbed);
-        const isHls = s.url.includes(".m3u8") || s.url.includes("hls-proxy") || s.url.includes("/hls") || (s.type === "hls");
+      const rawTitle = s.title || "";
+      const rawName = s.name || "";
+      const text = `${rawName} ${rawTitle}`.toLowerCase();
+      let quality = 1080;
+      if (text.includes("4k") || text.includes("2160p")) quality = 2160;
+      else if (text.includes("1440p") || text.includes("2k")) quality = 1440;
+      else if (text.includes("1080p") || text.includes("fhd") || text.includes("full hd") || text.includes("fullhd")) quality = 1080;
+      else if (text.includes("720p") || text.includes("hd")) quality = 720;
+      else if (text.includes("480p") || text.includes("sd")) quality = 480;
+      else if (text.includes("360p")) quality = 360;
 
-        // Provider trust, audio compatibility & speed tiers:
-        // 4: Dedicated high-speed official web VOD masters (fenixhub.online / Zeus / Badger) -> guaranteed AAC web audio, 0ms startup
-        // 3: Verified mirrors & direct CDNs (zunder, zunderflix)
-        // 2: Third-party web scrapers & adaptive HLS (hollymovies / embedplayer2) -> AAC web audio
-        // 1: Un-transcoded bot torrent streams (squareweb.app, koyeb.app, fenixbot, /stream/) -> raw MKVs with E-AC-3 audio (unsupported by HTML5 video / silent in browsers), sleep-prone containers
-        const rawUrl = (s.url || "").toLowerCase();
-        let providerTier = 3;
-        const isBotStream = rawUrl.includes("/stream/") || rawUrl.includes("squareweb.app") || rawUrl.includes("fenixbot") || rawUrl.includes("koyeb.app");
-        if (rawUrl.includes("fenixhub.online")) {
-          providerTier = 4;
-        } else if (text.includes("zunder") || rawUrl.includes("zunderflix")) {
-          providerTier = 3;
-        } else if (text.includes("hollymovies") || rawUrl.includes("embedplayer2")) {
-          providerTier = 2;
-        } else if (isBotStream) {
-          providerTier = 1;
-        }
+      const isSubbed = text.includes("legendado") || text.includes("subbed");
+      const isDubbed = text.includes("dublado") ||
+                       text.includes("nacional") ||
+                       text.includes("dual") ||
+                       text.includes("multi") ||
+                       text.includes("tri áudio") ||
+                       text.includes("tri audio") ||
+                       text.includes("pt-br") ||
+                       text.includes("ptbr") ||
+                       (rawTitle.includes("🇧🇷") && !isSubbed);
+      const isHls = s.url.includes(".m3u8") || s.url.includes("hls-proxy") || s.url.includes("/hls") || (s.type === "hls");
 
-        const tag = isDubbed ? (text.includes("dual") ? "Dual Áudio" : "Dublado") : (isSubbed ? "Legendado" : "Original");
-        const cleanName = s.name || `FenixFlix ${quality}p`;
-        return {
-          label: `${cleanName} [${tag}]`,
-          file: s.url,
-          quality,
-          providerTier,
-          type: isHls ? "hls" : "mp4",
-          isDubbed,
-          isSubbed
-        };
+      // Provider trust, audio compatibility & speed tiers:
+      // 4: Dedicated high-speed official web VOD masters (fenixhub.online / Zeus / Badger) -> guaranteed AAC web audio, 0ms startup
+      // 3: Verified mirrors & direct CDNs (zunder, zunderflix)
+      // 2: Third-party web scrapers & adaptive HLS (hollymovies / embedplayer2) -> AAC web audio
+      // 1: Un-transcoded bot torrent streams (squareweb.app, koyeb.app, fenixbot, /stream/) -> raw MKVs with E-AC-3 audio (unsupported by HTML5 video / silent in browsers), sleep-prone containers
+      const rawUrl = (s.url || "").toLowerCase();
+      let providerTier = 3;
+      const isBotStream = rawUrl.includes("/stream/") || rawUrl.includes("squareweb.app") || rawUrl.includes("fenixbot") || rawUrl.includes("koyeb.app");
+      if (rawUrl.includes("fenixhub.online")) {
+        providerTier = 4;
+      } else if (text.includes("zunder") || rawUrl.includes("zunderflix")) {
+        providerTier = 3;
+      } else if (text.includes("hollymovies") || rawUrl.includes("embedplayer2")) {
+        providerTier = 2;
+      } else if (isBotStream) {
+        providerTier = 1;
+      }
+
+      const cluster = extractClusterName(rawTitle);
+      const dedupKey = `${quality}_${cluster}_${isDubbed ? 'dub' : 'sub'}`;
+      if (seenClusters.has(dedupKey)) continue;
+      seenClusters.add(dedupKey);
+
+      const tag = isDubbed ? (text.includes("dual") ? "Dual Áudio" : "Dublado") : (isSubbed ? "Legendado" : "Original");
+      const labelParts = [`Fenix ${quality}p`];
+      if (cluster) labelParts.push(`· ${cluster}`);
+      labelParts.push(`[${tag}]`);
+      const cleanLabel = labelParts.join(" ");
+
+      parsed.push({
+        label: cleanLabel,
+        cluster,
+        file: s.url,
+        quality,
+        providerTier,
+        type: isHls ? "hls" : "mp4",
+        isDubbed,
+        isSubbed
       });
-
-    // Prefer dubbed if available
-    let filtered = parsed;
-    if (audio === "dubbed") {
-      const dubbed = parsed.filter(s => s.isDubbed);
-      if (dubbed.length > 0) filtered = dubbed;
     }
 
-    // Sort: Provider tier > Quality > HLS tie-breaker within identical tier & resolution
-    filtered.sort((a, b) => {
+    // Sort order:
+    // 1. Audio preference: Dubbed first (if audio === "dubbed"), else Subbed first
+    // 2. Provider tier: official masters (4) > mirrors (3) > third-party (2) > bot (1)
+    // 3. Resolution: 2160p > 1080p > 720p > 480p
+    // 4. HLS preference within identical tier & resolution
+    parsed.sort((a, b) => {
+      if (audio === "dubbed") {
+        if (a.isDubbed && !b.isDubbed) return -1;
+        if (!a.isDubbed && b.isDubbed) return 1;
+      } else if (audio === "subtitled") {
+        if (a.isSubbed && !b.isSubbed) return -1;
+        if (!a.isSubbed && b.isSubbed) return 1;
+      }
       if (b.providerTier !== a.providerTier) return b.providerTier - a.providerTier;
       if (b.quality !== a.quality) return b.quality - a.quality;
       if (a.type === "hls" && b.type !== "hls") return -1;
@@ -128,188 +186,12 @@ export async function resolveFenixFlix({ id, imdbId, type, season = 1, episode =
     });
 
     return {
-      title: data.title || "",
-      sources: filtered,
+      title: dataTitle || "",
+      sources: parsed,
       debug
     };
   } catch (err) {
     debug.error = err.message || String(err);
     return { title: "", sources: [], debug };
-  }
-}
-
-
-
-
-/* ============================================================
- * 4. MOVY (Wecollege mvm1 Stream Cipher Decryptor)
- * ============================================================ */
-const CONSTANTS_D = [
-  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
-  0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
-  0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174
-];
-const MAGIC_MVM1 = [109, 118, 109, 49]; // "mvm1"
-const isEven = (e) => (e * (e + 1) & 1) === 0;
-
-function mix32(e) {
-  e >>>= 0;
-  e ^= e >>> 16;
-  e = Math.imul(e, 0x85ebca6b) >>> 0;
-  e ^= e >>> 13;
-  e = Math.imul(e, 0xc2b2ae35) >>> 0;
-  return (e ^= e >>> 16) >>> 0;
-}
-
-function rotl32(e, a) {
-  e >>>= 0;
-  a &= 31;
-  return a === 0 ? e >>> 0 : (e << a | e >>> (32 - a)) >>> 0;
-}
-
-function base64UrlToBytes(str) {
-  let b64 = str.replace(/-/g, "+").replace(/_/g, "/");
-  while (b64.length % 4) b64 += "=";
-  const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
-function initKeystreamState(seed, mediaId) {
-  let mediaIdNum = Number(mediaId);
-  let S = Array(61);
-  let acc = 0x811c9dc5;
-  for (let t = 0; t < seed.length; t++) {
-    acc = Math.imul(acc ^ seed.charCodeAt(t), 0x1000193) >>> 0;
-  }
-  let seedHash = mix32(acc);
-  let s = mix32(seedHash ^ mix32((mediaIdNum >>> 0) ^ 0x9e3779b9)) >>> 0;
-
-  for (let e = 0; e < 8; e++) {
-    if (isEven(e)) {
-      let a = s % 61;
-      s = rotl32((s + 0x9e3779b9) >>> 0, 7 + (7 & e));
-      S[a] = (s ^ mix32(s)) >>> 0;
-      s = mix32((s + a) >>> 0);
-    } else {
-      S[e] = CONSTANTS_D[15 & e];
-    }
-  }
-
-  return { S, acc: mix32(0xa5a5a5a5 ^ s) >>> 0 };
-}
-
-function nextKeystreamWord(state, step) {
-  let S = state.S;
-  let l = state.acc;
-  let d_idx = l % 61;
-  let r = 0 - Number(d_idx in S);
-  let s_val = S[d_idx] >>> 0;
-  let c_val = Math.imul(0x9e3779b9, step + 1) >>> 0;
-  let n_val = (s_val ^ c_val) >>> 0;
-  let b_val = (((l ^ n_val) >>> 0) | ((l & n_val & r) >>> 0)) >>> 0;
-  let rotated = (rotl32((b_val + l) >>> 0, 31 & d_idx) ^ rotl32(l, 31 & Math.imul(d_idx, 7))) >>> 0;
-  l = mix32((rotated + 0x9e3779b9) >>> 0);
-  S[d_idx] = l >>> 0;
-  state.acc = l;
-  return l >>> 0;
-}
-
-function decryptMovyPayload(encryptedB64, seed, mediaId) {
-  const cipherBytes = base64UrlToBytes(encryptedB64);
-  const state = initKeystreamState(seed, mediaId);
-  const len = cipherBytes.length;
-  
-  let step = 0;
-  let pos = 0;
-  while (pos < len) {
-    let word = nextKeystreamWord(state, step++);
-    cipherBytes[pos++] ^= (word & 255);
-    if (pos < len) cipherBytes[pos++] ^= ((word >>> 8) & 255);
-    if (pos < len) cipherBytes[pos++] ^= ((word >>> 16) & 255);
-    if (pos < len) cipherBytes[pos++] ^= ((word >>> 24) & 255);
-  }
-
-  for (let i = 0; i < MAGIC_MVM1.length; i++) {
-    if (cipherBytes[i] !== MAGIC_MVM1[i]) {
-      throw new Error(`Magic signature mismatch at byte ${i}`);
-    }
-  }
-
-  const payload = cipherBytes.subarray(MAGIC_MVM1.length);
-  return JSON.parse(new TextDecoder("utf-8").decode(payload));
-}
-
-export async function resolveMovy({ tmdbId, type, season = 1, episode = 1, imdbId = "" }) {
-  const mediaType = type === "movie" ? "movie" : "tv";
-  const headers = {
-    "User-Agent": USER_AGENT,
-    "Referer": "https://www.movy.sx/",
-    "Origin": "https://www.movy.sx",
-    "Accept": "application/json"
-  };
-
-  try {
-    const seedRes = await fetch(`https://api.wecollege.net/seed?mediaId=${tmdbId}`, { headers });
-    if (!seedRes.ok) return null;
-    const { seed } = await seedRes.json();
-
-    const params = new URLSearchParams({
-      title: "title",
-      mediaType,
-      seasonId: String(season),
-      episodeId: String(episode),
-      tmdbId: String(tmdbId),
-      imdbId: imdbId || "",
-      year: "2024",
-      enc: "2",
-      seed
-    });
-
-    const sourcesRes = await fetch(`https://api.wecollege.net/miami/sources?${params.toString()}`, { headers });
-    if (!sourcesRes.ok) return null;
-    const encryptedText = await sourcesRes.text();
-    const data = decryptMovyPayload(encryptedText, seed, tmdbId);
-    const sources = data?.sources || [];
-    if (!sources.length && !data?.playlist) return null;
-
-    const mapped = sources.map(s => {
-      const q = s.quality || "";
-      const is4k = q.includes("2160") || q.includes("4k") || q.includes("4K");
-      const is1080 = q.includes("1080");
-      const is720 = q.includes("720");
-      const qualityNum = is4k ? 2160 : (is1080 ? 1080 : (is720 ? 720 : 480));
-      return {
-        label: `Movy [${q || (qualityNum + 'p')}]`,
-        file: s.url || s.file,
-        quality: qualityNum,
-        type: "hls",
-        referer: "https://www.movy.sx/"
-      };
-    });
-
-    if (!mapped.length && data?.playlist) {
-      mapped.push({
-        label: "Movy [Auto FHD]",
-        file: data.playlist,
-        quality: 1080,
-        type: "hls",
-        referer: "https://www.movy.sx/"
-      });
-    }
-
-    // Sort by quality descending
-    mapped.sort((a, b) => b.quality - a.quality);
-
-    return {
-      title: "",
-      sources: mapped
-    };
-  } catch {
-    return null;
   }
 }

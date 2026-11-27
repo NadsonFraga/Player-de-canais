@@ -3,28 +3,29 @@
  * Coordinates core state, modular engines, navigation, and exposes TvzinhaActions
  */
 
-import { store } from './core/state.js?v=20261118_1505';
-import { showToast } from './core/toast.js?v=20261118_1505';
-import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261118_1505';
-import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261118_1505';
-import { runWhenHomeIdle } from './core/activity.js?v=20261118_1505';
-import { initMoviesView, resetMoviesViewState } from './modules/movies.js?v=20261118_1505';
-import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261118_1505';
-import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261118_1505';
-import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261118_1505';
-import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261118_1505';
-import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261118_1505';
-import { preloadPlayerLibs } from './player/engine.js?v=20261118_1505';
-import { setupSiteFooter } from './modules/footer.js?v=20261118_1505';
-import { setupTitlePage, openTitle, titleBack, closeTitlePage, readTitleFromAddress } from './modules/titlePage.js?v=20261118_1505';
-import { setupHeader, openSearch } from './modules/header.js?v=20261118_1505';
-import { setupCollection, renderCollection, openCollection } from './modules/collection.js?v=20261118_1505';
-import { setupAccountPage, openAccountPage } from './modules/accountPage.js?v=20261118_1505';
-import { refreshAccount } from './core/account.js?v=20261118_1505';
-import { setupProfilePage, checkProfileOnStart, openProfilePicker } from './modules/profilePage.js?v=20261118_1505';
-import { setupSync, syncNow } from './core/sync.js?v=20261118_1505';
-import { setupSettingsPage, openSettingsPage } from './modules/settingsPage.js?v=20261118_1505';
-import { installImageFallbacks } from './core/imageFallback.js?v=20261118_1505';
+import { store } from './core/state.js?v=20261127_1525';
+import { showToast } from './core/toast.js?v=20261127_1525';
+import { TMDB_CACHE_KEY, TMDB_SERIES_CACHE_KEY, TMDB_ANIMES_CACHE_KEY } from './core/constants.js?v=20261127_1525';
+import { initChannelsCatalog, selectChannelByName, renderChannelGridCards, renderHomeView } from './modules/channels.js?v=20261127_1525';
+import { renderMatchesSection, openTeamSelectModal, closeTeamSelectModal } from './modules/sports.js?v=20261127_1525';
+import { runWhenHomeIdle } from './core/activity.js?v=20261127_1525';
+import { initMoviesView, resetMoviesViewState } from './modules/movies.js?v=20261127_1525';
+import { initSeriesView, initAnimesView, playSeriesEpisode, stopSeriesPlayer, renderHomeContinueWatching, resetSeriesViewState, resetAnimesViewState } from './modules/series.js?v=20261127_1525';
+import { setupSpaNavigation, switchAppView, closeMobileMenu, registerViewHook } from './navigation/router.js?v=20261127_1525';
+import { setupTvRemoteNavigation } from './navigation/remote.js?v=20261127_1525';
+import { initHistoryManager, pushNavLayer, popNavLayer, handleBackButton } from './navigation/historyManager.js?v=20261127_1525';
+import { initHomeView, refreshHomeContent } from './modules/home.js?v=20261127_1525';
+import { preloadPlayerLibs } from './player/engine.js?v=20261127_1525';
+import { setupSiteFooter } from './modules/footer.js?v=20261127_1525';
+import { setupTitlePage, openTitle, titleBack, closeTitlePage, readTitleFromAddress } from './modules/titlePage.js?v=20261127_1525';
+import { setupHeader, openSearch } from './modules/header.js?v=20261127_1525';
+import { setupCollection, renderCollection, openCollection } from './modules/collection.js?v=20261127_1525';
+import { setupAccountPage, openAccountPage } from './modules/accountPage.js?v=20261127_1525';
+import { refreshAccount } from './core/account.js?v=20261127_1525';
+import { setupProfilePage, checkProfileOnStart, openProfilePicker } from './modules/profilePage.js?v=20261127_1525';
+import { setupSync, syncNow } from './core/sync.js?v=20261127_1525';
+import { setupSettingsPage, openSettingsPage } from './modules/settingsPage.js?v=20261127_1525';
+import { installImageFallbacks } from './core/imageFallback.js?v=20261127_1525';
 
 // Setup Adblock & DNS Disclaimer Modal
 const ADBLOCK_STORAGE_KEY = 'tvzinha_adblock_ack_timestamp';
@@ -214,14 +215,24 @@ async function bootstrapApp() {
     // Preload TMDB catalogs for instantaneous navigation, but only when the browser is idle on the home screen:
     // opening a channel or a title first must not compete with its stream for bandwidth.
     // Each catalog still loads by itself when its tab is opened (view hooks above).
+    const hasCachedCatalogs = Boolean(
+        localStorage.getItem(TMDB_CACHE_KEY) &&
+        localStorage.getItem(TMDB_SERIES_CACHE_KEY) &&
+        localStorage.getItem(TMDB_ANIMES_CACHE_KEY)
+    );
+    // If cache is missing on cold start, kick off preload almost immediately (100ms) so Home tracks populate
+    // with covers right away; if already cached, wait 1500ms so initial channel/title interactions get priority.
+    const idleDelay = hasCachedCatalogs ? 1500 : 100;
+
     runWhenHomeIdle(async () => {
-        await Promise.allSettled([
-            initMoviesView().catch(e => console.warn("[Preload] Movies:", e)),
-            initSeriesView().catch(e => console.warn("[Preload] Series:", e)),
-            initAnimesView().catch(e => console.warn("[Preload] Animes:", e))
-        ]);
+        // Sequential staggered preload avoids hitting browser 6-connection domain limit
+        await initMoviesView().catch(e => console.warn("[Preload] Movies:", e));
         refreshHomeContent();
-    });
+        await initSeriesView().catch(e => console.warn("[Preload] Series:", e));
+        refreshHomeContent();
+        await initAnimesView().catch(e => console.warn("[Preload] Animes:", e));
+        refreshHomeContent();
+    }, idleDelay);
 
     // hls.js and Artplayer no longer block the start: fetch them once the browser is idle, on any tab,
     // so the first player opens right away (a player opened before that loads them itself)

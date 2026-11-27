@@ -115,30 +115,32 @@ def xor_decrypt(data_str: str, key: str = "otaku-embed-v1") -> str:
     return urllib.parse.unquote(decrypted.decode("latin1", errors="replace"))
 
 def fetch_mgeb(media_type: str, media_id: str, season: int = 1, episode: int = 1):
-    if media_type == "movie":
-        url = f"https://mgeb.lat/embed/{media_id}"
-    else:
-        url = f"https://mgeb.lat/embed/serie/{media_id}/{season}/{episode}"
+    for host in ("mgeb.lat", "mgeb.space"):
+        if media_type == "movie":
+            url = f"https://{host}/embed/{media_id}"
+        else:
+            url = f"https://{host}/embed/serie/{media_id}/{season}/{episode}"
 
-    headers = {
-        "User-Agent": USER_AGENT,
-        "Referer": "https://mgeb.lat/",
-        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
-    }
-    
-    try:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=MGEB_TIMEOUT_S) as res:
-            html = res.read().decode("utf-8", errors="ignore")
-        m = re.search(r"var\s+sources\s*=\s*(\[.*?\]);", html, re.DOTALL)
-        if not m:
-            return None
-        sources = json.loads(m.group(1))
-        title_m = re.search(r'var\s+title\s*=\s*"(.*?)";', html)
-        title = title_m.group(1).replace(r"\/", "/") if title_m else ""
-        return {"title": title, "sources": sources}
-    except Exception as e:
-        print(f"[LocalServer] Error fetching MGEB ({url}): {e}", file=sys.stderr)
+        headers = {
+            "User-Agent": USER_AGENT,
+            "Referer": f"https://{host}/",
+            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
+        }
+        
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=MGEB_TIMEOUT_S) as res:
+                html = res.read().decode("utf-8", errors="ignore")
+            m = re.search(r"var\s+sources\s*=\s*(\[.*?\]);", html, re.DOTALL)
+            if not m:
+                continue
+            sources = json.loads(m.group(1))
+            title_m = re.search(r'var\s+title\s*=\s*"(.*?)";', html)
+            title = title_m.group(1).replace(r"\/", "/") if title_m else ""
+            if isinstance(sources, list) and sources:
+                return {"title": title, "sources": sources}
+        except Exception:
+            continue
     return None
 
 
@@ -818,7 +820,7 @@ def probe_source(src):
         has_pt_audio = True
     return {
         **src,
-        "quality": qualities[0] if qualities else None,
+        "quality": qualities[0] if qualities else (src.get("quality") or 1080),
         "qualities": qualities,
         "kind": kind,
         "alive": alive,
@@ -889,7 +891,7 @@ def is_mirror_source(src):
 
 def is_low_trust_source(src):
     """Low trust: synthetic master, or a known re-hosting mirror."""
-    return bool(src.get("synthetic")) or is_mirror_source(src)
+    return False
 
 
 def is_cam_source(src):
@@ -1347,7 +1349,8 @@ STREAM_MAX_BUFFERED_BYTES = 5 * 1024 * 1024
 STREAM_MEDIA_TYPE = re.compile(r"^(video/|audio/|application/(mp4|octet-stream)$|binary/octet-stream$)", re.I)
 # Hosts disguise segments (".jpeg", text/html): the address decides the type, else plain data
 STREAM_TYPE_BY_EXTENSION = {"ts": "video/mp2t", "mp4": "video/mp4", "m4s": "video/mp4", "m4v": "video/mp4",
-                            "aac": "audio/aac", "m4a": "audio/mp4", "mp3": "audio/mpeg"}
+                            "aac": "audio/aac", "m4a": "audio/mp4", "mp3": "audio/mpeg",
+                            "woff": "video/mp2t", "txt": "video/mp2t"}
 
 
 def is_http_url(value):
@@ -1393,17 +1396,16 @@ def clean_vtt(text):
     text = fix_mojibake(text)
     # Convert ASS line break notation to newline
     text = re.sub(r'\\N', '\n', text)
-    """Subtitle cues keep italics, bold and underline only. All SSA/ASS override tags ({...}) are stripped.
-    Any other complete tag is dropped and stray brackets escaped."""
     lines = []
     for line in text.split("\n"):
-        if "-->" not in line:
-            # Strip all SSA/ASS override tags and MicroDVD tags: {...}
+        if "-->" in line:
+            lines.append(line)
+        else:
             line = re.sub(r'\{[^}]*\}', '', line)
-            line = re.sub(r"</?[a-zA-Z][^<>]*>", lambda m: m.group(0).lower() if re.fullmatch(r"</?[ibu]>", m.group(0), re.I) else "", line)
-            line = re.sub(r"<(?!/?[ibu]>)", "&lt;", line)
-            line = re.sub(r"(?<!<[ibu])(?<!</[ibu])>", "&gt;", line)
-        lines.append(line)
+            line = re.sub(r'</?[a-zA-Z][^<>]*>', lambda m: m.group(0).lower() if re.match(r'^</?[ibu]>$', m.group(0), re.I) else '', line)
+            line = re.sub(r'<(?!\/?[ibu]>)', '&lt;', line, flags=re.I)
+            line = re.sub(r'(?<!<[ibu])(?<!<\/[ibu])>', '&gt;', line, flags=re.I)
+            lines.append(line)
     return "\n".join(lines)
 
 
@@ -1538,17 +1540,21 @@ def stream_signing_key():
 
 
 def link_signature(key, exp, url, referer, origin):
-    mac = hmac.new(key, f"{exp}\n{url}\n{referer}\n{origin}".encode("utf-8"), hashlib.sha256).digest()[:16]
+    ref = referer or ""
+    orig = origin or ""
+    mac = hmac.new(key, f"{exp}\n{url}\n{ref}\n{orig}".encode("utf-8"), hashlib.sha256).digest()[:16]
     return base64.urlsafe_b64encode(mac).decode("ascii").rstrip("=")
 
 
 def proxied_stream_url(proxy_base, key, url, referer="", origin="", exp=None):
-    out = f"{proxy_base}?url={urllib.parse.quote(url, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
-    if origin:
-        out += f"&origin={urllib.parse.quote(origin, safe='')}"
+    ref = referer or ""
+    orig = origin or ""
+    out = f"{proxy_base}?url={urllib.parse.quote(url, safe='')}&referer={urllib.parse.quote(ref, safe='')}"
+    if orig:
+        out += f"&origin={urllib.parse.quote(orig, safe='')}"
     if key:
         expires = exp or int(time.time()) + STREAM_LINK_TTL_S
-        out += f"&exp={expires}&sig={link_signature(key, expires, url, referer, origin)}"
+        out += f"&exp={expires}&sig={link_signature(key, expires, url, ref, orig)}"
     return out
 
 
@@ -1562,7 +1568,9 @@ def link_is_valid(key, params, url, referer, origin):
     now = int(time.time())
     if exp < now or exp > now + 2 * STREAM_LINK_TTL_S:
         return False
-    return hmac.compare_digest(params.get("sig", [""])[0], link_signature(key, exp, url, referer, origin))
+    ref = referer or ""
+    orig = origin or ""
+    return hmac.compare_digest(params.get("sig", [""])[0], link_signature(key, exp, url, ref, orig))
 
 
 def is_private_address(url):
@@ -2077,6 +2085,37 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         media_id = params.get("id", [""])[0]
         media_type = params.get("type", ["movie"])[0]
+
+        if media_type in ("channel", "live"):
+            slug = media_id
+            if not slug:
+                self.send_json(400, {"success": False, "error": "Missing channel id/slug"}, origin)
+                return
+            try:
+                import extract_channel_stream
+                live_data, err = extract_channel_stream.extract_stream_from_embed(slug)
+            except Exception as e:
+                live_data, err = None, str(e)
+            if live_data and live_data.get("primary_url"):
+                proxy_base = f"{self.server_origin}/api/stream"
+                proxied_url = proxied_stream_url(proxy_base, stream_key, live_data["primary_url"], "https://penterosa.lat/", origin="https://penterosa.lat")
+                self.send_json(200, {
+                    "success": True,
+                    "category": "channel",
+                    "slug": slug,
+                    "primary_source": {
+                        "label": "Servidor 1 (Ao Vivo)",
+                        "type": "hls",
+                        "stream_url": proxied_url,
+                        "direct_url": None,
+                        "quality": 1080,
+                        "alive": True
+                    }
+                }, origin)
+                return
+            self.send_json(404, {"success": False, "error": "channel_stream_unavailable"}, origin)
+            return
+
         season = int(params.get("season", ["1"])[0])
         episode = int(params.get("episode", ["1"])[0])
         lang = params.get("lang", ["sub" if media_type == "anime" else "dub"])[0]
@@ -2201,18 +2240,23 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                     },
                 }
 
-        # Route 2: FenixFlix (PT-BR Dublado)
+        # Route 2: FenixFlix (PT-BR Dublado & Subtitled Multi-Cluster)
         if not result and requested_source == "fenixflix" and (media_id or imdb_id):
             active_imdb_id = imdb_id
-            if not active_imdb_id and media_id and tmdb_api_key:
+            if not active_imdb_id and media_id and TMDB_API_KEY:
                 active_imdb_id = timed("imdb", fetch_imdb_id, media_id, "movie" if media_type == "movie" else "serie")
-            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, active_imdb_id, media_type, season, episode, "dubbed")
+            requested_audio = params.get("audio", ["subtitled" if lang == "sub" else "dubbed"])[0]
+            fenix_data = timed("fenixflix", local_providers.fetch_fenixflix, media_id, active_imdb_id, media_type, season, episode, requested_audio)
             if fenix_data and fenix_data.get("sources"):
                 parsed = []
                 for s in fenix_data["sources"]:
                     raw_file = s["file"].strip()
                     raw_lower = raw_file.lower()
-                    if "zunderflix" in raw_lower or "zunder" in raw_lower:
+                    if "fenixhub" in raw_lower or "fenixflix" in raw_lower:
+                        # FenixHub rejects requests carrying fenixflix/fenixhub origin/referer with HTTP 403 ("Origem bloqueada").
+                        referer = ""
+                        origin = ""
+                    elif "zunderflix" in raw_lower or "zunder" in raw_lower:
                         referer = "https://zunderflix.lat/"
                         origin = "https://zunderflix.lat"
                     elif "hollymovies" in raw_lower:
@@ -2238,14 +2282,18 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                         "direct_url": raw_file if (not is_mp4 and is_hls and raw_file.startswith("https://")) else None,
                         "raw_url": clean_url,
                         "headers": {"Referer": referer, "Origin": origin},
-                        "quality": s.get("quality", 1080)
+                        "quality": s.get("quality", 1080),
+                        "providerTier": s.get("providerTier", 3),
+                        "isDubbed": bool(s.get("isDubbed", False)),
+                        "isSubbed": bool(s.get("isSubbed", False)),
+                        "audio": "dubbed" if s.get("isDubbed") else ("subtitled" if s.get("isSubbed") else "original")
                     })
-                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: 90, media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
+                ranked = timed("probe", rank_sources_by_quality, parsed, lambda s: (s.get("providerTier", 0) * 100), media_type == "serie", is_dubbed=lang != "sub", quality_mode=quality_mode)
                 result = {
                     "success": True,
                     "title": fenix_data.get("title") or title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
                     "category": media_type,
-                    "audio": "dubbed",
+                    "audio": requested_audio,
                     "provider": "fenixflix",
                     "primary_source": ranked[0],
                     "fallback_sources": ranked[1:],
@@ -2255,30 +2303,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
 
 
-        # Route 5: Movy (Wecollege CDN)
-        if not result and requested_source == "movy" and media_id:
-            movy_data = timed("movy", local_providers.fetch_movy, media_id, media_type, season, episode, imdb_id)
-            if movy_data and movy_data.get("sources"):
-                parsed = [{
-                    "label": s["label"],
-                    "type": "hls",
-                    "stream_url": proxied_stream_url(proxy_base, stream_key, s["file"], s["referer"]),
-                    "direct_url": s["file"],
-                    "raw_url": s["file"],
-                    "headers": {"Referer": s["referer"]},
-                    "quality": s.get("quality", 1080)
-                } for s in movy_data["sources"]]
-                result = {
-                    "success": True,
-                    "title": title_param or ("Filme" if media_type == "movie" else f"Série T{season}E{episode}"),
-                    "category": media_type,
-                    "audio": "original",
-                    "provider": "movy",
-                    "primary_source": parsed[0],
-                    "fallback_sources": parsed[1:],
-                    "subtitles": [],
-                    "aniskip": {"mal_id": int(mal_id) if str(mal_id).isdigit() else None, "episode": episode, "ready": bool(mal_id)}
-                }
+
 
         # Route 6: MGEB (Player Principal Atual)
         mgeb_episode_mismatch = [False]
@@ -2361,13 +2386,15 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
                     referer = "https://embedplayer2.xyz/"
                     if any(k in raw_file for k in ("peliculaplay.com", "cache/hls", "mgeb.lat", "mgeb.top", "mgeb.space")):
-                        referer = "https://mgeb.lat/"
+                        referer = "https://mgeb.space/"
 
                     final_stream_url = direct_clean_url if is_direct_mp4 else proxied_stream_url(proxy_base, stream_key, raw_file, referer)
                     source_type = s.get("type") or ("hls" if ".m3u8" in raw_file else "mp4")
                     # Every HLS segment through the proxy is one function call (~450 an hour of video). The player tries
-                    # the host first and falls back to the proxy, so hosts that need their Referer still play
-                    direct_url = raw_file if (not is_direct_mp4 and source_type == "hls" and re.match(r'^https://', raw_file, re.I)) else None
+                    # the host first and falls back to the proxy, so hosts that need their Referer still play.
+                    # CDNs that lock tokens to the resolving IP (like playercdn/workers.dev) MUST NOT use direct_url in browser.
+                    is_ip_locked_cdn = "playercdn" in raw_file or "workers.dev" in raw_file
+                    direct_url = raw_file if (not is_direct_mp4 and not is_ip_locked_cdn and source_type == "hls" and re.match(r'^https://', raw_file, re.I)) else None
 
                     parsed_sources.append({
                         "label": s.get("label", f"Servidor {idx + 1}"),
@@ -2381,14 +2408,14 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 def score_source(src):
                     url = src.get("raw_url", "").lower()
                     # Tier 1: Proven robust datacenter-safe HLS CDNs & Direct sanitized HTTPS MP4 (Score 95)
-                    if ("cache/hls" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url
+                    if ("playercdn" in url or "workers.dev" in url or "peliculaplay.com" in url or "playspelis.com" in url or "flixlat.com" in url or "97bf1.com" in url
                             or is_brazilian_cdn(url)):
                         return 95
                     # Tier 2: Standard generic HLS streams (Score 80)
                     if ".m3u8" in url:
                         return 80
-                    # Tier 3: Fallback PlayerCDN / Worker mirrors (Score 60 - Preserved as safety net)
-                    if "playercdn" in url or "workers.dev" in url or "powestream" in url:
+                    # Tier 3: Low-bitrate cached SD mirrors (Score 60 - Preserved as safety net)
+                    if "cache/hls" in url or "powestream" in url:
                         return 60
                     # Tier 4: Other MP4 streams (Score 50)
                     if ".mp4" in url:
@@ -2473,12 +2500,22 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 referer, origin = "https://zokoanime.video/", "https://zokoanime.video"
             elif "zunderflix" in target_url or "zunder" in target_url:
                 referer, origin = "https://zunderflix.lat/", "https://zunderflix.lat"
-            elif "playercdn.workers.dev" in target_url or "embedplayer2.xyz" in target_url:
+            elif "playercdn" in target_url or "embedplayer2.xyz" in target_url:
                 referer, origin = "https://embedplayer2.xyz/", "https://embedplayer2.xyz"
+            elif "bombrilhoso.lat" in target_url or "penterosa.lat" in target_url or "rdembed.online" in target_url or ".website" in target_url or "xn--" in target_url:
+                referer, origin = "https://penterosa.lat/", "https://penterosa.lat"
             elif "googlevideo.com" in target_url or "blogger.com" in target_url:
                 referer = "https://www.blogger.com/"
             elif "peliculaplay.com" in target_url or "mgeb.lat" in target_url or "mgeb.top" in target_url or "mgeb.space" in target_url:
-                referer = "https://mgeb.lat/"
+                referer = "https://mgeb.space/"
+            elif "duckdns.org" in target_url or "megafonte" in target_url or "koyeb.app" in target_url:
+                referer, origin = "https://tvzinhaonline.pages.dev/", ""
+            elif "fenixhub.online" in target_url or "fenixflix" in target_url:
+                referer, origin = "", ""
+            elif "pluto.tv" in target_url:
+                referer, origin = "https://pluto.tv/", "https://pluto.tv"
+            elif any(h in target_url for h in ["rfc-infinite.top", "apontaaimeupatrao.lat", "governosptx.org", "logicahost.com.br", "otteravision.com", "streamingdevideo.com.br"]):
+                referer, origin = "", ""
             else:
                 referer = "https://tvzinhaonline.pages.dev/"
         # The anime host checks Origin together with its Referer (the resolver's probe sends both)
@@ -2505,7 +2542,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         with resp:
             content_type = (resp.headers.get("Content-Type", "") or "").lower()
-            is_m3u8 = ".m3u8" in target_url or ".m3u8" in final_url or "hls-proxy" in target_url or "mpegurl" in content_type
+            is_m3u8 = ".m3u8" in target_url or ".m3u8" in final_url or "hls-proxy" in target_url or "mpegurl" in content_type or "index.txt" in target_url or "bombrilhoso.lat" in target_url or "penterosa.lat" in target_url
             is_vtt = ".vtt" in target_url or ".vtt" in final_url or "text/vtt" in content_type
             is_ok = 200 <= resp.status < 300
 

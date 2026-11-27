@@ -7,24 +7,28 @@
 import {
     TMDB_IMG_W500,
     TMDB_IMG_ORIGINAL,
+    TMDB_IMG_W342,
+    TMDB_IMG_W1280,
     TMDB_SERIES_CACHE_KEY,
     TMDB_ANIMES_CACHE_KEY,
     SERIES_SERVERS
-} from '../core/constants.js?v=20261118_1505';
-import { showToast } from '../core/toast.js?v=20261118_1505';
-import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261118_1505';
-import { buildFeedRows } from '../core/feedRows.js?v=20261118_1505';
-import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261118_1505';
-import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261118_1505';
-import { resumeStartTime } from '../core/resume.js?v=20261118_1505';
-import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261118_1505';
-import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261118_1505';
-import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261118_1505';
-import { fetchTmdb } from '../core/tmdb.js?v=20261118_1505';
-import { renderServerGroups } from '../core/serverGroups.js?v=20261118_1505';
-import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261118_1505';
-import { openTitle, exitTitleTo } from './titlePage.js?v=20261118_1505';
-import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261118_1505';
+} from '../core/constants.js?v=20261127_1525';
+import { showToast } from '../core/toast.js?v=20261127_1525';
+import { filteredSearchPage, inYearRange } from '../core/searchFilter.js?v=20261127_1525';
+import { buildFeedRows } from '../core/feedRows.js?v=20261127_1525';
+import { isBackgroundMediaAllowed, syncPageLock } from '../core/activity.js?v=20261127_1525';
+import { setPlaybackActiveState } from '../core/wakeLock.js?v=20261127_1525';
+import { resumeStartTime } from '../core/resume.js?v=20261127_1525';
+import { mountNativePlayer, resolveDirectStream, prefetchDirectStream, atomicPlayerReset, setLoaderText, leaveStageFullscreen } from '../player/engine.js?v=20261127_1525';
+import { pushNavLayer, popNavLayer } from '../navigation/historyManager.js?v=20261127_1525';
+import { escapeHtml, escapeAttr } from '../core/sanitize.js?v=20261127_1525';
+import { fetchTmdb } from '../core/tmdb.js?v=20261127_1525';
+import { renderServerGroups } from '../core/serverGroups.js?v=20261127_1525';
+import { continueWatchingEntries, hideFromContinueWatching, readWatchProgress, writeWatchProgress, PROGRESS_EVENT } from '../core/watchProgress.js?v=20261127_1525';
+import { openTitle, exitTitleTo } from './titlePage.js?v=20261127_1525';
+import { reachedEnd, titleFinished } from './ratePrompt.js?v=20261127_1525';
+import { getLibraryState, setWatchlist, setWatched, setRating } from '../core/library.js?v=20261127_1525';
+import { createRateStars, formatStars, starSvg } from '../core/rateStars.js?v=20261127_1525';
 
 // --- TMDB Genres Dictionary ---
 const TMDB_GENRES = {
@@ -70,13 +74,19 @@ let activeSeriesPlaying = {
     seasonNumber: 1,
     episodeNumber: 1,
     episodeData: null,
-    server: 'native_direct'
+    server: 'native_direct',
+    audioPreference: null
 };
 
 let seriesPlaybackSessionId = 0;
 let pendingSeriesIframeTimer = null;
 
 if (typeof window !== 'undefined') {
+    window.addEventListener('tvzinha:audioChanged', (e) => {
+        if (e.detail && e.detail.audioMode) {
+            activeSeriesPlaying.audioPreference = e.detail.audioMode;
+        }
+    });
     window.addEventListener('tvzinha:teardownMedia', () => {
         seriesPlaybackSessionId++;
         if (pendingSeriesIframeTimer) {
@@ -88,6 +98,8 @@ if (typeof window !== 'undefined') {
 }
 
 function getOrCreateSeriesIframe() {
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) playerCard.classList.add('is-iframe');
     let iframe = document.getElementById("series-modal-iframe");
     if (!iframe) {
         const stage = document.querySelector(".series-theater-stage");
@@ -113,6 +125,8 @@ function getOrCreateSeriesIframe() {
 }
 
 function removeSeriesIframe() {
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) playerCard.classList.remove('is-iframe');
     const iframe = document.getElementById("series-modal-iframe");
     if (iframe) {
         iframe.src = "";
@@ -476,7 +490,7 @@ function renderPaginationControls(containerId, currentPage, totalPages, totalRes
 }
 
 // --- Card Creator Element ---
-function createSeriesCardElement(seriesItem, mediaType = 'tv') {
+function createSeriesCardElement(seriesItem, mediaType = 'tv', isAboveFold = false, priority = false) {
     const card = document.createElement("div");
     card.className = "movie-poster-card";
     card.tabIndex = 0;
@@ -490,7 +504,7 @@ function createSeriesCardElement(seriesItem, mediaType = 'tv') {
     card.setAttribute("aria-label", `${title} (${year})`);
 
     const posterUrl = seriesItem.poster_path
-        ? `${TMDB_IMG_W500}${seriesItem.poster_path}`
+        ? `${TMDB_IMG_W342}${seriesItem.poster_path}`
         : 'assets/logos/fav/icon-detailed.svg';
 
     const safeTitle = escapeHtml(title);
@@ -498,9 +512,11 @@ function createSeriesCardElement(seriesItem, mediaType = 'tv') {
     const safePoster = escapeAttr(posterUrl);
     const safeYear = escapeHtml(year);
     const safeRating = escapeHtml(rating);
+    const loadingAttr = isAboveFold ? '' : 'loading="lazy"';
+    const priorityAttr = priority ? 'fetchpriority="high"' : '';
 
     card.innerHTML = `
-        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
+        <img class="movie-poster-img" src="${safePoster}" alt="${safeTitleAttr}" ${loadingAttr} ${priorityAttr} decoding="async" data-fallback-src="assets/logos/fav/icon-detailed.svg">
         <div class="movie-poster-overlay">
             <h4 class="movie-card-title" title="${safeTitleAttr}">${safeTitle}</h4>
             <div class="movie-card-meta">
@@ -599,7 +615,7 @@ function populateSeriesTrack(trackId, items, mediaType = 'tv') {
         return;
     }
     const fragment = document.createDocumentFragment();
-    items.forEach(item => fragment.appendChild(createSeriesCardElement(item, mediaType)));
+    items.forEach((item, idx) => fragment.appendChild(createSeriesCardElement(item, mediaType, idx < 6, idx < 2)));
     track.appendChild(fragment);
 }
 
@@ -613,7 +629,7 @@ function initHeroSeriesCarousel(seriesItems) {
     seriesItems.forEach(item => {
         if (item.backdrop_path) {
             const preBackdrop = new Image();
-            preBackdrop.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            preBackdrop.src = `${TMDB_IMG_W1280}${item.backdrop_path}`;
         }
 
         if (!item.logo_url && !item.has_no_logo) {
@@ -677,7 +693,8 @@ function initHeroSeriesCarousel(seriesItems) {
         const btnWatch = document.getElementById("btn-series-hero-watch");
 
         if (backdropImg && item.backdrop_path) {
-            backdropImg.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            backdropImg.fetchPriority = "high";
+            backdropImg.src = `${TMDB_IMG_W1280}${item.backdrop_path}`;
         }
 
         if (item.logo_url) {
@@ -1209,7 +1226,7 @@ function initHeroAnimesCarousel(animeItems) {
     animeItems.forEach(item => {
         if (item.backdrop_path) {
             const preBackdrop = new Image();
-            preBackdrop.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            preBackdrop.src = `${TMDB_IMG_W1280}${item.backdrop_path}`;
         }
 
         if (!item.logo_url && !item.has_no_logo) {
@@ -1274,7 +1291,8 @@ function initHeroAnimesCarousel(animeItems) {
         const btnWatch = document.getElementById("btn-animes-hero-watch");
 
         if (backdropImg && item.backdrop_path) {
-            backdropImg.src = `${TMDB_IMG_ORIGINAL}${item.backdrop_path}`;
+            backdropImg.fetchPriority = "high";
+            backdropImg.src = `${TMDB_IMG_W1280}${item.backdrop_path}`;
         }
 
         if (item.logo_url) {
@@ -1735,14 +1753,144 @@ async function executeFilteredAnimesSearch(page = 1) {
 
 const SERIES_SERVER_OPTIONS = [
     { id: 'native_anime',   name: 'Anime Player (Áudio Original)', isNative: true, animeOnly: true, source: 'anime_native' },
-    { id: 'native_direct',  name: 'Mgeb Player (BETA)',            isNative: true, source: 'mgeb' },
-    { id: 'native_fenix',   name: 'Fenix Player (BETA)',           isNative: true, source: 'fenixflix' },
+    { id: 'native_direct',  name: 'Mgeb Player (PTBR)',            isNative: true, source: 'mgeb' },
+    { id: 'native_fenix',   name: 'Fenix Player (Dual Áudio)',     isNative: true, source: 'fenixflix' },
     { id: 'mgeb',          name: 'Servidor 1 (MGEB)' },
     { id: 'superflix',     name: 'Servidor 2 (SuperFlix)' },
     { id: 'myembed',       name: 'Servidor 3 (MyEmbed)' },
     { id: 'warezcdn',      name: 'Servidor 4 (WarezCDN)' },
     { id: 'vsembed',       name: 'Servidor 5 (VsEmbed)' }
 ];
+
+export function selectSeriesServer(server) {
+    if (!server) return;
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) playerCard.classList.remove('is-error');
+    document.querySelectorAll("#series-servers-grid .btn-movie-server").forEach(b => {
+        b.classList.toggle("active", b.dataset.server === server.id);
+    });
+    const previousServer = activeSeriesPlaying.server;
+    activeSeriesPlaying.server = server.id;
+    activeSeriesPlaying.userSelectedServer = true;
+
+    // Preserve logical audio context when switching between players:
+    if (server.id === 'native_fenix') {
+        if (previousServer === 'native_anime') {
+            activeSeriesPlaying.audioPreference = 'subtitled';
+        } else if (previousServer === 'native_direct') {
+            activeSeriesPlaying.audioPreference = 'dubbed';
+        }
+    }
+
+    const activeLabel = document.getElementById("series-player-active-server-name");
+    if (activeLabel) {
+        activeLabel.textContent = (server.name || 'Servidores').replace(' (BETA)', '').replace(' (BETA - Legendados)', '');
+    }
+
+    // Immediate teardown of current playback in 0ms
+    atomicPlayerReset();
+    removeSeriesIframe();
+    const seriesArt = document.getElementById("series-artplayer-container");
+    const seriesLoader = document.getElementById("series-theater-loader");
+    if (seriesArt) {
+        seriesArt.innerHTML = "";
+        seriesArt.classList.add("hidden");
+    }
+    const playerName = server.name || 'Servidor';
+    setLoaderText(seriesLoader, `Conectando ao ${playerName}...`);
+    if (seriesLoader) seriesLoader.classList.remove("hidden");
+
+    if (activeSeriesPlaying.show) {
+        openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: activeSeriesPlaying.episodeNumber }, { keepPosition: true });
+    }
+}
+
+/** Renders the top bar server switcher flyout panel for series/animes. */
+export function renderSeriesTopServersFlyout() {
+    const panel = document.getElementById("series-servers-flyout-panel");
+    if (!panel) return;
+    const showItem = activeSeriesPlaying.show;
+    const isAnime = showItem ? isAnimeShow(showItem) : false;
+    const availableServers = SERIES_SERVER_OPTIONS.filter(s => !s.animeOnly || isAnime);
+    const activeServerId = activeSeriesPlaying.server || (availableServers[0]?.id || 'native_mgeb');
+    const nativeServers = availableServers.filter(s => s.isNative);
+    const iframeServers = availableServers.filter(s => !s.isNative);
+
+    let html = `
+        <div class="tvz-servers-header">
+            <div class="tvz-servers-header-left">
+                <button type="button" class="tvz-panel-back-btn" id="btn-close-series-servers-flyout" title="Voltar" aria-label="Voltar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <span class="tvz-servers-title">Trocar Servidor</span>
+            </div>
+        </div>
+        <div class="tvz-servers-body">
+    `;
+
+    if (nativeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Players Principais (Direto)</div>`;
+        nativeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'HD'}</span>
+                </div>
+            `;
+        });
+    }
+
+    if (iframeServers.length > 0) {
+        html += `<div class="tvz-servers-group-title">Servidores Externos (Iframe)</div>`;
+        iframeServers.forEach(s => {
+            const isActive = s.id === activeServerId;
+            html += `
+                <div class="tvz-server-item ${isActive ? 'is-active' : ''}" data-server-id="${s.id}">
+                    <span class="tvz-server-name">${escapeHtml(s.name)}</span>
+                    <span class="tvz-server-badge">${isActive ? 'Ativo' : 'Reproduzir'}</span>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div>`;
+    panel.innerHTML = html;
+
+    const closeBtn = document.getElementById("btn-close-series-servers-flyout");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => toggleSeriesServersFlyout(false));
+    }
+
+    panel.querySelectorAll('.tvz-server-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const serverId = item.getAttribute('data-server-id');
+            const targetServer = availableServers.find(s => s.id === serverId);
+            if (targetServer) {
+                toggleSeriesServersFlyout(false);
+                selectSeriesServer(targetServer);
+            }
+        });
+    });
+}
+
+export function toggleSeriesServersFlyout(forceState) {
+    const panel = document.getElementById("series-servers-flyout-panel");
+    const backdrop = document.getElementById("series-servers-backdrop");
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (!panel) return;
+    const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
+    if (willOpen) {
+        renderSeriesTopServersFlyout();
+        panel.classList.add('is-open');
+        if (backdrop) backdrop.classList.add('is-open');
+        if (playerCard) playerCard.classList.add('has-servers-open');
+    } else {
+        panel.classList.remove('is-open');
+        if (backdrop) backdrop.classList.remove('is-open');
+        if (playerCard) playerCard.classList.remove('has-servers-open');
+    }
+}
 
 function renderSeriesServerButtons(showItem) {
     const serversGrid = document.getElementById("series-servers-grid");
@@ -1764,27 +1912,7 @@ function renderSeriesServerButtons(showItem) {
             : `<span>${safeServerName}</span><span style="font-size: 0.72rem; color: #a1a1aa; opacity: 0.85;">Reproduzir</span>`;
 
         btn.addEventListener("click", () => {
-            document.querySelectorAll("#series-servers-grid .btn-movie-server").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            activeSeriesPlaying.server = server.id;
-            activeSeriesPlaying.userSelectedServer = true;
-
-            // Immediate teardown of current playback in 0ms
-            atomicPlayerReset();
-            removeSeriesIframe();
-            const seriesArt = document.getElementById("series-artplayer-container");
-            const seriesLoader = document.getElementById("series-theater-loader");
-            if (seriesArt) {
-                seriesArt.innerHTML = "";
-                seriesArt.classList.add("hidden");
-            }
-            const playerName = server.name || 'Servidor';
-            setLoaderText(seriesLoader, `Conectando ao ${playerName}...`);
-            if (seriesLoader) seriesLoader.classList.remove("hidden");
-
-            if (activeSeriesPlaying.show) {
-                openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: activeSeriesPlaying.episodeNumber }, { keepPosition: true });
-            }
+            selectSeriesServer(server);
         });
 
         return btn;
@@ -1797,6 +1925,8 @@ export function setupSeriesModalHandlers() {
 
     const btnReload = document.getElementById("btn-reload-series-player");
     const btnClosePlayer = document.getElementById("btn-close-series-player");
+    const btnServersToggle = document.getElementById("btn-series-servers-toggle");
+    const backdrop = document.getElementById("series-servers-backdrop");
 
     if (btnReload) {
         btnReload.addEventListener("click", () => {
@@ -1805,6 +1935,36 @@ export function setupSeriesModalHandlers() {
             }
         });
     }
+
+    if (btnServersToggle) {
+        btnServersToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleSeriesServersFlyout();
+        });
+    }
+
+    if (backdrop) {
+        ['pointerdown', 'touchstart', 'click'].forEach(evt => {
+            backdrop.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleSeriesServersFlyout(false);
+            }, { passive: false });
+        });
+    }
+
+    document.addEventListener('pointerdown', (e) => {
+        const panel = document.getElementById("series-servers-flyout-panel");
+        if (panel && panel.classList.contains('is-open')) {
+            if (!panel.contains(e.target) && !e.target.closest('#btn-series-servers-toggle') && !e.target.closest('.btn-error-server-switch') && !e.target.closest('.tvz-btn-error-primary')) {
+                toggleSeriesServersFlyout(false);
+            }
+        }
+        const ratePanel = document.getElementById("series-mobile-rate-panel");
+        if (ratePanel && !ratePanel.classList.contains('hidden') && !e.target.closest(".title-rate-wrap")) {
+            closeSeriesRatePanel();
+        }
+    });
 
     if (btnClosePlayer) {
         btnClosePlayer.addEventListener("click", stopSeriesPlayer);
@@ -1852,16 +2012,16 @@ export function setupSeriesModalHandlers() {
 
     if (btnToggleDrawer && drawer) {
         btnToggleDrawer.addEventListener("click", () => {
-            drawer.classList.toggle("hidden");
-            if (!drawer.classList.contains("hidden")) {
-                populateSeriesDrawer();
-            }
+            toggleSeriesDrawer();
         });
     }
 
     if (btnCloseDrawer && drawer) {
-        btnCloseDrawer.addEventListener("click", () => drawer.classList.add("hidden"));
+        btnCloseDrawer.addEventListener("click", () => toggleSeriesDrawer(false));
     }
+
+    window.removeEventListener('tvzinha:toggleSeriesDrawer', onToggleSeriesDrawerEvent);
+    window.addEventListener('tvzinha:toggleSeriesDrawer', onToggleSeriesDrawerEvent);
 
     const btnModeArcs = document.getElementById("btn-mode-arcs");
     const btnModeContinuous = document.getElementById("btn-mode-continuous");
@@ -1886,21 +2046,33 @@ export function setupSeriesModalHandlers() {
     }
 
     const quickSearchInput = document.getElementById("series-quick-ep-search");
-    const btnGoToEp = document.getElementById("btn-go-to-ep");
 
     const handleQuickSearch = () => {
-        const num = parseInt(quickSearchInput ? quickSearchInput.value.trim() : '0', 10);
+        const raw = quickSearchInput ? quickSearchInput.value.trim() : '';
+        const num = parseInt(raw, 10);
         if (!num || num < 1) {
             showToast("Por favor, digite um número de episódio válido.");
+            return;
+        }
+        const total = totalEpisodesOf(currentSeriesDetails);
+        if (total > 0 && num > total) {
+            showToast(`Episódio ${num} não encontrado (máx: ${total})`);
             return;
         }
         goToEpisodeByAbsoluteNumber(num);
     };
 
-    if (btnGoToEp) btnGoToEp.addEventListener("click", handleQuickSearch);
     if (quickSearchInput) {
         quickSearchInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") handleQuickSearch();
+            if (e.key === "Enter") {
+                e.preventDefault();
+                handleQuickSearch();
+            }
+        });
+        quickSearchInput.addEventListener("change", () => {
+            if (quickSearchInput.value.trim()) {
+                handleQuickSearch();
+            }
         });
     }
 }
@@ -2106,8 +2278,10 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
         const safeEpNum = escapeHtml(ep.episode_number);
         const safeEpDuration = escapeHtml(epDuration);
         const safeEpAbsoluteLabel = escapeHtml(epAbsoluteLabel);
-        const safeEpOverview = escapeHtml(ep.overview || "Sem descrição disponível.");
+        const rawOverview = (ep.overview || "").trim();
+        const safeEpOverview = escapeHtml(rawOverview || "Sem descrição disponível.");
         const safeAirDateYear = escapeHtml(ep.air_date ? ep.air_date.substring(0, 4) : '');
+        const hasLongOverview = rawOverview.length > 80;
 
         card.innerHTML = `
             <div class="ep-thumbnail-box">
@@ -2130,8 +2304,21 @@ function renderEpisodesGrid(container, episodes, seasonNumber) {
                     ${safeEpAbsoluteLabel ? `<span>${safeEpAbsoluteLabel}</span>` : ''}
                 </div>
                 <p class="ep-overview">${safeEpOverview}</p>
+                ${hasLongOverview ? '<button type="button" class="ep-overview-more" aria-label="Ler mais da sinopse">Ler mais</button>' : ''}
             </div>
         `;
+
+        const moreBtn = card.querySelector(".ep-overview-more");
+        if (moreBtn) {
+            moreBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const p = card.querySelector(".ep-overview");
+                if (p) {
+                    const expanded = p.classList.toggle("is-expanded");
+                    moreBtn.textContent = expanded ? "Ler menos" : "Ler mais";
+                }
+            });
+        }
 
         if (isUpcomingEpisode(ep)) {
             card.dataset.upcoming = upcomingText(ep) + '.';
@@ -2444,13 +2631,45 @@ function fetchSeasonEpisodes(showId, seasonNumber) {
     return request;
 }
 
-/** Title of the player header: show, season/episode, show-wide number (several seasons only), episode name. */
+/** Title of the player header: season/episode, show-wide number (several seasons only), episode name. */
 function episodeHeaderText(showItem, seasonNumber, episodeNumber, episodeName, absoluteEpisode) {
-    const showName = showItem.name || showItem.title || 'Série';
+    const isAnime = activeSeriesPlaying?.mediaContext?.isAnime;
+    if (isAnime) {
+        const epNum = absoluteEpisode || episodeNumber;
+        return `Ep. ${epNum}${episodeName ? ` – ${episodeName}` : ''}`;
+    }
     const details = detailsFor(showItem.id);
     const several = regularSeasonsOf(details).length > 1;
     const absolute = several ? (absoluteEpisode || absoluteEpisodeOf(details, seasonNumber, episodeNumber)) : 0;
-    return `${showName} • T${seasonNumber}:E${episodeNumber}${absolute ? ` • Ep. geral ${absolute}` : ''}${episodeName ? ` – ${episodeName}` : ''}`;
+    return `T${seasonNumber}:E${episodeNumber}${absolute ? ` • Ep. geral ${absolute}` : ''}${episodeName ? ` – ${episodeName}` : ''}`;
+}
+
+/** Standardized player top bar: Top line = Show Name • T1:E1 (Ep. geral X), Bottom line = Episode Name only */
+function updateSeriesPlayerTopBar(showItem, seasonNumber, episodeNumber, episodeName, absoluteEpisode) {
+    if (!showItem) return;
+    const showName = showItem.name || showItem.title || 'Série';
+    const isAnime = activeSeriesPlaying?.mediaContext?.isAnime;
+    let epBadge = '';
+    if (isAnime) {
+        const epNum = absoluteEpisode || episodeNumber;
+        epBadge = `Ep. ${epNum}`;
+    } else {
+        const details = detailsFor(showItem.id);
+        const several = regularSeasonsOf(details).length > 1;
+        const absolute = several ? (absoluteEpisode || absoluteEpisodeOf(details, seasonNumber, episodeNumber)) : 0;
+        epBadge = `T${seasonNumber}:E${episodeNumber}${absolute ? ` (Ep. geral ${absolute})` : ''}`;
+    }
+    const topText = epBadge ? `${showName} • ${epBadge}` : showName;
+    const subText = episodeName && !isGenericEpisodeName(episodeName) ? episodeName : '';
+
+    const topShowName = document.getElementById("series-player-show-name-top");
+    if (topShowName) topShowName.textContent = topText;
+
+    const currentTitleEl = document.getElementById("series-player-current-ep");
+    if (currentTitleEl) {
+        currentTitleEl.textContent = subText || '';
+        currentTitleEl.style.display = subText ? '' : 'none';
+    }
 }
 
 // MyAnimeList id the server picked per show+season, so the next episodes skip the title search
@@ -2626,7 +2845,23 @@ function applyEpisodeToCard(card, episode) {
         title.title = episode.name;
     }
     const overview = card.querySelector(".ep-overview");
-    if (overview) overview.textContent = episode.overview || "";
+    if (overview) {
+        const raw = (episode.overview || "").trim();
+        overview.textContent = raw || "Sem descrição disponível.";
+        if (raw.length > 80 && !card.querySelector(".ep-overview-more")) {
+            const moreBtn = document.createElement("button");
+            moreBtn.type = "button";
+            moreBtn.className = "ep-overview-more";
+            moreBtn.textContent = "Ler mais";
+            moreBtn.setAttribute("aria-label", "Ler mais da sinopse");
+            moreBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const exp = overview.classList.toggle("is-expanded");
+                moreBtn.textContent = exp ? "Ler menos" : "Ler mais";
+            });
+            overview.after(moreBtn);
+        }
+    }
     const image = card.querySelector(".ep-thumbnail-img");
     if (image && episode.still_path) image.src = `${TMDB_IMG_W500}${episode.still_path}`;
     if (isUpcomingEpisode(episode)) {
@@ -2637,6 +2872,11 @@ function applyEpisodeToCard(card, episode) {
 
 function goToEpisodeByAbsoluteNumber(epNumber) {
     if (!currentSelectedSeries) return;
+    const total = totalEpisodesOf(currentSeriesDetails);
+    if (total > 0 && epNumber > total) {
+        showToast(`Episódio ${epNumber} não encontrado (máx: ${total})`);
+        return;
+    }
     const seasons = (currentSeriesDetails && currentSeriesDetails.seasons) ? currentSeriesDetails.seasons : [];
     const mapped = mapAbsoluteEpisodeToSeason(seasons, epNumber);
     openEpisode(currentSelectedSeries, { absolute: epNumber });
@@ -2724,6 +2964,21 @@ function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNum
         resolveEpisode = tmdbEpisode;
     }
 
+    let effectiveLang = "dub";
+    if (isAnimeMode) {
+        effectiveLang = "sub";
+    } else if (source === 'mgeb') {
+        effectiveLang = "dub";
+    } else if (source === 'fenixflix') {
+        if (activeSeriesPlaying.audioPreference === 'subtitled') {
+            effectiveLang = "sub";
+        } else if (activeSeriesPlaying.audioPreference === 'dubbed') {
+            effectiveLang = "dub";
+        } else {
+            effectiveLang = isAnimeShow(showItem) ? "sub" : "dub";
+        }
+    }
+
     return {
         id: showItem.id,
         type: isAnimeMode ? "anime" : "serie",
@@ -2736,7 +2991,8 @@ function buildNativeResolveRequest(showItem, serverKey, seasonNumber, episodeNum
         absolute_episode: isAnimeMode ? (absoluteEpisode || absoluteEpisodeOf(details, seasonNumber, episodeNumber) || '') : '',
         total_episodes: isAnimeMode ? (totalEpisodesOf(details) || '') : '',
         mal_id: isAnimeMode ? (animeMalIds.get(`${showItem.id}_${seasonNumber}`) || '') : '',
-        lang: isAnimeMode ? "sub" : "dub",
+        lang: effectiveLang,
+        audio: effectiveLang === "sub" ? "subtitled" : "dubbed",
         title: showItem.name || showItem.title || 'Série',
         original_title: isAnimeMode ? originalTitle : '',
         year: airDate ? airDate.substring(0, 4) : '',
@@ -2751,12 +3007,13 @@ export function playSeriesEpisode(showItem, seasonNumber, episodeNumber) {
     return openEpisode(showItem, { season: seasonNumber, episode: episodeNumber });
 }
 
-/** Populates the Netflix/MGEB style Obra Card for Series and Anime at top-left of the player */
-function updateSeriesObraCard(showItem, seasonNumber, episodeNumber, epData, context = {}) {
-    if (!showItem) return;
+/** Renders or updates the Netflix/MGEB-style Obra Card shown exclusively when paused for Series/Animes. */
+export function updateSeriesObraCard(show, epData, context) {
+    if (!show) return;
     const card = document.getElementById("series-obra-card");
     if (!card) return;
-    const posterEl = document.getElementById("series-obra-poster");
+
+    const posterImg = document.getElementById("series-obra-poster");
     const titleEl = document.getElementById("series-obra-title");
     const ratingEl = document.getElementById("series-obra-rating");
     const yearEl = document.getElementById("series-obra-year");
@@ -2765,49 +3022,643 @@ function updateSeriesObraCard(showItem, seasonNumber, episodeNumber, epData, con
     const genresEl = document.getElementById("series-obra-genres");
     const overviewEl = document.getElementById("series-obra-overview");
 
-    if (posterEl) {
-        const still = epData?.still_path;
-        const poster = still ? `${TMDB_IMG_W500}${still}` : (showItem.poster_path ? `${TMDB_IMG_W500}${showItem.poster_path}` : '');
-        posterEl.src = poster;
-        posterEl.alt = showItem.name || showItem.title || '';
+    const showTitle = show.name || show.title || 'Série';
+    if (titleEl) titleEl.textContent = showTitle;
+
+    const sNum = activeSeriesPlaying.seasonNumber || (context && context.season) || 1;
+    const eNum = activeSeriesPlaying.episodeNumber || (context && context.episode) || 1;
+    const epName = (epData && !isGenericEpisodeName(epData.name)) ? epData.name : '';
+    const absNum = activeSeriesPlaying.absoluteEpisodeNumber || (epData && epData.absoluteEpisode) || (context && context.absolute) || 0;
+    updateSeriesPlayerTopBar(show, sNum, eNum, epName, absNum);
+
+    const thumbTop = document.getElementById("series-player-thumb-top");
+    if (thumbTop) {
+        const pPath = (epData && epData.still_path) || show.poster_path || show.backdrop_path;
+        if (pPath) {
+            thumbTop.src = `${TMDB_IMG_W500}${pPath}`;
+            thumbTop.alt = showTitle;
+            thumbTop.classList.remove("hidden");
+        } else {
+            thumbTop.classList.add("hidden");
+        }
     }
-    if (titleEl) {
-        const showName = showItem.name || showItem.title || 'Série';
-        const epName = epData?.name && !isGenericEpisodeName(epData.name) ? ` - ${epData.name}` : '';
-        titleEl.textContent = `${showName}${epName}`;
+
+    const ratingBadge = document.getElementById("series-player-rating-badge");
+    if (ratingBadge) {
+        ratingBadge.classList.add("hidden");
     }
+
+    const yearBadge = document.getElementById("series-player-year-badge");
+    if (yearBadge) {
+        yearBadge.classList.add("hidden");
+    }
+
+    const posterPath = (epData && epData.still_path) || show.poster_path || show.backdrop_path;
+    if (posterImg) {
+        if (posterPath) {
+            posterImg.src = `${TMDB_IMG_W500}${posterPath}`;
+            posterImg.alt = showTitle;
+            posterImg.style.display = '';
+        } else {
+            posterImg.removeAttribute('src');
+            posterImg.style.display = 'none';
+        }
+    }
+
     if (ratingEl) {
-        const vote = epData?.vote_average || showItem.vote_average;
-        const voteStr = vote ? Number(vote).toFixed(1) : '';
-        ratingEl.textContent = voteStr ? `★ ${voteStr}` : '';
-        ratingEl.style.display = voteStr ? 'inline-flex' : 'none';
+        const rating = Number(show.vote_average);
+        if (!isNaN(rating) && rating > 0) {
+            ratingEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${rating.toFixed(1)}`;
+            ratingEl.style.display = '';
+        } else {
+            ratingEl.style.display = 'none';
+        }
     }
+
     if (yearEl) {
-        const year = (showItem.first_air_date || showItem.release_date || '').substring(0, 4);
-        yearEl.textContent = year;
-        yearEl.style.display = year ? 'inline-flex' : 'none';
+        const dateStr = show.first_air_date || show.release_date || '';
+        const year = dateStr.slice(0, 4);
+        if (year) {
+            yearEl.textContent = year;
+            yearEl.style.display = '';
+        } else {
+            yearEl.style.display = 'none';
+        }
     }
+
     if (certEl) {
-        certEl.textContent = showItem.certification || showItem.content_rating || '';
-        certEl.style.display = certEl.textContent ? 'inline-flex' : 'none';
+        const cert = show.certification || show.age_rating || '';
+        if (cert) {
+            certEl.textContent = cert;
+            certEl.style.display = '';
+        } else {
+            certEl.style.display = 'none';
+        }
     }
+
     if (epMetaEl) {
-        const absNum = activeSeriesPlaying.absoluteEpisodeNumber || epData?.absoluteEpisode;
-        epMetaEl.textContent = context && context.isAnime && absNum ? `Ep. ${absNum}` : `T${seasonNumber}:E${episodeNumber}`;
-        epMetaEl.style.display = 'inline-flex';
+        const sNum = activeSeriesPlaying.seasonNumber || (context && context.season) || 1;
+        const eNum = activeSeriesPlaying.episodeNumber || (context && context.episode) || 1;
+        const epName = epData && epData.name && !isGenericEpisodeName(epData.name) ? epData.name : '';
+        epMetaEl.textContent = `T${sNum} E${eNum}${epName ? ` • ${epName}` : ''}`;
+        epMetaEl.style.display = '';
     }
+
     if (genresEl) {
         let genreNames = [];
-        if (Array.isArray(showItem.genres)) {
-            genreNames = showItem.genres.map(g => (typeof g === 'object' ? g.name : g)).filter(Boolean);
-        } else if (Array.isArray(showItem.genre_ids)) {
-            genreNames = showItem.genre_ids.map(id => TMDB_GENRES[id]).filter(Boolean);
+        if (Array.isArray(show.genres)) {
+            genreNames = show.genres.map(g => (typeof g === 'string' ? g : g.name)).filter(Boolean);
+        } else if (Array.isArray(show.genre_ids)) {
+            genreNames = show.genre_ids.map(id => TMDB_GENRES[id]).filter(Boolean);
         }
-        genresEl.textContent = genreNames.slice(0, 4).join(', ');
+        genresEl.textContent = genreNames.slice(0, 3).join(' • ');
     }
+
     if (overviewEl) {
-        overviewEl.textContent = epData?.overview || showItem.overview || 'Sinopse não disponível em português.';
+        overviewEl.textContent = (epData && epData.overview) || show.overview || '';
     }
+
+    // --- Mobile Vertical Hub Section Population ---
+    const mobTitle = document.getElementById("series-mobile-title");
+    const mobLogo = document.getElementById("series-mobile-logo");
+    if (mobTitle) mobTitle.textContent = showTitle;
+
+    const titlePageLogo = document.getElementById("title-logo");
+    const logoUrl = show.logo_url || (titlePageLogo && !titlePageLogo.classList.contains("hidden") && titlePageLogo.getAttribute("src"));
+    if (mobLogo) {
+        if (logoUrl) {
+            mobLogo.src = logoUrl;
+            mobLogo.alt = showTitle;
+            mobLogo.onload = () => {
+                mobLogo.classList.remove("hidden");
+                if (mobTitle) mobTitle.classList.add("sr-only");
+            };
+            mobLogo.onerror = () => {
+                mobLogo.classList.add("hidden");
+                if (mobTitle) mobTitle.classList.remove("sr-only");
+            };
+            mobLogo.classList.remove("hidden");
+            if (mobTitle) mobTitle.classList.add("sr-only");
+        } else {
+            mobLogo.classList.add("hidden");
+            if (mobTitle) mobTitle.classList.remove("sr-only");
+        }
+    }
+
+    const mobEpTitle = document.getElementById("series-mobile-ep-title");
+    if (mobEpTitle) {
+        const sNum = activeSeriesPlaying.seasonNumber || (context && context.season) || 1;
+        const eNum = activeSeriesPlaying.episodeNumber || (context && context.episode) || 1;
+        const epName = epData && epData.name && !isGenericEpisodeName(epData.name) ? epData.name : '';
+        mobEpTitle.textContent = `T${sNum}:E${eNum}${epName ? ` • ${epName}` : ''}`;
+    }
+
+    // Render genres with middle dots (matching title-genres)
+    const mobGenres = document.getElementById("series-mobile-genres");
+    if (mobGenres) {
+        let genreNames = [];
+        if (Array.isArray(show.genres) && show.genres.length > 0) {
+            genreNames = show.genres.slice(0, 3).map(g => typeof g === 'object' ? (g.name || '') : String(g)).filter(Boolean);
+        } else if (show.genre_ids) {
+            genreNames = (show.genre_ids || []).slice(0, 3).map(id => TMDB_GENRES[id] || '').filter(Boolean);
+        } else if (show.genre) {
+            genreNames = String(show.genre).split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
+        }
+        mobGenres.innerHTML = genreNames.map(g => `<span>${escapeHtml(g)}</span>`).join('');
+    }
+
+    const renderMobMetaRow = (details) => {
+        const mobMetaRow = document.getElementById("series-mobile-meta-row");
+        if (!mobMetaRow) return;
+        const d = details || show;
+        const parts = [];
+        const dateStr = d.first_air_date || d.release_date || show.first_air_date || show.release_date || '';
+        const year = dateStr.slice(0, 4);
+        if (year) parts.push(`<span>${escapeHtml(year)}</span>`);
+
+        const seasons = (d && Number(d.number_of_seasons)) || (d && regularSeasonsOf(d).length) || 1;
+        parts.push(`<span>${seasons} ${seasons === 1 ? 'temporada' : 'temporadas'}</span>`);
+
+        const episodes = (d && Number(d.number_of_episodes)) || 0;
+        if (episodes) parts.push(`<span>${episodes} episódios</span>`);
+
+        const br = ((d.content_ratings && d.content_ratings.results) || []).find(r => r.iso_3166_1 === 'BR');
+        const cert = (br && br.rating) || d.certification || d.age_rating || '';
+        if (cert) {
+            const cls = cert === 'L' ? 'is-free' : `is-${escapeAttr(cert)}`;
+            parts.push(`<span class="title-age ${cls}" title="Classificação indicativa">${escapeHtml(cert)}</span>`);
+        }
+
+        const rating = Number(d.vote_average || show.vote_average);
+        if (!isNaN(rating) && rating > 0) {
+            parts.push(`<span class="title-score">${starSvg(true)}${escapeHtml(rating.toFixed(1))}</span>`);
+        }
+        mobMetaRow.innerHTML = parts.join('');
+    };
+
+    const initialDetails = detailsFor(show.id);
+    renderMobMetaRow(initialDetails || show);
+    if (!initialDetails) {
+        loadShowDetails(show.id).then(details => {
+            if (details && activeSeriesPlaying && activeSeriesPlaying.show && activeSeriesPlaying.show.id === show.id) {
+                renderMobMetaRow(details);
+            }
+        }).catch(() => {});
+    }
+
+    const mobCrew = document.getElementById("series-mobile-crew");
+    if (mobCrew) {
+        const details = detailsFor(show.id) || show;
+        const createdBy = (details.created_by || []).map(c => c.name);
+        let creator = createdBy.length > 0 ? createdBy.slice(0, 2).join(', ') : '';
+        if (!creator && details.credits && details.credits.crew) {
+            const dirs = details.credits.crew.filter(c => c.job === 'Director').map(c => c.name);
+            if (dirs.length > 0) creator = dirs.slice(0, 2).join(', ');
+        }
+        if (creator) {
+            mobCrew.innerHTML = `<span class="title-credit-label">Criação:</span> <strong>${escapeHtml(creator)}</strong>`;
+            mobCrew.classList.remove("hidden");
+        } else {
+            mobCrew.innerHTML = '';
+            mobCrew.classList.add("hidden");
+        }
+    }
+
+    const mobOverview = document.getElementById("series-mobile-overview");
+    if (mobOverview) {
+        mobOverview.textContent = (epData && epData.overview) || show.overview || 'Sem sinopse disponível.';
+        if (!mobOverview._hasToggle) {
+            mobOverview._hasToggle = true;
+            mobOverview.addEventListener("click", () => mobOverview.classList.toggle("is-expanded"));
+        }
+    }
+
+    setupMobileSeriesActions(show);
+
+    // Episodes Accordion & Season Badge
+    const seasonNum = activeSeriesPlaying.seasonNumber || (context && context.season) || 1;
+    const badge = document.getElementById("series-mobile-season-badge");
+    if (badge) badge.textContent = `Temporada ${seasonNum}`;
+
+    const toggleBtn = document.getElementById("btn-mobile-episodes-toggle");
+    const collapseEl = document.getElementById("series-mobile-episodes-collapse");
+    if (toggleBtn && collapseEl && !toggleBtn._hasAccordion) {
+        toggleBtn._hasAccordion = true;
+        toggleBtn.addEventListener("click", () => {
+            const willOpen = !toggleBtn.classList.contains("is-open");
+            toggleBtn.classList.toggle("is-open", willOpen);
+            toggleBtn.setAttribute("aria-expanded", String(willOpen));
+            collapseEl.classList.toggle("hidden", !willOpen);
+            if (willOpen) {
+                populateMobileEpisodesGrid(activeSeriesPlaying.seasonNumber);
+            }
+        });
+    } else if (toggleBtn && toggleBtn.classList.contains("is-open")) {
+        populateMobileEpisodesGrid(activeSeriesPlaying.seasonNumber);
+    }
+}
+
+let seriesRateStars = null;
+
+function ensureSeriesRateStars(show) {
+    if (!seriesRateStars) {
+        const box = document.getElementById("series-mobile-rate-stars");
+        if (!box) return null;
+        seriesRateStars = createRateStars({
+            onPick: (val) => {
+                const target = activeSeriesPlaying.show || show;
+                const kind = target.is_anime ? "animes" : "series";
+                setRating(kind, target, val);
+                updateMobileSeriesRateButton(target);
+                closeSeriesRatePanel();
+                showToast(val ? `Nota salva: ${formatStars(val)} de 5 estrelas` : "Nota removida");
+            },
+            onPreview: (val) => {
+                const hint = document.getElementById("series-mobile-rate-hint");
+                if (hint) hint.textContent = val ? `${formatStars(val)} de 5 estrelas` : "Faça sua avaliação";
+            }
+        });
+        box.appendChild(seriesRateStars.element);
+    }
+    return seriesRateStars;
+}
+
+function closeSeriesRatePanel() {
+    const panel = document.getElementById("series-mobile-rate-panel");
+    const btn = document.getElementById("btn-series-mobile-rate");
+    if (panel) panel.classList.add("hidden");
+    if (btn) btn.setAttribute("aria-expanded", "false");
+}
+
+function updateMobileSeriesRateButton(show) {
+    if (!show) return;
+    const kind = show.is_anime ? "animes" : "series";
+    const state = getLibraryState(kind, show.id);
+    const rateBtn = document.getElementById("btn-series-mobile-rate");
+    const rateVal = document.getElementById("series-mobile-rate-value");
+    if (rateBtn) {
+        rateBtn.classList.toggle("is-on", Boolean(state.rating));
+        rateBtn.setAttribute("title", state.rating ? `Sua nota: ${formatStars(state.rating)} estrelas` : "Avaliar");
+        rateBtn.setAttribute("aria-label", rateBtn.title);
+    }
+    if (rateVal) {
+        rateVal.textContent = state.rating ? formatStars(state.rating) : "";
+    }
+}
+
+function setupMobileSeriesActions(show) {
+    if (!show) return;
+    const kind = show.is_anime ? "animes" : "series";
+
+    const watchlistBtn = document.getElementById("btn-series-mobile-watchlist");
+    if (watchlistBtn) {
+        const state = getLibraryState(kind, show.id);
+        watchlistBtn.classList.toggle("is-on", Boolean(state.watchlist));
+        watchlistBtn.setAttribute("aria-pressed", String(Boolean(state.watchlist)));
+        watchlistBtn.title = state.watchlist ? "Remover de Quero assistir" : "Quero assistir";
+        watchlistBtn.setAttribute("aria-label", watchlistBtn.title);
+        watchlistBtn.onclick = () => {
+            const curState = getLibraryState(kind, show.id);
+            const next = !curState.watchlist;
+            setWatchlist(kind, show, next);
+            watchlistBtn.classList.toggle("is-on", next);
+            watchlistBtn.setAttribute("aria-pressed", String(next));
+            watchlistBtn.title = next ? "Remover de Quero assistir" : "Quero assistir";
+            watchlistBtn.setAttribute("aria-label", watchlistBtn.title);
+            showToast(next ? "Adicionado a Quero assistir" : "Removido de Quero assistir");
+        };
+    }
+
+    const watchedBtn = document.getElementById("btn-series-mobile-watched");
+    if (watchedBtn) {
+        const state = getLibraryState(kind, show.id);
+        watchedBtn.classList.toggle("is-on", Boolean(state.watched));
+        watchedBtn.setAttribute("aria-pressed", String(Boolean(state.watched)));
+        watchedBtn.title = state.watched ? "Desmarcar como assistido" : "Marcar como assistido";
+        watchedBtn.setAttribute("aria-label", watchedBtn.title);
+        watchedBtn.onclick = () => {
+            const curState = getLibraryState(kind, show.id);
+            const next = !curState.watched;
+            setWatched(kind, show, next);
+            watchedBtn.classList.toggle("is-on", next);
+            watchedBtn.setAttribute("aria-pressed", String(next));
+            watchedBtn.title = next ? "Desmarcar como assistido" : "Marcar como assistido";
+            watchedBtn.setAttribute("aria-label", watchedBtn.title);
+            showToast(next ? "Marcado como assistido" : "Desmarcado como assistido");
+        };
+    }
+
+    updateMobileSeriesRateButton(show);
+
+    const rateBtn = document.getElementById("btn-series-mobile-rate");
+    const ratePanel = document.getElementById("series-mobile-rate-panel");
+    const rateClearBtn = document.getElementById("btn-series-mobile-rate-clear");
+
+    if (rateBtn && ratePanel) {
+        rateBtn.onclick = (e) => {
+            e.stopPropagation();
+            const isOpen = !ratePanel.classList.contains("hidden");
+            if (isOpen) {
+                closeSeriesRatePanel();
+            } else {
+                const stars = ensureSeriesRateStars(show);
+                const curState = getLibraryState(kind, show.id);
+                if (stars) stars.setValue(curState.rating || 0);
+                const hint = document.getElementById("series-mobile-rate-hint");
+                if (hint) hint.textContent = curState.rating ? `${formatStars(curState.rating)} de 5 estrelas` : 'Faça sua avaliação';
+                if (rateClearBtn) rateClearBtn.classList.toggle("hidden", !curState.rating);
+                ratePanel.classList.remove("hidden");
+                rateBtn.setAttribute("aria-expanded", "true");
+            }
+        };
+    }
+
+    if (rateClearBtn) {
+        rateClearBtn.onclick = (e) => {
+            e.stopPropagation();
+            setRating(kind, show, null);
+            updateMobileSeriesRateButton(show);
+            closeSeriesRatePanel();
+            showToast("Nota removida");
+        };
+    }
+
+    const shareBtn = document.getElementById("btn-series-mobile-share");
+    if (shareBtn) {
+        shareBtn.onclick = async () => {
+            const isAnime = isAnimeShow(show);
+            const param = isAnime ? `anime=${encodeURIComponent(show.id)}` : `serie=${encodeURIComponent(show.id)}`;
+            const shareTitle = show.name || show.title || "TVzinha";
+            const shareText = `Assista ${show.name || show.title || "esta série"} no TVzinha Online!`;
+            const shareUrl = `${window.location.origin}${window.location.pathname}?${param}`;
+
+            const triggerFeedback = () => {
+                if (shareBtn._shareTimer) clearTimeout(shareBtn._shareTimer);
+                const originalHtml = shareBtn.innerHTML;
+                shareBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                shareBtn.classList.add("is-copied");
+                shareBtn._shareTimer = setTimeout(() => {
+                    shareBtn.innerHTML = originalHtml;
+                    shareBtn.classList.remove("is-copied");
+                    shareBtn._shareTimer = null;
+                }, 1500);
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+                    triggerFeedback();
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                }
+            }
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    triggerFeedback();
+                    showToast("Link copiado para a área de transferência!");
+                    return;
+                } catch (_) {}
+            }
+            try {
+                const ta = document.createElement("textarea");
+                ta.value = shareUrl;
+                ta.style.position = "fixed";
+                ta.style.opacity = "0";
+                ta.style.left = "-9999px";
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                const ok = document.execCommand("copy");
+                document.body.removeChild(ta);
+                if (ok) {
+                    triggerFeedback();
+                    showToast("Link copiado para a área de transferência!");
+                    return;
+                }
+            } catch (_) {}
+            showToast("Não foi possível copiar o link.");
+        };
+    }
+}
+
+export async function populateMobileEpisodesGrid(targetSeason = null) {
+    const grid = document.getElementById("series-mobile-episodes-grid");
+    if (!grid || !activeSeriesPlaying.show) return;
+
+    const seasonNumber = targetSeason !== null ? Number(targetSeason) : Number(activeSeriesPlaying.seasonNumber || 1);
+    const badge = document.getElementById("series-mobile-season-badge");
+    if (badge) badge.textContent = `Temporada ${seasonNumber}`;
+    const show = activeSeriesPlaying.show;
+    const details = detailsFor(show.id);
+    const regularSeasons = details ? regularSeasonsOf(details) : [];
+
+    // Header season switcher
+    const seasonSelect = document.getElementById("series-mobile-season-select");
+    if (seasonSelect) {
+        if (regularSeasons.length > 1) {
+            seasonSelect.classList.remove("hidden");
+            seasonSelect.innerHTML = regularSeasons.map(s => {
+                const sNum = s.season_number;
+                return `<option value="${sNum}" ${sNum === seasonNumber ? 'selected' : ''}>Temporada ${sNum}</option>`;
+            }).join('');
+            seasonSelect.onchange = () => {
+                populateMobileEpisodesGrid(Number(seasonSelect.value));
+            };
+        } else {
+            seasonSelect.classList.add("hidden");
+        }
+    }
+
+    const cacheKey = `${show.id}_${seasonNumber}`;
+    let episodes = cachedSeasonsMap[cacheKey] || [];
+
+    if (episodes.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; display:flex; justify-content:center; padding:20px;"><div class="spinner"></div></div>`;
+        try {
+            episodes = await fetchSeasonEpisodes(show.id, seasonNumber);
+        } catch (e) {
+            grid.innerHTML = `<p style="grid-column: 1/-1; color:#71717a; padding:10px; text-align:center;">Não foi possível carregar os episódios.</p>`;
+            return;
+        }
+    }
+
+    if (!episodes || episodes.length === 0) {
+        grid.innerHTML = `<p style="grid-column: 1/-1; color:#71717a; padding:10px; text-align:center;">Nenhum episódio encontrado.</p>`;
+        return;
+    }
+
+    grid.innerHTML = "";
+    const storedProgress = getStoredWatchProgress();
+    const currentShowHistory = storedProgress[show.id];
+    const episodeDetails = detailsFor(show.id);
+    const isMultiSeason = regularSeasonsOf(episodeDetails).length > 1;
+
+    episodes.forEach(ep => {
+        const epNum = Number(ep.episode_number);
+        const isCurrent = epNum === Number(activeSeriesPlaying.episodeNumber) && seasonNumber === Number(activeSeriesPlaying.seasonNumber);
+        const isWatched = currentShowHistory && (
+            currentShowHistory.season > seasonNumber ||
+            (currentShowHistory.season === seasonNumber && currentShowHistory.episode >= epNum)
+        );
+
+        const stillUrl = ep.still_path
+            ? `${TMDB_IMG_W500}${ep.still_path}`
+            : (show.backdrop_path ? `${TMDB_IMG_W500}${show.backdrop_path}` : 'assets/logos/fav/icon-detailed.svg');
+
+        const epTitle = ep.name || `Episódio ${epNum}`;
+        const epDuration = ep.runtime ? `${ep.runtime} min` : '';
+        const epAbsolute = isMultiSeason ? absoluteEpisodeOf(episodeDetails, seasonNumber, epNum) : 0;
+        const epAbsoluteLabel = epAbsolute ? `Ep. geral ${epAbsolute}` : '';
+
+        const safeStill = escapeAttr(stillUrl);
+        const safeEpTitle = escapeHtml(epTitle);
+        const safeEpTitleAttr = escapeAttr(epTitle);
+        const safeEpNum = escapeHtml(epNum);
+        const safeEpDuration = escapeHtml(epDuration);
+        const safeEpAbsoluteLabel = escapeHtml(epAbsoluteLabel);
+        const rawOverview = (ep.overview || "").trim();
+        const safeEpOverview = escapeHtml(rawOverview || "Sem descrição disponível.");
+        const safeAirDateYear = escapeHtml(ep.air_date ? ep.air_date.substring(0, 4) : '');
+        const hasLongOverview = rawOverview.length > 80;
+
+        const card = document.createElement("div");
+        card.className = `series-ep-card ${isCurrent ? 'is-active-playing' : ''}`;
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        card.setAttribute("aria-label", `Episódio ${safeEpNum}: ${safeEpTitleAttr}`);
+
+        card.innerHTML = `
+            <div class="ep-thumbnail-box">
+                <img class="ep-thumbnail-img" src="${safeStill}" alt="${safeEpTitleAttr}" loading="lazy" data-fallback-src="assets/logos/fav/icon-detailed.svg">
+                <span class="ep-number-tag">Ep. ${safeEpNum}</span>
+                ${isWatched ? '<span class="ep-watched-tag">Visto</span>' : ''}
+                <div class="ep-play-overlay">
+                    <div class="ep-play-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="ep-info-box">
+                <h4 class="ep-title" title="${safeEpTitleAttr}">${safeEpTitle}</h4>
+                <div class="ep-meta-row">
+                    <span>${safeAirDateYear}</span>
+                    <span>${safeEpDuration}</span>
+                    ${safeEpAbsoluteLabel ? `<span>${safeEpAbsoluteLabel}</span>` : ''}
+                </div>
+                <p class="ep-overview">${safeEpOverview}</p>
+                ${hasLongOverview ? '<button type="button" class="ep-overview-more" aria-label="Ler mais da sinopse">Ler mais</button>' : ''}
+            </div>
+        `;
+
+        const moreBtn = card.querySelector(".ep-overview-more");
+        if (moreBtn) {
+            moreBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const p = card.querySelector(".ep-overview");
+                if (p) {
+                    const expanded = p.classList.toggle("is-expanded");
+                    moreBtn.textContent = expanded ? "Ler menos" : "Ler mais";
+                }
+            });
+        }
+
+        const playAction = () => {
+            openEpisode(show, { season: seasonNumber, episode: epNum });
+        };
+        card.addEventListener("click", playAction);
+        card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                playAction();
+            }
+        });
+
+        grid.appendChild(card);
+    });
+}
+
+/** Toggles the Series Episode Drawer with smooth populate. */
+export function toggleSeriesDrawer(forceState) {
+    const drawer = document.getElementById("series-player-drawer");
+    if (!drawer) return;
+    const willOpen = typeof forceState === 'boolean' ? forceState : drawer.classList.contains("hidden");
+    if (willOpen) {
+        window.dispatchEvent(new CustomEvent('tvzinha:closeFlyouts'));
+        drawer.classList.remove("hidden");
+        populateSeriesDrawer();
+    } else {
+        drawer.classList.add("hidden");
+    }
+}
+
+document.addEventListener('pointerdown', (e) => {
+    const drawer = document.getElementById("series-player-drawer");
+    if (!drawer || drawer.classList.contains("hidden")) return;
+    if (!drawer.contains(e.target) && !e.target.closest('.art-control-episodes-btn, #btn-toggle-drawer')) {
+        toggleSeriesDrawer(false);
+    }
+});
+
+function onToggleSeriesDrawerEvent() {
+    toggleSeriesDrawer();
+}
+
+function renderSeriesError(title, desc, { isMissing = false } = {}) {
+    const seriesArt = document.getElementById("series-artplayer-container");
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) {
+        playerCard.classList.remove('is-loading');
+        playerCard.classList.add('is-error', 'is-ui-visible');
+    }
+    if (!seriesArt) return;
+    seriesArt.innerHTML = `
+        <div class="tvz-player-error-wrap">
+            <div class="tvz-error-icon-circle">
+                <svg width="30" height="30" fill="none" stroke="${isMissing ? 'rgba(255, 255, 255, 0.75)' : '#ef4444'}" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/>
+                </svg>
+            </div>
+            <div class="tvz-error-title">${escapeHtml(title)}</div>
+            <div class="tvz-error-desc">${escapeHtml(desc)}</div>
+            <div class="tvz-error-actions">
+                <button type="button" class="tvz-btn-error-primary btn-error-server-switch">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="6" rx="2"/><rect x="2" y="15" width="20" height="6" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                    Trocar Servidor
+                </button>
+                <button type="button" class="tvz-btn-error-secondary btn-error-reload">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    Tentar Novamente
+                </button>
+                <button type="button" class="tvz-btn-error-secondary btn-error-episodes">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    Episódios
+                </button>
+            </div>
+        </div>
+    `;
+    seriesArt.classList.remove("hidden");
+
+    seriesArt.querySelector('.btn-error-server-switch')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSeriesServersFlyout(true);
+    });
+    seriesArt.querySelector('.btn-error-reload')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (activeSeriesPlaying.show) {
+            openEpisode(activeSeriesPlaying.show, {
+                season: activeSeriesPlaying.seasonNumber,
+                episode: activeSeriesPlaying.episodeNumber
+            }, { keepPosition: true });
+        }
+    });
+    seriesArt.querySelector('.btn-error-episodes')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent('tvzinha:toggleSeriesDrawer'));
+    });
 }
 
 /** Starts a resolved episode (see resolveEpisodeContext). Only openEpisode calls it. */
@@ -2828,6 +3679,7 @@ function startEpisodePlayback(context, options = {}) {
     const showChanged = !activeSeriesPlaying.show || String(activeSeriesPlaying.show.id) !== String(showItem.id);
     if (showChanged) {
         activeSeriesPlaying.userSelectedServer = false;
+        activeSeriesPlaying.audioPreference = null;
     }
 
     activeSeriesPlaying.show = showItem;
@@ -2836,9 +3688,26 @@ function startEpisodePlayback(context, options = {}) {
     activeSeriesPlaying.absoluteEpisodeNumber = absoluteEpNumber || (epData && epData.absoluteEpisode) || null;
     activeSeriesPlaying.episodeData = epData;
 
+    updateSeriesObraCard(showItem, activeSeriesPlaying.episodeData, context);
+
+    // If show details are thin (e.g. from resume card), fetch full metadata from TMDB
+    if (!showItem.overview || !showItem.poster_path) {
+        fetchTmdb(`tv/${showItem.id}?language=pt-BR`).then(fullShow => {
+            if (fullShow && activeSeriesPlaying.show && String(activeSeriesPlaying.show.id) === String(showItem.id)) {
+                activeSeriesPlaying.show = { ...activeSeriesPlaying.show, ...fullShow };
+                updateSeriesObraCard(activeSeriesPlaying.show, activeSeriesPlaying.episodeData, context);
+            }
+        }).catch(() => {});
+    }
+
     const theaterView = document.getElementById("series-player-view");
     const currentEpTitle = document.getElementById("series-player-current-ep");
     const btnPrev = document.getElementById("btn-series-prev-ep");
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) {
+        playerCard.classList.remove('is-error');
+        playerCard.classList.add('is-loading');
+    }
 
     const wasTheaterHidden = theaterView && theaterView.classList.contains("hidden");
     if (theaterView) theaterView.classList.remove("hidden");
@@ -2870,12 +3739,10 @@ function startEpisodePlayback(context, options = {}) {
                 Number(activeSeriesPlaying.episodeNumber) === Number(episodeNumber);
             if (!stillThisEpisode) return;
             activeSeriesPlaying.episodeData = { ...match, absoluteEpisode: activeSeriesPlaying.absoluteEpisodeNumber };
+            updateSeriesObraCard(showItem, activeSeriesPlaying.episodeData, context);
             saveStoredWatchProgress(showItem, seasonNumber, episodeNumber, match.name, context.isAnime ? 'anime' : 'tv', context.absolute, match.still_path);
-            const currentTitleEl = document.getElementById("series-player-current-ep");
+            updateSeriesPlayerTopBar(showItem, seasonNumber, episodeNumber, match.name, activeSeriesPlaying.absoluteEpisodeNumber);
             const currentOverviewEl = document.getElementById("series-player-overview");
-            if (currentTitleEl) {
-                currentTitleEl.textContent = episodeHeaderText(showItem, seasonNumber, episodeNumber, match.name, activeSeriesPlaying.absoluteEpisodeNumber);
-            }
             if (currentOverviewEl && match.overview) {
                 currentOverviewEl.textContent = match.overview;
             }
@@ -2885,9 +3752,7 @@ function startEpisodePlayback(context, options = {}) {
         });
     }
 
-    if (currentEpTitle) {
-        currentEpTitle.textContent = episodeHeaderText(showItem, seasonNumber, episodeNumber, epName, activeSeriesPlaying.absoluteEpisodeNumber);
-    }
+    updateSeriesPlayerTopBar(showItem, seasonNumber, episodeNumber, epName, activeSeriesPlaying.absoluteEpisodeNumber);
 
     const isAnime = context.isAnime;
 
@@ -2943,6 +3808,11 @@ function startEpisodePlayback(context, options = {}) {
     const serverKey = activeSeriesPlaying.server;
     const serverDef = SERIES_SERVER_OPTIONS.find(s => s.id === serverKey) || SERIES_SERVER_OPTIONS[0];
 
+    const activeLabel = document.getElementById("series-player-active-server-name");
+    if (activeLabel) {
+        activeLabel.textContent = (serverDef.name || 'Servidores').replace(' (BETA)', '').replace(' (BETA - Legendados)', '');
+    }
+
     // Route A: Native Direct Player
     if (serverDef.isNative) {
         atomicPlayerReset();
@@ -2951,7 +3821,7 @@ function startEpisodePlayback(context, options = {}) {
             seriesArt.innerHTML = "";
             seriesArt.classList.add("hidden");
         }
-        setLoaderText(seriesLoader, "Buscando fontes...");
+        setLoaderText(seriesLoader, `Conectando ao ${serverDef.name}...`);
         if (seriesLoader) seriesLoader.classList.remove("hidden");
         const playerName = serverDef.name;
 
@@ -2962,6 +3832,7 @@ function startEpisodePlayback(context, options = {}) {
                 console.warn("[Series] Abortando montagem nativa: reprodução cancelada ou janela fechada.");
                 return;
             }
+            if (playerCard) playerCard.classList.remove('is-loading');
             if (seriesLoader) seriesLoader.classList.add("hidden");
             if (data && data.primary_source && serverKey === 'native_anime' && data.aniskip && data.aniskip.mal_id) {
                 animeMalIds.set(`${showItem.id}_${seasonNumber}`, data.aniskip.mal_id);
@@ -2969,29 +3840,30 @@ function startEpisodePlayback(context, options = {}) {
             if (!data || !data.primary_source) {
                 const animeMissing = serverKey === 'native_anime';
                 showToast(animeMissing
-                    ? "Anime não encontrado no Anime Player. Tente o Mgeb Player ou outro servidor abaixo."
-                    : `O ${playerName} não encontrou fontes para este episódio. Escolha outro player ou um servidor externo abaixo.`);
-                if (seriesArt) {
-                    seriesArt.innerHTML = `
-                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);">
-                            <svg width="44" height="44" fill="none" stroke="#eab308" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 7.5h.008v.008H12v-.008z"/></svg>
-                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${animeMissing ? 'Anime não encontrado no Anime Player' : `${escapeHtml(playerName)} sem fontes`}</div>
-                            <div style="font-size:13px;max-width:380px;line-height:1.5;">${animeMissing ? 'Não encontramos este episódio no Anime Player. Escolha o Mgeb Player ou outro servidor abaixo.' : `O ${escapeHtml(playerName)} não encontrou fontes para este episódio no momento. Escolha outro player ou um servidor externo abaixo.`}</div>
-                        </div>`;
-                    seriesArt.classList.remove("hidden");
-                }
+                    ? "Anime não encontrado no Anime Player. Tente o Mgeb Player ou outro servidor."
+                    : `O ${playerName} não encontrou fontes para este episódio. Escolha outro servidor.`);
+                renderSeriesError(
+                    animeMissing ? 'Anime não encontrado no Anime Player' : `${playerName} sem fontes`,
+                    animeMissing
+                        ? 'Não encontramos este episódio no Anime Player. Escolha o Mgeb Player ou outro servidor para assistir.'
+                        : `O ${playerName} não encontrou fontes funcionais para este episódio no momento. Escolha outro servidor para assistir.`,
+                    { isMissing: true }
+                );
                 return;
             }
 
-            const backdropUrl = showItem.backdrop_path
-                ? `${TMDB_IMG_ORIGINAL}${showItem.backdrop_path}`
-                : '';
+            const backdropUrl = epData?.still_path
+                ? `${TMDB_IMG_W500}${epData.still_path}`
+                : showItem.backdrop_path
+                    ? `${TMDB_IMG_W1280}${showItem.backdrop_path}`
+                    : '';
 
             // Read after the previous player saved its last time (the reset above), so a switch keeps it
             const resumeAt = options.restart
                 ? 0
                 : resumeStartTime(getSavedPosition(context.tmdbId, context.season, context.episode),
                     { keep: Boolean(options.keepPosition), server: serverKey });
+            if (playerCard) playerCard.classList.remove('is-error');
             mountNativePlayer({
                 containerId: "series-artplayer-container",
                 startTime: resumeAt,
@@ -3008,6 +3880,19 @@ function startEpisodePlayback(context, options = {}) {
                     title: showName
                 },
                 provider: data.provider || serverDef.source || 'mgeb',
+                servers: SERIES_SERVER_OPTIONS.filter(s => !s.animeOnly || isAnime),
+                activeServerId: serverKey,
+                onSelectServer: (targetServer) => {
+                    if (targetServer.id !== activeSeriesPlaying.server && activeSeriesPlaying.show) {
+                        activeSeriesPlaying.server = targetServer.id;
+                        activeSeriesPlaying.userSelectedServer = true;
+                        openEpisode(activeSeriesPlaying.show, {
+                            season: activeSeriesPlaying.seasonNumber,
+                            episode: activeSeriesPlaying.episodeNumber
+                        }, { keepPosition: true });
+                    }
+
+                },
                 onProgress: (info) => {
                     saveEpisodePosition(context, serverKey, info);
                     if (reachedEnd(info) && isFinalEpisode(context)) finishShow(context);
@@ -3046,22 +3931,24 @@ function startEpisodePlayback(context, options = {}) {
                 },
                 onAllFailed: () => {
                     atomicPlayerReset();
-                    showToast(`Nenhuma fonte do ${playerName} respondeu. Escolha outro player ou um servidor externo abaixo.`);
-                    if (seriesArt) {
-                        seriesArt.innerHTML = `
-                            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a1a1aa;padding:32px 20px;text-align:center;background:radial-gradient(circle at center, rgba(30,41,59,0.5) 0%, rgba(10,12,16,0.95) 100%);">
-                                <svg width="44" height="44" fill="none" stroke="#ef4444" stroke-width="1.6" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                                <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">${escapeHtml(playerName)} sem resposta</div>
-                                <div style="font-size:13px;max-width:380px;line-height:1.5;">Nenhuma fonte do ${escapeHtml(playerName)} respondeu para este episódio. Escolha outro player ou um servidor externo abaixo para continuar assistindo.</div>
-                            </div>`;
-                        seriesArt.classList.remove("hidden");
-                    }
+                    showToast(`Nenhuma fonte do ${playerName} respondeu. Escolha outro player ou um servidor.`);
+                    renderSeriesError(
+                        `${playerName} sem resposta`,
+                        `Nenhuma fonte do ${playerName} respondeu para este episódio. Escolha outro player ou servidor para continuar assistindo.`,
+                        { isMissing: false }
+                    );
                 }
             });
         }).catch(err => {
+            if (currentSessionId !== seriesPlaybackSessionId || !theaterView || theaterView.classList.contains("hidden")) return;
             atomicPlayerReset();
             if (seriesLoader) seriesLoader.classList.add("hidden");
-            showToast(`Não foi possível conectar ao ${playerName}.`);
+            showToast(`Não foi possível conectar ao ${playerName}. Escolha outro servidor.`);
+            renderSeriesError(
+                `Falha ao conectar ao ${playerName}`,
+                `Ocorreu um erro ao carregar o episódio através do ${playerName}. Escolha outro servidor para continuar assistindo.`,
+                { isMissing: false }
+            );
         });
     } else {
         // Route B: Iframe Alternative Servers
@@ -3091,10 +3978,12 @@ function startEpisodePlayback(context, options = {}) {
             }, 30);
 
             iframe.onload = () => {
+                if (playerCard) playerCard.classList.remove('is-loading');
                 if (seriesLoader) seriesLoader.classList.add("hidden");
                 setPlaybackActiveState(true);
             };
             setTimeout(() => {
+                if (playerCard) playerCard.classList.remove('is-loading');
                 if (seriesLoader) seriesLoader.classList.add("hidden");
             }, 3000);
         }
@@ -3114,35 +4003,89 @@ function startEpisodePlayback(context, options = {}) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function populateSeriesDrawer() {
+export async function populateSeriesDrawer(targetSeason = null) {
     const drawerList = document.getElementById("series-drawer-list");
     if (!drawerList || !activeSeriesPlaying.show) return;
 
-    drawerList.innerHTML = "";
-    const cacheKey = `${activeSeriesPlaying.show.id}_${activeSeriesPlaying.seasonNumber}`;
-    const episodes = cachedSeasonsMap[cacheKey] || [];
+    const seasonNumber = targetSeason !== null ? Number(targetSeason) : Number(activeSeriesPlaying.seasonNumber);
+    const show = activeSeriesPlaying.show;
+    const details = detailsFor(show.id);
+    const regularSeasons = details ? regularSeasonsOf(details) : [];
+
+    // Header season switcher
+    const seasonSelect = document.getElementById("series-drawer-season-select");
+    if (seasonSelect) {
+        if (regularSeasons.length > 1) {
+            seasonSelect.classList.remove("hidden");
+            seasonSelect.innerHTML = regularSeasons.map(s => {
+                const sNum = s.season_number;
+                return `<option value="${sNum}" ${sNum === seasonNumber ? 'selected' : ''}>Temporada ${sNum}</option>`;
+            }).join('');
+            seasonSelect.onchange = () => {
+                populateSeriesDrawer(Number(seasonSelect.value));
+            };
+        } else {
+            seasonSelect.classList.add("hidden");
+        }
+    }
+
+    const cacheKey = `${show.id}_${seasonNumber}`;
+    let episodes = cachedSeasonsMap[cacheKey] || [];
 
     if (episodes.length === 0) {
-        drawerList.innerHTML = `<p style="color:#71717a; padding:10px;">Episódios não carregados.</p>`;
+        drawerList.innerHTML = `<div style="display:flex;justify-content:center;padding:40px;"><div class="spinner"></div></div>`;
+        try {
+            episodes = await fetchSeasonEpisodes(show.id, seasonNumber);
+        } catch (e) {
+            drawerList.innerHTML = `<p style="color:#71717a; padding:20px; text-align:center;">Não foi possível carregar os episódios.</p>`;
+            return;
+        }
+    }
+
+    if (!episodes || episodes.length === 0) {
+        drawerList.innerHTML = `<p style="color:#71717a; padding:20px; text-align:center;">Nenhum episódio encontrado.</p>`;
         return;
     }
 
+    drawerList.innerHTML = "";
     episodes.forEach(ep => {
+        const isCurrent = Number(ep.episode_number) === Number(activeSeriesPlaying.episodeNumber) && seasonNumber === Number(activeSeriesPlaying.seasonNumber);
         const item = document.createElement("button");
         item.type = "button";
-        item.className = `drawer-item ${ep.episode_number === activeSeriesPlaying.episodeNumber ? 'active' : ''}`;
+        item.className = `tvz-drawer-ep-card ${isCurrent ? 'active' : ''}`;
         const safeEpName = escapeHtml(ep.name || 'Episódio');
         const safeEpNum = escapeHtml(ep.episode_number);
+        const stillUrl = ep.still_path
+            ? `${TMDB_IMG_W500}${ep.still_path}`
+            : (show.backdrop_path ? `${TMDB_IMG_W500}${show.backdrop_path}` : '');
+        const safeOverview = escapeHtml(ep.overview || 'Sem sinopse disponível.');
+        const durationText = ep.runtime ? `${ep.runtime}m` : '';
+
         item.innerHTML = `
-            <span>Ep. ${safeEpNum} - ${safeEpName}</span>
-            <span>▶\uFE0E</span>
+            <div class="ep-thumb-wrap">
+                ${stillUrl ? `<img src="${stillUrl}" alt="" loading="lazy" class="ep-thumb">` : `<div class="ep-thumb-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>`}
+                ${isCurrent ? '<div class="ep-playing-pill">Assistindo</div>' : ''}
+            </div>
+            <div class="ep-info-wrap">
+                <div class="ep-header-row">
+                    <span class="ep-num-title">${safeEpNum}. ${safeEpName}</span>
+                    ${durationText ? `<span class="ep-duration">${durationText}</span>` : ''}
+                </div>
+                <p class="ep-synopsis">${safeOverview}</p>
+            </div>
         `;
+
         item.addEventListener("click", () => {
-            openEpisode(activeSeriesPlaying.show, { season: activeSeriesPlaying.seasonNumber, episode: ep.episode_number });
-            const drawer = document.getElementById("series-player-drawer");
-            if (drawer) drawer.classList.add("hidden");
+            openEpisode(show, { season: seasonNumber, episode: ep.episode_number });
+            toggleSeriesDrawer(false);
         });
+
         drawerList.appendChild(item);
+        if (isCurrent) {
+            setTimeout(() => {
+                item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 60);
+        }
     });
 }
 
@@ -3189,6 +4132,7 @@ export function isSeriesPlayerOpen() {
 export function stopSeriesPlayer() {
     seriesPlaybackSessionId++;
     leaveStageFullscreen();
+    toggleSeriesServersFlyout(false);
     if (pendingSeriesIframeTimer) {
         clearTimeout(pendingSeriesIframeTimer);
         pendingSeriesIframeTimer = null;
@@ -3202,6 +4146,10 @@ export function stopSeriesPlayer() {
     const theaterView = document.getElementById("series-player-view");
     const seriesLoader = document.getElementById("series-theater-loader");
     const drawer = document.getElementById("series-player-drawer");
+    const playerCard = document.querySelector('#series-player-view .player-page-card');
+    if (playerCard) {
+        playerCard.classList.remove('is-loading', 'is-paused', 'has-servers-open', 'is-error', 'is-ui-visible');
+    }
 
     const wasTheaterOpen = theaterView && !theaterView.classList.contains("hidden");
     if (seriesLoader) seriesLoader.classList.add("hidden");
