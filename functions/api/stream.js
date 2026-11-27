@@ -52,7 +52,9 @@ export async function streamSigningKey(env) {
 }
 
 async function linkSignature(key, exp, url, referer, origin) {
-  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(`${exp}\n${url}\n${referer}\n${origin}`)));
+  const ref = referer || "";
+  const orig = origin || "";
+  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(`${exp}\n${url}\n${ref}\n${orig}`)));
   let text = "";
   for (const b of mac.slice(0, 16)) text += String.fromCharCode(b);
   return btoa(text).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -60,11 +62,13 @@ async function linkSignature(key, exp, url, referer, origin) {
 
 /** A proxy address for `url` (signed when `key` is set; `exp` keeps the parent's expiry for playlist parts). */
 export async function proxiedStreamUrl(proxyBase, key, url, referer = "", { origin = "", exp = null } = {}) {
-  let out = `${proxyBase}?url=${encodeURIComponent(url)}&referer=${encodeURIComponent(referer)}`;
-  if (origin) out += `&origin=${encodeURIComponent(origin)}`;
+  const ref = referer || "";
+  const orig = origin || "";
+  let out = `${proxyBase}?url=${encodeURIComponent(url)}&referer=${encodeURIComponent(ref)}`;
+  if (orig) out += `&origin=${encodeURIComponent(orig)}`;
   if (key) {
     const expires = exp || Math.floor(Date.now() / 1000) + STREAM_LINK_TTL_S;
-    out += `&exp=${expires}&sig=${await linkSignature(key, expires, url, referer, origin)}`;
+    out += `&exp=${expires}&sig=${await linkSignature(key, expires, url, ref, orig)}`;
   }
   return out;
 }
@@ -75,7 +79,9 @@ async function linkIsValid(key, params, url, referer, origin) {
   const exp = Number(params.get("exp"));
   const now = Math.floor(Date.now() / 1000);
   if (!Number.isInteger(exp) || exp < now || exp > now + 2 * STREAM_LINK_TTL_S) return false;
-  const expected = await linkSignature(key, exp, url, referer, origin);
+  const ref = referer || "";
+  const orig = origin || "";
+  const expected = await linkSignature(key, exp, url, ref, orig);
   const given = params.get("sig") || "";
   if (given.length !== expected.length) return false;
   let diff = 0;
@@ -271,7 +277,7 @@ export async function onRequestGet(context) {
     const baseUrl = new URL(finalUrl);
     const proxyBase = `${urlObj.origin}${urlObj.pathname}`;
     // The playlist's parts expire with the playlist
-    const proxied = (uri) => proxiedStreamUrl(proxyBase, signingKey, new URL(uri, baseUrl).toString(), customReferer, { origin: customOrigin, exp: linkExp });
+    const proxied = (uri) => proxiedStreamUrl(proxyBase, signingKey, new URL(uri, baseUrl).toString(), customReferer || "", { origin: customOrigin || "", exp: linkExp });
 
     const rewritten = (await Promise.all(playlistText.split("\n").map(async line => {
       const trimmed = line.trim();

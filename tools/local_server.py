@@ -1396,18 +1396,16 @@ def clean_vtt(text):
     text = fix_mojibake(text)
     # Convert ASS line break notation to newline
     text = re.sub(r'\\N', '\n', text)
-    """Subtitle cues strip all SSA/ASS override tags ({...}) and any HTML/XML tags so raw tags never leak."""
     lines = []
     for line in text.split("\n"):
-        if "-->" not in line:
-            # Strip all SSA/ASS override tags and MicroDVD tags: {...}
+        if "-->" in line:
+            lines.append(line)
+        else:
             line = re.sub(r'\{[^}]*\}', '', line)
-            # Strip all HTML/XML tags completely so raw tags never display as literal text on screen
-            line = re.sub(r'</?[a-zA-Z][^<>]*>', '', line)
-            line = re.sub(r'&lt;/?(?:[a-zA-Z][^&>]*|i|b|u)&gt;', '', line, flags=re.I)
-            line = re.sub(r'&[a-zA-Z0-9#]+;', ' ', line)
-            line = re.sub(r'[<>]', '', line)
-        lines.append(line)
+            line = re.sub(r'</?[a-zA-Z][^<>]*>', lambda m: m.group(0).lower() if re.match(r'^</?[ibu]>$', m.group(0), re.I) else '', line)
+            line = re.sub(r'<(?!\/?[ibu]>)', '&lt;', line, flags=re.I)
+            line = re.sub(r'(?<!<[ibu])(?<!<\/[ibu])>', '&gt;', line, flags=re.I)
+            lines.append(line)
     return "\n".join(lines)
 
 
@@ -1542,17 +1540,21 @@ def stream_signing_key():
 
 
 def link_signature(key, exp, url, referer, origin):
-    mac = hmac.new(key, f"{exp}\n{url}\n{referer}\n{origin}".encode("utf-8"), hashlib.sha256).digest()[:16]
+    ref = referer or ""
+    orig = origin or ""
+    mac = hmac.new(key, f"{exp}\n{url}\n{ref}\n{orig}".encode("utf-8"), hashlib.sha256).digest()[:16]
     return base64.urlsafe_b64encode(mac).decode("ascii").rstrip("=")
 
 
 def proxied_stream_url(proxy_base, key, url, referer="", origin="", exp=None):
-    out = f"{proxy_base}?url={urllib.parse.quote(url, safe='')}&referer={urllib.parse.quote(referer, safe='')}"
-    if origin:
-        out += f"&origin={urllib.parse.quote(origin, safe='')}"
+    ref = referer or ""
+    orig = origin or ""
+    out = f"{proxy_base}?url={urllib.parse.quote(url, safe='')}&referer={urllib.parse.quote(ref, safe='')}"
+    if orig:
+        out += f"&origin={urllib.parse.quote(orig, safe='')}"
     if key:
         expires = exp or int(time.time()) + STREAM_LINK_TTL_S
-        out += f"&exp={expires}&sig={link_signature(key, expires, url, referer, origin)}"
+        out += f"&exp={expires}&sig={link_signature(key, expires, url, ref, orig)}"
     return out
 
 
@@ -1566,7 +1568,9 @@ def link_is_valid(key, params, url, referer, origin):
     now = int(time.time())
     if exp < now or exp > now + 2 * STREAM_LINK_TTL_S:
         return False
-    return hmac.compare_digest(params.get("sig", [""])[0], link_signature(key, exp, url, referer, origin))
+    ref = referer or ""
+    orig = origin or ""
+    return hmac.compare_digest(params.get("sig", [""])[0], link_signature(key, exp, url, ref, orig))
 
 
 def is_private_address(url):
