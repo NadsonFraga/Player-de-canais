@@ -33,7 +33,7 @@ const MAX_REDIRECTS = 5;
 const MAX_BUFFERED_BYTES = 5 * 1024 * 1024;
 const MEDIA_TYPE = /^(video\/|audio\/|application\/(mp4|octet-stream)$|binary\/octet-stream$)/i;
 // Hosts disguise segments (".jpeg", text/html): the address decides the type, else plain data
-const TYPE_BY_EXTENSION = { ts: "video/mp2t", mp4: "video/mp4", m4s: "video/mp4", m4v: "video/mp4", aac: "audio/aac", m4a: "audio/mp4", mp3: "audio/mpeg" };
+const TYPE_BY_EXTENSION = { ts: "video/mp2t", mp4: "video/mp4", m4s: "video/mp4", m4v: "video/mp4", aac: "audio/aac", m4a: "audio/mp4", mp3: "audio/mpeg", woff: "video/mp2t", txt: "video/mp2t" };
 
 // A signed address is good for a day: covers a long pause and casting; resolve answers are cached 30 min at most
 export const STREAM_LINK_TTL_S = 24 * 3600;
@@ -205,7 +205,7 @@ export async function onRequestGet(context) {
     } else if (targetUrl.includes("playercdn") || targetUrl.includes("embedplayer2.xyz")) {
       customReferer = "https://embedplayer2.xyz/";
       customOrigin = "https://embedplayer2.xyz";
-    } else if (targetUrl.includes("bombrilhoso.lat") || targetUrl.includes("penterosa.lat") || targetUrl.includes("rdembed.online")) {
+    } else if (targetUrl.includes("bombrilhoso.lat") || targetUrl.includes("penterosa.lat") || targetUrl.includes("rdembed.online") || targetUrl.includes(".website") || targetUrl.includes("xn--")) {
       customReferer = "https://penterosa.lat/";
       customOrigin = "https://penterosa.lat";
     } else if (targetUrl.includes("googlevideo.com") || targetUrl.includes("blogger.com")) {
@@ -256,7 +256,7 @@ export async function onRequestGet(context) {
   }
 
   const contentType = (upstream.headers.get("content-type") || "").toLowerCase();
-  const isM3U8 = targetUrl.includes(".m3u8") || finalUrl.includes(".m3u8") || targetUrl.includes("hls-proxy") || contentType.includes("mpegurl");
+  const isM3U8 = targetUrl.includes(".m3u8") || finalUrl.includes(".m3u8") || targetUrl.includes("hls-proxy") || contentType.includes("mpegurl") || targetUrl.includes("index.txt") || targetUrl.includes("bombrilhoso.lat") || targetUrl.includes("penterosa.lat");
   const isVtt = targetUrl.includes(".vtt") || finalUrl.includes(".vtt") || contentType.includes("text/vtt");
 
   // HLS playlist: rewrite relative and absolute paths (against the final address) so segments route through here

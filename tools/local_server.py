@@ -1349,7 +1349,8 @@ STREAM_MAX_BUFFERED_BYTES = 5 * 1024 * 1024
 STREAM_MEDIA_TYPE = re.compile(r"^(video/|audio/|application/(mp4|octet-stream)$|binary/octet-stream$)", re.I)
 # Hosts disguise segments (".jpeg", text/html): the address decides the type, else plain data
 STREAM_TYPE_BY_EXTENSION = {"ts": "video/mp2t", "mp4": "video/mp4", "m4s": "video/mp4", "m4v": "video/mp4",
-                            "aac": "audio/aac", "m4a": "audio/mp4", "mp3": "audio/mpeg"}
+                            "aac": "audio/aac", "m4a": "audio/mp4", "mp3": "audio/mpeg",
+                            "woff": "video/mp2t", "txt": "video/mp2t"}
 
 
 def is_http_url(value):
@@ -2497,7 +2498,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
                 referer, origin = "https://zunderflix.lat/", "https://zunderflix.lat"
             elif "playercdn" in target_url or "embedplayer2.xyz" in target_url:
                 referer, origin = "https://embedplayer2.xyz/", "https://embedplayer2.xyz"
-            elif "bombrilhoso.lat" in target_url or "penterosa.lat" in target_url or "rdembed.online" in target_url:
+            elif "bombrilhoso.lat" in target_url or "penterosa.lat" in target_url or "rdembed.online" in target_url or ".website" in target_url or "xn--" in target_url:
                 referer, origin = "https://penterosa.lat/", "https://penterosa.lat"
             elif "googlevideo.com" in target_url or "blogger.com" in target_url:
                 referer = "https://www.blogger.com/"
@@ -2533,7 +2534,7 @@ class DevAPIHandler(http.server.SimpleHTTPRequestHandler):
 
         with resp:
             content_type = (resp.headers.get("Content-Type", "") or "").lower()
-            is_m3u8 = ".m3u8" in target_url or ".m3u8" in final_url or "hls-proxy" in target_url or "mpegurl" in content_type
+            is_m3u8 = ".m3u8" in target_url or ".m3u8" in final_url or "hls-proxy" in target_url or "mpegurl" in content_type or "index.txt" in target_url or "bombrilhoso.lat" in target_url or "penterosa.lat" in target_url
             is_vtt = ".vtt" in target_url or ".vtt" in final_url or "text/vtt" in content_type
             is_ok = 200 <= resp.status < 300
 
